@@ -3,6 +3,7 @@ import Phaser from "phaser";
 
 function GameCanvas() {
     const canvasRef = useRef(null);
+    const gameRef = useRef(null);
 
     useEffect(() => {
         if (!canvasRef.current) {
@@ -10,30 +11,45 @@ function GameCanvas() {
             return;
         }
 
-        const config = {
-            type: Phaser.WEBGL,
-            width: 700,
-            height: 500,
-            canvas: canvasRef.current,
-            scene: {
-                preload() {
-                    this.load.image('sky', 'https://labs.phaser.io/assets/skies/space3.png');
-                },
-                create() {
-                    console.log("Phaser is running");
-                    this.add.image(350, 250, 'sky');
+        const createGame = () => {
+            const width = window.innerWidth;
+            const height = window.innerHeight;
+
+            const config = {
+                type: Phaser.WEBGL,
+                width,
+                height,
+                canvas: canvasRef.current,
+                scene: {
+                    preload() {
+                        this.load.image('sky', 'https://labs.phaser.io/assets/skies/space3.png');
+                    },
+                    create() {
+                        this.add.image(width / 2, height / 2, 'sky');
+                    }
                 }
+            };
+
+            gameRef.current = new Phaser.Game(config);
+        };
+
+        createGame();
+
+        const handleResize = () => {
+            if (gameRef.current) {
+                gameRef.current.scale.resize(window.innerWidth, window.innerHeight);
             }
         };
 
-        new Phaser.Game(config); // ✅ Still runs Phaser, no destroy
+        window.addEventListener('resize', handleResize);
+
     }, []);
 
     return (
         <canvas
             id="gameCanvas"
             ref={canvasRef}
-            style={{ display: 'block', width: '700px', height: '500px', background: '#111' }}
+            style={{ display: 'block', width: '100%', height: '100vh', background: '#111' }}
         />
     );
 }
