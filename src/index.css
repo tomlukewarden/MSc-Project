@@ -38,6 +38,9 @@ main{
 }
 
 #gameCanvas{
+  display: block;
+  display: block;
+  background-color: #111;
   border: 1px solid red;
   position: absolute;
   top: 50%;
