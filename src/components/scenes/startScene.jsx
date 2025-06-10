@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import GreenhouseScene from "./greenhouseScene";
 
 class StartScene extends Phaser.Scene {
     constructor() {
@@ -10,15 +11,19 @@ class StartScene extends Phaser.Scene {
         this.load.image("startButton", "src/assets/backgrounds/start-button.png");
     }
 
+
     create() {
         const { width, height } = this.sys.game.config;
         this.cameras.main.setBackgroundColor("#b36f4b");
 
-      const logo = this.add.image(width / 2, height / 3, "logo").setScale(0.35);
+      this.add.image(width / 2, height / 3, "logo").setScale(0.35);
       const startButton = this.add.image(width / 2, height / 1.3, "startButton").setScale(0.3).setInteractive();
-      startButton.on("pointerdown", () => {
-          this.scene.start("GameScene");
-      });
+   startButton.on("pointerdown", () => {
+    console.log("Switching to GreenhouseScene");
+    this.scene.stop("StartScene"); // Ensure StartScene is stopped
+    this.scene.start("GreenhouseScene");
+});
+
       this.add.text(width / 2, height / 1.1, "Click to Start", {
           fontSize: "24px",
           fill: "#fff"
@@ -32,7 +37,7 @@ class StartScene extends Phaser.Scene {
           fill: "#fff"
       }).setOrigin(0.5);
 
-    
+
     }
 }
 

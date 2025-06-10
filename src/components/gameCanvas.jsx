@@ -1,14 +1,14 @@
 import { useEffect, useRef } from "react";
 import Phaser from "phaser";
-import StartScene from "./scenes/StartScene";
+import GreenhouseScene from "./scenes/greenhouseScene";
+import StartScene from "./scenes/startScene";
 
 function GameCanvas() {
     const canvasRef = useRef(null);
     const gameRef = useRef(null);
 
     useEffect(() => {
-        if (!canvasRef.current) {
-            console.error("Canvas ref is null");
+        if (!canvasRef.current || gameRef.current) {
             return;
         }
 
@@ -17,7 +17,7 @@ function GameCanvas() {
             width: window.innerWidth,
             height: window.innerHeight,
             canvas: canvasRef.current,
-            scene: [StartScene]
+            scene: [StartScene, GreenhouseScene],
         };
 
         gameRef.current = new Phaser.Game(config);
@@ -29,7 +29,12 @@ function GameCanvas() {
         };
 
         window.addEventListener("resize", handleResize);
-    }, []);
+
+        return () => {
+            window.removeEventListener("resize", handleResize);
+            gameRef.current?.destroy(true); // Properly clean up when unmounting
+        };
+    }, []); // Only runs once when the component mounts
 
     return <canvas ref={canvasRef} style={{ display: "block", width: "100%", height: "100vh", background: "#111" }} />;
 }
