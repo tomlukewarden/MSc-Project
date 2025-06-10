@@ -21,27 +21,46 @@ class GreenhouseScene extends Phaser.Scene {
         const char = this.add.image(width / 2, height / 2, "defaultFront").setScale(0.06);
 
         this.input.keyboard.on("keydown", (event) => {
-            switch (event.key) {
-                case "w":
-                    char.setTexture("defaultBack");
-                    char.y -= 15;
-                    break;
-                case "s":
-                    char.setTexture("defaultFront");
-                    char.y += 15;
-                    break;
-                case "a":
-                    char.setTexture("defaultLeft");
-                    char.x -= 15;
-                    break;
-                case "d":
-                    char.setTexture("defaultRight");
-                    char.x += 15;
-                    break;
-                default:
-                    break;
-            }
-        });
+    switch (event.key) {
+        case "w":
+            this.tweens.add({
+                targets: char,
+                y: char.y - 50, // Moves up by 50 pixels
+                duration: 300, // Smooth movement over 300ms
+                ease: "Power2",
+            });
+            char.setTexture("defaultBack");
+            break;
+        case "s":
+            this.tweens.add({
+                targets: char,
+                y: char.y + 50,
+                duration: 300,
+                ease: "Power2",
+            });
+            char.setTexture("defaultFront");
+            break;
+        case "a":
+            this.tweens.add({
+                targets: char,
+                x: char.x - 50,
+                duration: 300,
+                ease: "Power2",
+            });
+            char.setTexture("defaultLeft");
+            break;
+        case "d":
+            this.tweens.add({
+                targets: char,
+                x: char.x + 50,
+                duration: 300,
+                ease: "Power2",
+            });
+            char.setTexture("defaultRight");
+            break;
+    }
+});
+
     }
 }
 
