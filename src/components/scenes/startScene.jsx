@@ -18,6 +18,17 @@ class StartScene extends Phaser.Scene {
 
       this.add.image(width / 2, height / 3, "logo").setScale(0.35);
       const startButton = this.add.image(width / 2, height / 1.3, "startButton").setScale(0.3).setInteractive();
+    startButton.on("pointerdown", () => {
+    this.scene.stop("StartScene"); 
+    this.scene.start("GreenhouseScene");
+      this.scene.launch("GreenhouseScene");
+      this.scene.bringToTop("GreenhouseScene");
+      this.scene.moveAbove("StartScene", "GreenhouseScene");
+      this.scene.setVisible(false, "StartScene");
+      this.scene.setVisible(true, "GreenhouseScene");
+      this.scene.setActive(true, "GreenhouseScene");
+      this.scene.setActive(false, "StartScene");
+});
       this.add.text(width / 2, height / 1.1, "Click to Start", {
           fontSize: "24px",
           fill: "#fff"
@@ -31,10 +42,6 @@ class StartScene extends Phaser.Scene {
           fill: "#fff"
       }).setOrigin(0.5);
 
-      startButton.on("pointerdown", () => {
-    this.scene.stop("StartScene"); // Ensure previous scene is removed
-    this.scene.start("GreenhouseScene");
-});
 
     }
 }
