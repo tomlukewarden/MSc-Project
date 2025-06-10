@@ -8,8 +8,7 @@ function GameCanvas() {
     const gameRef = useRef(null);
 
     useEffect(() => {
-        if (!canvasRef.current) {
-            console.error("Canvas ref is null");
+        if (!canvasRef.current || gameRef.current) {
             return;
         }
 
@@ -30,7 +29,12 @@ function GameCanvas() {
         };
 
         window.addEventListener("resize", handleResize);
-    }, []);
+
+        return () => {
+            window.removeEventListener("resize", handleResize);
+            gameRef.current?.destroy(true); // Properly clean up when unmounting
+        };
+    }, []); // Only runs once when the component mounts
 
     return <canvas ref={canvasRef} style={{ display: "block", width: "100%", height: "100vh", background: "#111" }} />;
 }
