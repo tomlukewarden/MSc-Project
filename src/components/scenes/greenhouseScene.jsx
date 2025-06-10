@@ -19,6 +19,7 @@ class GreenhouseScene extends Phaser.Scene {
 
         this.add.image(width / 2, height / 2, "greenhouseBackground").setScale(0.225);
         const char = this.add.image(width / 2, height / 2, "defaultFront").setScale(0.06);
+        char.setOrigin(-7, -0.1); // Adjust origin to center the character
 
         this.input.keyboard.on("keydown", (event) => {
     switch (event.key) {
