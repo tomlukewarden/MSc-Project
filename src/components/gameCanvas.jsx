@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import Phaser from "phaser";
-import StartScene from "./scenes/StartScene";
+import StartScene from "./scenes/startScene";
 
 function GameCanvas() {
     const canvasRef = useRef(null);
