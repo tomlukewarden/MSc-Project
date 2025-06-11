@@ -2,10 +2,11 @@ import Phaser from "phaser";
 
 class GreenhouseScene extends Phaser.Scene {
     constructor() {
-        super({ key: "GreenhouseScene" });
+        super({ key: "GreenhouseScene", physics: { default: "arcade", arcade: { debug: true } } });
     }
 
     preload() {
+        this.load.tilemapTiledJSON("map", "src/assets/maps/greenhouseMap.json");
         this.load.image("greenhouseBackground", "src/assets/backgrounds/greenhouse.png");
         this.load.image("defaultFront", "src/assets/char/default/front-default.png");
         this.load.image("defaultBack", "src/assets/char/default/back-default.png");
@@ -17,51 +18,67 @@ class GreenhouseScene extends Phaser.Scene {
         console.log("Entered GreenhouseScene");
         const { width, height } = this.sys.game.config;
 
-        this.add.image(width / 2, height / 2, "greenhouseBackground").setScale(0.225);
-        const char = this.add.image(width / 2, height / 2, "defaultFront").setScale(0.06);
-        char.setOrigin(-7, -0.1); // Adjust origin to center the character
+        const scaleFactor = 0.225;
 
+        // Add scaled background
+        this.add.image(width / 2, height / 2, "greenhouseBackground").setScale(scaleFactor);
+
+
+        const map = this.make.tilemap({ key: "map" });
+
+        const collisionObjects = map.getObjectLayer("collisions"); 
+
+        if (!collisionObjects) {
+            console.warn("Collision layer not found in Tiled map!");
+            return;
+        }
+
+        const char = this.physics.add.sprite(width / 2, height / 2, "defaultFront").setScale(0.06);
+        char.setOrigin(-7, -0.5); 
+        char.setCollideWorldBounds(true);
+
+        const collisionGroup = this.physics.add.staticGroup();
+        collisionObjects.objects.forEach((obj) => {
+            const solidArea = this.physics.add.staticImage(
+                obj.x * scaleFactor, obj.y * scaleFactor
+            ).setSize(obj.width * scaleFactor, obj.height * scaleFactor)
+            .setOrigin(0.5, 0.5); // Ensures proper positioning
+
+            collisionGroup.add(solidArea);
+        });
+
+        // Enable physics collision with player
+        this.physics.add.collider(char, collisionGroup);
+
+        // Debug: Visualize collision areas
+        collisionGroup.getChildren().forEach((solidArea) => {
+            solidArea.setVisible(true).setAlpha(0.5);
+        });
+
+        // Define movement speed
+        const speed = 150;
+
+        // Create keyboard input
         this.input.keyboard.on("keydown", (event) => {
-    switch (event.key) {
-        case "w":
-            this.tweens.add({
-                targets: char,
-                y: char.y - 50, // Moves up by 50 pixels
-                duration: 300, // Smooth movement over 300ms
-                ease: "Power2",
-            });
-            char.setTexture("defaultBack");
-            break;
-        case "s":
-            this.tweens.add({
-                targets: char,
-                y: char.y + 50,
-                duration: 300,
-                ease: "Power2",
-            });
-            char.setTexture("defaultFront");
-            break;
-        case "a":
-            this.tweens.add({
-                targets: char,
-                x: char.x - 50,
-                duration: 300,
-                ease: "Power2",
-            });
-            char.setTexture("defaultLeft");
-            break;
-        case "d":
-            this.tweens.add({
-                targets: char,
-                x: char.x + 50,
-                duration: 300,
-                ease: "Power2",
-            });
-            char.setTexture("defaultRight");
-            break;
-    }
-});
+            if (event.key === "w") {
+                char.setVelocityY(-speed);
+                char.setTexture("defaultBack");
+            } else if (event.key === "s") {
+                char.setVelocityY(speed);
+                char.setTexture("defaultFront");
+            } else if (event.key === "a") {
+                char.setVelocityX(-speed);
+                char.setTexture("defaultLeft");
+            } else if (event.key === "d") {
+                char.setVelocityX(speed);
+                char.setTexture("defaultRight");
+            }
+        });
 
+        // Stop movement when keys are released
+        this.input.keyboard.on("keyup", () => {
+            char.setVelocity(0);
+        });
     }
 }
 
