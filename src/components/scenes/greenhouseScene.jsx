@@ -1,9 +1,9 @@
 import Phaser from "phaser";
-import HUDScene from "../hud";
+
 
 class GreenhouseScene extends Phaser.Scene {
     constructor() {
-        super({ key: "GreenhouseScene", physics: { default: "arcade", arcade: { debug: true } } });
+        super({ key: "GreenhouseScene", physics: { default: "arcade", arcade: { debug: false } } });
     }
 
     preload() {

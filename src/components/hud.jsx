@@ -9,7 +9,6 @@ class HUDScene extends Phaser.Scene {
       const settings = this.load.image("settingsIcon","src/assets/ui-items/settings.png");
       const journal =  this.load.image("journalIcon","src/assets/ui-items/journal.png");
         // const volume = this.load.image("volumeIcon","src/assets/ui-items/volume.png");
-        const openBook = this.load.image("openBookIcon","src/assets/ui-items/book.png");
     
 
     }
@@ -23,9 +22,9 @@ class HUDScene extends Phaser.Scene {
             "settingsIcon",
         ];
         const iconSpacing = 140; 
-        const iconStartX = 1040; 
-        const iconY = 86;       
-        const iconScale = 0.05;
+        const iconStartX = 1540; 
+        const iconY = 56;       
+        const iconScale = 0.045;
 
         // Store references to the created icons
         const icons = {};
@@ -37,10 +36,11 @@ class HUDScene extends Phaser.Scene {
                 .setInteractive({ useHandCursor: true });
         });
 
-        // Now you can use icons["journalIcon"], etc.
         icons["journalIcon"].on("pointerdown", () => {
             console.log("Journal icon clicked");
-            // Add functionality for journal icon click
+            // Switch to OpenJournal scene
+            this.scene.launch("OpenJournal");
+            this.scene.bringToTop("OpenJournal");
         });
 
         icons["settingsIcon"].on("pointerdown", () => {
