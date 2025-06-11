@@ -5,10 +5,11 @@ class HUDScene extends Phaser.Scene {
         super({ key: "HUDScene", active: true });
     }
     preload() {
-        this.load.image("inventoryIcon","src/assets/ui-items/inventory.png");
-        this.load.image("settingsIcon","src/assets/ui-items/settings.png");
-        this.load.image("journalIcon","src/assets/ui-items/journal.png");
-        this.load.image("volumeIcon","src/assets/ui-items/volume.png");
+        const inventory = this.load.image("inventoryIcon","src/assets/ui-items/inventory.png");
+      const settings = this.load.image("settingsIcon","src/assets/ui-items/settings.png");
+      const journal =  this.load.image("journalIcon","src/assets/ui-items/journal.png");
+        // const volume = this.load.image("volumeIcon","src/assets/ui-items/volume.png");
+        const openBook = this.load.image("openBookIcon","src/assets/ui-items/book.png");
     
 
     }
@@ -31,8 +32,21 @@ class HUDScene extends Phaser.Scene {
                 .setOrigin(0.5)
                 .setScale(iconScale);
         });
+journal.on("pointerdown", () => {
+            console.log("Journal icon clicked");
+            // Add functionality for journal icon click
+        });
 
-        
+        settings.on("pointerdown", () => {
+            console.log("Settings icon clicked");
+            // Add functionality for settings icon click
+        });
+
+        inventory.on("pointerdown", () => {
+            console.log("Inventory icon clicked");
+            // Add functionality for inventory icon click
+        });
+
     }
 }
 
