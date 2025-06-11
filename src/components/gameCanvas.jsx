@@ -1,8 +1,8 @@
 import { useEffect, useRef } from "react";
 import Phaser from "phaser";
 import HUDScene from "./hud";
-//import GreenhouseScene from "./scenes/greenhouseScene";
-//import StartScene from "./scenes/startScene";
+import GreenhouseScene from "./scenes/greenhouseScene";
+import StartScene from "./scenes/startScene";
 
 function GameCanvas() {
     const canvasRef = useRef(null);
@@ -18,7 +18,7 @@ function GameCanvas() {
             width: window.innerWidth,
             height: window.innerHeight,
             canvas: canvasRef.current,
-            scene: [HUDScene],
+            scene: [StartScene, GreenhouseScene, HUDScene],
         };
 
         gameRef.current = new Phaser.Game(config);

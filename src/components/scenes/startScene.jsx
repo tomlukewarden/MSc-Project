@@ -13,6 +13,7 @@ class StartScene extends Phaser.Scene {
 
 
     create() {
+        this.scene.sleep("HUDScene");
         const { width, height } = this.sys.game.config;
         this.cameras.main.setBackgroundColor("#b36f4b");
 

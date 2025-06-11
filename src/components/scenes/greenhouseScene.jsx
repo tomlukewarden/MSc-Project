@@ -1,8 +1,9 @@
 import Phaser from "phaser";
+import HUDScene from "../hud";
 
 class GreenhouseScene extends Phaser.Scene {
     constructor() {
-        super({ key: "GreenhouseScene", physics: { default: "arcade", arcade: { debug: false } } });
+        super({ key: "GreenhouseScene", physics: { default: "arcade", arcade: { debug: true } } });
     }
 
     preload() {
@@ -15,6 +16,9 @@ class GreenhouseScene extends Phaser.Scene {
     }
 
     create() {
+        this.scene.launch("HUDScene"); 
+        this.scene.bringToTop("HUDScene");
+
         console.log("Entered GreenhouseScene");
         const { width, height } = this.sys.game.config;
 
@@ -23,9 +27,7 @@ class GreenhouseScene extends Phaser.Scene {
         // Add scaled background
         this.add.image(width / 2, height / 2, "greenhouseBackground").setScale(scaleFactor);
 
-
         const map = this.make.tilemap({ key: "map" });
-
         const collisionObjects = map.getObjectLayer("collisions"); 
 
         if (!collisionObjects) {
@@ -43,8 +45,8 @@ class GreenhouseScene extends Phaser.Scene {
         char.body.setOffset(char.width * 0.2, char.height * 0.2);
 
         const collisionGroup = this.physics.add.staticGroup();
-        const xOffset = -60; // move left (negative = left, positive = right)
-        const yOffset = 65;  // move down (positive = down, negative = up)
+        const xOffset = -60; 
+        const yOffset = 65;  
 
         collisionObjects.objects.forEach((obj) => {
             const centerX = (obj.x + obj.width / 2) * scaleFactor + xOffset;
@@ -76,6 +78,7 @@ class GreenhouseScene extends Phaser.Scene {
 
         // Create keyboard input
         this.input.keyboard.on("keydown", (event) => {
+            char.setVelocity(0); // Reset velocity before setting new direction
             if (event.key === "w") {
                 char.setVelocityY(-speed);
                 char.setTexture("defaultBack");
@@ -95,6 +98,10 @@ class GreenhouseScene extends Phaser.Scene {
         this.input.keyboard.on("keyup", () => {
             char.setVelocity(0);
         });
+    }
+
+    shutdown() {
+        this.scene.stop("HUDScene");
     }
 }
 

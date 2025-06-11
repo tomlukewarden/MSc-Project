@@ -22,27 +22,33 @@ class HUDScene extends Phaser.Scene {
             "journalIcon",
             "settingsIcon",
         ];
-        const iconSpacing = 140; // increased space between icons
-        const iconStartX = 1040;  // starting x position
-        const iconY = 86;       // y position for all icons
-        const iconScale = 0.05; // smaller scale for HUD icons
+        const iconSpacing = 140; 
+        const iconStartX = 1040; 
+        const iconY = 86;       
+        const iconScale = 0.05;
+
+        // Store references to the created icons
+        const icons = {};
 
         iconKeys.forEach((key, idx) => {
-            this.add.image(iconStartX + idx * iconSpacing, iconY, key)
+            icons[key] = this.add.image(iconStartX + idx * iconSpacing, iconY, key)
                 .setOrigin(0.5)
-                .setScale(iconScale);
+                .setScale(iconScale)
+                .setInteractive({ useHandCursor: true });
         });
-journal.on("pointerdown", () => {
+
+        // Now you can use icons["journalIcon"], etc.
+        icons["journalIcon"].on("pointerdown", () => {
             console.log("Journal icon clicked");
             // Add functionality for journal icon click
         });
 
-        settings.on("pointerdown", () => {
+        icons["settingsIcon"].on("pointerdown", () => {
             console.log("Settings icon clicked");
             // Add functionality for settings icon click
         });
 
-        inventory.on("pointerdown", () => {
+        icons["inventoryIcon"].on("pointerdown", () => {
             console.log("Inventory icon clicked");
             // Add functionality for inventory icon click
         });
