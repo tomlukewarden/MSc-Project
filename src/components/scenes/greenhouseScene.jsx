@@ -33,16 +33,32 @@ class GreenhouseScene extends Phaser.Scene {
             return;
         }
 
-        const char = this.physics.add.sprite(width / 2, height / 2, "defaultFront").setScale(0.06);
-        char.setOrigin(-7, -0.5); 
+        const char = this.physics.add.sprite(width / 2, height / 2, "defaultFront").setScale(0.04);
+        char.setOrigin(-8, -0.5); 
         char.setCollideWorldBounds(true);
 
+        // Make the hitbox smaller (e.g., 60% of the sprite's size)
+        char.body.setSize(char.width * 0.6, char.height * 0.6);
+        // Center the hitbox
+        char.body.setOffset(char.width * 0.2, char.height * 0.2);
+
         const collisionGroup = this.physics.add.staticGroup();
+        const xOffset = -60; // move left (negative = left, positive = right)
+        const yOffset = 65;  // move down (positive = down, negative = up)
+
         collisionObjects.objects.forEach((obj) => {
-            const solidArea = this.physics.add.staticImage(
-                obj.x * scaleFactor, obj.y * scaleFactor
-            ).setSize(obj.width * scaleFactor, obj.height * scaleFactor)
-            .setOrigin(0.5, 0.5); // Ensures proper positioning
+            const centerX = (obj.x + obj.width / 2) * scaleFactor + xOffset;
+            const centerY = (obj.y + obj.height / 2) * scaleFactor + yOffset;
+            const scaledWidth = obj.width * scaleFactor;
+            const scaledHeight = obj.height * scaleFactor;
+
+            const solidArea = this.physics.add.staticImage(centerX, centerY)
+                .setDisplaySize(scaledWidth, scaledHeight)
+                .setOrigin(0.5, 0.5);
+
+            // Set the physics body size to match the display size
+            solidArea.body.setSize(scaledWidth, scaledHeight);
+            solidArea.body.setOffset(-scaledWidth / 2, -scaledHeight / 2);
 
             collisionGroup.add(solidArea);
         });
