@@ -16,13 +16,13 @@ class GreenhouseScene extends Phaser.Scene {
     }
 
     create() {
-        this.scene.launch("HUDScene"); 
+        this.scene.launch("HUDScene");
         this.scene.bringToTop("HUDScene");
 
         console.log("Entered GreenhouseScene");
         const { width, height } = this.sys.game.config;
 
-        const scaleFactor = 0.225;
+        const scaleFactor = 0.175;
 
         // Add scaled background
         this.add.image(width / 2, height / 2, "greenhouseBackground").setScale(scaleFactor);
@@ -39,14 +39,14 @@ class GreenhouseScene extends Phaser.Scene {
         char.setOrigin(-8, -0.5); 
         char.setCollideWorldBounds(true);
 
-        // Make the hitbox smaller (e.g., 60% of the sprite's size)
+
         char.body.setSize(char.width * 0.6, char.height * 0.6);
         // Center the hitbox
         char.body.setOffset(char.width * 0.2, char.height * 0.2);
 
         const collisionGroup = this.physics.add.staticGroup();
-        const xOffset = -60; 
-        const yOffset = 65;  
+        const xOffset = -75; 
+        const yOffset = 45;  
 
         collisionObjects.objects.forEach((obj) => {
             const centerX = (obj.x + obj.width / 2) * scaleFactor + xOffset;
