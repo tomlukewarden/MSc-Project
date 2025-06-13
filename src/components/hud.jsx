@@ -10,7 +10,9 @@ class HUDScene extends Phaser.Scene {
     this.load.image("settingsIcon","src/assets/ui-items/settings.png");
     this.load.image("journalIcon","src/assets/ui-items/journal.png");
     this.load.image("toolbarIcon","src/assets/ui-items/toolbar.png");
-    this.load.image("energyIcon", "src/assets/energy/full.png")
+    this.load.image("energyFull", "src/assets/energy/full.png");
+    this.load.image("energyHalf", "src/assets/energy/50.png");
+    this.load.image("energyEmpty", "src/assets/energy/10.png");
         // const volume = this.load.image("volumeIcon","src/assets/ui-items/volume.png");
     
 
@@ -69,13 +71,10 @@ class HUDScene extends Phaser.Scene {
 
         // Energy icon directly above toolbar
         const energyY = toolbarY - 70;
-        this.add.image(width / 2, energyY, "energyIcon")
+        const energyIcon = this.add.image(width / 2, energyY, "energyFull")
             .setOrigin(0.5)
             .setScale(0.1)
-            .setInteractive({ useHandCursor: true })
-            .on("pointerdown", () => {
-                console.log("Energy icon clicked");
-            });
+            .setInteractive({ useHandCursor: true });
     }
 }
 
