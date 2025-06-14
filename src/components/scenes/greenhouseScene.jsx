@@ -15,6 +15,7 @@ class GreenhouseScene extends Phaser.Scene {
         this.load.image("defaultRight", "src/assets/char/default/right-default.png");
         this.load.image("butterflyFront", "src/assets/npc/butterfly/front-butterfly.png");
         this.load.image("talk", "src/assets/interact/talk.png");
+        this.load.image("butterflyHappy", "src/assets/npc/butterfly/happy-butterfly-dio.png");
     }
 
     create() {
@@ -67,20 +68,16 @@ class GreenhouseScene extends Phaser.Scene {
             collisionGroup.add(solidArea);
         });
 
-        // Enable physics collision with player
         this.physics.add.collider(char, collisionGroup);
 
-        // Debug: Visualize collision areas
         collisionGroup.getChildren().forEach((solidArea) => {
             solidArea.setVisible(true).setAlpha(0.5);
         });
 
-        // Define movement speed
         const speed = 150;
 
-        // Create keyboard input
         this.input.keyboard.on("keydown", (event) => {
-            char.setVelocity(0); // Reset velocity before setting new direction
+            char.setVelocity(0);
             if (event.key === "w") {
                 char.setVelocityY(-speed);
                 char.setTexture("defaultBack");
@@ -111,7 +108,6 @@ class GreenhouseScene extends Phaser.Scene {
             .setVisible(false)
             .setDepth(10); 
 
-        // Show and follow cursor on hover
         butterfly.on("pointerover", (pointer) => {
             talkIcon.setVisible(true);
             talkIcon.setPosition(pointer.worldX + 32, pointer.worldY);
@@ -121,10 +117,14 @@ class GreenhouseScene extends Phaser.Scene {
             talkIcon.setPosition(pointer.worldX + 32, pointer.worldY);
         });
 
-        // Hide the talk icon when not hovering
         butterfly.on("pointerout", () => {
             butterfly.setScale(0.05);
             talkIcon.setVisible(false);
+        });
+        butterfly.on("pointerdown", () => {
+            butterfly.setScale(0.08);
+            talkIcon.setVisible(false);
+            this.showButterflyDialogue();
         });
     }
 
