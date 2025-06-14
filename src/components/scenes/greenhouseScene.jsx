@@ -106,7 +106,6 @@ class GreenhouseScene extends Phaser.Scene {
             .setOrigin(0.5, 0.5)
             .setInteractive({ useHandCursor: true });
 
-        // Create the talk icon, hidden by default
         const talkIcon = this.add.image(0, 0, "talk")
             .setScale(0.05)
             .setVisible(false)
