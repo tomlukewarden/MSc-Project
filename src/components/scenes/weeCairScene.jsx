@@ -122,28 +122,60 @@ class WeeCairScene extends Phaser.Scene {
             talkIcon.setVisible(false);
         });
 
-        fairy.on("pointerdown", () => {
-            const fairyDialogue = [
+        this.fairyDialogues = [
               "Thank goodness you arrived so quickly! We're in quite the bind. The residents of the gardens are falling ill, one by one, and were in desperate need of your remedies! Just look at our dear friend Bee... shes simply not herself! Please, speak with her and see if you can uncover what's wrong.",
               "Oh dear… this isn’t good. I believe Foxglove is known to help with irregular heart rhythms, is it not? I just so happen to have a sprig with me. Would you be willing to brew a remedy for our poor friend?",
               "I believe you are ready for the gardens friend, do you feel the same?"
-            ];
-            this.showFairyDialogue("What would you like to do?", [
-                { label: "Go to the greenhouse", onSelect: () => {
-                    this.scene.stop("weeCairScene");
-                    this.scene.start("GreenhouseScene");
-                } },
-                { label: "Say goodbye", onSelect: () => { 
-                    this.fairyDialogueBox.destroy();
-                    this.fairyDialogueText.destroy();
-                    this.fairyOptionButtons.forEach(btn => btn.destroy());
-                    talkIcon.setVisible(false);
-                    this.scene.wake("HUDScene");
-                 } }
-            ]);
+        ];
+        this.currentDialogueIndex = -1;
+        this.dialogueActive = false;
+
+        fairy.on("pointerdown", () => {
+            this.scene.sleep("HUDScene");
+            this.currentDialogueIndex = -1;
+            this.dialogueActive = true;
+            this.showFairyDialogue(this.fairyDialogues[this.currentDialogueIndex]);
         });
 
-        
+        // Single input handler for advancing dialogue
+        this.input.on("pointerdown", () => {
+            if (!this.dialogueActive) return;
+
+            // Destroy current dialogue
+            if (this.fairyDialogueBox) this.fairyDialogueBox.destroy();
+            if (this.fairyDialogueText) this.fairyDialogueText.destroy();
+
+            this.currentDialogueIndex++;
+            if (this.currentDialogueIndex < this.fairyDialogues.length) {
+                this.showFairyDialogue(this.fairyDialogues[this.currentDialogueIndex]);
+            } else {
+                this.dialogueActive = false;
+                this.scene.wake("HUDScene");
+                this.showFairyOptions();
+            }
+        });
+
+        // Dialogue display function (no input handler here)
+        this.showFairyDialogue = (text) => {
+            const { width, height } = this.scale;
+            const boxWidth = width * 0.5;
+            const boxHeight = height * 0.13;
+            const boxY = height - boxHeight / 2 - height * 0.03;
+
+            this.fairyDialogueBox = this.add.rectangle(width / 2, boxY, boxWidth, boxHeight, 0xffffff, 0.9)
+                .setStrokeStyle(2, 0x000000)
+                .setDepth(100);
+
+            this.fairyDialogueText = this.add.text(width / 2, boxY, text, {
+                font: `${Math.round(height * 0.03)}px Arial`,
+                color: "#222",
+                align: "center",
+                wordWrap: { width: boxWidth - 20 }
+            })
+                .setOrigin(0.5)
+                .setDepth(101);
+        };
+
         const boxWidth = 400;
         const boxHeight = 100;
         const boxY = height - boxHeight / 2 - 20;
