@@ -7,7 +7,7 @@ class GreenhouseScene extends Phaser.Scene {
     }
 
     preload() {
-        this.load.tilemapTiledJSON("map", "src/assets/maps/greenhouseMap.json");
+        this.load.tilemapTiledJSON("greenhouseMap", "src/assets/maps/greenhouseMap.json");
         this.load.image("greenhouseBackground", "src/assets/backgrounds/greenhouse/greenhouse.png");
         this.load.image("defaultFront", "src/assets/char/default/front-default.png");
         this.load.image("defaultBack", "src/assets/char/default/back-default.png");
@@ -19,6 +19,9 @@ class GreenhouseScene extends Phaser.Scene {
     }
 
     create() {
+        this.scene.stop("OpenJournal");
+        this.scene.stop("WeeCairScene");
+        this.scene.stop("StartScene");
         this.scene.launch("HUDScene");
         this.scene.bringToTop("HUDScene");
 
@@ -30,8 +33,8 @@ class GreenhouseScene extends Phaser.Scene {
         // Add scaled background
         this.add.image(width / 2, height / 2, "greenhouseBackground").setScale(scaleFactor);
 
-        const map = this.make.tilemap({ key: "map" });
-        const collisionObjects = map.getObjectLayer("collisions"); 
+        const map = this.make.tilemap({ key: "greenhouseMap" });
+        const collisionObjects = map.getObjectLayer("greenhouse-collisions"); 
 
         if (!collisionObjects) {
             console.warn("Collision layer not found in Tiled map!");

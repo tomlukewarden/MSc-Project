@@ -29,7 +29,7 @@
         {
          "draworder":"topdown",
          "id":5,
-         "name":"collisions",
+         "name":"wee-cair-collisions",
          "objects":[
                 {
                  "height":3437.5,

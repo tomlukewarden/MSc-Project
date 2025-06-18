@@ -7,7 +7,7 @@ class WeeCairScene extends Phaser.Scene {
     }
 
     preload() {
-        this.load.tilemapTiledJSON("map", "src/assets/maps/weeCairMap.json");
+        this.load.tilemapTiledJSON("weeCairMap", "src/assets/maps/weeCairMap.json");
         this.load.image("weeCairBackground", "src/assets/backgrounds/weecair/weecair.png");
         this.load.image("weeCairArch", "src/assets/backgrounds/weecair/archway.png");
         this.load.image("defaultFront", "src/assets/char/default/front-default.png");
@@ -28,8 +28,8 @@ class WeeCairScene extends Phaser.Scene {
 
         // Add scaled background
         this.add.image(width / 2, height / 2, "weeCairBackground").setScale(scaleFactor);
-        const map = this.make.tilemap({ key: "map" });
-        const collisionObjects = map.getObjectLayer("collisions");
+        const map = this.make.tilemap({ key: "weeCairMap" });
+        const collisionObjects = map.getObjectLayer("wee-cair-collisions");
         
         if (!collisionObjects) {
             console.warn("Collision layer not found in Tiled map!");
@@ -124,7 +124,10 @@ class WeeCairScene extends Phaser.Scene {
 
         fairy.on("pointerdown", () => {
             this.showFairyDialogue("What would you like to do?", [
-                { label: "Go to Greenhouse", onSelect: () => { this.scene.stop(WeeCairScene), this.scene.start(GreenhouseScene)} },
+                { label: "Go to the greenhouse", onSelect: () => {
+                    this.scene.stop("weeCairScene");
+                    this.scene.start("GreenhouseScene");
+                } },
                 { label: "Say goodbye", onSelect: () => { 
                     this.fairyDialogueBox.destroy();
                     this.fairyDialogueText.destroy();

@@ -148,7 +148,7 @@
         {
          "draworder":"topdown",
          "id":3,
-         "name":"collisions",
+         "name":"greenhouse-collisions",
          "objects":[
                 {
                  "height":471.186,
