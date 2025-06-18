@@ -20,7 +20,7 @@ function GameCanvas() {
             width: window.innerWidth,
             height: window.innerHeight,
             canvas: canvasRef.current,
-            scene: [ GreenhouseScene, WeeCair ,HUDScene, OpenJournal],
+            scene: [ WeeCair, GreenhouseScene ,HUDScene, OpenJournal],
         };
 
         gameRef.current = new Phaser.Game(config);
