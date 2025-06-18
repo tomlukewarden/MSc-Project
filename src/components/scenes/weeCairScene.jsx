@@ -1,6 +1,9 @@
 import Phaser from "phaser";
-import GreenhouseScene from "./greenhouseScene";
 import { createTextBox } from "../../dialogue/dialogueManager";
+import { beeDialogues } from "../../dialogue/beeDialogue";
+import { bee } from "../../sprites/bee";
+import {fairyDialogues} from "../../dialogue/fairyDialogue";
+import { fairy } from "../../sprites/fairy";
 
 class WeeCairScene extends Phaser.Scene {
     constructor() {
@@ -105,119 +108,8 @@ class WeeCairScene extends Phaser.Scene {
             .setVisible(false)
             .setDepth(10);
 
-        const bee = this.add.sprite(width / 2 - 100, height / 2, "bee")
-            .setScale(0.1)
-            .setOrigin(4, 2.5)
-            .setInteractive({ useHandCursor: true });
 
-         bee.on("pointerover", (pointer) => {
-            talkIcon.setVisible(true);
-            talkIcon.setPosition(pointer.worldX + 32, pointer.worldY);
-        });
-
-        bee.on("pointermove", (pointer) => {
-            talkIcon.setPosition(pointer.worldX + 32, pointer.worldY);
-        });
-
-        bee.on("pointerout", () => {
-            talkIcon.setVisible(false);
-        });
-
-        this.beeIntroDialogues=[
-            "",
-            "...Hey... I don't feel right... ",
-            "My heart... it’s fluttering all wrong... like a broken metronome... too fast, then too slow",
-            "......Everything feels fuzzy... can you take a look?"
-        ]
-
-        this.beePreDialogues = [
-            "",
-            "...Wow, you work fast... something already?"
-        ]
-
-        this.beePostDialogues = [
-            "",
-            "Okay, okay, here goes...I feel... ",
-            "SO MUCH BETTER, OMG!!! Whew! Back to buzzing!",
-            "You’re amazing! Take this shiny gem I found as a thank you!"
-        ]
-
-        // 1. Define your arrays in order
-        this.beeDialogues = [
-            this.beeIntroDialogues,
-            this.beePreDialogues,
-            this.beePostDialogues
-        ];
-        this.currentDialogueSet = 0; // Tracks which array you're on
-        this.currentDialogueIndex = 0;
-        this.dialogueActive = false;
-        bee.on("pointerdown", () => {
-            if (!this.dialogueActive && this.currentDialogueSet < this.beeDialogues.length) {
-                this.activeDialogue = this.beeDialogues[this.currentDialogueSet];
-                this.currentDialogueIndex = 0;
-                this.dialogueActive = true;
-                this.scene.sleep("HUDScene");
-                this.showBeeDialogue(this.activeDialogue[this.currentDialogueIndex]);
-            }
-        });
-        // 3. Advance through lines and sets in your input handler
-        this.input.on("pointerdown", () => {
-            if (!this.dialogueActive || !this.activeDialogue) return;
-            if (this.beeDialogueBox) this.beeDialogueBox.destroy();
-            if (this.beeDialogueText) this.beeDialogueText.destroy();
-            this.currentDialogueIndex++;
-            if (this.currentDialogueIndex < this.activeDialogue.length) {
-                // Next line in current set                 
-                this.showBeeDialogue(this.activeDialogue[this.currentDialogueIndex]);
-            } else {
-              this.scene.wake("HUDScene");
-        }});
-        // Create the fairy sprite
-        const fairy = this.add.sprite(width / 2 + 100, height / 2, "fairy")
-            .setScale(0.05)
-            .setOrigin(-3, 0.5)
-            .setInteractive({ useHandCursor: true });
-
-        fairy.on("pointerover", (pointer) => {
-            talkIcon.setVisible(true);
-            talkIcon.setPosition(pointer.worldX + 32, pointer.worldY);
-        });
-
-        fairy.on("pointermove", (pointer) => {
-            talkIcon.setPosition(pointer.worldX + 32, pointer.worldY);
-        });
-
-        fairy.on("pointerout", () => {
-            talkIcon.setVisible(false);
-        });
-
-        this.fairyIntroDialogues = [
-            "",
-            "Thank goodness you arrived so quickly! We're in quite the bind.",
-            "The residents of the gardens are falling ill, one by one, and were in desperate need of your remedies!",
-            "Just look at our dear friend Paula Nator... shes simply not herself!",
-            "Please, speak with her and see if you can uncover what's wrong.",
-
-        ];
-
-        this.fairyHelpDialogues = [
-            "",
-            "Oh dear… this isn’t good. I believe Foxglove is known to help with irregular heart rhythms, is it not?",
-            "I just so happen to have a sprig with me. ",
-            "Would you be willing to brew a remedy for our poor friend?"
-        ];
-
-        this.fairyGoodbyeDialogues = [
-            "",
-            "I believe you are ready for the gardens friend, do you feel the same?"
-        ];
-
-        // 1. Define your arrays in order
-        this.fairyDialogues = [
-            this.fairyIntroDialogues,
-            this.fairyHelpDialogues,
-            this.fairyGoodbyeDialogues
-        ];
+       
         this.currentDialogueSet = 0; // Tracks which array you're on
         this.currentDialogueIndex = 0;
         this.dialogueActive = false;

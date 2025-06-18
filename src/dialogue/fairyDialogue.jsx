@@ -19,3 +19,9 @@ export const fairyDialogues = {
     "Do you feel the same?"
   ]
 };
+
+ this.fairyDialogues = [
+            this.fairyIntroDialogues,
+            this.fairyHelpDialogues,
+            this.fairyGoodbyeDialogues
+        ];

@@ -17,3 +17,9 @@ export const beeDialogues = {
     "You're amazing! Take this shiny gem I found!"
   ]
 };
+
+this.beeDialogues ={
+  intro,
+  pre,
+  post
+};
