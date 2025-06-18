@@ -8,7 +8,7 @@ class GreenhouseScene extends Phaser.Scene {
 
     preload() {
         this.load.tilemapTiledJSON("map", "src/assets/maps/greenhouseMap.json");
-        this.load.image("greenhouseBackground", "src/assets/backgrounds/greenhouse.png");
+        this.load.image("greenhouseBackground", "src/assets/backgrounds/greenhouse/greenhouse.png");
         this.load.image("defaultFront", "src/assets/char/default/front-default.png");
         this.load.image("defaultBack", "src/assets/char/default/back-default.png");
         this.load.image("defaultLeft", "src/assets/char/default/left-default.png");
