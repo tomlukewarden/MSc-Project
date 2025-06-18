@@ -3,6 +3,7 @@ import Phaser from "phaser";
 import HUDScene from "./hud";
 import OpenJournal from "./openJournal";
 import GreenhouseScene from "./scenes/greenhouseScene";
+import WeeCair from "./scenes/weeCair";
 // import StartScene from "./scenes/startScene";
 
 function GameCanvas() {
@@ -19,7 +20,7 @@ function GameCanvas() {
             width: window.innerWidth,
             height: window.innerHeight,
             canvas: canvasRef.current,
-            scene: [ GreenhouseScene, HUDScene, OpenJournal],
+            scene: [ GreenhouseScene, WeeCair ,HUDScene, OpenJournal],
         };
 
         gameRef.current = new Phaser.Game(config);
