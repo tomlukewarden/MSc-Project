@@ -5,12 +5,12 @@ export const beeIntroDialogue = [
     "My heart... it’s fluttering all wrong...",
     "......Everything feels fuzzy... can you take a look?"
   ]
-  export const beePreDiaglogue =[
+  export const beePreDialogue =[
     "",
     "...Wow, you work fast... something already?"
   ]
 
-  export const beePostDiaglogue =[
+  export const beePostDialogue =[
     "",
     "Okay, okay, here goes...I feel...",
     "SO MUCH BETTER, OMG!!!",

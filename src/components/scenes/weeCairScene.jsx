@@ -3,8 +3,8 @@ import { createTextBox } from "../../dialogue/createTextbox";
 import {
   createBee,
   beeIntroDialogue,
-  beePreDiaglogue,
-  beePostDiaglogue
+  beePreDialogue,
+  beePostDialogue
 } from "../../npc/bee";
 import {
   createFairy,
@@ -131,7 +131,7 @@ class WeeCairScene extends Phaser.Scene {
       fairyGoodbyeDialogues
     ];
 
-    this.beeDialogues = beeIntroDialogue;
+    this.beeDialogues =[ beeIntroDialogue, beePreDialogue, beePostDialogue ];
 
     fairy.on("pointerdown", () => {
       if (this.dialogueActive || this.hasTalkedToFairy) return;
