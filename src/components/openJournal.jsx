@@ -6,7 +6,7 @@ class OpenJournal extends Phaser.Scene {
     }
 
     preload() {
-        this.load.image("journalBackground", "src/assets/ui-items/book.png");
+        this.load.image("journalBackground", "/assets/ui-items/book.png");
     }
 
     create() {
