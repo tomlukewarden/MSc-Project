@@ -3,7 +3,7 @@ import { createTextBox } from "../../dialogue/dialogueManager";
 // import { beeDialogues } from "../../dialogue/beeDialogue";
 import { createBee } from "../../npc/bee";
 // import {fairyDialogues} from "../../dialogue/fairyDialogue";
-// import { createFairy } from "../../npc/fairy";
+import { createFairy } from "../../npc/fairy";
 
 class WeeCairScene extends Phaser.Scene {
     constructor() {
@@ -108,8 +108,12 @@ class WeeCairScene extends Phaser.Scene {
             .setVisible(false)
             .setDepth(10);
 
-const bee = createBee(this, width * 0.6, height * 0.5);
-       
+const bee = createBee( this, width / 2 + 200, height / 2 + 100);
+const fairy = createFairy( this, width / 2 - 200, height / 2 + 100);    
+
+
+
+
         this.currentDialogueSet = 0; // Tracks which array you're on
         this.currentDialogueIndex = 0;
         this.dialogueActive = false;

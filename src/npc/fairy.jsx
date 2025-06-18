@@ -2,19 +2,19 @@
 export function createFairy(scene, x, y) {
     const fairy = scene.add.sprite(x, y, "fairy")
         .setScale(0.13)
-        .setOrigin(0.5, 0.5)
+        .setOrigin(-3, 0.5)
         .setInteractive({ useHandCursor: true });
 
-        bee.on("pointerover", (pointer) => {
+        fairy.on("pointerover", (pointer) => {
         talkIcon.setVisible(true);
         talkIcon.setPosition(pointer.worldX + 32, pointer.worldY);
     });
 
-    bee.on("pointermove", (pointer) => {
+    fairy.on("pointermove", (pointer) => {
         talkIcon.setPosition(pointer.worldX + 32, pointer.worldY);
     });
 
-    bee.on("pointerout", () => {
+    fairy.on("pointerout", () => {
         talkIcon.setVisible(false);
     });
 

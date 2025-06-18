@@ -1,7 +1,7 @@
 export function createBee(scene, x, y) {
     const bee = scene.add.sprite(x, y, "bee")
         .setScale(0.1)
-        .setOrigin(0.5, 0.5)
+        .setOrigin(4, 2.7)
         .setInteractive({ useHandCursor: true });
 
     bee.on("pointerover", (pointer) => {

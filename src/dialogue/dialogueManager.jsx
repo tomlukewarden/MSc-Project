@@ -40,5 +40,9 @@ export function createTextBox(scene, text, options = {}) {
     .setOrigin(0, 0.5)
     .setDepth(depth + 2);
 
+
+
+
+
     return { box, textObj, image };
 }
