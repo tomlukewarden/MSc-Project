@@ -1,0 +1,213 @@
+ // 3. Advance through lines and sets in your input handler
+        /*this.input.on("pointerdown", () => {
+            if (!this.dialogueActive || !this.activeDialogue) return;
+
+            if (this.fairyDialogueBox) this.fairyDialogueBox.destroy();
+            if (this.fairyDialogueText) this.fairyDialogueText.destroy();
+
+            this.currentDialogueIndex++;
+            if (this.currentDialogueIndex < this.activeDialogue.length) {
+                // Next line in current set
+                this.showFairyDialogue(this.activeDialogue[this.currentDialogueIndex]);
+            } else {
+                // Finished this set, move to next
+                this.currentDialogueSet++;
+                this.dialogueActive = false;
+                this.scene.wake("HUDScene");
+
+                if (this.currentDialogueSet < this.fairyDialogues.length) {
+                } else {
+                    this.dialogueActive = false;
+                    this.scene.wake("HUDScene");
+                    this.showFairyDialogue("What would you like to do?", [
+                        this.scene.sleep("HUDScene"),
+                        {
+                            label: "Go to the gardens",
+                            onSelect: () => {
+                                this.scene.stop("weeCair");
+                                this.scene.start("GreenhouseScene");
+                            }
+                        },
+                        {
+                            label: "Stay here",
+                            onSelect: () => {
+                                if (this.fairyDialogueBox) this.fairyDialogueBox.destroy();
+                                if (this.fairyDialogueText) this.fairyDialogueText.destroy();
+                                if (this.fairyOptionButtons) this.fairyOptionButtons.forEach(btn => btn.destroy());
+                                this.scene.wake("HUDScene");
+                            }
+                        }
+                    ]);
+                }
+            }
+        });
+
+        // Dialogue display function (no input handler here)
+        this.showFairyDialogue = (text, options = null) => {
+            const { width, height } = this.scale;
+            const boxWidth = width * 0.5;
+            const boxHeight = height * 0.13;
+            const boxY = height - boxHeight / 2 - height * 0.03;
+
+            // Clean up previous dialogue and buttons
+            if (this.fairyDialogueBox) this.fairyDialogueBox.destroy();
+            if (this.fairyDialogueText) this.fairyDialogueText.destroy();
+            if (this.fairyDialogueImage) this.fairyDialogueImage.destroy();
+            if (this.fairyOptionButtons) {
+                this.fairyOptionButtons.forEach(btn => btn.destroy());
+                this.fairyOptionButtons = null;
+            }
+
+            // Use your dialogueManager to create the box, text, and optional image
+            const { box, textObj, image } = createTextBox(this, text, {
+                width: boxWidth,
+                height: boxHeight,
+                y: boxY,
+                imageKey: options && options.imageKey ? options.imageKey : undefined,
+                imageScale: options && options.imageScale ? options.imageScale : undefined
+            });
+
+            this.fairyDialogueBox = box;
+            this.fairyDialogueText = textObj;
+            this.fairyDialogueImage = image;
+
+            // Render options if provided (as before)
+            if (options && Array.isArray(options.options)) {
+                this.fairyOptionButtons = [];
+                const optionStartX = width / 2 + boxWidth / 2 + 30;
+                const optionStartY = boxY - ((options.options.length - 1) * 30) / 2;
+
+                options.options.forEach((option, idx) => {
+                    const btn = this.add.text(optionStartX, optionStartY + idx * 30, option.label, {
+                        font: "18px Arial",
+                        color: "#0077cc",
+                        backgroundColor: "#e0e0e0",
+                        padding: { left: 10, right: 10, top: 4, bottom: 4 }
+                    })
+                        .setOrigin(0, 0.5)
+                        .setInteractive({ useHandCursor: true })
+                        .setDepth(102)
+                        .on("pointerdown", () => {
+                            if (this.fairyDialogueBox) this.fairyDialogueBox.destroy();
+                            if (this.fairyDialogueText) this.fairyDialogueText.destroy();
+                            if (this.fairyDialogueImage) this.fairyDialogueImage.destroy();
+                            if (this.fairyOptionButtons) this.fairyOptionButtons.forEach(b => b.destroy());
+                            this.scene.wake("HUDScene");
+                            if (option.onSelect) option.onSelect();
+                        });
+
+                    this.fairyOptionButtons.push(btn);
+                });
+            }
+        };
+
+        const boxWidth = 400;
+        const boxHeight = 100;
+        const boxY = height - boxHeight / 2 - 20;
+
+        this.dialogueBox = this.add.rectangle(width / 2, boxY, boxWidth, boxHeight, 0xffffff, 0.9)
+            .setStrokeStyle(2, 0x000000)
+            .setDepth(20)
+            .setVisible(false);
+
+        this.dialogueText = this.add.text(width / 2, boxY, "", {
+            font: "20px Arial",
+            color: "#222",
+            align: "center",
+            wordWrap: { width: boxWidth - 20 }
+        })
+            .setOrigin(0.5)
+            .setDepth(21)
+            .setVisible(false);
+    }
+
+    showFairyDialogue(text, options = []) {
+        // Hide HUD
+        this.scene.sleep("HUDScene");
+
+        // Remove previous dialogue and options if they exist
+        if (this.fairyDialogueBox) this.fairyDialogueBox.destroy();
+        if (this.fairyDialogueText) this.fairyDialogueText.destroy();
+        if (this.fairyOptionButtons) {
+            this.fairyOptionButtons.forEach(btn => btn.destroy());
+        }
+
+        const { width, height } = this.scale;
+        const boxWidth = 400;
+        const boxHeight = 100;
+        const boxY = height - boxHeight / 2 - 20;
+
+        this.fairyDialogueBox = this.add.rectangle(width / 2, boxY, boxWidth, boxHeight, 0xffffff, 0.9)
+            .setStrokeStyle(2, 0x000000)
+            .setDepth(100);
+
+        this.fairyDialogueText = this.add.text(width / 2, boxY, text, {
+            font: "20px Arial",
+            color: "#222",
+            align: "center",
+            wordWrap: { width: boxWidth - 20 }
+        })
+            .setOrigin(0.5)
+            .setDepth(101);
+
+
+       
+    }
+
+    showDialogue(text, options = {}) {
+        const { width, height } = this.scale;
+        const boxWidth = width * 0.5;
+        const boxHeight = height * 0.13;
+        const boxY = height - boxHeight / 2 - height * 0.03;
+
+        // Clean up previous dialogue and buttons
+        if (this.dialogueBox) this.dialogueBox.destroy();
+        if (this.dialogueText) this.dialogueText.destroy();
+        if (this.dialogueImage) this.dialogueImage.destroy();
+        if (this.dialogueOptionButtons) {
+            this.dialogueOptionButtons.forEach(btn => btn.destroy());
+            this.dialogueOptionButtons = null;
+        }
+
+        // Create the text box (with optional image)
+        const { box, textObj, image } = createTextBox(this, text, {
+            width: boxWidth,
+            height: boxHeight,
+            y: boxY,
+            imageKey: options.imageKey,
+            imageScale: options.imageScale
+        });
+
+        this.dialogueBox = box;
+        this.dialogueText = textObj;
+        this.dialogueImage = image;
+
+        // Render options if provided
+        if (options.options && Array.isArray(options.options)) {
+            this.dialogueOptionButtons = [];
+            // Place options below the box for clarity
+            const optionStartX = width / 2;
+            const optionStartY = boxY + boxHeight / 2 + 40;
+
+            options.options.forEach((option, idx) => {
+                const btn = this.add.text(optionStartX, optionStartY + idx * 40, option.label, {
+                    font: "18px Arial",
+                    color: "#0077cc",
+                    backgroundColor: "#e0e0e0",
+                    padding: { left: 10, right: 10, top: 4, bottom: 4 }
+                })
+                    .setOrigin(0.5, 0)
+                    .setInteractive({ useHandCursor: true })
+                    .setDepth(102)
+                    .on("pointerdown", () => {
+                        // Clean up everything
+                        if (this.dialogueBox) this.dialogueBox.destroy();
+                        if (this.dialogueText) this.dialogueText.destroy();
+                        if (this.dialogueImage) this.dialogueImage.destroy();
+                        if (this.dialogueOptionButtons) this.dialogueOptionButtons.forEach(b => b.destroy());
+                        this.scene.wake("HUDScene");
+                        if (option.onSelect) option.onSelect();
+                    });
+
+                this.dialogueOptionButtons.push(btn);
+            });*/

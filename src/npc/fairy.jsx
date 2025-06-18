@@ -1,4 +1,4 @@
-// 1. Export dialogue arrays
+
 export const fairyIntroDialogues = [
     "",
     "Thank goodness you arrived!",
@@ -20,7 +20,6 @@ export const fairyGoodbyeDialogues = [
     "Do you feel the same?"
 ];
 
-// 2. Export a function to create the fairy sprite
 export function createFairy(scene, x, y) {
     const fairy = scene.add.sprite(x, y, "fairy")
         .setScale(0.13)
