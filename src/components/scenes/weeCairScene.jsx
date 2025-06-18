@@ -123,6 +123,11 @@ class WeeCairScene extends Phaser.Scene {
         });
 
         fairy.on("pointerdown", () => {
+            const fairyDialogue = [
+              "Thank goodness you arrived so quickly! We're in quite the bind. The residents of the gardens are falling ill, one by one, and were in desperate need of your remedies! Just look at our dear friend Bee... shes simply not herself! Please, speak with her and see if you can uncover what's wrong.",
+              "Oh dear… this isn’t good. I believe Foxglove is known to help with irregular heart rhythms, is it not? I just so happen to have a sprig with me. Would you be willing to brew a remedy for our poor friend?",
+              "I believe you are ready for the gardens friend, do you feel the same?"
+            ];
             this.showFairyDialogue("What would you like to do?", [
                 { label: "Go to the greenhouse", onSelect: () => {
                     this.scene.stop("weeCairScene");

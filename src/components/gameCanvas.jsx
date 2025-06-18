@@ -4,7 +4,7 @@ import Phaser from "phaser";
 import HUDScene from "./hud";
 import OpenJournal from "./openJournal";
 import GreenhouseScene from "./scenes/greenhouseScene";
-import WeeCair from "./scenes/weeCair";
+import WeeCairScene from "./scenes/weeCairScene";
 import StartScene from "./scenes/startScene";
 
 function GameCanvas() {
@@ -20,8 +20,12 @@ function GameCanvas() {
             type: Phaser.WEBGL,
             width: window.innerWidth,
             height: window.innerHeight,
+            scale: {
+                mode: Phaser.Scale.RESIZE,
+                autoCenter: Phaser.Scale.CENTER_BOTH,
+            },
             canvas: canvasRef.current,
-            scene: [StartScene, GreenhouseScene, WeeCair, HUDScene , OpenJournal],
+            scene: [StartScene, GreenhouseScene, WeeCairScene, HUDScene, OpenJournal],
         };
 
         gameRef.current = new Phaser.Game(config);
