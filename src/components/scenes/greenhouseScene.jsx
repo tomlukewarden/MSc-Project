@@ -13,9 +13,6 @@ class GreenhouseScene extends Phaser.Scene {
         this.load.image("defaultBack", "src/assets/char/default/back-default.png");
         this.load.image("defaultLeft", "src/assets/char/default/left-default.png");
         this.load.image("defaultRight", "src/assets/char/default/right-default.png");
-        this.load.image("butterflyFront", "src/assets/npc/butterfly/front-butterfly.png");
-        this.load.image("talk", "src/assets/interact/talk.png");
-        this.load.image("butterflyHappy", "src/assets/npc/butterfly/happy-butterfly-dio.png");
     }
 
     create() {
@@ -99,35 +96,6 @@ class GreenhouseScene extends Phaser.Scene {
         // Stop movement when keys are released
         this.input.keyboard.on("keyup", () => {
             char.setVelocity(0);
-        });
-
-        const butterfly = this.add.sprite(width / 2 + 100, height / 2, "butterflyFront")
-            .setScale(0.08)
-            .setOrigin(0.5, 0.5)
-            .setInteractive({ useHandCursor: true });
-
-        const talkIcon = this.add.image(0, 0, "talk")
-            .setScale(0.05)
-            .setVisible(false)
-            .setDepth(10); 
-
-        butterfly.on("pointerover", (pointer) => {
-            talkIcon.setVisible(true);
-            talkIcon.setPosition(pointer.worldX + 32, pointer.worldY);
-        });
-
-        butterfly.on("pointermove", (pointer) => {
-            talkIcon.setPosition(pointer.worldX + 32, pointer.worldY);
-        });
-
-        butterfly.on("pointerout", () => {
-            butterfly.setScale(0.05);
-            talkIcon.setVisible(false);
-        });
-        butterfly.on("pointerdown", () => {
-            butterfly.setScale(0.08);
-            talkIcon.setVisible(false);
-            this.showButterflyDialogue();
         });
     }
 
