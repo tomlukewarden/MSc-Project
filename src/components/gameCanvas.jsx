@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import Phaser from "phaser";
-import HUDScene from "./hud";
+// import HUDScene from "./hud";
 import OpenJournal from "./openJournal";
 import GreenhouseScene from "./scenes/greenhouseScene";
 import WeeCair from "./scenes/weeCair";
@@ -20,7 +20,7 @@ function GameCanvas() {
             width: window.innerWidth,
             height: window.innerHeight,
             canvas: canvasRef.current,
-            scene: [ WeeCair, GreenhouseScene ,HUDScene, OpenJournal],
+            scene: [ WeeCair, GreenhouseScene , OpenJournal],
         };
 
         gameRef.current = new Phaser.Game(config);
