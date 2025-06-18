@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import GreenhouseScene from "./greenhouseScene";
+import { createTextBox } from "../../dialogue/dialogueManager";
 
 class WeeCairScene extends Phaser.Scene {
     constructor() {
@@ -122,6 +123,55 @@ class WeeCairScene extends Phaser.Scene {
             talkIcon.setVisible(false);
         });
 
+        this.beeIntroDialogues=[
+            "",
+            "...Hey... I don't feel right... ",
+            "My heart... it’s fluttering all wrong... like a broken metronome... too fast, then too slow",
+            "......Everything feels fuzzy... can you take a look?"
+        ]
+
+        this.beePreDialogues = [
+            "",
+            "...Wow, you work fast... something already?"
+        ]
+
+        this.beePostDialogues = [
+            "",
+            "Okay, okay, here goes...I feel... ",
+            "SO MUCH BETTER, OMG!!! Whew! Back to buzzing!",
+            "You’re amazing! Take this shiny gem I found as a thank you!"
+        ]
+
+        // 1. Define your arrays in order
+        this.beeDialogues = [
+            this.beeIntroDialogues,
+            this.beePreDialogues,
+            this.beePostDialogues
+        ];
+        this.currentDialogueSet = 0; // Tracks which array you're on
+        this.currentDialogueIndex = 0;
+        this.dialogueActive = false;
+        bee.on("pointerdown", () => {
+            if (!this.dialogueActive && this.currentDialogueSet < this.beeDialogues.length) {
+                this.activeDialogue = this.beeDialogues[this.currentDialogueSet];
+                this.currentDialogueIndex = 0;
+                this.dialogueActive = true;
+                this.scene.sleep("HUDScene");
+                this.showBeeDialogue(this.activeDialogue[this.currentDialogueIndex]);
+            }
+        });
+        // 3. Advance through lines and sets in your input handler
+        this.input.on("pointerdown", () => {
+            if (!this.dialogueActive || !this.activeDialogue) return;
+            if (this.beeDialogueBox) this.beeDialogueBox.destroy();
+            if (this.beeDialogueText) this.beeDialogueText.destroy();
+            this.currentDialogueIndex++;
+            if (this.currentDialogueIndex < this.activeDialogue.length) {
+                // Next line in current set                 
+                this.showBeeDialogue(this.activeDialogue[this.currentDialogueIndex]);
+            } else {
+              this.scene.wake("HUDScene");
+        }});
         // Create the fairy sprite
         const fairy = this.add.sprite(width / 2 + 100, height / 2, "fairy")
             .setScale(0.05)
@@ -145,7 +195,7 @@ class WeeCairScene extends Phaser.Scene {
             "",
             "Thank goodness you arrived so quickly! We're in quite the bind.",
             "The residents of the gardens are falling ill, one by one, and were in desperate need of your remedies!",
-            "Just look at our dear friend Bee... shes simply not herself!",
+            "Just look at our dear friend Paula Nator... shes simply not herself!",
             "Please, speak with her and see if you can uncover what's wrong.",
 
         ];
@@ -236,35 +286,32 @@ class WeeCairScene extends Phaser.Scene {
             // Clean up previous dialogue and buttons
             if (this.fairyDialogueBox) this.fairyDialogueBox.destroy();
             if (this.fairyDialogueText) this.fairyDialogueText.destroy();
+            if (this.fairyDialogueImage) this.fairyDialogueImage.destroy();
             if (this.fairyOptionButtons) {
                 this.fairyOptionButtons.forEach(btn => btn.destroy());
                 this.fairyOptionButtons = null;
             }
 
-            // Create dialogue box and text
-            this.fairyDialogueBox = this.add.rectangle(width / 2, boxY, boxWidth, boxHeight, 0xffffff, 0.9)
-                .setStrokeStyle(2, 0x000000)
-                .setDepth(100);
+            // Use your dialogueManager to create the box, text, and optional image
+            const { box, textObj, image } = createTextBox(this, text, {
+                width: boxWidth,
+                height: boxHeight,
+                y: boxY,
+                imageKey: options && options.imageKey ? options.imageKey : undefined,
+                imageScale: options && options.imageScale ? options.imageScale : undefined
+            });
 
-            this.fairyDialogueText = this.add.text(width / 2, boxY, text, {
-                font: `${Math.round(height * 0.03)}px Arial`,
-                color: "#222",
-                align: "center",
-                wordWrap: { width: boxWidth - 20 }
-            })
-                .setOrigin(0.5)
-                .setDepth(101);
+            this.fairyDialogueBox = box;
+            this.fairyDialogueText = textObj;
+            this.fairyDialogueImage = image;
 
-            // --- INCORPORATE YOUR BUTTON CODE HERE ---
-            if (options && Array.isArray(options)) {
+            // Render options if provided (as before)
+            if (options && Array.isArray(options.options)) {
                 this.fairyOptionButtons = [];
-                // You can adjust these to put buttons below the box if you prefer:
-                // const optionStartX = width / 2;
-                // const optionStartY = boxY + boxHeight / 2 + 40;
                 const optionStartX = width / 2 + boxWidth / 2 + 30;
-                const optionStartY = boxY - ((options.length - 1) * 30) / 2;
+                const optionStartY = boxY - ((options.options.length - 1) * 30) / 2;
 
-                options.forEach((option, idx) => {
+                options.options.forEach((option, idx) => {
                     const btn = this.add.text(optionStartX, optionStartY + idx * 30, option.label, {
                         font: "18px Arial",
                         color: "#0077cc",
@@ -275,10 +322,10 @@ class WeeCairScene extends Phaser.Scene {
                         .setInteractive({ useHandCursor: true })
                         .setDepth(102)
                         .on("pointerdown", () => {
-                            // Clean up dialogue and options
-                            this.fairyDialogueBox.destroy();
-                            this.fairyDialogueText.destroy();
-                            this.fairyOptionButtons.forEach(b => b.destroy());
+                            if (this.fairyDialogueBox) this.fairyDialogueBox.destroy();
+                            if (this.fairyDialogueText) this.fairyDialogueText.destroy();
+                            if (this.fairyDialogueImage) this.fairyDialogueImage.destroy();
+                            if (this.fairyOptionButtons) this.fairyOptionButtons.forEach(b => b.destroy());
                             this.scene.wake("HUDScene");
                             if (option.onSelect) option.onSelect();
                         });
