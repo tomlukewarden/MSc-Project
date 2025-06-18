@@ -95,8 +95,8 @@ class WeeCairScene extends Phaser.Scene {
 
         // Create the fairy sprite
         const fairy = this.add.sprite(width / 2 + 100, height / 2, "fairy")
-            .setScale(0.03)
-            .setOrigin(0.5, 0.5)
+            .setScale(0.08)
+            .setOrigin(-3, 0.5)
             .setInteractive({ useHandCursor: true });
 
         // Create the talk icon, hidden by default
@@ -148,11 +148,12 @@ class WeeCairScene extends Phaser.Scene {
         this.dialogueText.setText(text);
         this.dialogueBox.setVisible(true);
         this.dialogueText.setVisible(true);
-
-        this.input.once("pointerdown", () => {
+        this.time.delayedCall(3000, () => {
+            console.log("Dialogue ended");
             this.dialogueBox.setVisible(false);
             this.dialogueText.setVisible(false);
         });
+
     }
 }
 
