@@ -7,8 +7,8 @@ class StartScene extends Phaser.Scene {
     }
 
     preload() {
-        this.load.image("logo", "src/assets/backgrounds/start/botanist-logo.png");
-        this.load.image("startButton", "src/assets/backgrounds/start/start-button.png");
+        this.load.image("logo", "/assets/backgrounds/start/botanist-logo.png");
+        this.load.image("startButton", "/assets/backgrounds/start/start-button.png");
     }
 
 

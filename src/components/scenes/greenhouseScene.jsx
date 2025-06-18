@@ -7,12 +7,12 @@ class GreenhouseScene extends Phaser.Scene {
     }
 
     preload() {
-        this.load.tilemapTiledJSON("greenhouseMap", "src/assets/maps/greenhouseMap.json");
-        this.load.image("greenhouseBackground", "src/assets/backgrounds/greenhouse/greenhouse.png");
-        this.load.image("defaultFront", "src/assets/char/default/front-default.png");
-        this.load.image("defaultBack", "src/assets/char/default/back-default.png");
-        this.load.image("defaultLeft", "src/assets/char/default/left-default.png");
-        this.load.image("defaultRight", "src/assets/char/default/right-default.png");
+        this.load.tilemapTiledJSON("greenhouseMap", "/assets/maps/greenhouseMap.json");
+        this.load.image("greenhouseBackground", "/assets/backgrounds/greenhouse/greenhouse.png");
+        this.load.image("defaultFront", "/assets/char/default/front-default.png");
+        this.load.image("defaultBack", "/assets/char/default/back-default.png");
+        this.load.image("defaultLeft", "/assets/char/default/left-default.png");
+        this.load.image("defaultRight", "/assets/char/default/right-default.png");
     }
 
     create() {

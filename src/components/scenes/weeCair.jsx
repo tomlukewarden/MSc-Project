@@ -7,15 +7,15 @@ class WeeCairScene extends Phaser.Scene {
     }
 
     preload() {
-        this.load.tilemapTiledJSON("weeCairMap", "src/assets/maps/weeCairMap.json");
-        this.load.image("weeCairBackground", "src/assets/backgrounds/weecair/weecair.png");
-        this.load.image("weeCairArch", "src/assets/backgrounds/weecair/archway.png");
-        this.load.image("defaultFront", "src/assets/char/default/front-default.png");
-        this.load.image("defaultBack", "src/assets/char/default/back-default.png");
-        this.load.image("defaultLeft", "src/assets/char/default/left-default.png");
-        this.load.image("defaultRight", "src/assets/char/default/right-default.png");
-        this.load.image("fairy", "src/assets/npc/fairy/fairy.png");
-        this.load.image("talk", "src/assets/interact/talk.png");
+        this.load.tilemapTiledJSON("weeCairMap", "/assets/maps/weeCairMap.json");
+        this.load.image("weeCairBackground", "/assets/backgrounds/weecair/weecair.png");
+        this.load.image("weeCairArch", "/assets/backgrounds/weecair/archway.png");
+        this.load.image("defaultFront", "/assets/char/default/front-default.png");
+        this.load.image("defaultBack", "/assets/char/default/back-default.png");
+        this.load.image("defaultLeft", "/assets/char/default/left-default.png");
+        this.load.image("defaultRight", "/assets/char/default/right-default.png");
+        this.load.image("fairy", "/assets/npc/fairy/fairy.png");
+        this.load.image("talk", "/assets/interact/talk.png");
     }
 
     create() {
