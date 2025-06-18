@@ -16,6 +16,7 @@ class WeeCairScene extends Phaser.Scene {
         this.load.image("defaultRight", "/assets/char/default/right-default.png");
         this.load.image("fairy", "/assets/npc/fairy/fairy.png");
         this.load.image("talk", "/assets/interact/talk.png");
+        this.load.image("bee", "/assets/npc/bee/bee-sad.png");
     }
 
     create() {
@@ -97,9 +98,14 @@ class WeeCairScene extends Phaser.Scene {
             .setOrigin(0.5, 0.5)
             .setDepth(20);
 
+        const bee = this.add.sprite(width / 2 - 100, height / 2, "bee")
+            .setScale(0.1)
+            .setOrigin(4, 2.5);
+        bee.setDepth(10);
+
         // Create the fairy sprite
         const fairy = this.add.sprite(width / 2 + 100, height / 2, "fairy")
-            .setScale(0.08)
+            .setScale(0.05)
             .setOrigin(-3, 0.5)
             .setInteractive({ useHandCursor: true });
 
