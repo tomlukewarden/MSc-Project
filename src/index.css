@@ -1,5 +1,6 @@
+
 :root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+
   --dkClr: #181818;
   --ltClr: #f5f5f5;
   --accClr: #007bff;
@@ -7,6 +8,7 @@
 
 
 *, *::before, *::after {
+  font-family: 'Pixelify Sans', cursive;
   box-sizing: border-box;
   margin: 0;
   padding: 0;
