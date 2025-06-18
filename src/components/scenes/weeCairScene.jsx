@@ -96,45 +96,34 @@ class WeeCairScene extends Phaser.Scene {
       .setOrigin(0.5)
       .setDepth(20);
 
-    this.add.image(0, 0, "talk").setScale(0.05).setVisible(false).setDepth(10);
-
     const talkIcon = this.add.image(0, 0, "talk")
       .setScale(0.05)
       .setVisible(false)
       .setDepth(10)
       .setOrigin(0.5);
 
-
     const bee = createBee(this, width / 2 + 200, height / 2 + 100);
-    bee.on("pointerover", (pointer) => {
-        talkIcon.setVisible(true);
-        talkIcon.setPosition(pointer.worldX + 32, pointer.worldY);
-    });
-
-    bee.on("pointermove", (pointer) => {
-        talkIcon.setPosition(pointer.worldX + 32, pointer.worldY);
-    });
-
-    bee.on("pointerout", () => {
-        talkIcon.setVisible(false);
-    });
     const fairy = createFairy(this, width / 2 - 200, height / 2 + 100);
-    fairy.on("pointerover", (pointer) => {
+
+    [bee, fairy].forEach(npc => {
+      npc.setInteractive();
+      npc.on("pointerover", (pointer) => {
         talkIcon.setVisible(true);
         talkIcon.setPosition(pointer.worldX + 32, pointer.worldY);
-    });
-
-    fairy.on("pointermove", (pointer) => {
+      });
+      npc.on("pointermove", (pointer) => {
         talkIcon.setPosition(pointer.worldX + 32, pointer.worldY);
-    });
-
-    fairy.on("pointerout", () => {
+      });
+      npc.on("pointerout", () => {
         talkIcon.setVisible(false);
+      });
     });
 
     this.dialogueActive = false;
     this.currentDialogueSet = 0;
     this.currentDialogueIndex = 0;
+    this.hasTalkedToFairy = false;
+    this.hasTalkedToBee = false;
 
     this.fairyDialogues = [
       fairyIntroDialogues,
@@ -142,25 +131,53 @@ class WeeCairScene extends Phaser.Scene {
       fairyGoodbyeDialogues
     ];
 
-    this.beeDialogues = {
-      beeIntroDialogue,
-      beePreDiaglogue,
-      beePostDiaglogue
-    };
+    this.beeDialogues = beeIntroDialogue;
 
-    fairy.setInteractive();
     fairy.on("pointerdown", () => {
-      if (this.dialogueActive) return;
+      if (this.dialogueActive || this.hasTalkedToFairy) return;
+      this.dialogueActive = true;
+      this.scene.sleep("HUDScene");
+      this.currentDialogueIndex = 0;
+      this.activeDialogue = this.fairyDialogues[this.currentDialogueSet];
+      this.showNextDialogue();
+    });
 
-      if (this.currentDialogueSet < this.fairyDialogues.length) {
-        this.dialogueActive = true;
+    bee.on("pointerdown", () => {
+      if (this.dialogueActive || !this.hasTalkedToFairy || this.hasTalkedToBee) return;
+      this.dialogueActive = true;
+      this.scene.sleep("HUDScene");
+      this.currentDialogueIndex = 0;
+      this.activeDialogue = this.beeDialogues;
+      this.showNextDialogue();
+    });
+
+    this.input.on("pointerdown", () => {
+      if (!this.dialogueActive) return;
+      this.advanceDialogue();
+    });
+  }
+
+  advanceDialogue() {
+    this.destroyDialogueUI();
+    this.currentDialogueIndex++;
+
+    if (this.currentDialogueIndex < this.activeDialogue.length) {
+      this.showNextDialogue();
+    } else {
+      if (this.activeDialogue === this.fairyDialogues[this.currentDialogueSet]) {
+        this.hasTalkedToFairy = true;
+        this.currentDialogueSet++;
+      } else if (this.activeDialogue === this.beeDialogues) {
+        this.hasTalkedToBee = true;
+      }
+
+      this.currentDialogueIndex = 0;
+      this.dialogueActive = false;
+      this.scene.wake("HUDScene");
+
+      if (this.hasTalkedToFairy && this.hasTalkedToBee) {
         this.scene.sleep("HUDScene");
-        this.currentDialogueIndex = 0;
-        this.activeDialogue = this.fairyDialogues[this.currentDialogueSet];
-        this.showNextDialogue();
-      } else {
-        this.showDialogue("What would you like to do?", {
-          imageKey: "fairySad",
+        this.showDialogue("You've spoken to everyone. Ready to move on?", {
           options: [
             {
               label: "Go to the greenhouse",
@@ -179,27 +196,6 @@ class WeeCairScene extends Phaser.Scene {
           ]
         });
       }
-    });
-
-    this.input.on("pointerdown", () => {
-      if (!this.dialogueActive) return;
-      this.advanceDialogue();
-    });
-  }
-
-  advanceDialogue() {
-    this.destroyDialogueUI();
-
-    this.currentDialogueIndex++;
-    const currentSet = this.fairyDialogues[this.currentDialogueSet];
-
-    if (this.currentDialogueIndex < currentSet.length) {
-      this.showNextDialogue();
-    } else {
-      this.currentDialogueSet++;
-      this.currentDialogueIndex = 0;
-      this.dialogueActive = false;
-      this.scene.wake("HUDScene");
     }
   }
 
@@ -213,13 +209,13 @@ class WeeCairScene extends Phaser.Scene {
   }
 
   destroyDialogueUI() {
-  if (this.dialogueBox) {
-    this.dialogueBox.box?.destroy();
-    this.dialogueBox.textObj?.destroy();
-    this.dialogueBox.image?.destroy();
-    this.dialogueBox = null;
+    if (this.dialogueBox) {
+      this.dialogueBox.box?.destroy();
+      this.dialogueBox.textObj?.destroy();
+      this.dialogueBox.image?.destroy();
+      this.dialogueBox = null;
+    }
   }
-}
 }
 
 export default WeeCairScene;
