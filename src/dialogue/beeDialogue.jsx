@@ -1,4 +1,4 @@
-// bee.js
+
 export const beeDialogues = {
   intro: [
     "",
@@ -16,10 +16,4 @@ export const beeDialogues = {
     "SO MUCH BETTER, OMG!!!",
     "You're amazing! Take this shiny gem I found!"
   ]
-};
-
-this.beeDialogues ={
-  intro,
-  pre,
-  post
 };

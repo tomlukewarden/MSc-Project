@@ -1,9 +1,9 @@
 import Phaser from "phaser";
 import { createTextBox } from "../../dialogue/dialogueManager";
-import { beeDialogues } from "../../dialogue/beeDialogue";
-import { bee } from "../../sprites/bee";
-import {fairyDialogues} from "../../dialogue/fairyDialogue";
-import { fairy } from "../../sprites/fairy";
+// import { beeDialogues } from "../../dialogue/beeDialogue";
+import { createBee } from "../../npc/bee";
+// import {fairyDialogues} from "../../dialogue/fairyDialogue";
+// import { createFairy } from "../../npc/fairy";
 
 class WeeCairScene extends Phaser.Scene {
     constructor() {
@@ -108,7 +108,7 @@ class WeeCairScene extends Phaser.Scene {
             .setVisible(false)
             .setDepth(10);
 
-
+const bee = createBee(this, width * 0.6, height * 0.5);
        
         this.currentDialogueSet = 0; // Tracks which array you're on
         this.currentDialogueIndex = 0;
@@ -278,6 +278,66 @@ class WeeCairScene extends Phaser.Scene {
 
 
        
+    }
+
+    showDialogue(text, options = {}) {
+        const { width, height } = this.scale;
+        const boxWidth = width * 0.5;
+        const boxHeight = height * 0.13;
+        const boxY = height - boxHeight / 2 - height * 0.03;
+
+        // Clean up previous dialogue and buttons
+        if (this.dialogueBox) this.dialogueBox.destroy();
+        if (this.dialogueText) this.dialogueText.destroy();
+        if (this.dialogueImage) this.dialogueImage.destroy();
+        if (this.dialogueOptionButtons) {
+            this.dialogueOptionButtons.forEach(btn => btn.destroy());
+            this.dialogueOptionButtons = null;
+        }
+
+        // Create the text box (with optional image)
+        const { box, textObj, image } = createTextBox(this, text, {
+            width: boxWidth,
+            height: boxHeight,
+            y: boxY,
+            imageKey: options.imageKey,
+            imageScale: options.imageScale
+        });
+
+        this.dialogueBox = box;
+        this.dialogueText = textObj;
+        this.dialogueImage = image;
+
+        // Render options if provided
+        if (options.options && Array.isArray(options.options)) {
+            this.dialogueOptionButtons = [];
+            // Place options below the box for clarity
+            const optionStartX = width / 2;
+            const optionStartY = boxY + boxHeight / 2 + 40;
+
+            options.options.forEach((option, idx) => {
+                const btn = this.add.text(optionStartX, optionStartY + idx * 40, option.label, {
+                    font: "18px Arial",
+                    color: "#0077cc",
+                    backgroundColor: "#e0e0e0",
+                    padding: { left: 10, right: 10, top: 4, bottom: 4 }
+                })
+                    .setOrigin(0.5, 0)
+                    .setInteractive({ useHandCursor: true })
+                    .setDepth(102)
+                    .on("pointerdown", () => {
+                        // Clean up everything
+                        if (this.dialogueBox) this.dialogueBox.destroy();
+                        if (this.dialogueText) this.dialogueText.destroy();
+                        if (this.dialogueImage) this.dialogueImage.destroy();
+                        if (this.dialogueOptionButtons) this.dialogueOptionButtons.forEach(b => b.destroy());
+                        this.scene.wake("HUDScene");
+                        if (option.onSelect) option.onSelect();
+                    });
+
+                this.dialogueOptionButtons.push(btn);
+            });
+        }
     }
 }
 
