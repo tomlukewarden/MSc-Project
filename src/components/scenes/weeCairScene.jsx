@@ -30,7 +30,7 @@ class WeeCairScene extends Phaser.Scene {
         this.add.image(width / 2, height / 2, "weeCairBackground").setScale(scaleFactor);
         const map = this.make.tilemap({ key: "weeCairMap" });
         const collisionObjects = map.getObjectLayer("wee-cair-collisions");
-        
+
         if (!collisionObjects) {
             console.warn("Collision layer not found in Tiled map!");
             return;
@@ -123,37 +123,44 @@ class WeeCairScene extends Phaser.Scene {
         });
 
         this.fairyIntroDialogues = [
-        "Thank goodness you arrived so quickly! We're in quite the bind.",
-        "The residents of the gardens are falling ill, one by one, and were in desperate need of your remedies!",
-        "Just look at our dear friend Bee... shes simply not herself!",
-        "Please, speak with her and see if you can uncover what's wrong.",
-             
+            "Thank goodness you arrived so quickly! We're in quite the bind.",
+            "The residents of the gardens are falling ill, one by one, and were in desperate need of your remedies!",
+            "Just look at our dear friend Bee... shes simply not herself!",
+            "Please, speak with her and see if you can uncover what's wrong.",
+
         ];
 
         this.fairyHelpDialogues = [
-             "Oh dear… this isn’t good. I believe Foxglove is known to help with irregular heart rhythms, is it not?", 
-             "I just so happen to have a sprig with me. ",
-             "Would you be willing to brew a remedy for our poor friend?"
+            "Oh dear… this isn’t good. I believe Foxglove is known to help with irregular heart rhythms, is it not?",
+            "I just so happen to have a sprig with me. ",
+            "Would you be willing to brew a remedy for our poor friend?"
         ];
 
         this.fairyGoodbyeDialogues = [
-             "I believe you are ready for the gardens friend, do you feel the same?"
+            "I believe you are ready for the gardens friend, do you feel the same?"
         ];
 
-        if (typeof this.currentDialogueIndex !== "number") {
-            this.currentDialogueIndex = -1;
-        }
+        // 1. Define your arrays in order
+        this.fairyDialogues = [
+            this.fairyIntroDialogues,
+            this.fairyHelpDialogues,
+            this.fairyGoodbyeDialogues
+        ];
+        this.currentDialogueSet = 0; // Tracks which array you're on
+        this.currentDialogueIndex = 0;
         this.dialogueActive = false;
 
         fairy.on("pointerdown", () => {
-            this.activeDialogue = this.fairyIntroDialogues; // or whichever array you want
-            this.currentDialogueIndex = -1;
-            this.dialogueActive = true;
-            this.scene.sleep("HUDScene");
-            this.showFairyDialogue(this.activeDialogue[this.currentDialogueIndex]);
+            if (!this.dialogueActive && this.currentDialogueSet < this.fairyDialogues.length) {
+                this.activeDialogue = this.fairyDialogues[this.currentDialogueSet];
+                this.currentDialogueIndex = 0;
+                this.dialogueActive = true;
+                this.scene.sleep("HUDScene");
+                this.showFairyDialogue(this.activeDialogue[this.currentDialogueIndex]);
+            }
         });
 
-        // Single input handler for advancing dialogue
+        // 3. Advance through lines and sets in your input handler
         this.input.on("pointerdown", () => {
             if (!this.dialogueActive || !this.activeDialogue) return;
 
@@ -162,11 +169,40 @@ class WeeCairScene extends Phaser.Scene {
 
             this.currentDialogueIndex++;
             if (this.currentDialogueIndex < this.activeDialogue.length) {
+                // Next line in current set
                 this.showFairyDialogue(this.activeDialogue[this.currentDialogueIndex]);
             } else {
+                // Finished this set, move to next
+                this.currentDialogueSet++;
                 this.dialogueActive = false;
                 this.scene.wake("HUDScene");
-                this.showFairyOptions(); // Or whatever you want to do next
+
+                if (this.currentDialogueSet < this.fairyDialogues.length) {
+                    // Optionally, you can auto-start the next set or wait for another click
+                } else {
+                    // All dialogues done, show options
+                    this.dialogueActive = false; // Prevent further dialogue advancement
+                    this.scene.wake("HUDScene");
+                    this.showFairyDialogue("What would you like to do?", [
+                        this.scene.sleep("HUDScene"),
+                        {
+                            label: "Go to the gardens",
+                            onSelect: () => {
+                                this.scene.stop("weeCair");
+                                this.scene.start("GreenhouseScene");
+                            }
+                        },
+                        {
+                            label: "Stay here",
+                            onSelect: () => {
+                                if (this.fairyDialogueBox) this.fairyDialogueBox.destroy();
+                                if (this.fairyDialogueText) this.fairyDialogueText.destroy();
+                                if (this.fairyOptionButtons) this.fairyOptionButtons.forEach(btn => btn.destroy());
+                                this.scene.wake("HUDScene");
+                            }
+                        }
+                    ]);
+                }
             }
         });
 
@@ -240,10 +276,10 @@ class WeeCairScene extends Phaser.Scene {
             .setOrigin(0.5)
             .setDepth(101);
 
-        // --- PLAYER OPTIONS ---
+             // --- PLAYER OPTIONS ---
         this.fairyOptionButtons = [];
-        const optionStartX = width / 2 + boxWidth / 2 + 30; 
-        const optionStartY = boxY - ((options.length - 1) * 30) / 2; 
+        const optionStartX = width / 2 + boxWidth / 2 + 30;
+        const optionStartY = boxY - ((options.length - 1) * 30) / 2;
 
         options.forEach((option, idx) => {
             const btn = this.add.text(optionStartX, optionStartY + idx * 30, option.label, {
