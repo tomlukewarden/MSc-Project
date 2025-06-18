@@ -14,6 +14,8 @@ class WeeCairScene extends Phaser.Scene {
         this.load.image("defaultBack", "src/assets/char/default/back-default.png");
         this.load.image("defaultLeft", "src/assets/char/default/left-default.png");
         this.load.image("defaultRight", "src/assets/char/default/right-default.png");
+        this.load.image("fairy", "src/assets/npc/fairy/fairy.png");
+        this.load.image("talk", "src/assets/interact/talk.png");
     }
 
     create() {
@@ -95,14 +97,31 @@ class WeeCairScene extends Phaser.Scene {
             solidArea.setVisible(true).setAlpha(0.5);
         });
         
-        // Add the arch sprite LAST, with a higher depth
+
         const arch = this.add.image(width / 2, height / 2, "weeCairArch")
             .setScale(scaleFactor)
             .setOrigin(0.5, 0.5)
-            .setDepth(20); // Depth higher than player
-    }
-
+            .setDepth(20);
     
+
+        const fairy = this.add.image(width / 2, height / 2, "fairy")
+            .setScale(0.08)
+            .setOrigin(-3, 1)
+            .setDepth(15);
+
+        const talkPrompt = this.add.image(width / 2, height - 50, "talk")
+            .setScale(0.1)
+            .setOrigin(0.5, 0.5)
+            .setDepth(30); 
+
+        talkPrompt.setInteractive();
+        talkPrompt.on("pointerdown", () => {
+            this.add.text(width / 2, height / 2, "You interacted with the fairy!", {
+                fontSize: "24px",
+                fill: "#fff",
+            }).setOrigin(0.5, 0.5);
+        });
+    }
     shutdown() {
         this.scene.stop("HUDScene");
     }
