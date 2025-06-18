@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import GreenhouseScene from "./greenhouseScene";
+
 
 class StartScene extends Phaser.Scene {
     constructor() {
@@ -7,23 +7,23 @@ class StartScene extends Phaser.Scene {
     }
 
     preload() {
-        this.load.image("logo", "src/assets/backgrounds/botanist-logo.png");
-        this.load.image("startButton", "src/assets/backgrounds/start-button.png");
+        this.load.image("logo", "src/assets/backgrounds/start/botanist-logo.png");
+        this.load.image("startButton", "src/assets/backgrounds/start/start-button.png");
     }
 
 
     create() {
-        this.scene.sleep("HUDScene");
-        this.scene.sleep("OpenJournal");
+        this.scene.stop("HUDScene");
+        this.scene.stop("OpenJournal");
         const { width, height } = this.sys.game.config;
         this.cameras.main.setBackgroundColor("#b36f4b");
 
       this.add.image(width / 2, height / 3, "logo").setScale(0.35);
       const startButton = this.add.image(width / 2, height / 1.3, "startButton").setScale(0.3).setInteractive();
    startButton.on("pointerdown", () => {
-    console.log("Switching to GreenhouseScene");
+    console.log("Switching to WeeCair");
     this.scene.stop("StartScene"); // Ensure StartScene is stopped
-    this.scene.start("GreenhouseScene");
+    this.scene.start("WeeCairScene"); // Start the WeeCairScene
 });
 
       this.add.text(width / 2, height / 1.1, "Click to Start", {
