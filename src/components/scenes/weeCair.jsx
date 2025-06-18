@@ -104,22 +104,40 @@ class WeeCairScene extends Phaser.Scene {
             .setDepth(20);
     
 
-        const fairy = this.add.image(width / 2, height / 2, "fairy")
+        // Create the fairy sprite (use your actual fairy image key)
+        const fairy = this.add.sprite(width / 2 + 100, height / 2, "fairy")
             .setScale(0.08)
             .setOrigin(-3, 1)
-            .setDepth(15);
+            .setInteractive({ useHandCursor: true });
 
-        const talkPrompt = this.add.image(width / 2, height - 50, "talk")
-            .setScale(0.1)
-            .setOrigin(0.5, 0.5)
-            .setDepth(30); 
+        // Create the talk icon, hidden by default
+        const talkIcon = this.add.image(0, 0, "talk")
+            .setScale(0.05)
+            .setVisible(false)
+            .setDepth(10);
 
-        talkPrompt.setInteractive();
-        talkPrompt.on("pointerdown", () => {
-            this.add.text(width / 2, height / 2, "You interacted with the fairy!", {
-                fontSize: "24px",
-                fill: "#fff",
+        // Show and follow the talk icon when hovering over the fairy
+        fairy.on("pointerover", (pointer) => {
+            talkIcon.setVisible(true);
+            talkIcon.setPosition(pointer.worldX + 32, pointer.worldY);
+        });
+        fairy.on("pointermove", (pointer) => {
+            talkIcon.setPosition(pointer.worldX + 32, pointer.worldY);
+        });
+        fairy.on("pointerout", () => {
+            talkIcon.setVisible(false);
+        });
+        fairy.on("pointerdown", () => {
+            fairy.setScale(0.08);
+            talkIcon.setVisible(false);
+            this.add.text(fairy.x, fairy.y - 50, "Hello! Welcome to Wee Cair!", {
+                fontSize: '16px',
+                fill: '#fff',
+                backgroundColor: '#000',
+                padding: { x: 10, y: 5 },
+                align: 'center'
             }).setOrigin(0.5, 0.5);
+            // Add your interaction logic here
         });
     }
     shutdown() {
