@@ -3,7 +3,7 @@ import GreenhouseScene from "./greenhouseScene";
 
 class WeeCairScene extends Phaser.Scene {
     constructor() {
-        super({ key: "WeeCairScene", physics: { default: "arcade", arcade: { debug: true } } });
+        super({ key: "WeeCairScene", physics: { default: "arcade", arcade: { debug: false } } });
     }
 
     preload() {
@@ -123,6 +123,7 @@ class WeeCairScene extends Phaser.Scene {
         });
 
         this.fairyIntroDialogues = [
+            "",
             "Thank goodness you arrived so quickly! We're in quite the bind.",
             "The residents of the gardens are falling ill, one by one, and were in desperate need of your remedies!",
             "Just look at our dear friend Bee... shes simply not herself!",
@@ -131,12 +132,14 @@ class WeeCairScene extends Phaser.Scene {
         ];
 
         this.fairyHelpDialogues = [
+            "",
             "Oh dear… this isn’t good. I believe Foxglove is known to help with irregular heart rhythms, is it not?",
             "I just so happen to have a sprig with me. ",
             "Would you be willing to brew a remedy for our poor friend?"
         ];
 
         this.fairyGoodbyeDialogues = [
+            "",
             "I believe you are ready for the gardens friend, do you feel the same?"
         ];
 
@@ -178,10 +181,8 @@ class WeeCairScene extends Phaser.Scene {
                 this.scene.wake("HUDScene");
 
                 if (this.currentDialogueSet < this.fairyDialogues.length) {
-                    // Optionally, you can auto-start the next set or wait for another click
                 } else {
-                    // All dialogues done, show options
-                    this.dialogueActive = false; // Prevent further dialogue advancement
+                    this.dialogueActive = false;
                     this.scene.wake("HUDScene");
                     this.showFairyDialogue("What would you like to do?", [
                         this.scene.sleep("HUDScene"),
@@ -207,12 +208,21 @@ class WeeCairScene extends Phaser.Scene {
         });
 
         // Dialogue display function (no input handler here)
-        this.showFairyDialogue = (text) => {
+        this.showFairyDialogue = (text, options = null) => {
             const { width, height } = this.scale;
             const boxWidth = width * 0.5;
             const boxHeight = height * 0.13;
             const boxY = height - boxHeight / 2 - height * 0.03;
 
+            // Clean up previous dialogue and buttons
+            if (this.fairyDialogueBox) this.fairyDialogueBox.destroy();
+            if (this.fairyDialogueText) this.fairyDialogueText.destroy();
+            if (this.fairyOptionButtons) {
+                this.fairyOptionButtons.forEach(btn => btn.destroy());
+                this.fairyOptionButtons = null;
+            }
+
+            // Create dialogue box and text
             this.fairyDialogueBox = this.add.rectangle(width / 2, boxY, boxWidth, boxHeight, 0xffffff, 0.9)
                 .setStrokeStyle(2, 0x000000)
                 .setDepth(100);
@@ -225,6 +235,38 @@ class WeeCairScene extends Phaser.Scene {
             })
                 .setOrigin(0.5)
                 .setDepth(101);
+
+            // --- INCORPORATE YOUR BUTTON CODE HERE ---
+            if (options && Array.isArray(options)) {
+                this.fairyOptionButtons = [];
+                // You can adjust these to put buttons below the box if you prefer:
+                // const optionStartX = width / 2;
+                // const optionStartY = boxY + boxHeight / 2 + 40;
+                const optionStartX = width / 2 + boxWidth / 2 + 30;
+                const optionStartY = boxY - ((options.length - 1) * 30) / 2;
+
+                options.forEach((option, idx) => {
+                    const btn = this.add.text(optionStartX, optionStartY + idx * 30, option.label, {
+                        font: "18px Arial",
+                        color: "#0077cc",
+                        backgroundColor: "#e0e0e0",
+                        padding: { left: 10, right: 10, top: 4, bottom: 4 }
+                    })
+                        .setOrigin(0, 0.5)
+                        .setInteractive({ useHandCursor: true })
+                        .setDepth(102)
+                        .on("pointerdown", () => {
+                            // Clean up dialogue and options
+                            this.fairyDialogueBox.destroy();
+                            this.fairyDialogueText.destroy();
+                            this.fairyOptionButtons.forEach(b => b.destroy());
+                            this.scene.wake("HUDScene");
+                            if (option.onSelect) option.onSelect();
+                        });
+
+                    this.fairyOptionButtons.push(btn);
+                });
+            }
         };
 
         const boxWidth = 400;
@@ -276,34 +318,8 @@ class WeeCairScene extends Phaser.Scene {
             .setOrigin(0.5)
             .setDepth(101);
 
-             // --- PLAYER OPTIONS ---
-        this.fairyOptionButtons = [];
-        const optionStartX = width / 2 + boxWidth / 2 + 30;
-        const optionStartY = boxY - ((options.length - 1) * 30) / 2;
 
-        options.forEach((option, idx) => {
-            const btn = this.add.text(optionStartX, optionStartY + idx * 30, option.label, {
-                font: "18px Arial",
-                color: "#0077cc",
-                backgroundColor: "#e0e0e0",
-                padding: { left: 10, right: 10, top: 4, bottom: 4 }
-            })
-                .setOrigin(0, 0.5)
-                .setInteractive({ useHandCursor: true })
-                .setDepth(102)
-                .on("pointerdown", () => {
-                    // Clean up dialogue and options
-                    this.fairyDialogueBox.destroy();
-                    this.fairyDialogueText.destroy();
-                    this.fairyOptionButtons.forEach(b => b.destroy());
-                    // Show HUD again
-                    this.scene.wake("HUDScene");
-                    // Call the option's callback
-                    if (option.onSelect) option.onSelect();
-                });
-
-            this.fairyOptionButtons.push(btn);
-        });
+       
     }
 }
 
