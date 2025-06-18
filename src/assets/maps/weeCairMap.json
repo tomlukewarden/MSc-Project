@@ -9,7 +9,6 @@
          "imagewidth":9159,
          "name":"Image Layer 3",
          "opacity":1,
-         "parallaxy":100,
          "type":"imagelayer",
          "visible":true,
          "x":0,
@@ -30,7 +29,7 @@
         {
          "draworder":"topdown",
          "id":5,
-         "name":"Object Layer 1",
+         "name":"collisions",
          "objects":[
                 {
                  "height":3437.5,
@@ -84,15 +83,21 @@
                  "y":1700
                 }, 
                 {
-                 "height":0,
-                 "id":7,
+                 "height":325,
+                 "id":8,
                  "name":"",
+                 "properties":[
+                        {
+                         "name":"collision",
+                         "type":"bool",
+                         "value":true
+                        }],
                  "rotation":0,
                  "type":"",
                  "visible":true,
-                 "width":0,
-                 "x":-350,
-                 "y":3075
+                 "width":2850,
+                 "x":2525,
+                 "y":2750
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -250,7 +255,7 @@
          "y":0
         }],
  "nextlayerid":8,
- "nextobjectid":8,
+ "nextobjectid":10,
  "orientation":"orthogonal",
  "renderorder":"right-down",
  "tiledversion":"1.11.2",
