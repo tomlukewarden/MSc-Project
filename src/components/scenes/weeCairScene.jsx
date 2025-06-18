@@ -97,23 +97,36 @@ class WeeCairScene extends Phaser.Scene {
             .setScale(scaleFactor)
             .setOrigin(0.5, 0.5)
             .setDepth(20);
+    
+
+        const talkIcon = this.add.image(0, 0, "talk")
+            .setScale(0.05)
+            .setVisible(false)
+            .setDepth(10);
 
         const bee = this.add.sprite(width / 2 - 100, height / 2, "bee")
             .setScale(0.1)
-            .setOrigin(4, 2.5);
-        bee.setDepth(10);
+            .setOrigin(4, 2.5)
+            .setInteractive({ useHandCursor: true });
+
+         bee.on("pointerover", (pointer) => {
+            talkIcon.setVisible(true);
+            talkIcon.setPosition(pointer.worldX + 32, pointer.worldY);
+        });
+
+        bee.on("pointermove", (pointer) => {
+            talkIcon.setPosition(pointer.worldX + 32, pointer.worldY);
+        });
+
+        bee.on("pointerout", () => {
+            talkIcon.setVisible(false);
+        });
 
         // Create the fairy sprite
         const fairy = this.add.sprite(width / 2 + 100, height / 2, "fairy")
             .setScale(0.05)
             .setOrigin(-3, 0.5)
             .setInteractive({ useHandCursor: true });
-
-        // Create the talk icon, hidden by default
-        const talkIcon = this.add.image(0, 0, "talk")
-            .setScale(0.05)
-            .setVisible(false)
-            .setDepth(10);
 
         fairy.on("pointerover", (pointer) => {
             talkIcon.setVisible(true);
