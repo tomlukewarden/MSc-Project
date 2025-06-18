@@ -1,19 +1,19 @@
 
 export const fairyDialogues = {
-  intro: [
+  fairyIntroDialogues: [
     "",
     "Thank goodness you arrived!",
     "The residents are falling ill...",
     "Just look at Paula Nator... she's not herself!",
     "Please, help her!"
   ],
-  help: [
+  fairyHelpDialogues: [
     "",
     "Foxglove helps with heart stuff, right?",
     "I just so happen to have some!",
     "Can you make the remedy?"
   ],
-  goodbye: [
+ fairyGoodbyeDialogues: [
     "",
     "You're ready for the gardens!",
     "Do you feel the same?"

@@ -111,9 +111,6 @@ class WeeCairScene extends Phaser.Scene {
 const bee = createBee( this, width / 2 + 200, height / 2 + 100);
 const fairy = createFairy( this, width / 2 - 200, height / 2 + 100);    
 
-
-
-
         this.currentDialogueSet = 0; // Tracks which array you're on
         this.currentDialogueIndex = 0;
         this.dialogueActive = false;
