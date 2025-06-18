@@ -18,6 +18,9 @@ class WeeCairScene extends Phaser.Scene {
     }
 
     create() {
+        this.scene.launch("HUDScene");
+        this.scene.bringToTop("HUDScene");
+
         console.log("Entered WeeCair");
         const { width, height } = this.sys.game.config;
         const scaleFactor = 0.175;
@@ -120,10 +123,10 @@ class WeeCairScene extends Phaser.Scene {
 
         fairy.on("pointerdown", () => {
             console.log("Fairy clicked!");
-            this.showFairyDialogue("Hello! I'm your fairy friend.");
+            this.showFairyDialogue("Welcome to the WeeCAIR garden");
         });
 
-        // Dialogue box setup (initially hidden)
+        
         const boxWidth = 400;
         const boxHeight = 100;
         const boxY = height - boxHeight / 2 - 20;
@@ -145,6 +148,7 @@ class WeeCairScene extends Phaser.Scene {
     }
 
     showFairyDialogue(text) {
+        this.scene.sleep("HUDScene");
         this.dialogueText.setText(text);
         this.dialogueBox.setVisible(true);
         this.dialogueText.setVisible(true);
@@ -152,6 +156,7 @@ class WeeCairScene extends Phaser.Scene {
             console.log("Dialogue ended");
             this.dialogueBox.setVisible(false);
             this.dialogueText.setVisible(false);
+            this.scene.wake("HUDScene");
         });
 
     }
