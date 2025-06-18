@@ -1,9 +1,7 @@
 import Phaser from "phaser";
 import { createTextBox } from "../../dialogue/dialogueManager";
-// import { beeDialogues } from "../../dialogue/beeDialogue";
 import { createBee } from "../../npc/bee";
-// import {fairyDialogues} from "../../dialogue/fairyDialogue";
-import { createFairy } from "../../npc/fairy";
+import { createFairy, fairyIntroDialogues, fairyHelpDialogues, fairyGoodbyeDialogues } from "../../npc/fairy";
 
 class WeeCairScene extends Phaser.Scene {
     constructor() {
