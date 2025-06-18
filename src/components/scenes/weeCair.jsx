@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import GreenhouseScene from "./greenhouseScene";
 
 class WeeCairScene extends Phaser.Scene {
     constructor() {
@@ -122,8 +123,16 @@ class WeeCairScene extends Phaser.Scene {
         });
 
         fairy.on("pointerdown", () => {
-            console.log("Fairy clicked!");
-            this.showFairyDialogue("Welcome to the WeeCAIR garden");
+            this.showFairyDialogue("What would you like to do?", [
+                { label: "Go to Greenhouse", onSelect: () => { this.scene.stop(WeeCairScene), this.scene.start(GreenhouseScene)} },
+                { label: "Say goodbye", onSelect: () => { 
+                    this.fairyDialogueBox.destroy();
+                    this.fairyDialogueText.destroy();
+                    this.fairyOptionButtons.forEach(btn => btn.destroy());
+                    talkIcon.setVisible(false);
+                    this.scene.wake("HUDScene");
+                 } }
+            ]);
         });
 
         
@@ -147,18 +156,63 @@ class WeeCairScene extends Phaser.Scene {
             .setVisible(false);
     }
 
-    showFairyDialogue(text) {
+    showFairyDialogue(text, options = []) {
+        // Hide HUD
         this.scene.sleep("HUDScene");
-        this.dialogueText.setText(text);
-        this.dialogueBox.setVisible(true);
-        this.dialogueText.setVisible(true);
-        this.time.delayedCall(3000, () => {
-            console.log("Dialogue ended");
-            this.dialogueBox.setVisible(false);
-            this.dialogueText.setVisible(false);
-            this.scene.wake("HUDScene");
-        });
 
+        // Remove previous dialogue and options if they exist
+        if (this.fairyDialogueBox) this.fairyDialogueBox.destroy();
+        if (this.fairyDialogueText) this.fairyDialogueText.destroy();
+        if (this.fairyOptionButtons) {
+            this.fairyOptionButtons.forEach(btn => btn.destroy());
+        }
+
+        const { width, height } = this.scale;
+        const boxWidth = 400;
+        const boxHeight = 100;
+        const boxY = height - boxHeight / 2 - 20;
+
+        this.fairyDialogueBox = this.add.rectangle(width / 2, boxY, boxWidth, boxHeight, 0xffffff, 0.9)
+            .setStrokeStyle(2, 0x000000)
+            .setDepth(100);
+
+        this.fairyDialogueText = this.add.text(width / 2, boxY, text, {
+            font: "20px Arial",
+            color: "#222",
+            align: "center",
+            wordWrap: { width: boxWidth - 20 }
+        })
+            .setOrigin(0.5)
+            .setDepth(101);
+
+        // --- PLAYER OPTIONS ---
+        this.fairyOptionButtons = [];
+        const optionStartX = width / 2 + boxWidth / 2 + 30; 
+        const optionStartY = boxY - ((options.length - 1) * 30) / 2; 
+
+        options.forEach((option, idx) => {
+            const btn = this.add.text(optionStartX, optionStartY + idx * 30, option.label, {
+                font: "18px Arial",
+                color: "#0077cc",
+                backgroundColor: "#e0e0e0",
+                padding: { left: 10, right: 10, top: 4, bottom: 4 }
+            })
+                .setOrigin(0, 0.5)
+                .setInteractive({ useHandCursor: true })
+                .setDepth(102)
+                .on("pointerdown", () => {
+                    // Clean up dialogue and options
+                    this.fairyDialogueBox.destroy();
+                    this.fairyDialogueText.destroy();
+                    this.fairyOptionButtons.forEach(b => b.destroy());
+                    // Show HUD again
+                    this.scene.wake("HUDScene");
+                    // Call the option's callback
+                    if (option.onSelect) option.onSelect();
+                });
+
+            this.fairyOptionButtons.push(btn);
+        });
     }
 }
 
