@@ -122,32 +122,50 @@ class WeeCairScene extends Phaser.Scene {
             talkIcon.setVisible(false);
         });
 
-        this.fairyDialogues = [
-              "Thank goodness you arrived so quickly! We're in quite the bind. The residents of the gardens are falling ill, one by one, and were in desperate need of your remedies! Just look at our dear friend Bee... shes simply not herself! Please, speak with her and see if you can uncover what's wrong.",
-              "Oh dear… this isn’t good. I believe Foxglove is known to help with irregular heart rhythms, is it not? I just so happen to have a sprig with me. Would you be willing to brew a remedy for our poor friend?",
-              "I believe you are ready for the gardens friend, do you feel the same?"
+        this.fairyIntroDialogues = [
+        "Thank goodness you arrived so quickly! We're in quite the bind.",
+        "The residents of the gardens are falling ill, one by one, and were in desperate need of your remedies!",
+        "Just look at our dear friend Bee... shes simply not herself!",
+        "Please, speak with her and see if you can uncover what's wrong.",
+             
         ];
-        this.currentDialogueIndex = -1;
+
+        this.fairyHelpDialogues = [
+             "Oh dear… this isn’t good. I believe Foxglove is known to help with irregular heart rhythms, is it not?", 
+             "I just so happen to have a sprig with me. ",
+             "Would you be willing to brew a remedy for our poor friend?"
+        ];
+
+        this.fairyGoodbyeDialogues = [
+             "I believe you are ready for the gardens friend, do you feel the same?"
+        ];
+
+        if (typeof this.currentDialogueIndex !== "number") {
+            this.currentDialogueIndex = -1;
+        }
         this.dialogueActive = false;
 
         fairy.on("pointerdown", () => {
-            this.scene.sleep("HUDScene");
-            this.currentDialogueIndex = -1;
-            this.dialogueActive = true;
-            this.showFairyDialogue(this.fairyDialogues[this.currentDialogueIndex]);
+            if (this.currentDialogueIndex < this.fairyIntroDialogues.length) {
+                this.scene.sleep("HUDScene");
+                this.dialogueActive = true;
+                this.showFairyDialogue(this.fairyIntroDialogues[this.currentDialogueIndex]);
+            } else {
+                // All dialogue done, maybe show options or nothing
+                this.showFairyOptions();
+            }
         });
 
         // Single input handler for advancing dialogue
         this.input.on("pointerdown", () => {
             if (!this.dialogueActive) return;
 
-            // Destroy current dialogue
             if (this.fairyDialogueBox) this.fairyDialogueBox.destroy();
             if (this.fairyDialogueText) this.fairyDialogueText.destroy();
 
             this.currentDialogueIndex++;
-            if (this.currentDialogueIndex < this.fairyDialogues.length) {
-                this.showFairyDialogue(this.fairyDialogues[this.currentDialogueIndex]);
+            if (this.currentDialogueIndex < this.fairyIntroDialogues.length) {
+                this.showFairyDialogue(this.fairyIntroDialogues[this.currentDialogueIndex]);
             } else {
                 this.dialogueActive = false;
                 this.scene.wake("HUDScene");
