@@ -146,30 +146,27 @@ class WeeCairScene extends Phaser.Scene {
         this.dialogueActive = false;
 
         fairy.on("pointerdown", () => {
-            if (this.currentDialogueIndex < this.fairyIntroDialogues.length) {
-                this.scene.sleep("HUDScene");
-                this.dialogueActive = true;
-                this.showFairyDialogue(this.fairyIntroDialogues[this.currentDialogueIndex]);
-            } else {
-                // All dialogue done, maybe show options or nothing
-                this.showFairyOptions();
-            }
+            this.activeDialogue = this.fairyIntroDialogues; // or whichever array you want
+            this.currentDialogueIndex = -1;
+            this.dialogueActive = true;
+            this.scene.sleep("HUDScene");
+            this.showFairyDialogue(this.activeDialogue[this.currentDialogueIndex]);
         });
 
         // Single input handler for advancing dialogue
         this.input.on("pointerdown", () => {
-            if (!this.dialogueActive) return;
+            if (!this.dialogueActive || !this.activeDialogue) return;
 
             if (this.fairyDialogueBox) this.fairyDialogueBox.destroy();
             if (this.fairyDialogueText) this.fairyDialogueText.destroy();
 
             this.currentDialogueIndex++;
-            if (this.currentDialogueIndex < this.fairyIntroDialogues.length) {
-                this.showFairyDialogue(this.fairyIntroDialogues[this.currentDialogueIndex]);
+            if (this.currentDialogueIndex < this.activeDialogue.length) {
+                this.showFairyDialogue(this.activeDialogue[this.currentDialogueIndex]);
             } else {
                 this.dialogueActive = false;
                 this.scene.wake("HUDScene");
-                this.showFairyOptions();
+                this.showFairyOptions(); // Or whatever you want to do next
             }
         });
 
@@ -273,5 +270,6 @@ class WeeCairScene extends Phaser.Scene {
         });
     }
 }
+
 
 export default WeeCairScene;
