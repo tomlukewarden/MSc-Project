@@ -1,16 +1,16 @@
 
-export const beeIntroDialogue = [
+export const beeIntroDialogues = [
     "",
     "...Hey... I don't feel right...",
     "My heart... it’s fluttering all wrong...",
     "......Everything feels fuzzy... can you take a look?"
   ]
-  export const beePreDialogue =[
+  export const beePreDialogues =[
     "",
     "...Wow, you work fast... something already?"
   ]
 
-  export const beePostDialogue =[
+  export const beePostDialogues =[
     "",
     "Okay, okay, here goes...I feel...",
     "SO MUCH BETTER, OMG!!!",

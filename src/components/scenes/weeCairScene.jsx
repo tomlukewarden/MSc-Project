@@ -2,9 +2,9 @@ import Phaser from "phaser";
 import { createTextBox } from "../../dialogue/createTextbox";
 import {
   createBee,
-  beeIntroDialogue,
-  beePreDialogue,
-  beePostDialogue
+  beeIntroDialogues,
+  beePreDialogues,
+  beePostDialogues
 } from "../../npc/bee";
 import {
   createFairy,
@@ -12,6 +12,7 @@ import {
   fairyHelpDialogues,
   fairyGoodbyeDialogues
 } from "../../npc/fairy";
+
 
 class WeeCairScene extends Phaser.Scene {
   constructor() {
@@ -41,8 +42,8 @@ class WeeCairScene extends Phaser.Scene {
   }
 
   create() {
-    this.scene.launch("HUDScene");
-    this.scene.bringToTop("HUDScene");
+    // this.scene.launch("HUDScene");
+   //  this.scene.bringToTop("HUDScene");
 
     const { width, height } = this.sys.game.config;
     const scaleFactor = 0.175;
@@ -119,103 +120,81 @@ class WeeCairScene extends Phaser.Scene {
       });
     });
 
-    this.dialogueActive = false;
-    this.currentDialogueSet = 0;
-    this.currentDialogueIndex = 0;
-    this.hasTalkedToFairy = false;
-    this.hasTalkedToBee = false;
+  
+  this.dialogueSequence = [
+  { lines: fairyIntroDialogues, imageKey: "fairySad" },
+  { lines: beeIntroDialogues, imageKey: "bee" },
+  { lines: fairyHelpDialogues, imageKey: "fairySad" },
+  { lines: beePreDialogues, imageKey: "bee" },
+  { lines: beePostDialogues, imageKey: "bee" },
+  { lines: fairyGoodbyeDialogues, imageKey: "fairyHappy" }
+];
 
-    this.fairyDialogues = [
-      fairyIntroDialogues,
-      fairyHelpDialogues,
-      fairyGoodbyeDialogues
-    ];
+this.currentSet = 0;
+this.currentDialogueIndex = 0;
+this.dialogueActive = false;
 
-    this.beeDialogues =[ beeIntroDialogue, beePreDialogue, beePostDialogue ];
+this.startDialogueSequence = () => {
+  if (this.currentSet >= this.dialogueSequence.length) return;
+  this.activeDialogue = this.dialogueSequence[this.currentSet].lines;
+  this.activeImageKey = this.dialogueSequence[this.currentSet].imageKey;
+  this.currentDialogueIndex = 0;
+  this.dialogueActive = true;
 
-    fairy.on("pointerdown", () => {
-      if (this.dialogueActive || this.hasTalkedToFairy) return;
-      this.dialogueActive = true;
-      this.scene.sleep("HUDScene");
-      this.currentDialogueIndex = 0;
-      this.activeDialogue = this.fairyDialogues[this.currentDialogueSet];
-      this.showNextDialogue();
-    });
+  this.scene.sleep("HUDScene");
+  this.showDialogue(this.activeDialogue[this.currentDialogueIndex], {
+    imageKey: this.activeImageKey
+  });
+};
 
-    bee.on("pointerdown", () => {
-      if (this.dialogueActive || !this.hasTalkedToFairy || this.hasTalkedToBee) return;
-      this.dialogueActive = true;
-      this.scene.sleep("HUDScene");
-      this.currentDialogueIndex = 0;
-      this.activeDialogue = this.beeDialogues;
-      this.showNextDialogue();
-    });
-
-    this.input.on("pointerdown", () => {
-      if (!this.dialogueActive) return;
-      this.advanceDialogue();
-    });
+this.input.on("pointerdown", () => {
+  if (!this.dialogueActive) {
+    this.startDialogueSequence(); // Start next set when ready
+    return;
   }
 
-  advanceDialogue() {
+  this.currentDialogueIndex++;
+
+  if (this.currentDialogueIndex < this.activeDialogue.length) {
+    this.showDialogue(this.activeDialogue[this.currentDialogueIndex], {
+      imageKey: this.activeImageKey
+    });
+  } else {
     this.destroyDialogueUI();
-    this.currentDialogueIndex++;
+    this.dialogueActive = false;
+    this.currentSet++;
 
-    if (this.currentDialogueIndex < this.activeDialogue.length) {
-      this.showNextDialogue();
-    } else {
-      if (this.activeDialogue === this.fairyDialogues[this.currentDialogueSet]) {
-        this.hasTalkedToFairy = true;
-        this.currentDialogueSet++;
-      } else if (this.activeDialogue === this.beeDialogues) {
-        this.hasTalkedToBee = true;
-      }
-
-      this.currentDialogueIndex = 0;
-      this.dialogueActive = false;
-      this.scene.wake("HUDScene");
-
-      if (this.hasTalkedToFairy && this.hasTalkedToBee) {
-        this.scene.sleep("HUDScene");
-        this.showDialogue("You've spoken to everyone. Ready to move on?", {
-          options: [
-            {
-              label: "Go to the greenhouse",
-              onSelect: () => {
-                this.destroyDialogueUI();
-                this.scene.start("GreenhouseScene");
-              }
-            },
-            {
-              label: "Stay here",
-              onSelect: () => {
-                this.destroyDialogueUI();
-                this.scene.wake("HUDScene");
-              }
-            }
-          ]
-        });
-      }
+    // If done with all sets
+    if (this.currentSet >= this.dialogueSequence.length) {
+      this.showDialogue("What would you like to do?", {
+        imageKey: "fairy",
+        options: [
+          { label: "Go to the greenhouse", onSelect: () => this.scene.start("GreenhouseScene") },
+          { label: "Stay here", onSelect: () => {/* optional idle state */} }
+        ]
+      });
     }
   }
-
-  showNextDialogue() {
-    const line = this.activeDialogue[this.currentDialogueIndex];
-    this.dialogueBox = createTextBox(this, line, () => {});
+});
   }
+  
+showDialogue(text, optionsConfig = {}) {
+  this.destroyDialogueUI(); // Clean up old box before showing a new one
+  this.dialogueBox = createTextBox(this, text, optionsConfig);
+}
 
-  showDialogue(text, optionsConfig = {}) {
-    this.dialogueBox = createTextBox(this, text, optionsConfig);
-  }
+destroyDialogueUI() {
 
-  destroyDialogueUI() {
-    if (this.dialogueBox) {
-      this.dialogueBox.box?.destroy();
-      this.dialogueBox.textObj?.destroy();
-      this.dialogueBox.image?.destroy();
-      this.dialogueBox = null;
+  if (this.dialogueBox) {
+    this.dialogueBox.box?.destroy();
+    this.dialogueBox.textObj?.destroy();
+    this.dialogueBox.image?.destroy();
+    if (this.dialogueBox.optionButtons) {
+      this.dialogueBox.optionButtons.forEach(btn => btn.destroy());
     }
+    this.dialogueBox = null;
   }
+}
 }
 
 export default WeeCairScene;

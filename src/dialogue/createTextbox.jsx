@@ -13,17 +13,31 @@ export function createTextBox(scene, text, options = {}) {
         .setDepth(depth);
 
     let image = null;
-    const imageMargin = 24;
-    if (options.imageKey) {
-        image = scene.add.image(
-            width / 2 - boxWidth / 2 + imageMargin,
-            boxY,
-            options.imageKey
-        )
-        .setOrigin(0, 0.5)
-        .setScale(options.imageScale || (boxHeight / 128)) 
-        .setDepth(depth + 1);
-    }
+const imageMargin = 4;
+
+if (options.imageKey) {
+  image = scene.add.image(0, 0, options.imageKey);
+
+  const imageOriginalHeight = image.height;
+  const imageOriginalWidth = image.width;
+
+  const maxImageHeight = options.imageMaxHeight || (boxHeight * 0.8); // cap image to 80% of box height
+  const maxImageWidth = boxWidth * 0.3; // don't let it eat more than 30% of the box width
+
+  const heightScale = maxImageHeight / imageOriginalHeight;
+  const widthScale = maxImageWidth / imageOriginalWidth;
+
+  const finalScale = Math.min(heightScale, widthScale) * (options.scaleMultiplier || 1);
+
+  image
+    .setScale(finalScale)
+    .setOrigin(0, 0.5)
+    .setDepth(depth + 1)
+    .setPosition(
+      width / 2 - boxWidth / 2 + imageMargin,
+      boxY
+    );
+}
 
     const textMargin = options.imageKey ? (boxWidth * 0.13) : 24;
     const textObj = scene.add.text(
