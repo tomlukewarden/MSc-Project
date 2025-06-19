@@ -141,7 +141,6 @@ this.startDialogueSequence = () => {
   this.currentDialogueIndex = 0;
   this.dialogueActive = true;
 
-  this.scene.sleep("HUDScene");
   this.showDialogue(this.activeDialogue[this.currentDialogueIndex], {
     imageKey: this.activeImageKey
   });
@@ -167,7 +166,7 @@ this.input.on("pointerdown", () => {
     // If done with all sets
     if (this.currentSet >= this.dialogueSequence.length) {
       this.showDialogue("What would you like to do?", {
-        imageKey: "fairy",
+        imageKey: "fairyHappy",
         options: [
           { label: "Go to the greenhouse", onSelect: () => this.scene.start("GreenhouseScene") },
           { label: "Stay here", onSelect: () => {/* optional idle state */} }
