@@ -5,7 +5,7 @@ import HUDScene from "./hud";
 import OpenJournal from "./openJournal";
 import GreenhouseScene from "./scenes/greenhouseScene";
 import WeeCairScene from "./scenes/weeCairScene";
-import StartScene from "./scenes/startScene";
+// import StartScene from "./scenes/startScene";
 
 function GameCanvas() {
     const canvasRef = useRef(null);
@@ -25,7 +25,7 @@ function GameCanvas() {
                 autoCenter: Phaser.Scale.CENTER_BOTH,
             },
             canvas: canvasRef.current,
-            scene: [StartScene, GreenhouseScene, WeeCairScene, HUDScene, OpenJournal],
+            scene: [  WeeCairScene, GreenhouseScene, HUDScene,OpenJournal],
         };
 
         gameRef.current = new Phaser.Game(config);
@@ -40,9 +40,9 @@ function GameCanvas() {
 
         return () => {
             window.removeEventListener("resize", handleResize);
-            gameRef.current?.destroy(true); // Properly clean up when unmounting
+            gameRef.current?.destroy(true); 
         };
-    }, []); // Only runs once when the component mounts
+    }, []); 
 
     return <canvas ref={canvasRef} style={{ display: "block", width: "100%", height: "100vh", background: "#111" }} />;
 }
