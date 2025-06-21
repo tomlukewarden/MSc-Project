@@ -40,6 +40,7 @@ class WeeCairScene extends Phaser.Scene {
     this.load.image("bee", "/assets/npc/bee/bee-sad.png");
 
     this.load.image("talk", "/assets/interact/talk.png");
+    this.load.image("foxglovePlant", "/assets/plants/foxglove.png")
   }
 
   create() {
@@ -103,6 +104,10 @@ class WeeCairScene extends Phaser.Scene {
       .setVisible(false)
       .setDepth(10)
       .setOrigin(0.5);
+const foxglovePlant = this.add.image(width / 2, height / 2, "foxglovePlant")
+  .setScale(0.2)
+  .setDepth(100); 
+
 
     const bee = createBee(this, width / 2 + 200, height / 2 + 100);
     const fairy = createFairy(this, width / 2 - 200, height / 2 + 100);
