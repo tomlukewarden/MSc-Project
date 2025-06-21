@@ -104,9 +104,52 @@ class WeeCairScene extends Phaser.Scene {
       .setVisible(false)
       .setDepth(10)
       .setOrigin(0.5);
-const foxglovePlant = this.add.image(width / 2, height / 2, "foxglovePlant")
-  .setScale(0.2)
-  .setDepth(100); 
+
+const plantScale = 0.1;
+const plantTexture = this.textures.get("foxglovePlant").getSourceImage();
+const plantWidth = plantTexture.width * plantScale;
+const plantHeight = plantTexture.height * plantScale;
+const borderPadding = 20;
+const foxgloveContainer = this.add.container(width / 2, height / 2).setDepth(100);
+
+
+const border = this.add.rectangle(
+  0, 0,
+  plantWidth + borderPadding,
+  plantHeight + borderPadding,
+  0xffffff,
+).setStrokeStyle(2, 0x88cc88);
+
+const foxglovePlant = this.add.image(0, 0, "foxglovePlant")
+  .setScale(plantScale)
+  .setDepth(1);
+
+const topLabel = this.add.text(
+  0,
+  -(plantHeight / 2) - borderPadding / 2 - 20, 
+  "You Received:",
+  {
+    fontFamily: "Georgia",
+    fontSize: "18px",
+    color: "#ffffff",
+    align: "center"
+  }
+).setOrigin(0.5);
+
+
+const bottomLabel = this.add.text(
+  0, plantHeight / 2 + borderPadding / 2 + 12,
+  "Foxglove",
+  {
+    fontFamily: "Georgia",
+    fontSize: "18px",
+    color: "#ffffff",
+    align: "center"
+  }
+).setOrigin(0.5);
+
+foxgloveContainer.add([border, foxglovePlant, topLabel, bottomLabel]);
+
 
 
     const bee = createBee(this, width / 2 + 200, height / 2 + 100);
