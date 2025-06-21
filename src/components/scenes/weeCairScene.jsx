@@ -15,6 +15,7 @@ import {
 
 
 class WeeCairScene extends Phaser.Scene {
+
   constructor() {
     super({
       key: "WeeCairScene",
@@ -42,8 +43,8 @@ class WeeCairScene extends Phaser.Scene {
   }
 
   create() {
-    // this.scene.launch("HUDScene");
-   //  this.scene.bringToTop("HUDScene");
+    this.scene.launch("HUDScene");
+   this.scene.bringToTop("HUDScene");
 
     const { width, height } = this.sys.game.config;
     const scaleFactor = 0.175;
@@ -133,6 +134,8 @@ class WeeCairScene extends Phaser.Scene {
 this.currentSet = 0;
 this.currentDialogueIndex = 0;
 this.dialogueActive = false;
+this.currentNPC = null;
+
 
 this.startDialogueSequence = () => {
   if (this.currentSet >= this.dialogueSequence.length) return;
@@ -140,17 +143,32 @@ this.startDialogueSequence = () => {
   this.activeImageKey = this.dialogueSequence[this.currentSet].imageKey;
   this.currentDialogueIndex = 0;
   this.dialogueActive = true;
+  this.updateHUDState();
 
   this.showDialogue(this.activeDialogue[this.currentDialogueIndex], {
     imageKey: this.activeImageKey
   });
 };
 
-this.input.on("pointerdown", () => {
-  if (!this.dialogueActive) {
-    this.startDialogueSequence(); // Start next set when ready
-    return;
+fairy.on("pointerdown", () => {
+  if (!this.dialogueActive && this.dialogueSequence[this.currentSet]?.imageKey === "fairySad" || this.dialogueSequence[this.currentSet]?.imageKey === "fairyHappy") {
+    this.currentNPC = fairy;
+    this.startDialogueSequence();
   }
+});
+
+bee.on("pointerdown", () => {
+  if (!this.dialogueActive && this.dialogueSequence[this.currentSet]?.imageKey === "bee") {
+    this.currentNPC = bee;
+    this.startDialogueSequence();
+  }
+});
+
+
+this.input.on("pointerdown", (pointer, gameObjects) => {
+  if (!this.dialogueActive) return;
+
+  if (!gameObjects.includes(this.currentNPC)) return;
 
   this.currentDialogueIndex++;
 
@@ -161,15 +179,16 @@ this.input.on("pointerdown", () => {
   } else {
     this.destroyDialogueUI();
     this.dialogueActive = false;
+    this.updateHUDState();
     this.currentSet++;
+    this.currentNPC = null;
 
-    // If done with all sets
     if (this.currentSet >= this.dialogueSequence.length) {
       this.showDialogue("What would you like to do?", {
         imageKey: "fairyHappy",
         options: [
           { label: "Go to the greenhouse", onSelect: () => this.scene.start("GreenhouseScene") },
-          { label: "Stay here", onSelect: () => {/* optional idle state */} }
+          { label: "Stay here", onSelect: () => {} }
         ]
       });
     }
@@ -178,8 +197,16 @@ this.input.on("pointerdown", () => {
   }
   
 showDialogue(text, optionsConfig = {}) {
-  this.destroyDialogueUI(); // Clean up old box before showing a new one
+  this.destroyDialogueUI();
   this.dialogueBox = createTextBox(this, text, optionsConfig);
+}
+
+updateHUDState() {
+  if (this.dialogueActive) {
+    this.scene.sleep("HUDScene");
+  } else {
+    this.scene.wake("HUDScene");
+  }
 }
 
 destroyDialogueUI() {
@@ -195,5 +222,4 @@ destroyDialogueUI() {
   }
 }
 }
-
 export default WeeCairScene;
