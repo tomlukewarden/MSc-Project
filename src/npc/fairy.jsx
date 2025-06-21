@@ -19,8 +19,8 @@ export const fairyGoodbyeDialogues = [
 
 export function createFairy(scene, x, y) {
     const fairy = scene.add.sprite(x, y, "fairy")
-        .setScale(0.13)
-        .setOrigin(0.5, 0.5)
+        .setScale(0.07)
+        .setOrigin(-6, 2)
         .setInteractive({ useHandCursor: true });
 
     return fairy;
