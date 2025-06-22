@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import { createTextBox } from "../../dialogue/createTextbox";
+import { createOptionBox } from "../../dialogue/createOptionBox";
 import {
   createBee,
   beeIntroDialogues,
@@ -123,11 +124,14 @@ class WeeCairScene extends Phaser.Scene {
     });
 
   
-  this.dialogueSequence = [
+this.dialogueSequence = [
   { lines: fairyIntroDialogues, imageKey: "fairySad" },
   { lines: beeIntroDialogues, imageKey: "bee" },
   { lines: fairyHelpDialogues, imageKey: "fairySad" },
   { lines: beePreDialogues, imageKey: "bee" },
+
+  { choice: true },
+
   { lines: beePostDialogues, imageKey: "bee" },
   { lines: fairyGoodbyeDialogues, imageKey: "fairyHappy" }
 ];
@@ -188,12 +192,46 @@ this.input.on("pointerdown", (pointer, gameObjects) => {
   if (this.dialogueSequence[justCompletedSet] && this.dialogueSequence[justCompletedSet].lines === fairyHelpDialogues) {
     this.receivedItem();
 }
+if (this.dialogueSequence[justCompletedSet] && this.dialogueSequence[justCompletedSet].lines === fairyHelpDialogues) {
+  this.dialogueActive = true;
+  this.updateHUDState();
+
+  this.showDialogue("Would you like to give Paula Nator the Foxglove?", {
+    imageKey: "bee",
+    options: [
+      {
+        label: "Yes",
+        onSelect: () => {
+          this.showOption("You decide to heal your friend",);
+          this.destroyDialogueUI();
+          this.dialogueActive = false;
+          this.updateHUDState();
+          this.currentSet++; 
+          this.startDialogueSequence();
+        }
+      },
+      {
+        label: "No",
+        onSelect: () => {
+          this.destroyDialogueUI();
+          this.dialogueActive = true;
+          this.updateHUDState();
+          this.showOption("You decide to wait a bit longer.",);
+        }
+      }
+    ]
+  });
+
+  return; 
+}
+
+
     if (this.currentSet >= this.dialogueSequence.length) {
       this.showDialogue("What would you like to do?", {
         imageKey: "fairyHappy",
         options: [
-          { label: "Go to the greenhouse", onSelect: () => this.scene.start("GreenhouseScene") },
-          { label: "Stay here", onSelect: () => {} }
+          { label: "Go to the greenhouse", onSelect: () => {this.scene.start("GreenhouseScene"); this.showOption()}},
+          { label: "Stay here", onSelect: () => {this.showOption()} }
         ]
       });
     }
@@ -260,7 +298,6 @@ showDialogue(text, optionsConfig = {}) {
   this.destroyDialogueUI();
   this.dialogueBox = createTextBox(this, text, optionsConfig);
 }
-
 updateHUDState() {
   if (this.dialogueActive) {
     this.scene.sleep("HUDScene");
