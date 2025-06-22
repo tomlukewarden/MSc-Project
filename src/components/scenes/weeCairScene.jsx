@@ -199,7 +199,7 @@ this.input.on("pointerdown", (pointer, gameObjects) => {
     }
   }
 });
-  }
+}
 receivedItem() {
   const { width, height } = this.sys.game.config;
 
