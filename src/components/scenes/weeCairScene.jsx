@@ -186,22 +186,21 @@ if (isFinalLine) {
 
     };
 
-    fairy.on("pointerdown", () => {
-      const currentImage = this.dialogueSequence[this.currentSet]?.imageKey;
-      if (
-        !this.dialogueActive &&
-        (currentImage === "fairySad" || currentImage === "fairyHappy")
-      ) {
-        this.currentNPC = fairy;
-        this.startDialogueSequence();
-      }
-    });
+   fairy.on("pointerdown", () => {
+  const currentImage = this.dialogueSequence[this.currentSet]?.imageKey;
+  if (
+    !this.dialogueActive &&
+    (currentImage === "fairySad" || currentImage === "fairyHappy")
+  ) {
+    this.currentNPC = fairy;
+    this.startDialogueSequence();
+  }
+});
 
 bee.on("pointerdown", () => {
   const currentImage = this.dialogueSequence[this.currentSet]?.imageKey;
 
   if (this.dialogueActive && currentImage === "bee") {
-
     if (this.dialogueBox?.optionButtons?.length > 0) return;
 
     this.currentDialogueIndex++;
@@ -223,15 +222,35 @@ bee.on("pointerdown", () => {
         this.dialogueSequence[justCompletedSet] &&
         this.dialogueSequence[justCompletedSet].lines === fairyHelpDialogues
       ) {
-       this.receivedItem("foxglovePlant", "Foxglove");
+        this.receivedItem("foxglovePlant", "Foxglove");
       }
 
+      // 🪄 NEW: Automatically trigger fairyGoodbyeDialogues
+      if (
+        this.dialogueSequence[this.currentSet] &&
+        this.dialogueSequence[this.currentSet].lines === fairyGoodbyeDialogues
+      ) {
+        this.time.delayedCall(800, () => {
+          this.activeDialogue = fairyGoodbyeDialogues;
+          this.activeImageKey = "fairyHappy";
+          this.currentDialogueIndex = 0;
+          this.dialogueActive = true;
+          this.updateHUDState();
+          this.showDialogue(this.activeDialogue[this.currentDialogueIndex], {
+            imageKey: this.activeImageKey
+          });
+        });
+        return;
+      }
+
+      // Only show options *after* fairyGoodbye is done
       if (this.currentSet >= this.dialogueSequence.length) {
         this.showOption("What would you like to do?", {
           imageKey: "fairyHappy",
           options: [
             {
               label: "Go to the greenhouse",
+
               onSelect: () => {
                 this.scene.start("GreenhouseScene");
               }
@@ -294,7 +313,8 @@ bee.on("pointerdown", () => {
     });
     return;
   }
-  if (!this.dialogueActive && currentImage === "bee") {
+
+  if (!this.dialogueActive && (currentImage === "bee" || currentImage === "beeHappy")) {
     this.currentNPC = bee;
     this.startDialogueSequence();
   }
