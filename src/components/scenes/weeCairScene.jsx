@@ -45,6 +45,7 @@ class WeeCairScene extends Phaser.Scene {
     this.load.image("talk", "/assets/interact/talk.png");
 
     this.load.image("foxglovePlant", "/assets/plants/foxglove.png");
+    this.load.image("springShard", "/assets/items/spring.png")
   }
 
   create() {
@@ -224,6 +225,7 @@ bee.on("pointerdown", () => {
       ) {
         this.receivedItem("foxglovePlant", "Foxglove");
       }
+
     }
   }
 
@@ -291,13 +293,18 @@ bee.on("pointerdown", () => {
         });
     } else {
         if (this.activeDialogue === beeThanksDialogues) {
-            this.activeDialogue = fairyGoodbyeDialogues;
-            this.activeImageKey = "fairyHappy";
-            this.currentDialogueIndex = 0;
-            this.dialogueActive = true;
-            this.showDialogue(this.activeDialogue[this.currentDialogueIndex], { imageKey: this.activeImageKey });
-            return;
-        }
+          this.receivedItem("springShard", "Spring Shard");
+
+          this.time.delayedCall(1000, () => {
+              this.activeDialogue = fairyGoodbyeDialogues;
+              this.activeImageKey = "fairyHappy";
+              this.currentDialogueIndex = 0;
+              this.dialogueActive = true;
+              this.showDialogue(this.activeDialogue[this.currentDialogueIndex], { imageKey: this.activeImageKey });
+          });
+
+          return;
+      }
 
         if (this.activeDialogue === fairyGoodbyeDialogues) {
             this.destroyDialogueUI();
@@ -316,6 +323,7 @@ bee.on("pointerdown", () => {
                     {
                         label: "Stay here",
                         onSelect: () => {
+                          this.dialogueActive = true;
                             this.showDialogue("You decide to wait a bit longer...");
                         }
                     }
