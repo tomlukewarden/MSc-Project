@@ -1,5 +1,6 @@
 
 export const fairyIntroDialogues = [
+    "",
     "Thank goodness you arrived!",
     "The residents are falling ill...",
     "Just look at Paula Nator... she's not herself!",
@@ -7,6 +8,7 @@ export const fairyIntroDialogues = [
 ];
 
 export const fairyHelpDialogues = [
+    "",
     "Foxglove helps with heart stuff, right?",
     "I just so happen to have some!",
     "Can you make the remedy?"

@@ -46,6 +46,7 @@ class WeeCairScene extends Phaser.Scene {
   }
 
   create() {
+
     this.scene.launch("HUDScene");
     this.scene.bringToTop("HUDScene");
 
@@ -161,9 +162,26 @@ class WeeCairScene extends Phaser.Scene {
       this.currentDialogueIndex = 0;
       this.dialogueActive = true;
       this.updateHUDState();
-      this.showDialogue(this.activeDialogue[this.currentDialogueIndex], {
-        imageKey: this.activeImageKey
-      });
+      const isFinalLine =
+  this.activeDialogue === fairyHelpDialogues &&
+  this.currentDialogueIndex === this.activeDialogue.length - 1;
+
+this.showDialogue(this.activeDialogue[this.currentDialogueIndex], {
+  imageKey: this.activeImageKey
+});
+
+if (isFinalLine) {
+  this.time.delayedCall(2000, () => {
+    this.destroyDialogueUI();
+    this.dialogueActive = false;
+    this.updateHUDState();
+    this.currentSet++;
+    this.currentNPC = null;
+
+    this.receivedItem("foxglovePlant", "Foxglove");
+  });
+}
+
     };
 
     fairy.on("pointerdown", () => {
@@ -204,7 +222,6 @@ bee.on("pointerdown", () => {
         this.dialogueSequence[justCompletedSet].lines === fairyHelpDialogues
       ) {
        this.receivedItem("foxglovePlant", "Foxglove");
-
       }
 
       if (this.currentSet >= this.dialogueSequence.length) {
@@ -284,8 +301,6 @@ bee.on("pointerdown", () => {
 
    this.input.on("pointerdown", (pointer, gameObjects) => {
   if (!this.dialogueActive) return;
-
-  // If there's a choice box on screen, don’t advance
   if (this.dialogueBox?.optionButtons?.length > 0) return;
 
   this.currentDialogueIndex++;
@@ -344,7 +359,7 @@ bee.on("pointerdown", () => {
   const itemWidth = itemTexture.width * scale;
   const itemHeight = itemTexture.height * scale;
 
-  const container = this.add.container(width / 2, height / 2).setDepth(100);
+  const container = this.add.container(width / 2, height / 2).setDepth(103);
 
   const border = this.add
     .rectangle(0, 0, itemWidth + borderPadding, itemHeight + borderPadding, 0xffffff)
@@ -353,7 +368,7 @@ bee.on("pointerdown", () => {
   const itemImage = this.add
     .image(0, 0, itemKey)
     .setScale(scale)
-    .setDepth(1);
+
 
   const topLabel = this.add
     .text(0, -(itemHeight / 2) - borderPadding / 2 - 20, "You Received:", {
@@ -374,6 +389,7 @@ bee.on("pointerdown", () => {
     .setOrigin(0.5);
 
   container.add([border, itemImage, topLabel, bottomLabel]);
+  console.log(`Received item: ${itemKey}`);
 
   this[`${itemKey}Received`] = true;
 
