@@ -1,6 +1,13 @@
 export function createOptionBox(scene, promptText, { imageKey, options = [] } = {}) {
   const { width, height } = scene.sys.game.config;
 
+  scene.dialogueActive = true;
+  if (typeof scene.updateHUDState === "function") {
+    scene.updateHUDState();
+  } else if (scene.scene && typeof scene.scene.sleep === "function") {
+    scene.scene.sleep("HUDScene");
+  }
+
   const container = scene.add.container(width / 2, height - 100).setDepth(105);
 
   const background = scene.add.rectangle(0, 0, 380, 100 + options.length * 40, 0x000000, 0.7)
@@ -21,7 +28,7 @@ export function createOptionBox(scene, promptText, { imageKey, options = [] } = 
 
   let currentY = text.y + text.height + 10;
 
-  const buttons = options.map((opt) => {
+  const optionButtons = options.map((opt) => {
     const btn = scene.add.text(
       text.x,
       currentY,
@@ -38,6 +45,16 @@ export function createOptionBox(scene, promptText, { imageKey, options = [] } = 
       .on("pointerover", () => btn.setStyle({ backgroundColor: "#666" }))
       .on("pointerout", () => btn.setStyle({ backgroundColor: "#444" }))
       .on("pointerdown", () => {
+        // Clean up UI and wake HUD
+        if (typeof scene.destroyDialogueUI === "function") {
+          scene.destroyDialogueUI();
+        }
+        scene.dialogueActive = false;
+        if (typeof scene.updateHUDState === "function") {
+          scene.updateHUDState();
+        } else if (scene.scene && typeof scene.scene.wake === "function") {
+          scene.scene.wake("HUDScene");
+        }
         opt.onSelect?.();
         container.destroy();
       });
@@ -46,7 +63,11 @@ export function createOptionBox(scene, promptText, { imageKey, options = [] } = 
     return btn;
   });
 
-  container.add([background, text, ...buttons]);
+  container.add([background, text, ...optionButtons]);
 
-  return container;
+  return {
+    box: container,
+    textObj: text,
+    optionButtons
+  };
 }
