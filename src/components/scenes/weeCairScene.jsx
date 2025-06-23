@@ -224,49 +224,7 @@ bee.on("pointerdown", () => {
       ) {
         this.receivedItem("foxglovePlant", "Foxglove");
       }
-
-      // 🪄 NEW: Automatically trigger fairyGoodbyeDialogues
-      if (
-        this.dialogueSequence[this.currentSet] &&
-        this.dialogueSequence[this.currentSet].lines === fairyGoodbyeDialogues
-      ) {
-        this.time.delayedCall(800, () => {
-          this.activeDialogue = fairyGoodbyeDialogues;
-          this.activeImageKey = "fairyHappy";
-          this.currentDialogueIndex = 0;
-          this.dialogueActive = true;
-          this.updateHUDState();
-          this.showDialogue(this.activeDialogue[this.currentDialogueIndex], {
-            imageKey: this.activeImageKey
-          });
-        });
-        return;
-      }
-
-      // Only show options *after* fairyGoodbye is done
-      if (this.currentSet >= this.dialogueSequence.length) {
-        this.showOption("What would you like to do?", {
-          imageKey: "fairyHappy",
-          options: [
-            {
-              label: "Go to the greenhouse",
-
-              onSelect: () => {
-                this.scene.start("GreenhouseScene");
-              }
-            },
-            {
-              label: "Stay here",
-              onSelect: () => {
-                this.showDialogue("You decide to wait a bit longer...");
-              }
-            }
-          ]
-        });
-      }
     }
-
-    return;
   }
 
   if (this.foxglovePlantReceived) {
@@ -321,52 +279,69 @@ bee.on("pointerdown", () => {
 });
 
 
-   this.input.on("pointerdown", (pointer, gameObjects) => {
-  if (!this.dialogueActive) return;
-  if (this.dialogueBox?.optionButtons?.length > 0) return;
+   this.input.on("pointerdown", () => {
+    if (!this.dialogueActive || !this.activeDialogue) return;
+    if (this.dialogueBox?.optionButtons?.length > 0) return;
 
-  this.currentDialogueIndex++;
+    this.currentDialogueIndex++;
 
-  if (this.currentDialogueIndex < this.activeDialogue.length) {
-    this.showDialogue(this.activeDialogue[this.currentDialogueIndex], {
-      imageKey: this.activeImageKey
-    });
-  } else {
-    this.destroyDialogueUI();
-    this.dialogueActive = false;
-    this.updateHUDState();
-    this.currentSet++;
-    this.currentNPC = null;
+    if (this.currentDialogueIndex < this.activeDialogue.length) {
+        this.showDialogue(this.activeDialogue[this.currentDialogueIndex], {
+            imageKey: this.activeImageKey
+        });
+    } else {
+        if (this.activeDialogue === beeThanksDialogues) {
+            this.activeDialogue = fairyGoodbyeDialogues;
+            this.activeImageKey = "fairyHappy";
+            this.currentDialogueIndex = 0;
+            this.dialogueActive = true;
+            this.showDialogue(this.activeDialogue[this.currentDialogueIndex], { imageKey: this.activeImageKey });
+            return;
+        }
 
-    const justCompletedSet = this.currentSet - 1;
+        if (this.activeDialogue === fairyGoodbyeDialogues) {
+            this.destroyDialogueUI();
+            this.dialogueActive = false;
+            this.updateHUDState();
 
-    if (
-      this.dialogueSequence[justCompletedSet] &&
-      this.dialogueSequence[justCompletedSet].lines === fairyHelpDialogues
-    ) {
-      this.receivedItem("foxglovePlant", "Foxglove");
+            this.showOption("What would you like to do?", {
+                imageKey: "fairyHappy",
+                options: [
+                    {
+                        label: "Go to the greenhouse",
+                        onSelect: () => {
+                            this.scene.start("GreenhouseScene");
+                        }
+                    },
+                    {
+                        label: "Stay here",
+                        onSelect: () => {
+                            this.showDialogue("You decide to wait a bit longer...");
+                        }
+                    }
+                ]
+            });
+            return;
+        }
+        this.destroyDialogueUI();
+        this.dialogueActive = false;
+        this.updateHUDState();
+        this.currentSet++;
+        this.currentNPC = null;
+
+        const justCompletedSet = this.currentSet - 1;
+        if (
+            this.dialogueSequence[justCompletedSet] &&
+            this.dialogueSequence[justCompletedSet].lines === fairyHelpDialogues
+        ) {
+            this.receivedItem("foxglovePlant", "Foxglove");
+        }
+
+        if (this.currentSet < this.dialogueSequence.length) {
+        } else {
+            console.log("Dialogue sequence completed.");
+        }
     }
-
-    if (this.currentSet >= this.dialogueSequence.length) {
-      this.showOption("What would you like to do?", {
-        imageKey: "fairyHappy",
-        options: [
-          {
-            label: "Go to the greenhouse",
-            onSelect: () => {
-              this.scene.start("GreenhouseScene");
-            }
-          },
-          {
-            label: "Stay here",
-            onSelect: () => {
-              this.showDialogue("You decide to wait a bit longer...");
-            }
-          }
-        ]
-      });
-    }
-  }
 });
   }
 
