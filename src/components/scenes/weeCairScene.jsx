@@ -153,7 +153,7 @@ class WeeCairScene extends Phaser.Scene {
     this.currentDialogueIndex = 0;
     this.dialogueActive = false;
     this.currentNPC = null;
-    this.foxgloveRecieved = false;
+    this.foxglovePlantRecieved = false;
 
     this.startDialogueSequence = () => {
       if (this.currentSet >= this.dialogueSequence.length) return;
@@ -217,13 +217,6 @@ bee.on("pointerdown", () => {
 
       const justCompletedSet = this.currentSet - 1;
 
-      if (
-        this.dialogueSequence[justCompletedSet] &&
-        this.dialogueSequence[justCompletedSet].lines === fairyHelpDialogues
-      ) {
-       this.receivedItem("foxglovePlant", "Foxglove");
-      }
-
       if (this.currentSet >= this.dialogueSequence.length) {
         this.showOption("What would you like to do?", {
           imageKey: "fairyHappy",
@@ -248,7 +241,7 @@ bee.on("pointerdown", () => {
     return;
   }
 
-  if (this.foxgloveRecieved) {
+  if (this.foxglovePlantRecieved) {
     this.dialogueActive = true;
     this.updateHUDState();
     this.showOption("Give Paula the Foxglove?", {
@@ -322,7 +315,7 @@ bee.on("pointerdown", () => {
       this.dialogueSequence[justCompletedSet] &&
       this.dialogueSequence[justCompletedSet].lines === fairyHelpDialogues
     ) {
-      this.receivedItem();
+      this.receivedItem("foxglovePlant", "Foxglove");
     }
 
     if (this.currentSet >= this.dialogueSequence.length) {
@@ -349,6 +342,10 @@ bee.on("pointerdown", () => {
   }
 
   receivedItem(itemKey, itemName, options = {}) {
+  if (!itemKey || !itemName) {
+    console.warn("receivedItem called without itemKey or itemName");
+    return;
+  }
   const { width, height } = this.sys.game.config;
   const scale = options.scale || 0.1;
   const borderPadding = options.borderPadding || 20;
