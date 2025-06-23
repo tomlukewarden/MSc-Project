@@ -1,5 +1,6 @@
 
 export const fairyIntroDialogues = [
+    "",
     "Thank goodness you arrived!",
     "The residents are falling ill...",
     "Just look at Paula Nator... she's not herself!",
@@ -7,14 +8,15 @@ export const fairyIntroDialogues = [
 ];
 
 export const fairyHelpDialogues = [
+    "",
     "Foxglove helps with heart stuff, right?",
     "I just so happen to have some!",
     "Can you make the remedy?"
 ];
 
 export const fairyGoodbyeDialogues = [
-    "You're ready for the gardens!",
-    "Do you feel the same?"
+    "I think you've really helped Paula here! I think it's time to head over to the gardens.",
+    "What do you think?"
 ];
 
 export function createFairy(scene, x, y) {

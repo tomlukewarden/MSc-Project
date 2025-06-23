@@ -5,7 +5,7 @@ export function createTextBox(scene, text, options = {}) {
     const boxHeight = options.height || height * 0.16;
     const boxY = options.y || height - boxHeight / 2 - height * 0.04;
     const fontSize = options.fontSize || Math.round(height * 0.03);
-    const depth = options.depth || 100;
+    const depth = 105;
 
 
     const box = scene.add.rectangle(width / 2, boxY, boxWidth, boxHeight, 0xffffff, 0.92)
@@ -21,8 +21,8 @@ if (options.imageKey) {
   const imageOriginalHeight = image.height;
   const imageOriginalWidth = image.width;
 
-  const maxImageHeight = options.imageMaxHeight || (boxHeight * 0.8); // cap image to 80% of box height
-  const maxImageWidth = boxWidth * 0.3; // don't let it eat more than 30% of the box width
+  const maxImageHeight = options.imageMaxHeight || (boxHeight * 0.8);
+  const maxImageWidth = boxWidth * 0.3; 
 
   const heightScale = maxImageHeight / imageOriginalHeight;
   const widthScale = maxImageWidth / imageOriginalWidth;
@@ -32,7 +32,7 @@ if (options.imageKey) {
   image
     .setScale(finalScale)
     .setOrigin(0, 0.5)
-    .setDepth(depth + 1)
+    .setDepth(105)
     .setPosition(
       width / 2 - boxWidth / 2 + imageMargin,
       boxY
