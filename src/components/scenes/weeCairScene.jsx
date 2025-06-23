@@ -40,6 +40,8 @@ class WeeCairScene extends Phaser.Scene {
     this.load.image("fairyConfused", "/assets/npc/fairy/fairy-aaaa.PNG");
 
     this.load.image("bee", "/assets/npc/bee/bee-sad.png");
+    this.load.image("beeHappy", "/assets/npc/bee/bee-happy.png");
+    
     this.load.image("talk", "/assets/interact/talk.png");
 
     this.load.image("foxglovePlant", "/assets/plants/foxglove.png");
@@ -145,7 +147,7 @@ class WeeCairScene extends Phaser.Scene {
       { lines: fairyIntroDialogues, imageKey: "fairySad" },
       { lines: beeIntroDialogues, imageKey: "bee" },
       { lines: fairyHelpDialogues, imageKey: "fairySad" },
-      { lines: beeThanksDialogues, imageKey: "bee" },
+      { lines: beeThanksDialogues, imageKey: "beeHappy" },
       { lines: fairyGoodbyeDialogues, imageKey: "fairyHappy" }
     ];
 
@@ -260,7 +262,7 @@ bee.on("pointerdown", () => {
             this.hasMadeFoxgloveChoice = true;
             this.destroyDialogueUI();
             this.dialogueActive = true;
-            this.foxgloveReceived = false;
+            this.foxgloveReceived = true;
 
             this.showDialogue("You hand her the plant...", {
               imageKey: "bee"
