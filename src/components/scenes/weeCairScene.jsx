@@ -203,7 +203,8 @@ bee.on("pointerdown", () => {
         this.dialogueSequence[justCompletedSet] &&
         this.dialogueSequence[justCompletedSet].lines === fairyHelpDialogues
       ) {
-        this.receivedItem();
+       this.receivedItem("foxglovePlant", "Foxglove");
+
       }
 
       if (this.currentSet >= this.dialogueSequence.length) {
@@ -230,7 +231,6 @@ bee.on("pointerdown", () => {
     return;
   }
 
-  // 🐝 Foxglove choice sequence
   if (this.foxgloveRecieved) {
     this.dialogueActive = true;
     this.updateHUDState();
@@ -333,55 +333,60 @@ bee.on("pointerdown", () => {
 });
   }
 
-  receivedItem() {
-    const { width, height } = this.sys.game.config;
-    const plantScale = 0.1;
-    const plantTexture = this.textures.get("foxglovePlant").getSourceImage();
-    const plantWidth = plantTexture.width * plantScale;
-    const plantHeight = plantTexture.height * plantScale;
-    const borderPadding = 20;
+  receivedItem(itemKey, itemName, options = {}) {
+  const { width, height } = this.sys.game.config;
+  const scale = options.scale || 0.1;
+  const borderPadding = options.borderPadding || 20;
+  const borderColor = options.borderColor || 0x88cc88;
+  const textColor = options.textColor || "#ffffff";
 
-    const foxgloveContainer = this.add.container(width / 2, height / 2).setDepth(100);
+  const itemTexture = this.textures.get(itemKey).getSourceImage();
+  const itemWidth = itemTexture.width * scale;
+  const itemHeight = itemTexture.height * scale;
 
-    const border = this.add
-      .rectangle(0, 0, plantWidth + borderPadding, plantHeight + borderPadding, 0xffffff)
-      .setStrokeStyle(2, 0x88cc88);
+  const container = this.add.container(width / 2, height / 2).setDepth(100);
 
-    const foxglovePlant = this.add
-      .image(0, 0, "foxglovePlant")
-      .setScale(plantScale)
-      .setDepth(1);
+  const border = this.add
+    .rectangle(0, 0, itemWidth + borderPadding, itemHeight + borderPadding, 0xffffff)
+    .setStrokeStyle(2, borderColor);
 
-    const topLabel = this.add
-      .text(0, -(plantHeight / 2) - borderPadding / 2 - 20, "You Received:", {
-        fontFamily: "Georgia",
-        fontSize: "18px",
-        color: "#ffffff",
-        align: "center"
-      })
-      .setOrigin(0.5);
+  const itemImage = this.add
+    .image(0, 0, itemKey)
+    .setScale(scale)
+    .setDepth(1);
 
-    const bottomLabel = this.add
-      .text(0, plantHeight / 2 + borderPadding / 2 + 12, "Foxglove", {
-        fontFamily: "Georgia",
-        fontSize: "18px",
-        color: "#ffffff",
-        align: "center"
-      })
-      .setOrigin(0.5);
+  const topLabel = this.add
+    .text(0, -(itemHeight / 2) - borderPadding / 2 - 20, "You Received:", {
+      fontFamily: "Georgia",
+      fontSize: "18px",
+      color: textColor,
+      align: "center"
+    })
+    .setOrigin(0.5);
 
-    foxgloveContainer.add([border, foxglovePlant, topLabel, bottomLabel]);
-    this.foxgloveRecieved = true;
+  const bottomLabel = this.add
+    .text(0, itemHeight / 2 + borderPadding / 2 + 12, itemName, {
+      fontFamily: "Georgia",
+      fontSize: "18px",
+      color: textColor,
+      align: "center"
+    })
+    .setOrigin(0.5);
 
-    this.time.delayedCall(3000, () => {
-      this.tweens.add({
-        targets: foxgloveContainer,
-        alpha: 0,
-        duration: 500,
-        onComplete: () => foxgloveContainer.destroy()
-      });
+  container.add([border, itemImage, topLabel, bottomLabel]);
+
+  this[`${itemKey}Received`] = true;
+
+  this.time.delayedCall(3000, () => {
+    this.tweens.add({
+      targets: container,
+      alpha: 0,
+      duration: 500,
+      onComplete: () => container.destroy()
     });
-  }
+  });
+}
+
 
   showDialogue(text, optionsConfig = {}) {
     this.destroyDialogueUI();
@@ -392,6 +397,7 @@ bee.on("pointerdown", () => {
     this.destroyDialogueUI();
     this.dialogueBox = createOptionBox(this, text, config);
   }
+
 
   updateHUDState() {
     if (this.dialogueActive) {
