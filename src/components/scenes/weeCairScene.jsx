@@ -153,7 +153,7 @@ class WeeCairScene extends Phaser.Scene {
     this.currentDialogueIndex = 0;
     this.dialogueActive = false;
     this.currentNPC = null;
-    this.foxglovePlantRecieved = false;
+    this.foxglovePlantReceived = false;
 
     this.startDialogueSequence = () => {
       if (this.currentSet >= this.dialogueSequence.length) return;
@@ -217,6 +217,13 @@ bee.on("pointerdown", () => {
 
       const justCompletedSet = this.currentSet - 1;
 
+      if (
+        this.dialogueSequence[justCompletedSet] &&
+        this.dialogueSequence[justCompletedSet].lines === fairyHelpDialogues
+      ) {
+       this.receivedItem("foxglovePlant", "Foxglove");
+      }
+
       if (this.currentSet >= this.dialogueSequence.length) {
         this.showOption("What would you like to do?", {
           imageKey: "fairyHappy",
@@ -241,7 +248,7 @@ bee.on("pointerdown", () => {
     return;
   }
 
-  if (this.foxglovePlantRecieved) {
+  if (this.foxglovePlantReceived) {
     this.dialogueActive = true;
     this.updateHUDState();
     this.showOption("Give Paula the Foxglove?", {
@@ -253,7 +260,7 @@ bee.on("pointerdown", () => {
             this.hasMadeFoxgloveChoice = true;
             this.destroyDialogueUI();
             this.dialogueActive = true;
-            this.foxgloveRecieved = false;
+            this.foxgloveReceived = false;
 
             this.showDialogue("You hand her the plant...", {
               imageKey: "bee"
