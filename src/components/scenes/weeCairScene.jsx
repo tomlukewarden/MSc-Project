@@ -216,7 +216,7 @@ if (this.dialogueSequence[justCompletedSet] && this.dialogueSequence[justComplet
           this.dialogueActive = true;
           this.updateHUDState();
           this.currentSet--
-          this.showDialogue("You decide to wait a bit longer.",);
+          this.showDialogue("You decide to wait a bit longer...",);
         }
       }
     ]
@@ -227,11 +227,11 @@ if (this.dialogueSequence[justCompletedSet] && this.dialogueSequence[justComplet
 
 
     if (this.currentSet >= this.dialogueSequence.length) {
-      this.showDialogue("What would you like to do?", {
+      this.showOption("What would you like to do?", {
         imageKey: "fairyHappy",
         options: [
-          { label: "Go to the greenhouse", onSelect: () => {this.scene.start("GreenhouseScene"); this.showOption()}},
-          { label: "Stay here", onSelect: () => {this.showOption()} }
+          { label: "Go to the greenhouse", onSelect: () => {this.scene.start("GreenhouseScene");}},
+          { label: "Stay here", onSelect: () => {this.showDialogue("You decide to wait a bit longer...")} }
         ]
       });
     }
