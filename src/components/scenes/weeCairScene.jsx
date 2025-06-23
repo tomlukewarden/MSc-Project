@@ -4,8 +4,7 @@ import { createOptionBox } from "../../dialogue/createOptionBox";
 import {
   createBee,
   beeIntroDialogues,
-  beePreDialogues,
-  beePostDialogues
+  beeThanksDialogues
 } from "../../npc/bee";
 import {
   createFairy,
@@ -145,8 +144,7 @@ class WeeCairScene extends Phaser.Scene {
       { lines: fairyIntroDialogues, imageKey: "fairySad" },
       { lines: beeIntroDialogues, imageKey: "bee" },
       { lines: fairyHelpDialogues, imageKey: "fairySad" },
-      { lines: beePreDialogues, imageKey: "bee" },
-      { lines: beePostDialogues, imageKey: "bee" },
+      { lines: beeThanksDialogues, imageKey: "bee" },
       { lines: fairyGoodbyeDialogues, imageKey: "fairyHappy" }
     ];
 
@@ -179,59 +177,110 @@ class WeeCairScene extends Phaser.Scene {
       }
     });
 
-    bee.on("pointerdown", () => {
-      if (this.dialogueActive) return;
+bee.on("pointerdown", () => {
+  const currentImage = this.dialogueSequence[this.currentSet]?.imageKey;
 
-      if (this.foxgloveRecieved) {
-        this.dialogueActive = true;
-        this.updateHUDState();
-        this.showOption("Give Paula the Foxglove?", {
-          imageKey: "bee",
+  if (this.dialogueActive && currentImage === "bee") {
+
+    if (this.dialogueBox?.optionButtons?.length > 0) return;
+
+    this.currentDialogueIndex++;
+
+    if (this.currentDialogueIndex < this.activeDialogue.length) {
+      this.showDialogue(this.activeDialogue[this.currentDialogueIndex], {
+        imageKey: this.activeImageKey
+      });
+    } else {
+      this.destroyDialogueUI();
+      this.dialogueActive = false;
+      this.updateHUDState();
+      this.currentSet++;
+      this.currentNPC = null;
+
+      const justCompletedSet = this.currentSet - 1;
+
+      if (
+        this.dialogueSequence[justCompletedSet] &&
+        this.dialogueSequence[justCompletedSet].lines === fairyHelpDialogues
+      ) {
+        this.receivedItem();
+      }
+
+      if (this.currentSet >= this.dialogueSequence.length) {
+        this.showOption("What would you like to do?", {
+          imageKey: "fairyHappy",
           options: [
             {
-              label: "Yes",
+              label: "Go to the greenhouse",
               onSelect: () => {
-                this.hasMadeFoxgloveChoice = true;
-                this.destroyDialogueUI();
-                this.dialogueActive = true;
-                this.foxgloveRecieved = false;
-
-                this.showDialogue("You hand her the plant...", {
-                  imageKey: "bee"
-                });
-
-                this.time.delayedCall(800, () => {
-                  this.activeDialogue = beePreDialogues;
-                  this.activeImageKey = "bee";
-                  this.currentDialogueIndex = 0;
-                  this.dialogueActive = true;
-                  this.updateHUDState();
-                  this.showDialogue(this.activeDialogue[this.currentDialogueIndex], {
-                    imageKey: this.activeImageKey
-                  });
-                });
+                this.scene.start("GreenhouseScene");
               }
             },
             {
-              label: "No",
+              label: "Stay here",
               onSelect: () => {
-                this.destroyDialogueUI();
-                this.dialogueActive = true;
-                this.showDialogue("You decide to hold off for now.", {
-                  imageKey: "bee"
-                });
+                this.showDialogue("You decide to wait a bit longer...");
               }
             }
           ]
         });
-        return;
       }
+    }
 
-      if (this.dialogueSequence[this.currentSet]?.imageKey === "bee") {
-        this.currentNPC = bee;
-        this.startDialogueSequence();
-      }
+    return;
+  }
+
+  // 🐝 Foxglove choice sequence
+  if (this.foxgloveRecieved) {
+    this.dialogueActive = true;
+    this.updateHUDState();
+    this.showOption("Give Paula the Foxglove?", {
+      imageKey: "bee",
+      options: [
+        {
+          label: "Yes",
+          onSelect: () => {
+            this.hasMadeFoxgloveChoice = true;
+            this.destroyDialogueUI();
+            this.dialogueActive = true;
+            this.foxgloveRecieved = false;
+
+            this.showDialogue("You hand her the plant...", {
+              imageKey: "bee"
+            });
+
+            this.time.delayedCall(800, () => {
+              this.activeDialogue = beeThanksDialogues;
+              this.activeImageKey = "bee";
+              this.currentDialogueIndex = 0;
+              this.dialogueActive = true;
+              this.updateHUDState();
+              this.showDialogue(this.activeDialogue[this.currentDialogueIndex], {
+                imageKey: this.activeImageKey
+              });
+            });
+          }
+        },
+        {
+          label: "No",
+          onSelect: () => {
+            this.destroyDialogueUI();
+            this.dialogueActive = true;
+            this.showDialogue("You decide to hold off for now.", {
+              imageKey: "bee"
+            });
+          }
+        }
+      ]
     });
+    return;
+  }
+  if (!this.dialogueActive && currentImage === "bee") {
+    this.currentNPC = bee;
+    this.startDialogueSequence();
+  }
+});
+
 
    this.input.on("pointerdown", (pointer, gameObjects) => {
   if (!this.dialogueActive) return;
