@@ -17,10 +17,7 @@ class WeeCairScene extends Phaser.Scene {
   constructor() {
     super({
       key: "WeeCairScene",
-      physics: {
-        default: "arcade",
-        arcade: { debug: false }
-      }
+      physics: { default: "arcade", arcade: { debug: false } }
     });
   }
 
@@ -28,34 +25,29 @@ class WeeCairScene extends Phaser.Scene {
     this.load.tilemapTiledJSON("weeCairMap", "/assets/maps/weeCairMap.json");
     this.load.image("weeCairBackground", "/assets/backgrounds/weecair/weecair.png");
     this.load.image("weeCairArch", "/assets/backgrounds/weecair/archway.png");
-
     this.load.image("defaultFront", "/assets/char/default/front-default.png");
     this.load.image("defaultBack", "/assets/char/default/back-default.png");
     this.load.image("defaultLeft", "/assets/char/default/left-default.png");
     this.load.image("defaultRight", "/assets/char/default/right-default.png");
-
     this.load.image("fairy", "/assets/npc/fairy/fairy.png");
     this.load.image("fairySad", "/assets/npc/fairy/fairy-sad.PNG");
     this.load.image("fairyHappy", "/assets/npc/fairy/fairy-happy.PNG");
     this.load.image("fairyConfused", "/assets/npc/fairy/fairy-aaaa.PNG");
-
     this.load.image("bee", "/assets/npc/bee/bee-sad.png");
     this.load.image("beeHappy", "/assets/npc/bee/bee-happy.png");
-    
     this.load.image("talk", "/assets/interact/talk.png");
-
     this.load.image("foxglovePlant", "/assets/plants/foxglove.png");
-    this.load.image("springShard", "/assets/items/spring.png")
+    this.load.image("springShard", "/assets/items/spring.png");
   }
 
   create() {
-
+    // --- Launch HUD ---
     this.scene.launch("HUDScene");
     this.scene.bringToTop("HUDScene");
 
+    // --- Map and background ---
     const { width, height } = this.sys.game.config;
     const scaleFactor = 0.175;
-
     this.add.image(width / 2, height / 2, "weeCairBackground").setScale(scaleFactor);
 
     const map = this.make.tilemap({ key: "weeCairMap" });
@@ -78,6 +70,7 @@ class WeeCairScene extends Phaser.Scene {
       });
     }
 
+    // --- Player character ---
     const char = this.physics.add
       .sprite(width / 2, 99, "defaultFront")
       .setScale(0.05)
@@ -110,7 +103,6 @@ class WeeCairScene extends Phaser.Scene {
           break;
       }
     });
-
     this.input.keyboard.on("keyup", () => char.setVelocity(0));
     this.physics.add.collider(char, collisionGroup);
 
@@ -120,6 +112,7 @@ class WeeCairScene extends Phaser.Scene {
       .setOrigin(0.5)
       .setDepth(20);
 
+    // --- Talk icon ---
     const talkIcon = this.add
       .image(0, 0, "talk")
       .setScale(0.05)
@@ -127,6 +120,7 @@ class WeeCairScene extends Phaser.Scene {
       .setDepth(10)
       .setOrigin(0.5);
 
+    // --- NPCs ---
     const bee = createBee(this, width / 2 + 200, height / 2 + 100);
     const fairy = createFairy(this, width / 2 - 200, height / 2 + 100);
 
@@ -144,6 +138,7 @@ class WeeCairScene extends Phaser.Scene {
       });
     });
 
+    // --- Dialogue sequence ---
     this.dialogueSequence = [
       { lines: fairyIntroDialogues, imageKey: "fairySad" },
       { lines: beeIntroDialogues, imageKey: "bee" },
@@ -151,13 +146,15 @@ class WeeCairScene extends Phaser.Scene {
       { lines: beeThanksDialogues, imageKey: "beeHappy" },
       { lines: fairyGoodbyeDialogues, imageKey: "fairyHappy" }
     ];
-
     this.currentSet = 0;
     this.currentDialogueIndex = 0;
     this.dialogueActive = false;
     this.currentNPC = null;
     this.foxglovePlantReceived = false;
+    this.springShardReceived = false;
+    this.hasMadeFoxgloveChoice = false;
 
+    // --- Start dialogue sequence ---
     this.startDialogueSequence = () => {
       if (this.currentSet >= this.dialogueSequence.length) return;
       this.activeDialogue = this.dialogueSequence[this.currentSet].lines;
@@ -165,172 +162,142 @@ class WeeCairScene extends Phaser.Scene {
       this.currentDialogueIndex = 0;
       this.dialogueActive = true;
       this.updateHUDState();
-      const isFinalLine =
-  this.activeDialogue === fairyHelpDialogues &&
-  this.currentDialogueIndex === this.activeDialogue.length - 1;
-
-this.showDialogue(this.activeDialogue[this.currentDialogueIndex], {
-  imageKey: this.activeImageKey
-});
-
-if (isFinalLine) {
-  this.time.delayedCall(2000, () => {
-    this.destroyDialogueUI();
-    this.dialogueActive = false;
-    this.updateHUDState();
-    this.currentSet++;
-    this.currentNPC = null;
-
-    this.receivedItem("foxglovePlant", "Foxglove");
-  });
-}
-
-    };
-
-   fairy.on("pointerdown", () => {
-  const currentImage = this.dialogueSequence[this.currentSet]?.imageKey;
-  if (
-    !this.dialogueActive &&
-    (currentImage === "fairySad" || currentImage === "fairyHappy")
-  ) {
-    this.currentNPC = fairy;
-    this.startDialogueSequence();
-  }
-});
-
-bee.on("pointerdown", () => {
-  const currentImage = this.dialogueSequence[this.currentSet]?.imageKey;
-
-  if (this.dialogueActive && currentImage === "bee") {
-    if (this.dialogueBox?.optionButtons?.length > 0) return;
-
-    this.currentDialogueIndex++;
-
-    if (this.currentDialogueIndex < this.activeDialogue.length) {
       this.showDialogue(this.activeDialogue[this.currentDialogueIndex], {
         imageKey: this.activeImageKey
       });
-    } else {
-      this.destroyDialogueUI();
-      this.dialogueActive = false;
-      this.updateHUDState();
-      this.currentSet++;
-      this.currentNPC = null;
+    };
 
-      const justCompletedSet = this.currentSet - 1;
-
+    // --- Fairy click handler ---
+    fairy.on("pointerdown", () => {
+      const currentImage = this.dialogueSequence[this.currentSet]?.imageKey;
       if (
-        this.dialogueSequence[justCompletedSet] &&
-        this.dialogueSequence[justCompletedSet].lines === fairyHelpDialogues
+        !this.dialogueActive &&
+        (currentImage === "fairySad" || currentImage === "fairyHappy")
       ) {
-        this.receivedItem("foxglovePlant", "Foxglove");
+        this.currentNPC = fairy;
+        this.startDialogueSequence();
+      }
+    });
+
+    // --- Bee click handler ---
+    bee.on("pointerdown", () => {
+      const currentImage = this.dialogueSequence[this.currentSet]?.imageKey;
+
+      // If player has foxglove, offer to give it to Paula (the bee)
+      if (this.foxglovePlantReceived && !this.hasMadeFoxgloveChoice) {
+        this.dialogueActive = true;
+        this.updateHUDState();
+        this.showOption("Give Paula the Foxglove?", {
+          imageKey: "bee",
+          options: [
+            {
+              label: "Yes",
+              onSelect: () => {
+                this.hasMadeFoxgloveChoice = true;
+                this.destroyDialogueUI();
+                this.dialogueActive = true;
+                this.foxglovePlantReceived = false;
+
+                this.showDialogue("You hand her the plant...", {
+                  imageKey: "bee"
+                });
+
+                this.time.delayedCall(800, () => {
+                  // Set currentSet to beeThanksDialogues index so pointerdown handler works
+                  this.currentSet = this.dialogueSequence.findIndex(
+                    (set) => set.lines === beeThanksDialogues
+                  );
+                  this.activeDialogue = beeThanksDialogues;
+                  this.activeImageKey = "bee";
+                  this.currentDialogueIndex = 0;
+                  this.dialogueActive = true;
+                  this.updateHUDState();
+                  this.showDialogue(this.activeDialogue[this.currentDialogueIndex], {
+                    imageKey: this.activeImageKey
+                  });
+                });
+              }
+            },
+            {
+              label: "No",
+              onSelect: () => {
+                this.destroyDialogueUI();
+                this.dialogueActive = true;
+                this.showDialogue("You decide to hold off for now.", {
+                  imageKey: "bee"
+                });
+              }
+            }
+          ]
+        });
+        return;
       }
 
-    }
-  }
-
-  if (this.foxglovePlantReceived) {
-    this.dialogueActive = true;
-    this.updateHUDState();
-    this.showOption("Give Paula the Foxglove?", {
-      imageKey: "bee",
-      options: [
-        {
-          label: "Yes",
-          onSelect: () => {
-            this.hasMadeFoxgloveChoice = true;
-            this.destroyDialogueUI();
-            this.dialogueActive = true;
-            this.foxgloveReceived = true;
-
-            this.showDialogue("You hand her the plant...", {
-              imageKey: "bee"
-            });
-
-            this.time.delayedCall(800, () => {
-              this.activeDialogue = beeThanksDialogues;
-              this.activeImageKey = "bee";
-              this.currentDialogueIndex = 0;
-              this.dialogueActive = true;
-              this.updateHUDState();
-              this.showDialogue(this.activeDialogue[this.currentDialogueIndex], {
-                imageKey: this.activeImageKey
-              });
-            });
-          }
-        },
-        {
-          label: "No",
-          onSelect: () => {
-            this.destroyDialogueUI();
-            this.dialogueActive = true;
-            this.showDialogue("You decide to hold off for now.", {
-              imageKey: "bee"
-            });
-          }
-        }
-      ]
+      // Only start bee dialogue if not already active and it's a bee set
+      if (!this.dialogueActive && (currentImage === "bee" || currentImage === "beeHappy")) {
+        this.currentNPC = bee;
+        this.startDialogueSequence();
+      }
     });
-    return;
-  }
 
-  if (!this.dialogueActive && (currentImage === "bee" || currentImage === "beeHappy")) {
-    this.currentNPC = bee;
-    this.startDialogueSequence();
-  }
-});
+    // --- Pointerdown handler for advancing dialogue ---
+    this.input.on("pointerdown", () => {
+      if (!this.dialogueActive || !this.activeDialogue) return;
+      if (this.dialogueBox?.optionButtons?.length > 0) return;
 
+      this.currentDialogueIndex++;
 
-   this.input.on("pointerdown", () => {
-    if (!this.dialogueActive || !this.activeDialogue) return;
-    if (this.dialogueBox?.optionButtons?.length > 0) return;
-
-    this.currentDialogueIndex++;
-
-    if (this.currentDialogueIndex < this.activeDialogue.length) {
+      if (this.currentDialogueIndex < this.activeDialogue.length) {
         this.showDialogue(this.activeDialogue[this.currentDialogueIndex], {
-            imageKey: this.activeImageKey
+          imageKey: this.activeImageKey
         });
-    } else {
+      } else {
+        // Special case: just finished beeThanksDialogues
         if (this.activeDialogue === beeThanksDialogues) {
           this.receivedItem("springShard", "Spring Shard");
 
+          // Delay before starting fairyGoodbyeDialogues
           this.time.delayedCall(1000, () => {
-              this.activeDialogue = fairyGoodbyeDialogues;
-              this.activeImageKey = "fairyHappy";
-              this.currentDialogueIndex = 0;
-              this.dialogueActive = true;
-              this.showDialogue(this.activeDialogue[this.currentDialogueIndex], { imageKey: this.activeImageKey });
+            this.activeDialogue = fairyGoodbyeDialogues;
+            this.activeImageKey = "fairyHappy";
+            this.currentDialogueIndex = 0;
+            this.dialogueActive = true;
+            this.showDialogue(this.activeDialogue[this.currentDialogueIndex], { imageKey: this.activeImageKey });
           });
 
           return;
-      }
-
-        if (this.activeDialogue === fairyGoodbyeDialogues) {
-            this.destroyDialogueUI();
-            this.dialogueActive = false;
-            this.updateHUDState();
-
-            this.showOption("What would you like to do?", {
-                imageKey: "fairyHappy",
-                options: [
-                    {
-                        label: "Go to the greenhouse",
-                        onSelect: () => {
-                            this.scene.start("GreenhouseScene");
-                        }
-                    },
-                    {
-                        label: "Stay here",
-                        onSelect: () => {
-                          this.dialogueActive = true;
-                            this.showDialogue("You decide to wait a bit longer...");
-                        }
-                    }
-                ]
-            });
-            return;
         }
+
+        // Special case: just finished fairyGoodbyeDialogues
+        if (this.activeDialogue === fairyGoodbyeDialogues) {
+          this.destroyDialogueUI();
+          this.dialogueActive = false;
+          this.updateHUDState();
+
+          this.showOption("What would you like to do?", {
+            imageKey: "fairyHappy",
+            options: [
+              {
+                label: "Go to the greenhouse",
+                onSelect: () => {
+                  this.scene.start("GreenhouseScene");
+                }
+              },
+              {
+                label: "Stay here",
+                onSelect: () => {
+                  this.destroyDialogueUI();
+                  this.dialogueActive = true;
+                  this.updateHUDState();
+                  this.showDialogue("You decide to wait a bit longer...");
+                }
+              }
+            ]
+          });
+          return;
+        }
+
+        // Normal sequence advancement
         this.destroyDialogueUI();
         this.dialogueActive = false;
         this.updateHUDState();
@@ -339,90 +306,88 @@ bee.on("pointerdown", () => {
 
         const justCompletedSet = this.currentSet - 1;
         if (
-            this.dialogueSequence[justCompletedSet] &&
-            this.dialogueSequence[justCompletedSet].lines === fairyHelpDialogues
+          this.dialogueSequence[justCompletedSet] &&
+          this.dialogueSequence[justCompletedSet].lines === fairyHelpDialogues
         ) {
-            this.receivedItem("foxglovePlant", "Foxglove");
+          this.receivedItem("foxglovePlant", "Foxglove");
         }
-
-        if (this.currentSet < this.dialogueSequence.length) {
-        } else {
-            console.log("Dialogue sequence completed.");
-        }
-    }
-});
-  }
-
-  receivedItem(itemKey, itemName, options = {}) {
-  if (!itemKey || !itemName) {
-    console.warn("receivedItem called without itemKey or itemName");
-    return;
-  }
-  const { width, height } = this.sys.game.config;
-  const scale = options.scale || 0.1;
-  const borderPadding = options.borderPadding || 20;
-  const borderColor = options.borderColor || 0x88cc88;
-  const textColor = options.textColor || "#ffffff";
-
-  const itemTexture = this.textures.get(itemKey).getSourceImage();
-  const itemWidth = itemTexture.width * scale;
-  const itemHeight = itemTexture.height * scale;
-
-  const container = this.add.container(width / 2, height / 2).setDepth(103);
-
-  const border = this.add
-    .rectangle(0, 0, itemWidth + borderPadding, itemHeight + borderPadding, 0xffffff)
-    .setStrokeStyle(2, borderColor);
-
-  const itemImage = this.add
-    .image(0, 0, itemKey)
-    .setScale(scale)
-
-
-  const topLabel = this.add
-    .text(0, -(itemHeight / 2) - borderPadding / 2 - 20, "You Received:", {
-      fontFamily: "Georgia",
-      fontSize: "18px",
-      color: textColor,
-      align: "center"
-    })
-    .setOrigin(0.5);
-
-  const bottomLabel = this.add
-    .text(0, itemHeight / 2 + borderPadding / 2 + 12, itemName, {
-      fontFamily: "Georgia",
-      fontSize: "18px",
-      color: textColor,
-      align: "center"
-    })
-    .setOrigin(0.5);
-
-  container.add([border, itemImage, topLabel, bottomLabel]);
-  console.log(`Received item: ${itemKey}`);
-
-  this[`${itemKey}Received`] = true;
-
-  this.time.delayedCall(3000, () => {
-    this.tweens.add({
-      targets: container,
-      alpha: 0,
-      duration: 500,
-      onComplete: () => container.destroy()
+      }
     });
-  });
-}
+  }
 
+  // --- Item received popup ---
+  receivedItem(itemKey, itemName, options = {}) {
+    if (!itemKey || !itemName) {
+      console.warn("receivedItem called without itemKey or itemName");
+      return;
+    }
+    const { width, height } = this.sys.game.config;
+    const scale = options.scale || 0.1;
+    const borderPadding = options.borderPadding || 20;
+    const borderColor = options.borderColor || 0x88cc88;
+    const textColor = options.textColor || "#ffffff";
 
+    const itemTexture = this.textures.get(itemKey).getSourceImage();
+    const itemWidth = itemTexture.width * scale;
+    const itemHeight = itemTexture.height * scale;
+
+    const container = this.add.container(width / 2, height / 2).setDepth(103);
+
+    const border = this.add
+      .rectangle(0, 0, itemWidth + borderPadding, itemHeight + borderPadding, 0xffffff)
+      .setStrokeStyle(2, borderColor);
+
+    const itemImage = this.add
+      .image(0, 0, itemKey)
+      .setScale(scale);
+
+    const topLabel = this.add
+      .text(0, -(itemHeight / 2) - borderPadding / 2 - 20, "You Received:", {
+        fontFamily: "Georgia",
+        fontSize: "18px",
+        color: textColor,
+        align: "center"
+      })
+      .setOrigin(0.5);
+
+    const bottomLabel = this.add
+      .text(0, itemHeight / 2 + borderPadding / 2 + 12, itemName, {
+        fontFamily: "Georgia",
+        fontSize: "18px",
+        color: textColor,
+        align: "center"
+      })
+      .setOrigin(0.5);
+
+    container.add([border, itemImage, topLabel, bottomLabel]);
+    console.log(`Received item: ${itemKey}`);
+
+    this[`${itemKey}Received`] = true;
+
+    this.time.delayedCall(3000, () => {
+      this.tweens.add({
+        targets: container,
+        alpha: 0,
+        duration: 500,
+        onComplete: () => container.destroy()
+      });
+    });
+  }
+
+  // --- Dialogue UI helpers ---
   showDialogue(text, optionsConfig = {}) {
     this.destroyDialogueUI();
     this.dialogueBox = createTextBox(this, text, optionsConfig);
+    this.dialogueActive = true;
+    this.updateHUDState();
   }
 
   showOption(text, config = {}) {
     this.destroyDialogueUI();
     this.dialogueBox = createOptionBox(this, text, config);
+    this.dialogueActive = true;
+    this.updateHUDState();
   }
-
 
   updateHUDState() {
     if (this.dialogueActive) {
