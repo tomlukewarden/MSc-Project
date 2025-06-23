@@ -196,17 +196,16 @@ if (this.dialogueSequence[justCompletedSet] && this.dialogueSequence[justComplet
   this.dialogueActive = true;
   this.updateHUDState();
 
-  this.showDialogue("Would you like to give Paula Nator the Foxglove?", {
+  this.showOption("Would you like to give Paula Nator the Foxglove?", {
     imageKey: "bee",
     options: [
       {
         label: "Yes",
         onSelect: () => {
-          this.showOption("You decide to heal your friend",);
+          this.showDialogue("You decide to heal your friend",);
           this.destroyDialogueUI();
           this.dialogueActive = false;
           this.updateHUDState();
-          this.currentSet++; 
           this.startDialogueSequence();
         }
       },
@@ -216,7 +215,8 @@ if (this.dialogueSequence[justCompletedSet] && this.dialogueSequence[justComplet
           this.destroyDialogueUI();
           this.dialogueActive = true;
           this.updateHUDState();
-          this.showOption("You decide to wait a bit longer.",);
+          this.currentSet--
+          this.showDialogue("You decide to wait a bit longer.",);
         }
       }
     ]
@@ -298,6 +298,7 @@ showDialogue(text, optionsConfig = {}) {
   this.destroyDialogueUI();
   this.dialogueBox = createTextBox(this, text, optionsConfig);
 }
+showOption(text, config = {}) { this.destroyDialogueUI(); this.dialogueBox = createOptionBox(this, text, config); }
 updateHUDState() {
   if (this.dialogueActive) {
     this.scene.sleep("HUDScene");

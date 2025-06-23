@@ -1,7 +1,7 @@
 export function createOptionBox(scene, promptText, { imageKey, options = [] } = {}) {
   const { width, height } = scene.sys.game.config;
 
-  const container = scene.add.container(width / 2, height - 100).setDepth(100);
+  const container = scene.add.container(width / 2, height - 100).setDepth(105);
 
   const background = scene.add.rectangle(0, 0, 380, 100 + options.length * 40, 0x000000, 0.7)
     .setStrokeStyle(2, 0xffffff)
