@@ -5,7 +5,9 @@ import HUDScene from "./hud";
 import OpenJournal from "./openJournal";
 import GreenhouseScene from "./scenes/greenhouseScene";
 import WeeCairScene from "./scenes/weeCairScene";
-// import StartScene from "./scenes/startScene";
+import StartScene from "./scenes/startScene";
+import ShopScene from "./scenes/shopScene";
+import Menu from "./scenes/menuScene";
 
 function GameCanvas() {
     const canvasRef = useRef(null);
@@ -25,7 +27,7 @@ function GameCanvas() {
                 autoCenter: Phaser.Scale.CENTER_BOTH,
             },
             canvas: canvasRef.current,
-            scene: [  WeeCairScene, GreenhouseScene, HUDScene,OpenJournal],
+            scene: [Menu, StartScene, ShopScene,  WeeCairScene, GreenhouseScene, HUDScene,OpenJournal],
         };
 
         gameRef.current = new Phaser.Game(config);
