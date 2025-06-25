@@ -12,25 +12,54 @@ class ShopScene extends Phaser.Scene {
   create() {
     const { width, height } = this.scale;
 
+    // Main shop background
     this.add.image(width / 2, height / 2, 'shopBackground').setDepth(0).setScale(0.225);
 
+    // Shop items data
     const items = [
-      { key: 'item1', x: width / 2 - 100, y: height / 2 },
-      { key: 'item2', x: width / 2 + 100, y: height / 2 },
+      { key: 'item1', name: 'Seeds' },
+      { key: 'item2', name: 'Foxglove' },
     ];
 
-    items.forEach(item => {
-      const img = this.add.image(item.x, item.y, item.key)
-        .setInteractive({ useHandCursor: true })
-        .setDepth(1)
-        .setScale(0.1);
+    // Layout variables
+    const itemAreaX = width - 180; // Right side of the screen
+    const itemStartY = 150;
+    const itemSpacing = 160;
+    const itemBgWidth = 160;
+    const itemBgHeight = 120;
+
+    items.forEach((item, idx) => {
+      const y = itemStartY + idx * itemSpacing;
+
+      // Background rectangle for each item
+      const bg = this.add.rectangle(
+        itemAreaX, y, itemBgWidth, itemBgHeight, 0x222233, 1
+      )
+        .setStrokeStyle(2, 0x88ccff)
+        .setDepth(1);
+
+      // Item image
+      const img = this.add.image(itemAreaX, y - 20, item.key)
+        .setScale(0.7)
+        .setDepth(2)
+        .setScale(0.09)
+        .setInteractive({ useHandCursor: true });
 
       img.on('pointerover', () => img.setTint(0x88ccff));
       img.on('pointerout', () => img.clearTint());
       img.on('pointerdown', () => {
-        console.log(`Item clicked: ${item.key}`);
-
+        console.log(`Item clicked: ${item.name}`);
+        // Add purchase logic here
       });
+
+      // Item name below the image
+      this.add.text(itemAreaX, y + 40, item.name, {
+        fontFamily: "Georgia",
+        fontSize: "20px",
+        color: "#ffffff"
+      })
+        .setOrigin(0.5)
+        .setDepth(2);
     });
 
     // Back to Menu button
