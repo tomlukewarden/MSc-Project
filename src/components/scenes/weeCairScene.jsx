@@ -54,7 +54,7 @@ class WeeCairScene extends Phaser.Scene {
     const collisionObjects = map.getObjectLayer("wee-cair-collisions");
     const collisionGroup = this.physics.add.staticGroup();
 
-    const xOffset = -80;
+    const xOffset = -160;
     const yOffset = 0;
 
     if (collisionObjects) {
