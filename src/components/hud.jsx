@@ -28,7 +28,7 @@ class HUDScene extends Phaser.Scene {
             "settingsIcon",
         ];
         const iconSpacing = 140;
-        const iconStartX = 1040;
+        const iconStartX = 900;
         const iconScale = 0.045;
         const iconY = 56;
 
