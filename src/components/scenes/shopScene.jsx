@@ -18,6 +18,18 @@ class ShopScene extends Phaser.Scene {
     // Main shop background
     this.add.image(width / 2, height / 2, 'shopBackground').setDepth(0).setScale(0.225);
 
+    // Player's starting coins
+    this.playerCoins = 200;
+
+    // Coins text
+    const coinText = this.add.text(width - 40, 30, `${this.playerCoins}c`, {
+      fontFamily: "Georgia",
+      fontSize: "24px",
+      color: "#ffe066",
+      backgroundColor: "#222",
+      padding: { left: 12, right: 12, top: 6, bottom: 6 }
+    }).setOrigin(1, 0).setDepth(10);
+
     // Shop items data
     const items = [
       { key: 'item1', name: 'Seeds', price: '20' },
@@ -25,7 +37,7 @@ class ShopScene extends Phaser.Scene {
     ];
 
     // Layout variables
-    const itemAreaX = width - 180; // Right side of the screen
+    const itemAreaX = width - 180; 
     const itemStartY = 150;
     const itemSpacing = 160;
     const itemBgWidth = 160;
@@ -34,7 +46,6 @@ class ShopScene extends Phaser.Scene {
     items.forEach((item, idx) => {
       const y = itemStartY + idx * itemSpacing;
 
-      // Background rectangle for each item
       this.add.rectangle(
         itemAreaX, y, itemBgWidth, itemBgHeight, 0x222233, 1
       )
@@ -43,7 +54,7 @@ class ShopScene extends Phaser.Scene {
 
       // Item image
       const img = this.add.image(itemAreaX, y - 20, item.key)
-        .setScale(0.7)
+        .setScale(0.09)
         .setDepth(2)
         .setInteractive({ useHandCursor: true });
 
@@ -57,9 +68,20 @@ class ShopScene extends Phaser.Scene {
               {
                 label: 'Buy',
                 onSelect: () => {
-                  this.destroyDialogueUI();
-                  console.log(`Buying ${item.name} for ${item.price} coins.`);
-                  // Add your purchase logic here
+                  if (this.playerCoins >= parseInt(item.price)) {
+                    this.playerCoins -= parseInt(item.price);
+                    coinText.setText(`${this.playerCoins}c`);
+                    this.destroyDialogueUI();
+                    // Add item to inventory logic here
+                    this.showOption(`You bought ${item.name}!`, {
+                      options: [{ label: "OK", onSelect: () => this.destroyDialogueUI() }]
+                    });
+                  } else {
+                    this.destroyDialogueUI();
+                    this.showOption("Not enough coins!", {
+                      options: [{ label: "OK", onSelect: () => this.destroyDialogueUI() }]
+                    });
+                  }
                 }
               },
               {
@@ -74,7 +96,6 @@ class ShopScene extends Phaser.Scene {
         );
       });
 
-      // Item name and price below the image
       this.add.text(itemAreaX, y + 35, `${item.name} (${item.price}c)`, {
         fontFamily: "Georgia",
         fontSize: "20px",
