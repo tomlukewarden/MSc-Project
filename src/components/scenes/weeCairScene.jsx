@@ -313,6 +313,75 @@ class WeeCairScene extends Phaser.Scene {
         }
       }
     });
+
+    // --- Responsive: Listen for resize events
+    this.scale.on('resize', this.handleResize, this);
+  }
+
+  // --- Responsive dialogue UI helpers ---
+  showDialogue(text, optionsConfig = {}) {
+    this.destroyDialogueUI();
+    // Use responsive width/height for the dialogue box
+    const { width, height } = this.scale;
+    const boxWidth = Math.min(600, width * 0.8);
+    const boxHeight = Math.min(180, height * 0.25);
+
+    // Pass boxWidth/boxHeight to your createTextBox if it supports sizing
+    this.dialogueBox = createTextBox(this, text, {
+      ...optionsConfig,
+      boxWidth,
+      boxHeight,
+      x: width / 2,
+      y: height - boxHeight / 2 - 30
+    });
+    this.dialogueActive = true;
+    this.updateHUDState();
+  }
+
+  showOption(text, config = {}) {
+    this.destroyDialogueUI();
+    // Use responsive width/height for the option box
+    const { width, height } = this.scale;
+    const boxWidth = Math.min(600, width * 0.8);
+    const boxHeight = Math.min(220, height * 0.3);
+
+    // Pass boxWidth/boxHeight to your createOptionBox if it supports sizing
+    this.dialogueBox = createOptionBox(this, text, {
+      ...config,
+      boxWidth,
+      boxHeight,
+      x: width / 2,
+      y: height - boxHeight / 2 - 30
+    });
+    this.dialogueActive = true;
+    this.updateHUDState();
+  }
+
+  // --- Responsive resize handler ---
+  handleResize(gameSize) {
+    // Reposition or resize UI elements as needed
+    // For example, if you have a dialogue box open:
+    if (this.dialogueBox && this.dialogueBox.box) {
+      const { width, height } = gameSize;
+      const boxWidth = Math.min(600, width * 0.8);
+      const boxHeight = Math.min(220, height * 0.3);
+      this.dialogueBox.box.setPosition(width / 2, height - boxHeight / 2 - 30);
+      this.dialogueBox.box.setSize(boxWidth, boxHeight);
+      // Also reposition text/image if needed
+      if (this.dialogueBox.textObj) {
+        this.dialogueBox.textObj.setPosition(width / 2, height - boxHeight / 2 - 30);
+      }
+      if (this.dialogueBox.image) {
+        this.dialogueBox.image.setPosition(width / 2, height - boxHeight / 2 - 30);
+      }
+      // Option buttons: reposition as needed
+      if (this.dialogueBox.optionButtons) {
+        // Example: stack vertically under the box
+        this.dialogueBox.optionButtons.forEach((btn, idx) => {
+          btn.setPosition(width / 2, height - boxHeight / 2 + 40 + idx * 40);
+        });
+      }
+    }
   }
 
   // --- Item received popup ---
@@ -372,21 +441,6 @@ class WeeCairScene extends Phaser.Scene {
         onComplete: () => container.destroy()
       });
     });
-  }
-
-  // --- Dialogue UI helpers ---
-  showDialogue(text, optionsConfig = {}) {
-    this.destroyDialogueUI();
-    this.dialogueBox = createTextBox(this, text, optionsConfig);
-    this.dialogueActive = true;
-    this.updateHUDState();
-  }
-
-  showOption(text, config = {}) {
-    this.destroyDialogueUI();
-    this.dialogueBox = createOptionBox(this, text, config);
-    this.dialogueActive = true;
-    this.updateHUDState();
   }
 
   updateHUDState() {
