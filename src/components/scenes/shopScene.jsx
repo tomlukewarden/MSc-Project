@@ -1,3 +1,6 @@
+import Phaser from 'phaser';
+import { createOptionBox } from '../../dialogue/createOptionBox';
+
 class ShopScene extends Phaser.Scene {
   constructor() {
     super({ key: 'ShopScene' });
@@ -17,8 +20,8 @@ class ShopScene extends Phaser.Scene {
 
     // Shop items data
     const items = [
-      { key: 'item1', name: 'Seeds' },
-      { key: 'item2', name: 'Foxglove' },
+      { key: 'item1', name: 'Seeds', price: '20' },
+      { key: 'item2', name: 'Foxglove', price: '100' },
     ];
 
     // Layout variables
@@ -32,7 +35,7 @@ class ShopScene extends Phaser.Scene {
       const y = itemStartY + idx * itemSpacing;
 
       // Background rectangle for each item
-      const bg = this.add.rectangle(
+      this.add.rectangle(
         itemAreaX, y, itemBgWidth, itemBgHeight, 0x222233, 1
       )
         .setStrokeStyle(2, 0x88ccff)
@@ -42,18 +45,37 @@ class ShopScene extends Phaser.Scene {
       const img = this.add.image(itemAreaX, y - 20, item.key)
         .setScale(0.7)
         .setDepth(2)
-        .setScale(0.09)
         .setInteractive({ useHandCursor: true });
 
       img.on('pointerover', () => img.setTint(0x88ccff));
       img.on('pointerout', () => img.clearTint());
       img.on('pointerdown', () => {
-        console.log(`Item clicked: ${item.name}`);
-        // Add purchase logic here
+        this.showOption(
+          `You clicked on ${item.name}.\nPrice: ${item.price} coins.`,
+          {
+            options: [
+              {
+                label: 'Buy',
+                onSelect: () => {
+                  this.destroyDialogueUI();
+                  console.log(`Buying ${item.name} for ${item.price} coins.`);
+                  // Add your purchase logic here
+                }
+              },
+              {
+                label: 'Cancel',
+                onSelect: () => {
+                  this.destroyDialogueUI();
+                  console.log('Purchase cancelled.');
+                }
+              }
+            ]
+          }
+        );
       });
 
-      // Item name below the image
-      this.add.text(itemAreaX, y + 40, item.name, {
+      // Item name and price below the image
+      this.add.text(itemAreaX, y + 35, `${item.name} (${item.price}c)`, {
         fontFamily: "Georgia",
         fontSize: "20px",
         color: "#ffffff"
@@ -77,6 +99,23 @@ class ShopScene extends Phaser.Scene {
       .on("pointerdown", () => {
         this.scene.start("Menu");
       });
+  }
+
+  showOption(text, config = {}) {
+    this.destroyDialogueUI();
+    this.dialogueBox = createOptionBox(this, text, config);
+  }
+
+  destroyDialogueUI() {
+    if (this.dialogueBox) {
+      this.dialogueBox.box?.destroy();
+      this.dialogueBox.textObj?.destroy();
+      this.dialogueBox.image?.destroy();
+      if (this.dialogueBox.optionButtons) {
+        this.dialogueBox.optionButtons.forEach((btn) => btn.destroy());
+      }
+      this.dialogueBox = null;
+    }
   }
 }
 
