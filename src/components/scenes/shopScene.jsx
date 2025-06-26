@@ -1,9 +1,11 @@
 import Phaser from 'phaser';
 import { createOptionBox } from '../../dialogue/createOptionBox';
+import { CoinManager } from '../coinManager';
 
 class ShopScene extends Phaser.Scene {
   constructor() {
     super({ key: 'ShopScene' });
+    this.coinManager = new CoinManager(200); // or load from save
   }
 
   preload() {
@@ -18,17 +20,16 @@ class ShopScene extends Phaser.Scene {
     // Main shop background
     this.add.image(width / 2, height / 2, 'shopBackground').setDepth(0).setScale(0.225);
 
-    // Player's starting coins
-    this.playerCoins = 200;
-
     // Coins text
-    const coinText = this.add.text(width - 40, 30, `${this.playerCoins}c`, {
+    const coinText = this.add.text(width - 40, 30, `${this.coinManager.coins}c`, {
       fontFamily: "Georgia",
       fontSize: "24px",
       color: "#ffe066",
       backgroundColor: "#222",
       padding: { left: 12, right: 12, top: 6, bottom: 6 }
     }).setOrigin(1, 0).setDepth(10);
+
+    this.coinManager.onChange((coins) => coinText.setText(`${coins}c`));
 
     // Shop items data
     const items = [
@@ -68,11 +69,8 @@ class ShopScene extends Phaser.Scene {
               {
                 label: 'Buy',
                 onSelect: () => {
-                  if (this.playerCoins >= parseInt(item.price)) {
-                    this.playerCoins -= parseInt(item.price);
-                    coinText.setText(`${this.playerCoins}c`);
+                  if (this.coinManager.subtract(parseInt(item.price))) {
                     this.destroyDialogueUI();
-                    // Add item to inventory logic here
                     this.showOption(`You bought ${item.name}!`, {
                       options: [{ label: "OK", onSelect: () => this.destroyDialogueUI() }]
                     });
