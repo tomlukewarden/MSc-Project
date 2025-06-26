@@ -13,7 +13,6 @@ export function saveToLocal(key, data) {
 }
 
 /**
- * Load and parse a JS object from localStorage by key.
  * @param {string} key
  * @returns {object|null}
  */
@@ -28,7 +27,6 @@ export function loadFromLocal(key) {
 }
 
 /**
- * Remove a key from localStorage.
  * @param {string} key
  */
 export function removeFromLocal(key) {
