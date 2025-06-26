@@ -57,6 +57,8 @@ class HUDScene extends Phaser.Scene {
 
         icons["inventoryIcon"].on("pointerdown", () => {
             console.log("Inventory icon clicked");
+            this.scene.launch("OpenInventory");
+            this.scene.bringToTop("OpenInventory");
         });
 
         // Toolbar icon at bottom center
