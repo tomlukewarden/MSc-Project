@@ -3,7 +3,7 @@ import Phaser from "phaser";
 
 class GreenhouseScene extends Phaser.Scene {
     constructor() {
-        super({ key: "GreenhouseScene", physics: { default: "arcade", arcade: { debug: false } } });
+        super({ key: "GreenhouseScene", physics: { default: "arcade", arcade: { debug: true } } });
     }
 
     preload() {
@@ -48,7 +48,7 @@ class GreenhouseScene extends Phaser.Scene {
         char.body.setOffset(char.width * 0.2, char.height * 0.2);
 
         const collisionGroup = this.physics.add.staticGroup();
-        const xOffset = -75; 
+        const xOffset = -155; 
         const yOffset = 45;  
 
         collisionObjects.objects.forEach((obj) => {
