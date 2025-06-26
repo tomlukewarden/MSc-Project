@@ -53,6 +53,8 @@ class HUDScene extends Phaser.Scene {
 
         icons["settingsIcon"].on("pointerdown", () => {
             console.log("Settings icon clicked");
+            this.scene.launch("OpenSettings");
+            this.scene.bringToTop("OpenSettings");
         });
 
         icons["inventoryIcon"].on("pointerdown", () => {

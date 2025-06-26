@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import Phaser from "phaser";
-// 
+
 import HUDScene from "./hud";
 import OpenJournal from "./openJournal";
 import GreenhouseScene from "./scenes/greenhouseScene";
@@ -9,6 +9,8 @@ import StartScene from "./scenes/startScene";
 import ShopScene from "./scenes/shopScene";
 import Menu from "./scenes/menuScene";
 import OpenInventory from "./openInventory";
+import OpenSettings from "./openSettings";
+
 
 function GameCanvas() {
     const canvasRef = useRef(null);
@@ -28,7 +30,7 @@ function GameCanvas() {
                 autoCenter: Phaser.Scale.CENTER_BOTH,
             },
             canvas: canvasRef.current,
-            scene: [Menu, StartScene, ShopScene,  WeeCairScene, GreenhouseScene, HUDScene,OpenJournal, OpenInventory],
+            scene: [Menu, StartScene, ShopScene,  WeeCairScene, GreenhouseScene, HUDScene,OpenJournal, OpenInventory, OpenSettings],
         };
 
         gameRef.current = new Phaser.Game(config);

@@ -1,8 +1,9 @@
 import Phaser from "phaser";
+import { saveToLocal } from "../utils/localStorage";
 
 class OpenSettings extends Phaser.Scene {
   constructor() {
-    super({ key: "SettingsScene" });
+    super({ key: "OpenSettings" });
   }
 
   create() {
@@ -52,8 +53,40 @@ class OpenSettings extends Phaser.Scene {
       }
     });
 
+    // Save button
+    const saveBtn = this.add.text(width / 2 - 100, height / 2 + 140, "Save", {
+      fontFamily: "Georgia",
+      fontSize: "24px",
+      color: "#ffffff",
+      backgroundColor: "#225522",
+      padding: { left: 24, right: 24, top: 10, bottom: 10 }
+    })
+      .setOrigin(0.5)
+      .setInteractive({ useHandCursor: true })
+      .on("pointerover", () => saveBtn.setStyle({ backgroundColor: "#338833" }))
+      .on("pointerout", () => saveBtn.setStyle({ backgroundColor: "#225522" }))
+      .on("pointerdown", () => {
+        const coins = this.registry.get("coins") || 0;
+        const inventory = this.registry.get("inventory") || [];
+        const isFullscreen = this.scale.isFullscreen;
+
+        saveToLocal("botanistSave", {
+          coins,
+          inventory,
+          isFullscreen
+        });
+
+        this.add.text(width / 2, height / 2 + 100, "Settings & Game Saved!", {
+          fontFamily: "Georgia",
+          fontSize: "20px",
+          color: "#ffe066",
+          backgroundColor: "#222",
+          padding: { left: 16, right: 16, top: 6, bottom: 6 }
+        }).setOrigin(0.5).setDepth(10);
+      });
+
     // Back button
-    const backBtn = this.add.text(width / 2, height / 2 + 140, "Back", {
+    const backBtn = this.add.text(width / 2 + 100, height / 2 + 140, "Back", {
       fontFamily: "Georgia",
       fontSize: "24px",
       color: "#ffffff",
