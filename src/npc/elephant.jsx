@@ -17,7 +17,7 @@ export const elephantIntroDialogues = [
 
 
 export function createElephant(scene, x, y) {
-    const bee = scene.add.sprite(x, y, "bee")
+    const elephant = scene.add.sprite(x, y, "elephant")
         .setScale(0.1)
         .setOrigin(7, 3)
         .setInteractive({ useHandCursor: true });
