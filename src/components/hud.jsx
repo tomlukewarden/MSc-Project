@@ -14,8 +14,6 @@ class HUDScene extends Phaser.Scene {
     this.load.image("energyHalf", "/assets/energy/50.png");
     this.load.image("energyEmpty", "/assets/energy/10.png");
         // const volume = this.load.image("volumeIcon","src/assets/ui-items/volume.png");
-    
-
     }
 
     create() {
