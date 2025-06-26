@@ -17,7 +17,7 @@ class WeeCairScene extends Phaser.Scene {
   constructor() {
     super({
       key: "WeeCairScene",
-      physics: { default: "arcade", arcade: { debug: true } }
+      physics: { default: "arcade", arcade: { debug: false } }
     });
   }
 

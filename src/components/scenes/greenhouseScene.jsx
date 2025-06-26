@@ -3,7 +3,7 @@ import Phaser from "phaser";
 
 class GreenhouseScene extends Phaser.Scene {
     constructor() {
-        super({ key: "GreenhouseScene", physics: { default: "arcade", arcade: { debug: true } } });
+        super({ key: "GreenhouseScene", physics: { default: "arcade", arcade: { debug: false } } });
     }
 
     preload() {
