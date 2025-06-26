@@ -24,5 +24,5 @@ export function createElephant(scene, x, y) {
 
 
 
-    return bee;
+    return elephant;
 }
