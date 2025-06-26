@@ -1,3 +1,6 @@
+import Phaser from 'phaser';
+import { createOptionBox } from '../../dialogue/createOptionBox';
+
 class ShopScene extends Phaser.Scene {
   constructor() {
     super({ key: 'ShopScene' });
@@ -15,14 +18,26 @@ class ShopScene extends Phaser.Scene {
     // Main shop background
     this.add.image(width / 2, height / 2, 'shopBackground').setDepth(0).setScale(0.225);
 
+    // Player's starting coins
+    this.playerCoins = 200;
+
+    // Coins text
+    const coinText = this.add.text(width - 40, 30, `${this.playerCoins}c`, {
+      fontFamily: "Georgia",
+      fontSize: "24px",
+      color: "#ffe066",
+      backgroundColor: "#222",
+      padding: { left: 12, right: 12, top: 6, bottom: 6 }
+    }).setOrigin(1, 0).setDepth(10);
+
     // Shop items data
     const items = [
-      { key: 'item1', name: 'Seeds' },
-      { key: 'item2', name: 'Foxglove' },
+      { key: 'item1', name: 'Seeds', price: '20' },
+      { key: 'item2', name: 'Foxglove', price: '100' },
     ];
 
     // Layout variables
-    const itemAreaX = width - 180; // Right side of the screen
+    const itemAreaX = width - 180; 
     const itemStartY = 150;
     const itemSpacing = 160;
     const itemBgWidth = 160;
@@ -31,8 +46,7 @@ class ShopScene extends Phaser.Scene {
     items.forEach((item, idx) => {
       const y = itemStartY + idx * itemSpacing;
 
-      // Background rectangle for each item
-      const bg = this.add.rectangle(
+      this.add.rectangle(
         itemAreaX, y, itemBgWidth, itemBgHeight, 0x222233, 1
       )
         .setStrokeStyle(2, 0x88ccff)
@@ -40,20 +54,49 @@ class ShopScene extends Phaser.Scene {
 
       // Item image
       const img = this.add.image(itemAreaX, y - 20, item.key)
-        .setScale(0.7)
-        .setDepth(2)
         .setScale(0.09)
+        .setDepth(2)
         .setInteractive({ useHandCursor: true });
 
       img.on('pointerover', () => img.setTint(0x88ccff));
       img.on('pointerout', () => img.clearTint());
       img.on('pointerdown', () => {
-        console.log(`Item clicked: ${item.name}`);
-        // Add purchase logic here
+        this.showOption(
+          `You clicked on ${item.name}.\nPrice: ${item.price} coins.`,
+          {
+            options: [
+              {
+                label: 'Buy',
+                onSelect: () => {
+                  if (this.playerCoins >= parseInt(item.price)) {
+                    this.playerCoins -= parseInt(item.price);
+                    coinText.setText(`${this.playerCoins}c`);
+                    this.destroyDialogueUI();
+                    // Add item to inventory logic here
+                    this.showOption(`You bought ${item.name}!`, {
+                      options: [{ label: "OK", onSelect: () => this.destroyDialogueUI() }]
+                    });
+                  } else {
+                    this.destroyDialogueUI();
+                    this.showOption("Not enough coins!", {
+                      options: [{ label: "OK", onSelect: () => this.destroyDialogueUI() }]
+                    });
+                  }
+                }
+              },
+              {
+                label: 'Cancel',
+                onSelect: () => {
+                  this.destroyDialogueUI();
+                  console.log('Purchase cancelled.');
+                }
+              }
+            ]
+          }
+        );
       });
 
-      // Item name below the image
-      this.add.text(itemAreaX, y + 40, item.name, {
+      this.add.text(itemAreaX, y + 35, `${item.name} (${item.price}c)`, {
         fontFamily: "Georgia",
         fontSize: "20px",
         color: "#ffffff"
@@ -77,6 +120,23 @@ class ShopScene extends Phaser.Scene {
       .on("pointerdown", () => {
         this.scene.start("Menu");
       });
+  }
+
+  showOption(text, config = {}) {
+    this.destroyDialogueUI();
+    this.dialogueBox = createOptionBox(this, text, config);
+  }
+
+  destroyDialogueUI() {
+    if (this.dialogueBox) {
+      this.dialogueBox.box?.destroy();
+      this.dialogueBox.textObj?.destroy();
+      this.dialogueBox.image?.destroy();
+      if (this.dialogueBox.optionButtons) {
+        this.dialogueBox.optionButtons.forEach((btn) => btn.destroy());
+      }
+      this.dialogueBox = null;
+    }
   }
 }
 
