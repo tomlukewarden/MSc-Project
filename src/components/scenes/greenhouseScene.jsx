@@ -143,29 +143,24 @@ class GreenhouseScene extends Phaser.Scene {
                 "What would you like to say?",
                 [
                     {
-                        label: "Of course I will help!",
-                        onSelect: () => {
-                            this.startDialogue(
-                                ["Thank you so much! I really need your help."],
-                                () => {
-                                    this.dialogueActive = false;
-                                    this.updateHUDState();
-                                }
-                            );
-                        }
-                    },
-                    {
-                        label: "I am not quite ready yet.",
-                        onSelect: () => {
-                            this.startDialogue(
-                                ["Okay, come back when you are ready."],
-                                () => {
-                                    this.dialogueActive = false;
-                                    this.updateHUDState();
-                                }
-                            );
-                        }
-                    }
+    label: "Of course I will help!",
+    onSelect: () => {
+        this.startDialogue(
+            ["Thank you so much! I really need your help."],
+            () => { this.dialogueActive = false; this.updateHUDState(); }
+        );
+    }
+},
+{
+    label: "I am not quite ready yet.",
+    onSelect: () => {
+        this.startDialogue(
+            ["Okay, come back when you are ready."],
+            () => { this.dialogueActive = false; this.updateHUDState(); }
+        );
+    }
+}
+
                 ]
             );
         });
@@ -193,6 +188,8 @@ class GreenhouseScene extends Phaser.Scene {
     // --- Dialogue helpers ---
 
     startDialogue(dialogueArray, onComplete) {
+        this.dialogueActive = true;
+        this.updateHUDState();
         this.currentDialogue = dialogueArray;
         this.currentDialogueIndex = 0;
         this.dialogueOnComplete = onComplete;
@@ -214,6 +211,8 @@ class GreenhouseScene extends Phaser.Scene {
     }
 
     showOption(prompt, options) {
+        this.dialogueActive = true;
+        this.updateHUDState();
         this.destroyDialogueUI();
         const { width, height } = this.sys.game.config;
         const boxWidth = Math.min(600, width * 0.8);
