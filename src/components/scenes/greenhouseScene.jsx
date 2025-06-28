@@ -1,5 +1,8 @@
 import Phaser from "phaser";
-
+import { elephantIntroDialogues, elephantThanksDialogues } from "../../npc/elephant";
+import { createElephant } from "../../npc/elephant";
+import { createTextBox } from "../../dialogue/createTextbox";
+import { createOptionBox } from "../../dialogue/createOptionBox";
 
 class GreenhouseScene extends Phaser.Scene {
     constructor() {
@@ -13,6 +16,7 @@ class GreenhouseScene extends Phaser.Scene {
         this.load.image("defaultBack", "/assets/char/default/back-default.png");
         this.load.image("defaultLeft", "/assets/char/default/left-default.png");
         this.load.image("defaultRight", "/assets/char/default/right-default.png");
+        this.load.image("elephant", "/assets/npc/elephant/elephant.png")
     }
 
     create() {
