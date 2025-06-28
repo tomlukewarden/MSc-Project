@@ -1,4 +1,3 @@
-
 export const elephantIntroDialogues = [
   "",
      "Hi… Did Butterfly send you? She always knows when something’s off.",
@@ -18,11 +17,8 @@ export const elephantIntroDialogues = [
 
 export function createElephant(scene, x, y) {
     const elephant = scene.add.sprite(x, y, "elephant")
-        .setScale(0.1)
-        .setOrigin(7, 3)
+        .setScale(0.09)
+        .setOrigin(5, -1)
         .setInteractive({ useHandCursor: true });
-
-
-
     return elephant;
 }

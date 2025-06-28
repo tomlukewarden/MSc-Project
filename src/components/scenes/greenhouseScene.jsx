@@ -17,7 +17,8 @@ class GreenhouseScene extends Phaser.Scene {
         this.load.image("defaultLeft", "/assets/char/default/left-default.png");
         this.load.image("defaultRight", "/assets/char/default/right-default.png");
         this.load.image("elephant", "/assets/npc/elephant/elephant.png")
-    }
+        this.load.image("talkIcon", "/assets/interact/talk.png");
+    } 
 
     create() {
         this.scene.stop("OpenJournal");
@@ -101,9 +102,29 @@ class GreenhouseScene extends Phaser.Scene {
         this.input.keyboard.on("keyup", () => {
             char.setVelocity(0);
         });
-    }
 
-    
+
+    // Place a smaller elephant in the center
+    const elephant = createElephant(this, width / 2, height / 2);
+
+    elephant.setInteractive({ useHandCursor: true });
+
+    elephant.on("pointerdown", () => {
+        console.log("Elephant clicked");
+        createTextBox(this, elephantIntroDialogues, () => {
+            createOptionBox(this, ["Of course I will help!", "I am not quite ready yet."], (choice) => {
+                if (choice === "Of course I will help!") {
+                    createTextBox(this, ["Thank you so much! I really need your help."]);
+                } else {
+                    createTextBox(this, ["Okay, come back when you are ready."], () => {
+                        console.log("Player not ready to help Elephant");
+                    });
+                }
+            });
+        });
+    });
+
+    }
     shutdown() {
         this.scene.stop("HUDScene");
     }
