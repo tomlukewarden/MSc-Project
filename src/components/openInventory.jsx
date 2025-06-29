@@ -1,7 +1,9 @@
-// coinManager.js
-import { CoinManager } from "../components/coinManager";
-export const coinManager = new CoinManager(0);
 
+import { CoinManager } from "../components/coinManager";
+import { loadFromLocal } from "../utils/localStorage";
+
+const startingCoins = loadFromLocal("coins") || 0;
+const coinManager = new CoinManager(startingCoins);
 class OpenInventory extends Phaser.Scene {
   constructor() {
     super({ key: "OpenInventory" });

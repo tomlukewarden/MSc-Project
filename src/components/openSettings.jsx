@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import { saveToLocal } from "../utils/localStorage";
+import { saveToLocal, loadFromLocal, removeFromLocal } from "../utils/localStorage";
 
 class OpenSettings extends Phaser.Scene {
   constructor() {
@@ -9,12 +9,12 @@ class OpenSettings extends Phaser.Scene {
   create() {
     const { width, height } = this.sys.game.config;
 
-    // Brighter, more visible background panel with border
+    // Background panel
     this.add.rectangle(width / 2, height / 2, 520, 420, 0xf5f5dc, 0.98)
       .setStrokeStyle(6, 0x88ccff)
       .setDepth(1);
 
-    // Title with shadow
+    // Title
     this.add.text(width / 2, height / 2 - 160, "Settings", {
       fontFamily: "Georgia",
       fontSize: "40px",
@@ -25,16 +25,15 @@ class OpenSettings extends Phaser.Scene {
       shadow: { offsetX: 2, offsetY: 2, color: "#fff", blur: 2, fill: true }
     }).setOrigin(0.5).setDepth(2);
 
-    // Volume slider label
+    // Music Volume
     this.add.text(width / 2 - 150, height / 2 - 60, "Music Volume", {
       fontFamily: "Georgia",
       fontSize: "24px",
-      color: "#111", // much darker
+      color: "#111",
       fontStyle: "bold",
       shadow: { offsetX: 1, offsetY: 1, color: "#fff", blur: 0, fill: true }
     }).setOrigin(0, 0.5).setDepth(10);
 
-    // Volume bar background and fill
     this.add.rectangle(width / 2 + 40, height / 2 - 60, 200, 18, 0xcccccc)
       .setOrigin(0, 0.5)
       .setStrokeStyle(2, 0x567d46)
@@ -43,11 +42,11 @@ class OpenSettings extends Phaser.Scene {
       .setOrigin(0, 0.5)
       .setDepth(2);
 
-    // Fullscreen toggle label
+    // Fullscreen toggle
     this.add.text(width / 2 - 150, height / 2, "Fullscreen", {
       fontFamily: "Georgia",
       fontSize: "24px",
-      color: "#111", // much darker
+      color: "#111",
       fontStyle: "bold",
       shadow: { offsetX: 1, offsetY: 1, color: "#fff", blur: 0, fill: true }
     }).setOrigin(0, 0.5).setDepth(10);
@@ -70,7 +69,19 @@ class OpenSettings extends Phaser.Scene {
       }
     });
 
-    // Save button - bright green
+    // Helper to show a temporary message
+    const showTempMessage = (msg, y) => {
+      const textObj = this.add.text(width / 2, y, msg, {
+        fontFamily: "Georgia",
+        fontSize: "22px",
+        color: "#234",
+        backgroundColor: "#ffe066",
+        padding: { left: 18, right: 18, top: 8, bottom: 8 }
+      }).setOrigin(0.5).setDepth(20);
+      this.time.delayedCall(2000, () => textObj.destroy());
+    };
+
+    // Save button
     const saveBtn = this.add.text(width / 2 - 100, height / 2 + 140, "Save", {
       fontFamily: "Georgia",
       fontSize: "26px",
@@ -95,16 +106,10 @@ class OpenSettings extends Phaser.Scene {
           isFullscreen
         });
 
-        this.add.text(width / 2, height / 2 + 100, "Settings & Game Saved!", {
-          fontFamily: "Georgia",
-          fontSize: "22px",
-          color: "#234",
-          backgroundColor: "#ffe066",
-          padding: { left: 18, right: 18, top: 8, bottom: 8 }
-        }).setOrigin(0.5).setDepth(20);
+        showTempMessage("Settings & Game Saved!", height / 2 + 100);
       });
 
-    // Back button - bright blue
+    // Back button
     const backBtn = this.add.text(width / 2 + 100, height / 2 + 140, "Back", {
       fontFamily: "Georgia",
       fontSize: "26px",
@@ -121,6 +126,26 @@ class OpenSettings extends Phaser.Scene {
       .on("pointerdown", () => {
         this.scene.stop("OpenSettings");
         this.scene.resume("HUDScene");
+      });
+
+    // Clear Save button
+    const clearBtn = this.add.text(width / 2, height / 2 + 200, "Clear Save", {
+      fontFamily: "Georgia",
+      fontSize: "24px",
+      color: "#fff",
+      backgroundColor: "#d7263d",
+      fontStyle: "bold",
+      padding: { left: 24, right: 24, top: 10, bottom: 10 }
+    })
+      .setOrigin(0.5)
+      .setDepth(10)
+      .setInteractive({ useHandCursor: true })
+      .on("pointerover", () => clearBtn.setStyle({ backgroundColor: "#a61b2b" }))
+      .on("pointerout", () => clearBtn.setStyle({ backgroundColor: "#d7263d" }))
+      .on("pointerdown", () => {
+        removeFromLocal("botanistSave");
+        removeFromLocal("coins");
+        showTempMessage("All save data cleared!", height / 2 + 140);
       });
   }
 }
