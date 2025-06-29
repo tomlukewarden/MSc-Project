@@ -106,7 +106,7 @@ class GreenhouseScene extends Phaser.Scene {
 
     // Place a smaller elephant in the center
     const elephant = createElephant(this, width / 2, height / 2);
-    elephant.setScale(0.06).setOrigin(0.5, 0.5);
+    elephant.setScale(0.09).setOrigin(0.5, 0.5);
 
     // --- TALK ICON ---
     const talkIcon = this.add
