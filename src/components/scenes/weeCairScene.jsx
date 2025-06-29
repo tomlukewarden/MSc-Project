@@ -13,7 +13,6 @@ import {
   fairyGoodbyeDialogues
 } from "../../npc/fairy";
 import { CoinManager } from "../coinManager";
-
 const coinManager = new CoinManager(0); 
 
 class WeeCairScene extends Phaser.Scene {
