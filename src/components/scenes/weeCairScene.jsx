@@ -12,6 +12,11 @@ import {
   fairyHelpDialogues,
   fairyGoodbyeDialogues
 } from "../../npc/fairy";
+import { CoinManager } from "../coinManager";
+import { saveToLocal, loadFromLocal } from "../../utils/localStorage";
+
+const startingCoins = loadFromLocal("coins") || 0;
+const coinManager = new CoinManager(startingCoins);
 
 class WeeCairScene extends Phaser.Scene {
   constructor() {
@@ -38,6 +43,7 @@ class WeeCairScene extends Phaser.Scene {
     this.load.image("talk", "/assets/interact/talk.png");
     this.load.image("foxglovePlant", "/assets/plants/foxglove.png");
     this.load.image("springShard", "/assets/items/spring.png");
+    this.load.audio("click", "/assets/sound-effects/click.mp3")
   }
 
   create() {
@@ -200,7 +206,11 @@ class WeeCairScene extends Phaser.Scene {
 
                 this.showDialogue("You hand her the plant...", {
                   imageKey: "bee"
-                });
+                });                onSelect: () => {
+                    coinManager.add(200);
+                    saveToLocal("coins", coinManager.coins); // <-- always save after changing coins
+          
+                }
 
                 this.time.delayedCall(800, () => {
                   // Set currentSet to beeThanksDialogues index so pointerdown handler works
@@ -430,6 +440,12 @@ class WeeCairScene extends Phaser.Scene {
 
     container.add([border, itemImage, topLabel, bottomLabel]);
     console.log(`Received item: ${itemKey}`);
+
+    // --- COIN MANAGER LOGIC ---
+    if (itemKey === "springShard") {
+      coinManager.add(200); 
+      saveToLocal("coins", coinManager.coins);
+    }
 
     this[`${itemKey}Received`] = true;
 

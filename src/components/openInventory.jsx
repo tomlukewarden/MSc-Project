@@ -1,6 +1,13 @@
+
+import { CoinManager } from "../components/coinManager";
+import { loadFromLocal } from "../utils/localStorage";
+
+const startingCoins = loadFromLocal("coins") || 0;
+const coinManager = new CoinManager(startingCoins);
 class OpenInventory extends Phaser.Scene {
   constructor() {
     super({ key: "OpenInventory" });
+    this.coinText = null;
   }
 
   create() {
@@ -16,14 +23,19 @@ class OpenInventory extends Phaser.Scene {
       color: "#fff"
     }).setOrigin(0.5).setDepth(106);
 
-    // Example coins
-    this.add.text(width / 2 + 170, height / 2 - 140, "200c", {
+    // --- COINS ---
+    this.coinText = this.add.text(width / 2 + 170, height / 2 - 140, `${coinManager.coins}c`, {
       fontFamily: "Georgia",
       fontSize: "22px",
       color: "#ffe066",
       backgroundColor: "#222",
       padding: { left: 12, right: 12, top: 6, bottom: 6 }
     }).setOrigin(1, 0).setDepth(106);
+
+    // Listen for coin changes and update display
+    coinManager.onChange((coins) => {
+      if (this.coinText) this.coinText.setText(`${coins}c`);
+    });
 
     // Example items
     const items = [
