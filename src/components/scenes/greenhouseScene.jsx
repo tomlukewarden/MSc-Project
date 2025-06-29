@@ -3,6 +3,11 @@ import { elephantIntroDialogues, elephantThanksDialogues } from "../../npc/eleph
 import { createElephant } from "../../npc/elephant";
 import { createTextBox } from "../../dialogue/createTextbox";
 import { createOptionBox } from "../../dialogue/createOptionBox";
+import { CoinManager } from "../coinManager";
+import { saveToLocal, loadFromLocal } from "../../utils/localStorage";
+
+const startingCoins = loadFromLocal("coins") || 0;
+const coinManager = new CoinManager(startingCoins);
 
 class GreenhouseScene extends Phaser.Scene {
     constructor() {
@@ -47,9 +52,7 @@ class GreenhouseScene extends Phaser.Scene {
         char.setOrigin(-8, -0.5); 
         char.setCollideWorldBounds(true);
 
-
         char.body.setSize(char.width * 0.6, char.height * 0.6);
-        // Center the hitbox
         char.body.setOffset(char.width * 0.2, char.height * 0.2);
 
         const collisionGroup = this.physics.add.staticGroup();
@@ -66,7 +69,6 @@ class GreenhouseScene extends Phaser.Scene {
                 .setDisplaySize(scaledWidth, scaledHeight)
                 .setOrigin(0.5, 0.5);
 
-            // Set the physics body size to match the display size
             solidArea.body.setSize(scaledWidth, scaledHeight);
             solidArea.body.setOffset(-scaledWidth / 2, -scaledHeight / 2);
 
@@ -103,87 +105,87 @@ class GreenhouseScene extends Phaser.Scene {
             char.setVelocity(0);
         });
 
+        // Place a smaller elephant in the center
+        const elephant = createElephant(this, width / 2, height / 2);
+        elephant.setScale(0.09).setOrigin(0.5, 0.5);
 
-    // Place a smaller elephant in the center
-    const elephant = createElephant(this, width / 2, height / 2);
-    elephant.setScale(0.09).setOrigin(0.5, 0.5);
+        // --- TALK ICON ---
+        const talkIcon = this.add
+            .image(0, 0, "talkIcon")
+            .setScale(0.05)
+            .setVisible(false)
+            .setDepth(20)
+            .setOrigin(0.5);
 
-    // --- TALK ICON ---
-    const talkIcon = this.add
-        .image(0, 0, "talkIcon")
-        .setScale(0.05)
-        .setVisible(false)
-        .setDepth(20)
-        .setOrigin(0.5);
-
-    elephant.on("pointerover", (pointer) => {
-        if (!this.dialogueActive) {
-            talkIcon.setVisible(true);
-            talkIcon.setPosition(pointer.worldX + 32, pointer.worldY);
-        }
-    });
-    elephant.on("pointermove", (pointer) => {
-        if (!this.dialogueActive) {
-            talkIcon.setPosition(pointer.worldX + 32, pointer.worldY);
-        }
-    });
-    elephant.on("pointerout", () => {
-        talkIcon.setVisible(false);
-    });
-
-    // --- Dialogue logic ---
-    elephant.on("pointerdown", () => {
-        if (this.dialogueActive) return;
-        this.dialogueActive = true;
-        this.updateHUDState();
-        talkIcon.setVisible(false);
-
-        this.startDialogue(elephantIntroDialogues, () => {
-            this.showOption(
-                "What would you like to say?",
-                [
-                    {
-    label: "Of course I will help!",
-    onSelect: () => {
-        this.startDialogue(
-            ["Thank you so much! I really need your help."],
-            () => { this.dialogueActive = false; this.updateHUDState(); }
-        );
-    }
-},
-{
-    label: "I am not quite ready yet.",
-    onSelect: () => {
-        this.startDialogue(
-            ["Okay, come back when you are ready."],
-            () => { this.dialogueActive = false; this.updateHUDState(); }
-        );
-    }
-}
-
-                ]
-            );
+        elephant.on("pointerover", (pointer) => {
+            if (!this.dialogueActive) {
+                talkIcon.setVisible(true);
+                talkIcon.setPosition(pointer.worldX + 32, pointer.worldY);
+            }
         });
-    });
+        elephant.on("pointermove", (pointer) => {
+            if (!this.dialogueActive) {
+                talkIcon.setPosition(pointer.worldX + 32, pointer.worldY);
+            }
+        });
+        elephant.on("pointerout", () => {
+            talkIcon.setVisible(false);
+        });
 
-    // --- Advance dialogue on pointerdown ---
-    this.input.on("pointerdown", () => {
-        if (!this.dialogueActive || !this.currentDialogue) return;
-        // Don't advance if option box is open
-        if (this.dialogueBox && this.dialogueBox.optionButtons) return;
+        // --- Dialogue logic ---
+        elephant.on("pointerdown", () => {
+            if (this.dialogueActive) return;
+            this.dialogueActive = true;
+            this.updateHUDState();
+            talkIcon.setVisible(false);
 
-        this.currentDialogueIndex++;
-        if (this.currentDialogueIndex < this.currentDialogue.length) {
-            this.showDialogueLine(this.currentDialogue[this.currentDialogueIndex]);
-        } else {
-            // End of dialogue
-            this.destroyDialogueUI();
-            this.currentDialogue = null;
-            this.currentDialogueIndex = 0;
-            if (this.dialogueOnComplete) this.dialogueOnComplete();
-        }
-    });
-}
+            this.startDialogue(elephantIntroDialogues, () => {
+                this.showOption(
+                    "What would you like to say?",
+                    [
+                        {
+                            label: "Of course I will help!",
+                            onSelect: () => {
+                                coinManager.add(5); // Award 5 coins for helping
+                                saveToLocal("coins", coinManager.coins); // Save to local storage
+                                this.startDialogue(
+                                    ["Thank you so much! I really need your help. (+5c)"],
+                                    () => { this.dialogueActive = false; this.updateHUDState(); }
+                                );
+                            }
+                        },
+                        {
+                            label: "I am not quite ready yet.",
+                            onSelect: () => {
+                                this.startDialogue(
+                                    ["Okay, come back when you are ready."],
+                                    () => { this.dialogueActive = false; this.updateHUDState(); }
+                                );
+                            }
+                        }
+                    ]
+                );
+            });
+        });
+
+        // --- Advance dialogue on pointerdown ---
+        this.input.on("pointerdown", () => {
+            if (!this.dialogueActive || !this.currentDialogue) return;
+            // Don't advance if option box is open
+            if (this.dialogueBox && this.dialogueBox.optionButtons) return;
+
+            this.currentDialogueIndex++;
+            if (this.currentDialogueIndex < this.currentDialogue.length) {
+                this.showDialogueLine(this.currentDialogue[this.currentDialogueIndex]);
+            } else {
+                // End of dialogue
+                this.destroyDialogueUI();
+                this.currentDialogue = null;
+                this.currentDialogueIndex = 0;
+                if (this.dialogueOnComplete) this.dialogueOnComplete();
+            }
+        });
+    }
 
     // --- Dialogue helpers ---
 

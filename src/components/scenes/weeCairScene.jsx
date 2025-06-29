@@ -13,7 +13,10 @@ import {
   fairyGoodbyeDialogues
 } from "../../npc/fairy";
 import { CoinManager } from "../coinManager";
-const coinManager = new CoinManager(0); 
+import { saveToLocal, loadFromLocal } from "../../utils/localStorage";
+
+const startingCoins = loadFromLocal("coins") || 0;
+const coinManager = new CoinManager(startingCoins);
 
 class WeeCairScene extends Phaser.Scene {
   constructor() {
@@ -436,8 +439,8 @@ class WeeCairScene extends Phaser.Scene {
     // --- COIN MANAGER LOGIC ---
     if (itemKey === "springShard") {
       coinManager.add(200); 
+      saveToLocal("coins", coinManager.coins);
     }
-    // Add more conditions as needed
 
     this[`${itemKey}Received`] = true;
 
