@@ -12,6 +12,9 @@ import {
   fairyHelpDialogues,
   fairyGoodbyeDialogues
 } from "../../npc/fairy";
+import { CoinManager } from "../coinManager";
+
+const coinManager = new CoinManager(0); 
 
 class WeeCairScene extends Phaser.Scene {
   constructor() {
@@ -430,6 +433,12 @@ class WeeCairScene extends Phaser.Scene {
 
     container.add([border, itemImage, topLabel, bottomLabel]);
     console.log(`Received item: ${itemKey}`);
+
+    // --- COIN MANAGER LOGIC ---
+    if (itemKey === "springShard") {
+      coinManager.add(200); 
+    }
+    // Add more conditions as needed
 
     this[`${itemKey}Received`] = true;
 
