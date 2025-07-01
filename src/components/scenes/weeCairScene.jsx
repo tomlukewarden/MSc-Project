@@ -1,6 +1,5 @@
 import Phaser from "phaser";
-import { createTextBox } from "../../dialogue/createTextbox";
-import { createOptionBox } from "../../dialogue/createOptionBox";
+import { showDialogue, showOption, destroyDialogueUI } from "../../dialogue/dialogueUIHelpers";
 import {
   createBee,
   beeIntroDialogues,
@@ -14,9 +13,10 @@ import {
 } from "../../characters/fairy";
 import { CoinManager } from "../coinManager";
 import { saveToLocal, loadFromLocal } from "../../utils/localStorage";
+import { createMainChar } from "../../characters/mainChar";
+import { receivedItem } from "../../components/recievedItem";
 
-const startingCoins = loadFromLocal("coins") || 0;
-const coinManager = new CoinManager(startingCoins);
+const coinManager = CoinManager.load();
 
 class WeeCairScene extends Phaser.Scene {
   constructor() {
@@ -43,10 +43,16 @@ class WeeCairScene extends Phaser.Scene {
     this.load.image("talk", "/assets/interact/talk.png");
     this.load.image("foxglovePlant", "/assets/plants/foxglove.png");
     this.load.image("springShard", "/assets/items/spring.png");
-    this.load.audio("click", "/assets/sound-effects/click.mp3")
+    this.load.audio("click", "/assets/sound-effects/click.mp3");
+    this.load.audio("sparkle", "/assets/sound-effects/sparkle.mp3");
+    this.load.audio("theme1", "/assets/music/main-theme-1.mp3");
   }
 
   create() {
+    this.sound.play("theme1", {
+      loop: true,
+      volume: 0.1
+    });
     // --- Launch HUD ---
     this.scene.launch("HUDScene");
     this.scene.bringToTop("HUDScene");
@@ -58,10 +64,11 @@ class WeeCairScene extends Phaser.Scene {
 
     const map = this.make.tilemap({ key: "weeCairMap" });
     const collisionObjects = map.getObjectLayer("wee-cair-collisions");
-    const collisionGroup = this.physics.add.staticGroup();
 
     const xOffset = -160;
     const yOffset = 0;
+
+    const collisionGroup = this.physics.add.staticGroup();
 
     if (collisionObjects) {
       collisionObjects.objects.forEach((obj) => {
@@ -76,41 +83,8 @@ class WeeCairScene extends Phaser.Scene {
       });
     }
 
-    // --- Player character ---
-    const char = this.physics.add
-      .sprite(width / 2, 99, "defaultFront")
-      .setScale(0.05)
-      .setDepth(10)
-      .setOrigin(-8, -0.5);
-
-    char.setCollideWorldBounds(true);
-    char.body.setSize(char.width * 0.6, char.height * 0.6);
-    char.body.setOffset(char.width * 0.2, char.height * 0.2);
-
-    const speed = 150;
-    this.input.keyboard.on("keydown", (event) => {
-      char.setVelocity(0);
-      switch (event.key) {
-        case "w":
-          char.setVelocityY(-speed);
-          char.setTexture("defaultBack");
-          break;
-        case "s":
-          char.setVelocityY(speed);
-          char.setTexture("defaultFront");
-          break;
-        case "a":
-          char.setVelocityX(-speed);
-          char.setTexture("defaultLeft");
-          break;
-        case "d":
-          char.setVelocityX(speed);
-          char.setTexture("defaultRight");
-          break;
-      }
-    });
-    this.input.keyboard.on("keyup", () => char.setVelocity(0));
-    this.physics.add.collider(char, collisionGroup);
+    // Pass collisionGroup to createMainChar
+    const char = createMainChar(this, width, height, scaleFactor, collisionGroup);
 
     this.add
       .image(width / 2, height / 2, "weeCairArch")
@@ -168,7 +142,7 @@ class WeeCairScene extends Phaser.Scene {
       this.currentDialogueIndex = 0;
       this.dialogueActive = true;
       this.updateHUDState();
-      this.showDialogue(this.activeDialogue[this.currentDialogueIndex], {
+      showDialogue(this, this.activeDialogue[this.currentDialogueIndex], {
         imageKey: this.activeImageKey
       });
     };
@@ -193,24 +167,23 @@ class WeeCairScene extends Phaser.Scene {
       if (this.foxglovePlantReceived && !this.hasMadeFoxgloveChoice) {
         this.dialogueActive = true;
         this.updateHUDState();
-        this.showOption("Give Paula the Foxglove?", {
+        showOption(this, "Give Paula the Foxglove?", {
           imageKey: "bee",
           options: [
             {
               label: "Yes",
               onSelect: () => {
                 this.hasMadeFoxgloveChoice = true;
-                this.destroyDialogueUI();
+                destroyDialogueUI(this);
                 this.dialogueActive = true;
                 this.foxglovePlantReceived = false;
 
-                this.showDialogue("You hand her the plant...", {
+                showDialogue(this, "You hand her the plant...", {
                   imageKey: "bee"
-                });                onSelect: () => {
-                    coinManager.add(200);
-                    saveToLocal("coins", coinManager.coins); // <-- always save after changing coins
-          
-                }
+                });
+
+                coinManager.add(200);
+                saveToLocal("coins", coinManager.coins);
 
                 this.time.delayedCall(800, () => {
                   // Set currentSet to beeThanksDialogues index so pointerdown handler works
@@ -222,7 +195,7 @@ class WeeCairScene extends Phaser.Scene {
                   this.currentDialogueIndex = 0;
                   this.dialogueActive = true;
                   this.updateHUDState();
-                  this.showDialogue(this.activeDialogue[this.currentDialogueIndex], {
+                  showDialogue(this, this.activeDialogue[this.currentDialogueIndex], {
                     imageKey: this.activeImageKey
                   });
                 });
@@ -231,9 +204,9 @@ class WeeCairScene extends Phaser.Scene {
             {
               label: "No",
               onSelect: () => {
-                this.destroyDialogueUI();
+                destroyDialogueUI(this);
                 this.dialogueActive = true;
-                this.showDialogue("You decide to hold off for now.", {
+                showDialogue(this, "You decide to hold off for now.", {
                   imageKey: "bee"
                 });
               }
@@ -252,39 +225,38 @@ class WeeCairScene extends Phaser.Scene {
 
     // --- Pointerdown handler for advancing dialogue ---
     this.input.on("pointerdown", () => {
+      this.sound.play("click", { volume: 0.5 });
       if (!this.dialogueActive || !this.activeDialogue) return;
       if (this.dialogueBox?.optionButtons?.length > 0) return;
 
       this.currentDialogueIndex++;
 
       if (this.currentDialogueIndex < this.activeDialogue.length) {
-        this.showDialogue(this.activeDialogue[this.currentDialogueIndex], {
+        showDialogue(this, this.activeDialogue[this.currentDialogueIndex], {
           imageKey: this.activeImageKey
         });
       } else {
-        // Special case: just finished beeThanksDialogues
+        // --- After beeThanksDialogues, receive spring shard ---
         if (this.activeDialogue === beeThanksDialogues) {
-          this.receivedItem("springShard", "Spring Shard");
+          receivedItem(this, "springShard", "Spring Shard");
 
-          // Delay before starting fairyGoodbyeDialogues
           this.time.delayedCall(1000, () => {
             this.activeDialogue = fairyGoodbyeDialogues;
             this.activeImageKey = "fairyHappy";
             this.currentDialogueIndex = 0;
             this.dialogueActive = true;
-            this.showDialogue(this.activeDialogue[this.currentDialogueIndex], { imageKey: this.activeImageKey });
+            showDialogue(this, this.activeDialogue[this.currentDialogueIndex], { imageKey: this.activeImageKey });
           });
-
           return;
         }
 
-        // Special case: just finished fairyGoodbyeDialogues
+        // --- After fairyGoodbyeDialogues, show options ---
         if (this.activeDialogue === fairyGoodbyeDialogues) {
-          this.destroyDialogueUI();
+          destroyDialogueUI(this);
           this.dialogueActive = false;
           this.updateHUDState();
 
-          this.showOption("What would you like to do?", {
+          showOption(this, "What would you like to do?", {
             imageKey: "fairyHappy",
             options: [
               {
@@ -296,10 +268,10 @@ class WeeCairScene extends Phaser.Scene {
               {
                 label: "Stay here",
                 onSelect: () => {
-                  this.destroyDialogueUI();
+                  destroyDialogueUI(this);
                   this.dialogueActive = true;
                   this.updateHUDState();
-                  this.showDialogue("You decide to wait a bit longer...");
+                  showDialogue(this, "You decide to wait a bit longer...");
                 }
               }
             ]
@@ -307,155 +279,28 @@ class WeeCairScene extends Phaser.Scene {
           return;
         }
 
-        // Normal sequence advancement
-        this.destroyDialogueUI();
+        // --- Normal sequence advancement ---
+        destroyDialogueUI(this);
         this.dialogueActive = false;
         this.updateHUDState();
         this.currentSet++;
         this.currentNPC = null;
 
+        // --- After fairyHelpDialogues, receive foxglove ---
         const justCompletedSet = this.currentSet - 1;
         if (
           this.dialogueSequence[justCompletedSet] &&
           this.dialogueSequence[justCompletedSet].lines === fairyHelpDialogues
         ) {
-          this.receivedItem("foxglovePlant", "Foxglove");
+          receivedItem(this, "foxglovePlant", "Foxglove");
+          this.foxglovePlantReceived = true;
         }
       }
     });
 
     // --- Responsive: Listen for resize events
-    this.scale.on('resize', this.handleResize, this);
-  }
-
-  // --- Responsive dialogue UI helpers ---
-  showDialogue(text, optionsConfig = {}) {
-    this.destroyDialogueUI();
-    // Use responsive width/height for the dialogue box
-    const { width, height } = this.scale;
-    const boxWidth = Math.min(600, width * 0.8);
-    const boxHeight = Math.min(180, height * 0.25);
-
-    // Pass boxWidth/boxHeight to your createTextBox if it supports sizing
-    this.dialogueBox = createTextBox(this, text, {
-      ...optionsConfig,
-      boxWidth,
-      boxHeight,
-      x: width / 2,
-      y: height - boxHeight / 2 - 30
-    });
-    this.dialogueActive = true;
-    this.updateHUDState();
-  }
-
-  showOption(text, config = {}) {
-    this.destroyDialogueUI();
-    // Use responsive width/height for the option box
-    const { width, height } = this.scale;
-    const boxWidth = Math.min(600, width * 0.8);
-    const boxHeight = Math.min(220, height * 0.3);
-
-    // Pass boxWidth/boxHeight to your createOptionBox if it supports sizing
-    this.dialogueBox = createOptionBox(this, text, {
-      ...config,
-      boxWidth,
-      boxHeight,
-      x: width / 2,
-      y: height - boxHeight / 2 - 30
-    });
-    this.dialogueActive = true;
-    this.updateHUDState();
-  }
-
-  // --- Responsive resize handler ---
-  handleResize(gameSize) {
-    // Reposition or resize UI elements as needed
-    // For example, if you have a dialogue box open:
-    if (this.dialogueBox && this.dialogueBox.box) {
-      const { width, height } = gameSize;
-      const boxWidth = Math.min(600, width * 0.8);
-      const boxHeight = Math.min(220, height * 0.3);
-      this.dialogueBox.box.setPosition(width / 2, height - boxHeight / 2 - 30);
-      this.dialogueBox.box.setSize(boxWidth, boxHeight);
-      // Also reposition text/image if needed
-      if (this.dialogueBox.textObj) {
-        this.dialogueBox.textObj.setPosition(width / 2, height - boxHeight / 2 - 30);
-      }
-      if (this.dialogueBox.image) {
-        this.dialogueBox.image.setPosition(width / 2, height - boxHeight / 2 - 30);
-      }
-      // Option buttons: reposition as needed
-      if (this.dialogueBox.optionButtons) {
-        // Example: stack vertically under the box
-        this.dialogueBox.optionButtons.forEach((btn, idx) => {
-          btn.setPosition(width / 2, height - boxHeight / 2 + 40 + idx * 40);
-        });
-      }
-    }
-  }
-
-  // --- Item received popup ---
-  receivedItem(itemKey, itemName, options = {}) {
-    if (!itemKey || !itemName) {
-      console.warn("receivedItem called without itemKey or itemName");
-      return;
-    }
-    const { width, height } = this.sys.game.config;
-    const scale = options.scale || 0.1;
-    const borderPadding = options.borderPadding || 20;
-    const borderColor = options.borderColor || 0x88cc88;
-    const textColor = options.textColor || "#ffffff";
-
-    const itemTexture = this.textures.get(itemKey).getSourceImage();
-    const itemWidth = itemTexture.width * scale;
-    const itemHeight = itemTexture.height * scale;
-
-    const container = this.add.container(width / 2, height / 2).setDepth(103);
-
-    const border = this.add
-      .rectangle(0, 0, itemWidth + borderPadding, itemHeight + borderPadding, 0xffffff)
-      .setStrokeStyle(2, borderColor);
-
-    const itemImage = this.add
-      .image(0, 0, itemKey)
-      .setScale(scale);
-
-    const topLabel = this.add
-      .text(0, -(itemHeight / 2) - borderPadding / 2 - 20, "You Received:", {
-        fontFamily: "Georgia",
-        fontSize: "18px",
-        color: textColor,
-        align: "center"
-      })
-      .setOrigin(0.5);
-
-    const bottomLabel = this.add
-      .text(0, itemHeight / 2 + borderPadding / 2 + 12, itemName, {
-        fontFamily: "Georgia",
-        fontSize: "18px",
-        color: textColor,
-        align: "center"
-      })
-      .setOrigin(0.5);
-
-    container.add([border, itemImage, topLabel, bottomLabel]);
-    console.log(`Received item: ${itemKey}`);
-
-    // --- COIN MANAGER LOGIC ---
-    if (itemKey === "springShard") {
-      coinManager.add(200); 
-      saveToLocal("coins", coinManager.coins);
-    }
-
-    this[`${itemKey}Received`] = true;
-
-    this.time.delayedCall(3000, () => {
-      this.tweens.add({
-        targets: container,
-        alpha: 0,
-        duration: 500,
-        onComplete: () => container.destroy()
-      });
+    this.scale.on('resize', (gameSize) => {
+      const char = createMainChar(this, width, height, collisionObjects, scaleFactor);      this.handleResize(gameSize);
     });
   }
 
@@ -478,6 +323,28 @@ class WeeCairScene extends Phaser.Scene {
       this.dialogueBox = null;
     }
   }
+
+  handleResize(gameSize) {
+    if (this.dialogueBox && this.dialogueBox.box) {
+      const { width, height } = gameSize;
+      const boxWidth = Math.min(600, width * 0.8);
+      const boxHeight = Math.min(220, height * 0.3);
+      this.dialogueBox.box.setPosition(width / 2, height - boxHeight / 2 - 30);
+      this.dialogueBox.box.setSize(boxWidth, boxHeight);
+      if (this.dialogueBox.textObj) {
+        this.dialogueBox.textObj.setPosition(width / 2, height - boxHeight / 2 - 30);
+      }
+      if (this.dialogueBox.image) {
+        this.dialogueBox.image.setPosition(width / 2, height - boxHeight / 2 - 30);
+      }
+      if (this.dialogueBox.optionButtons) {
+        this.dialogueBox.optionButtons.forEach((btn, idx) => {
+          btn.setPosition(width / 2, height - boxHeight / 2 + 40 + idx * 40);
+        });
+      }
+    }
+  }
 }
+
 
 export default WeeCairScene;
