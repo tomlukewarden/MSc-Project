@@ -14,6 +14,7 @@ import {
 import { CoinManager } from "../coinManager";
 import { saveToLocal, loadFromLocal } from "../../utils/localStorage";
 import { createMainChar } from "../../characters/mainChar";
+import { receivedItem } from "../../components/recievedItem";
 
 const coinManager = CoinManager.load();
 
@@ -216,7 +217,7 @@ class WeeCairScene extends Phaser.Scene {
 
     // --- Pointerdown handler for advancing dialogue ---
     this.input.on("pointerdown", () => {
-       this.sound.play("click", { volume: 0.5 });
+      this.sound.play("click", { volume: 0.5 });
       if (!this.dialogueActive || !this.activeDialogue) return;
       if (this.dialogueBox?.optionButtons?.length > 0) return;
 
@@ -227,11 +228,10 @@ class WeeCairScene extends Phaser.Scene {
           imageKey: this.activeImageKey
         });
       } else {
-        // Special case: just finished beeThanksDialogues
+        // --- After beeThanksDialogues, receive spring shard ---
         if (this.activeDialogue === beeThanksDialogues) {
-          this.receivedItem("springShard", "Spring Shard");
+          receivedItem(this, "springShard", "Spring Shard");
 
-          // Delay before starting fairyGoodbyeDialogues
           this.time.delayedCall(1000, () => {
             this.activeDialogue = fairyGoodbyeDialogues;
             this.activeImageKey = "fairyHappy";
@@ -239,11 +239,10 @@ class WeeCairScene extends Phaser.Scene {
             this.dialogueActive = true;
             showDialogue(this, this.activeDialogue[this.currentDialogueIndex], { imageKey: this.activeImageKey });
           });
-
           return;
         }
 
-        // Special case: just finished fairyGoodbyeDialogues
+        // --- After fairyGoodbyeDialogues, show options ---
         if (this.activeDialogue === fairyGoodbyeDialogues) {
           destroyDialogueUI(this);
           this.dialogueActive = false;
@@ -272,19 +271,21 @@ class WeeCairScene extends Phaser.Scene {
           return;
         }
 
-        // Normal sequence advancement
+        // --- Normal sequence advancement ---
         destroyDialogueUI(this);
         this.dialogueActive = false;
         this.updateHUDState();
         this.currentSet++;
         this.currentNPC = null;
 
+        // --- After fairyHelpDialogues, receive foxglove ---
         const justCompletedSet = this.currentSet - 1;
         if (
           this.dialogueSequence[justCompletedSet] &&
           this.dialogueSequence[justCompletedSet].lines === fairyHelpDialogues
         ) {
-          this.receivedItem("foxglovePlant", "Foxglove");
+          receivedItem(this, "foxglovePlant", "Foxglove");
+          this.foxglovePlantReceived = true;
         }
       }
     });
@@ -294,8 +295,6 @@ class WeeCairScene extends Phaser.Scene {
   }
   // --- Responsive resize handler ---
   handleResize(gameSize) {
-    // Reposition or resize UI elements as needed
-    // For example, if you have a dialogue box open:
     if (this.dialogueBox && this.dialogueBox.box) {
       const { width, height } = gameSize;
       const boxWidth = Math.min(600, width * 0.8);
@@ -319,70 +318,6 @@ class WeeCairScene extends Phaser.Scene {
     }
   }
 
-  // --- Item received popup ---
-  receivedItem(itemKey, itemName, options = {}) {
-    if (!itemKey || !itemName) {
-      console.warn("receivedItem called without itemKey or itemName");
-      return;
-    }
-    const { width, height } = this.sys.game.config;
-    const scale = options.scale || 0.1;
-    const borderPadding = options.borderPadding || 20;
-    const borderColor = options.borderColor || 0x88cc88;
-    const textColor = options.textColor || "#ffffff";
-
-    const itemTexture = this.textures.get(itemKey).getSourceImage();
-    const itemWidth = itemTexture.width * scale;
-    const itemHeight = itemTexture.height * scale;
-
-    const container = this.add.container(width / 2, height / 2).setDepth(103);
-
-    const border = this.add
-      .rectangle(0, 0, itemWidth + borderPadding, itemHeight + borderPadding, 0xffffff)
-      .setStrokeStyle(2, borderColor);
-
-    const itemImage = this.add
-      .image(0, 0, itemKey)
-      .setScale(scale);
-
-    const topLabel = this.add
-      .text(0, -(itemHeight / 2) - borderPadding / 2 - 20, "You Received:", {
-        fontFamily: "Georgia",
-        fontSize: "18px",
-        color: textColor,
-        align: "center"
-      })
-      .setOrigin(0.5);
-
-    const bottomLabel = this.add
-      .text(0, itemHeight / 2 + borderPadding / 2 + 12, itemName, {
-        fontFamily: "Georgia",
-        fontSize: "18px",
-        color: textColor,
-        align: "center"
-      })
-      .setOrigin(0.5);
-
-    container.add([border, itemImage, topLabel, bottomLabel]);
-    console.log(`Received item: ${itemKey}`);
-
-    // --- COIN MANAGER LOGIC ---
-    if (itemKey === "springShard") {
-      coinManager.add(200); 
-      saveToLocal("coins", coinManager.coins);
-    }
-
-    this[`${itemKey}Received`] = true;
-
-    this.time.delayedCall(3000, () => {
-      this.tweens.add({
-        targets: container,
-        alpha: 0,
-        duration: 500,
-        onComplete: () => container.destroy()
-      });
-    });
-  }
 
   updateHUDState() {
     if (this.dialogueActive) {
