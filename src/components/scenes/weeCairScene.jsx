@@ -15,7 +15,6 @@ import { CoinManager } from "../coinManager";
 import { saveToLocal, loadFromLocal } from "../../utils/localStorage";
 import { createMainChar } from "../../characters/mainChar";
 import { receivedItem } from "../../components/recievedItem";
-import { handleResize } from "../../components/handleResize";
 
 const coinManager = CoinManager.load();
 
@@ -44,10 +43,15 @@ class WeeCairScene extends Phaser.Scene {
     this.load.image("talk", "/assets/interact/talk.png");
     this.load.image("foxglovePlant", "/assets/plants/foxglove.png");
     this.load.image("springShard", "/assets/items/spring.png");
-    this.load.audio("click", "/assets/sound-effects/click.mp3")
+    this.load.audio("click", "/assets/sound-effects/click.mp3");
+    this.load.audio("theme1", "/assets/music/main-theme-1.mp3");
   }
 
   create() {
+    this.sound.play("theme1", {
+      loop: true,
+      volume: 0.1
+    });
     // --- Launch HUD ---
     this.scene.launch("HUDScene");
     this.scene.bringToTop("HUDScene");
@@ -59,10 +63,11 @@ class WeeCairScene extends Phaser.Scene {
 
     const map = this.make.tilemap({ key: "weeCairMap" });
     const collisionObjects = map.getObjectLayer("wee-cair-collisions");
-    const collisionGroup = this.physics.add.staticGroup();
 
     const xOffset = -160;
     const yOffset = 0;
+
+    const collisionGroup = this.physics.add.staticGroup();
 
     if (collisionObjects) {
       collisionObjects.objects.forEach((obj) => {
@@ -77,7 +82,8 @@ class WeeCairScene extends Phaser.Scene {
       });
     }
 
-    const char = createMainChar(this, width, height, collisionObjects, scaleFactor);
+    // Pass collisionGroup to createMainChar
+    const char = createMainChar(this, width, height, scaleFactor, collisionGroup);
 
     this.add
       .image(width / 2, height / 2, "weeCairArch")
@@ -293,7 +299,7 @@ class WeeCairScene extends Phaser.Scene {
 
     // --- Responsive: Listen for resize events
     this.scale.on('resize', (gameSize) => {
-      handleResize(this, gameSize);
+      const char = createMainChar(this, width, height, collisionObjects, scaleFactor);      this.handleResize(gameSize);
     });
   }
 
@@ -316,6 +322,28 @@ class WeeCairScene extends Phaser.Scene {
       this.dialogueBox = null;
     }
   }
+
+  handleResize(gameSize) {
+    if (this.dialogueBox && this.dialogueBox.box) {
+      const { width, height } = gameSize;
+      const boxWidth = Math.min(600, width * 0.8);
+      const boxHeight = Math.min(220, height * 0.3);
+      this.dialogueBox.box.setPosition(width / 2, height - boxHeight / 2 - 30);
+      this.dialogueBox.box.setSize(boxWidth, boxHeight);
+      if (this.dialogueBox.textObj) {
+        this.dialogueBox.textObj.setPosition(width / 2, height - boxHeight / 2 - 30);
+      }
+      if (this.dialogueBox.image) {
+        this.dialogueBox.image.setPosition(width / 2, height - boxHeight / 2 - 30);
+      }
+      if (this.dialogueBox.optionButtons) {
+        this.dialogueBox.optionButtons.forEach((btn, idx) => {
+          btn.setPosition(width / 2, height - boxHeight / 2 + 40 + idx * 40);
+        });
+      }
+    }
+  }
 }
+
 
 export default WeeCairScene;

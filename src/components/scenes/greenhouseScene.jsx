@@ -10,7 +10,7 @@ const coinManager = CoinManager.load();
 
 class GreenhouseScene extends Phaser.Scene {
     constructor() {
-        super({ key: "GreenhouseScene", physics: { default: "arcade", arcade: { debug: true } } });
+        super({ key: "GreenhouseScene", physics: { default: "arcade", arcade: { debug: false } } });
         this.dialogueActive = false;
         this.dialogueBox = null;
     }
