@@ -216,6 +216,7 @@ class WeeCairScene extends Phaser.Scene {
 
     // --- Pointerdown handler for advancing dialogue ---
     this.input.on("pointerdown", () => {
+       this.sound.play("click", { volume: 0.5 });
       if (!this.dialogueActive || !this.activeDialogue) return;
       if (this.dialogueBox?.optionButtons?.length > 0) return;
 
