@@ -10,6 +10,7 @@ import ShopScene from "./scenes/shopScene";
 import Menu from "./scenes/menuScene";
 import OpenInventory from "./openInventory";
 import OpenSettings from "./openSettings";
+import MapScene from "./scenes/mapScene";
 
 
 function GameCanvas() {
@@ -33,7 +34,7 @@ function GameCanvas() {
                 height: 720
             },
             canvas: canvasRef.current,
-            scene: [Menu, StartScene, ShopScene,  WeeCairScene, GreenhouseScene, HUDScene,OpenJournal, OpenInventory, OpenSettings],
+            scene: [Menu,  MapScene, StartScene, ShopScene,  WeeCairScene, GreenhouseScene, HUDScene,OpenJournal, OpenInventory, OpenSettings],
         };
 
         gameRef.current = new Phaser.Game(config);

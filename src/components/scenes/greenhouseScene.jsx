@@ -1,6 +1,6 @@
 import Phaser from "phaser";
-import { elephantIntroDialogues, elephantThanksDialogues } from "../../npc/elephant";
-import { createElephant } from "../../npc/elephant";
+import { elephantIntroDialogues, elephantThanksDialogues } from "../../characters/elephant";
+import { createElephant } from "../../characters/elephant";
 import { createTextBox } from "../../dialogue/createTextbox";
 import { createOptionBox } from "../../dialogue/createOptionBox";
 import { CoinManager } from "../coinManager";
@@ -11,7 +11,7 @@ const coinManager = new CoinManager(startingCoins);
 
 class GreenhouseScene extends Phaser.Scene {
     constructor() {
-        super({ key: "GreenhouseScene", physics: { default: "arcade", arcade: { debug: false } } });
+        super({ key: "GreenhouseScene", physics: { default: "arcade", arcade: { debug: true } } });
         this.dialogueActive = false;
         this.dialogueBox = null;
     }
@@ -185,6 +185,26 @@ class GreenhouseScene extends Phaser.Scene {
                 this.currentDialogueIndex = 0;
                 if (this.dialogueOnComplete) this.dialogueOnComplete();
             }
+        });
+
+        this.events.on('update', () => {
+            // FAR LEFT: trigger when player's left edge is near 0
+            if (char.x - char.displayWidth / 2 < 5) { 
+                this.exitToNextScene();
+            }
+        });
+    }
+
+    // Add this method to your class:
+    exitToNextScene() {
+        // Prevent multiple triggers
+        if (this.exiting) return;
+        this.exiting = true;
+        this.cameras.main.fadeOut(600, 0, 0, 0);
+
+        this.cameras.main.once('camerafadeoutcomplete', () => {
+            this.scene.start("WeeCairScene");
+            this.scene.get("WeeCairScene")?.cameras?.main?.fadeIn?.(600, 0, 0, 0);
         });
     }
 

@@ -5,13 +5,13 @@ import {
   createBee,
   beeIntroDialogues,
   beeThanksDialogues
-} from "../../npc/bee";
+} from "../../characters/bee";
 import {
   createFairy,
   fairyIntroDialogues,
   fairyHelpDialogues,
   fairyGoodbyeDialogues
-} from "../../npc/fairy";
+} from "../../characters/fairy";
 import { CoinManager } from "../coinManager";
 import { saveToLocal, loadFromLocal } from "../../utils/localStorage";
 
