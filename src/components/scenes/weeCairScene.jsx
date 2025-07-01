@@ -15,6 +15,7 @@ import { CoinManager } from "../coinManager";
 import { saveToLocal, loadFromLocal } from "../../utils/localStorage";
 import { createMainChar } from "../../characters/mainChar";
 import { receivedItem } from "../../components/recievedItem";
+import { handleResize } from "../../components/handleResize";
 
 const coinManager = CoinManager.load();
 
@@ -291,33 +292,10 @@ class WeeCairScene extends Phaser.Scene {
     });
 
     // --- Responsive: Listen for resize events
-    this.scale.on('resize', this.handleResize, this);
+    this.scale.on('resize', (gameSize) => {
+      handleResize(this, gameSize);
+    });
   }
-  // --- Responsive resize handler ---
-  handleResize(gameSize) {
-    if (this.dialogueBox && this.dialogueBox.box) {
-      const { width, height } = gameSize;
-      const boxWidth = Math.min(600, width * 0.8);
-      const boxHeight = Math.min(220, height * 0.3);
-      this.dialogueBox.box.setPosition(width / 2, height - boxHeight / 2 - 30);
-      this.dialogueBox.box.setSize(boxWidth, boxHeight);
-      // Also reposition text/image if needed
-      if (this.dialogueBox.textObj) {
-        this.dialogueBox.textObj.setPosition(width / 2, height - boxHeight / 2 - 30);
-      }
-      if (this.dialogueBox.image) {
-        this.dialogueBox.image.setPosition(width / 2, height - boxHeight / 2 - 30);
-      }
-      // Option buttons: reposition as needed
-      if (this.dialogueBox.optionButtons) {
-        // Example: stack vertically under the box
-        this.dialogueBox.optionButtons.forEach((btn, idx) => {
-          btn.setPosition(width / 2, height - boxHeight / 2 + 40 + idx * 40);
-        });
-      }
-    }
-  }
-
 
   updateHUDState() {
     if (this.dialogueActive) {

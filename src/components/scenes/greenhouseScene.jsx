@@ -146,7 +146,6 @@ class GreenhouseScene extends Phaser.Scene {
         const char = createMainChar(this, width, height, collisionObjects, scaleFactor);
 
         this.events.on('update', () => {
-            // FAR LEFT: trigger when player's left edge is near 0
             if (char.x - char.displayWidth / 2 < 5) { 
                 this.exitToNextScene();
             }
