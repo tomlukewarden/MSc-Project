@@ -14,6 +14,7 @@ import {
 } from "../../characters/fairy";
 import { CoinManager } from "../coinManager";
 import { saveToLocal, loadFromLocal } from "../../utils/localStorage";
+import { createMainChar } from "../../characters/mainChar";
 
 const startingCoins = loadFromLocal("coins") || 0;
 const coinManager = new CoinManager(startingCoins);
@@ -76,41 +77,7 @@ class WeeCairScene extends Phaser.Scene {
       });
     }
 
-    // --- Player character ---
-    const char = this.physics.add
-      .sprite(width / 2, 99, "defaultFront")
-      .setScale(0.05)
-      .setDepth(10)
-      .setOrigin(-8, -0.5);
-
-    char.setCollideWorldBounds(true);
-    char.body.setSize(char.width * 0.6, char.height * 0.6);
-    char.body.setOffset(char.width * 0.2, char.height * 0.2);
-
-    const speed = 150;
-    this.input.keyboard.on("keydown", (event) => {
-      char.setVelocity(0);
-      switch (event.key) {
-        case "w":
-          char.setVelocityY(-speed);
-          char.setTexture("defaultBack");
-          break;
-        case "s":
-          char.setVelocityY(speed);
-          char.setTexture("defaultFront");
-          break;
-        case "a":
-          char.setVelocityX(-speed);
-          char.setTexture("defaultLeft");
-          break;
-        case "d":
-          char.setVelocityX(speed);
-          char.setTexture("defaultRight");
-          break;
-      }
-    });
-    this.input.keyboard.on("keyup", () => char.setVelocity(0));
-    this.physics.add.collider(char, collisionGroup);
+    const char = createMainChar(this, width, height, collisionObjects, scaleFactor);
 
     this.add
       .image(width / 2, height / 2, "weeCairArch")
