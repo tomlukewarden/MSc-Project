@@ -1,8 +1,7 @@
 import Phaser from "phaser";
 import { elephantIntroDialogues, elephantThanksDialogues } from "../../characters/elephant";
 import { createElephant } from "../../characters/elephant";
-import { createTextBox } from "../../dialogue/createTextbox";
-import { createOptionBox } from "../../dialogue/createOptionBox";
+import { showDialogue, showOption, destroyDialogueUI } from "../../dialogue/dialogueUIHelpers";
 import { CoinManager } from "../coinManager";
 import { saveToLocal, loadFromLocal } from "../../utils/localStorage";
 import { createMainChar } from "../../characters/mainChar";
@@ -83,47 +82,57 @@ class GreenhouseScene extends Phaser.Scene {
             this.updateHUDState();
             talkIcon.setVisible(false);
 
-            this.startDialogue(elephantIntroDialogues, () => {
-                this.showOption(
-                    "What would you like to say?",
-                    [
+            showDialogue(this, elephantIntroDialogues[0]);
+            this.currentDialogue = elephantIntroDialogues;
+            this.currentDialogueIndex = 0;
+            this.dialogueOnComplete = () => {
+                showOption(this, "What would you like to say?", {
+                    options: [
                         {
                             label: "Of course I will help!",
                             onSelect: () => {
-                                coinManager.add(5); // Award 5 coins for helping
-                                saveToLocal("coins", coinManager.coins); // Save to local storage
-                                this.startDialogue(
-                                    ["Thank you so much! I really need your help. (+5c)"],
-                                    () => { this.dialogueActive = false; this.updateHUDState(); }
-                                );
+                                coinManager.add(5);
+                                showDialogue(this, "Thank you so much! I really need your help. (+5c)");
+                                this.currentDialogue = ["Thank you so much! I really need your help. (+5c)"];
+                                this.currentDialogueIndex = 0;
+                                this.dialogueOnComplete = () => {
+                                    this.dialogueActive = false;
+                                    this.updateHUDState();
+                                };
                             }
                         },
                         {
                             label: "I am not quite ready yet.",
                             onSelect: () => {
-                                this.startDialogue(
-                                    ["Okay, come back when you are ready."],
-                                    () => { this.dialogueActive = false; this.updateHUDState(); }
-                                );
+                                showDialogue(this, "Okay, come back when you are ready.");
+                                this.currentDialogue = ["Okay, come back when you are ready."];
+                                this.currentDialogueIndex = 0;
+                                this.dialogueOnComplete = () => {
+                                    this.dialogueActive = false;
+                                    this.updateHUDState();
+                                };
                             }
                         }
                     ]
-                );
-            });
+                });
+                this.currentDialogue = null;
+                this.currentDialogueIndex = 0;
+                this.dialogueOnComplete = null;
+            };
         });
 
         // --- Advance dialogue on pointerdown ---
         this.input.on("pointerdown", () => {
+            this.sound.play("click", { volume: 0.5 });
             if (!this.dialogueActive || !this.currentDialogue) return;
             // Don't advance if option box is open
             if (this.dialogueBox && this.dialogueBox.optionButtons) return;
 
             this.currentDialogueIndex++;
             if (this.currentDialogueIndex < this.currentDialogue.length) {
-                this.showDialogueLine(this.currentDialogue[this.currentDialogueIndex]);
+                showDialogue(this, this.currentDialogue[this.currentDialogueIndex]);
             } else {
-                // End of dialogue
-                this.destroyDialogueUI();
+                destroyDialogueUI(this);
                 this.currentDialogue = null;
                 this.currentDialogueIndex = 0;
                 if (this.dialogueOnComplete) this.dialogueOnComplete();
@@ -153,47 +162,7 @@ class GreenhouseScene extends Phaser.Scene {
         });
     }
 
-    // --- Dialogue helpers ---
 
-    startDialogue(dialogueArray, onComplete) {
-        this.dialogueActive = true;
-        this.updateHUDState();
-        this.currentDialogue = dialogueArray;
-        this.currentDialogueIndex = 0;
-        this.dialogueOnComplete = onComplete;
-        this.showDialogueLine(this.currentDialogue[0]);
-    }
-
-    showDialogueLine(text) {
-        this.destroyDialogueUI();
-        const { width, height } = this.sys.game.config;
-        const boxWidth = Math.min(600, width * 0.8);
-        const boxHeight = Math.min(180, height * 0.25);
-
-        this.dialogueBox = createTextBox(this, text, {
-            boxWidth,
-            boxHeight,
-            x: width / 2,
-            y: height - boxHeight / 2 - 30
-        });
-    }
-
-    showOption(prompt, options) {
-        this.dialogueActive = true;
-        this.updateHUDState();
-        this.destroyDialogueUI();
-        const { width, height } = this.sys.game.config;
-        const boxWidth = Math.min(600, width * 0.8);
-        const boxHeight = Math.min(220, height * 0.3);
-
-        this.dialogueBox = createOptionBox(this, prompt, {
-            options,
-            boxWidth,
-            boxHeight,
-            x: width / 2,
-            y: height - boxHeight / 2 - 30
-        });
-    }
 
     updateHUDState() {
         if (this.dialogueActive) {
@@ -203,17 +172,6 @@ class GreenhouseScene extends Phaser.Scene {
         }
     }
 
-    destroyDialogueUI() {
-        if (this.dialogueBox) {
-            this.dialogueBox.box?.destroy();
-            this.dialogueBox.textObj?.destroy();
-            this.dialogueBox.image?.destroy();
-            if (this.dialogueBox.optionButtons) {
-                this.dialogueBox.optionButtons.forEach((btn) => btn.destroy());
-            }
-            this.dialogueBox = null;
-        }
-    }
 }
 
 export default GreenhouseScene;
