@@ -1,6 +1,6 @@
 import Phaser from "phaser";
-import { elephantIntroDialogues, elephantThanksDialogues } from "../../npc/elephant";
-import { createElephant } from "../../npc/elephant";
+import { elephantIntroDialogues, elephantThanksDialogues } from "../../characters/elephant";
+import { createElephant } from "../../characters/elephant";
 import { createTextBox } from "../../dialogue/createTextbox";
 import { createOptionBox } from "../../dialogue/createOptionBox";
 import { CoinManager } from "../coinManager";
