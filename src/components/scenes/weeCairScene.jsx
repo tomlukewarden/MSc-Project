@@ -1,6 +1,5 @@
 import Phaser from "phaser";
-import { createTextBox } from "../../dialogue/createTextbox";
-import { createOptionBox } from "../../dialogue/createOptionBox";
+import { showDialogue, showOption, destroyDialogueUI } from "../../dialogue/dialogueUIHelpers";
 import {
   createBee,
   beeIntroDialogues,
@@ -134,7 +133,7 @@ class WeeCairScene extends Phaser.Scene {
       this.currentDialogueIndex = 0;
       this.dialogueActive = true;
       this.updateHUDState();
-      this.showDialogue(this.activeDialogue[this.currentDialogueIndex], {
+      showDialogue(this, this.activeDialogue[this.currentDialogueIndex], {
         imageKey: this.activeImageKey
       });
     };
@@ -159,24 +158,23 @@ class WeeCairScene extends Phaser.Scene {
       if (this.foxglovePlantReceived && !this.hasMadeFoxgloveChoice) {
         this.dialogueActive = true;
         this.updateHUDState();
-        this.showOption("Give Paula the Foxglove?", {
+        showOption(this, "Give Paula the Foxglove?", {
           imageKey: "bee",
           options: [
             {
               label: "Yes",
               onSelect: () => {
                 this.hasMadeFoxgloveChoice = true;
-                this.destroyDialogueUI();
+                destroyDialogueUI(this);
                 this.dialogueActive = true;
                 this.foxglovePlantReceived = false;
 
-                this.showDialogue("You hand her the plant...", {
+                showDialogue(this, "You hand her the plant...", {
                   imageKey: "bee"
-                });                onSelect: () => {
-                    coinManager.add(200);
-                    saveToLocal("coins", coinManager.coins); // <-- always save after changing coins
-          
-                }
+                });
+
+                coinManager.add(200);
+                saveToLocal("coins", coinManager.coins);
 
                 this.time.delayedCall(800, () => {
                   // Set currentSet to beeThanksDialogues index so pointerdown handler works
@@ -188,7 +186,7 @@ class WeeCairScene extends Phaser.Scene {
                   this.currentDialogueIndex = 0;
                   this.dialogueActive = true;
                   this.updateHUDState();
-                  this.showDialogue(this.activeDialogue[this.currentDialogueIndex], {
+                  showDialogue(this, this.activeDialogue[this.currentDialogueIndex], {
                     imageKey: this.activeImageKey
                   });
                 });
@@ -197,9 +195,9 @@ class WeeCairScene extends Phaser.Scene {
             {
               label: "No",
               onSelect: () => {
-                this.destroyDialogueUI();
+                destroyDialogueUI(this);
                 this.dialogueActive = true;
-                this.showDialogue("You decide to hold off for now.", {
+                showDialogue(this, "You decide to hold off for now.", {
                   imageKey: "bee"
                 });
               }
@@ -224,7 +222,7 @@ class WeeCairScene extends Phaser.Scene {
       this.currentDialogueIndex++;
 
       if (this.currentDialogueIndex < this.activeDialogue.length) {
-        this.showDialogue(this.activeDialogue[this.currentDialogueIndex], {
+        showDialogue(this, this.activeDialogue[this.currentDialogueIndex], {
           imageKey: this.activeImageKey
         });
       } else {
@@ -238,7 +236,7 @@ class WeeCairScene extends Phaser.Scene {
             this.activeImageKey = "fairyHappy";
             this.currentDialogueIndex = 0;
             this.dialogueActive = true;
-            this.showDialogue(this.activeDialogue[this.currentDialogueIndex], { imageKey: this.activeImageKey });
+            showDialogue(this, this.activeDialogue[this.currentDialogueIndex], { imageKey: this.activeImageKey });
           });
 
           return;
@@ -246,11 +244,11 @@ class WeeCairScene extends Phaser.Scene {
 
         // Special case: just finished fairyGoodbyeDialogues
         if (this.activeDialogue === fairyGoodbyeDialogues) {
-          this.destroyDialogueUI();
+          destroyDialogueUI(this);
           this.dialogueActive = false;
           this.updateHUDState();
 
-          this.showOption("What would you like to do?", {
+          showOption(this, "What would you like to do?", {
             imageKey: "fairyHappy",
             options: [
               {
@@ -262,10 +260,10 @@ class WeeCairScene extends Phaser.Scene {
               {
                 label: "Stay here",
                 onSelect: () => {
-                  this.destroyDialogueUI();
+                  destroyDialogueUI(this);
                   this.dialogueActive = true;
                   this.updateHUDState();
-                  this.showDialogue("You decide to wait a bit longer...");
+                  showDialogue(this, "You decide to wait a bit longer...");
                 }
               }
             ]
@@ -274,7 +272,7 @@ class WeeCairScene extends Phaser.Scene {
         }
 
         // Normal sequence advancement
-        this.destroyDialogueUI();
+        destroyDialogueUI(this);
         this.dialogueActive = false;
         this.updateHUDState();
         this.currentSet++;
@@ -293,46 +291,6 @@ class WeeCairScene extends Phaser.Scene {
     // --- Responsive: Listen for resize events
     this.scale.on('resize', this.handleResize, this);
   }
-
-  // --- Responsive dialogue UI helpers ---
-  showDialogue(text, optionsConfig = {}) {
-    this.destroyDialogueUI();
-    // Use responsive width/height for the dialogue box
-    const { width, height } = this.scale;
-    const boxWidth = Math.min(600, width * 0.8);
-    const boxHeight = Math.min(180, height * 0.25);
-
-    // Pass boxWidth/boxHeight to your createTextBox if it supports sizing
-    this.dialogueBox = createTextBox(this, text, {
-      ...optionsConfig,
-      boxWidth,
-      boxHeight,
-      x: width / 2,
-      y: height - boxHeight / 2 - 30
-    });
-    this.dialogueActive = true;
-    this.updateHUDState();
-  }
-
-  showOption(text, config = {}) {
-    this.destroyDialogueUI();
-    // Use responsive width/height for the option box
-    const { width, height } = this.scale;
-    const boxWidth = Math.min(600, width * 0.8);
-    const boxHeight = Math.min(220, height * 0.3);
-
-    // Pass boxWidth/boxHeight to your createOptionBox if it supports sizing
-    this.dialogueBox = createOptionBox(this, text, {
-      ...config,
-      boxWidth,
-      boxHeight,
-      x: width / 2,
-      y: height - boxHeight / 2 - 30
-    });
-    this.dialogueActive = true;
-    this.updateHUDState();
-  }
-
   // --- Responsive resize handler ---
   handleResize(gameSize) {
     // Reposition or resize UI elements as needed
