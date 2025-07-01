@@ -5,16 +5,19 @@ import { CoinManager } from '../coinManager';
 class ShopScene extends Phaser.Scene {
   constructor() {
     super({ key: 'ShopScene' });
-    this.coinManager = new CoinManager(200); // or load from save
+    this.coinManager = new CoinManager(200);
   }
 
   preload() {
     this.load.image('shopBackground', '/assets/backgrounds/shop/shop.jpg');
     this.load.image('item1', '/assets/plants/seeds.png');
     this.load.image('item2', '/assets/plants/foxglove.png');
+    this.load.audio('click', '/assets/sound-effects/click.mp3');
+    this.load.audio("shopTheme", "/assets/music/shop-theme.mp3");
   }
 
   create() {
+    this.sound.play('shopTheme', { loop: true, volume: 0.1 });
     const { width, height } = this.scale;
 
     // Main shop background
@@ -62,6 +65,7 @@ class ShopScene extends Phaser.Scene {
       img.on('pointerover', () => img.setTint(0x88ccff));
       img.on('pointerout', () => img.clearTint());
       img.on('pointerdown', () => {
+        this.sound.play('click', { volume: 0.5 });
         this.showOption(
           `You clicked on ${item.name}.\nPrice: ${item.price} coins.`,
           {

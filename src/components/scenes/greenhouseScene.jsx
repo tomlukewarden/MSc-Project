@@ -25,6 +25,8 @@ class GreenhouseScene extends Phaser.Scene {
         this.load.image("elephant", "/assets/npc/elephant/elephant.png");
         this.load.image("talkIcon", "/assets/interact/talk.png");
         this.load.audio("click", "/assets/sound-effects/click.mp3")
+        this.load.audio("theme1", "/assets/music/theme1.mp3");
+        this.load.audio("sparkle", "/assets/sound-effects/sparkle.mp3");
     } 
 
     create() {

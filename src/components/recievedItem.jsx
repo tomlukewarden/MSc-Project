@@ -44,6 +44,10 @@ export function receivedItem(scene, itemKey, itemName, options = {}) {
   container.add([border, itemImage, topLabel, bottomLabel]);
   console.log(`Received item: ${itemKey}`);
 
+  if (scene.sound && scene.sound.play) {
+    scene.sound.play("sparkle", { volume: 0.7 });
+  }
+
   // Optionally: fade out and destroy after a delay
   scene.time.delayedCall(3000, () => {
     scene.tweens.add({
