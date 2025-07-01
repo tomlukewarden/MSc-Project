@@ -7,8 +7,7 @@ import { CoinManager } from "../coinManager";
 import { saveToLocal, loadFromLocal } from "../../utils/localStorage";
 import { createMainChar } from "../../characters/mainChar";
 
-const startingCoins = loadFromLocal("coins") || 0;
-const coinManager = new CoinManager(startingCoins);
+const coinManager = CoinManager.load();
 
 class GreenhouseScene extends Phaser.Scene {
     constructor() {
