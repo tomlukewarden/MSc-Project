@@ -124,6 +124,10 @@ class GreenhouseScene extends Phaser.Scene {
         // --- Advance dialogue on pointerdown ---
         this.input.on("pointerdown", () => {
             this.sound.play("click", { volume: 0.5 });
+
+            // Always destroy any existing dialogue UI before advancing or showing new dialogue
+            destroyDialogueUI(this);
+
             if (!this.dialogueActive || !this.currentDialogue) return;
             // Don't advance if option box is open
             if (this.dialogueBox && this.dialogueBox.optionButtons) return;
@@ -132,7 +136,7 @@ class GreenhouseScene extends Phaser.Scene {
             if (this.currentDialogueIndex < this.currentDialogue.length) {
                 showDialogue(this, this.currentDialogue[this.currentDialogueIndex]);
             } else {
-                destroyDialogueUI(this);
+                // Dialogue finished, clean up
                 this.currentDialogue = null;
                 this.currentDialogueIndex = 0;
                 if (this.dialogueOnComplete) this.dialogueOnComplete();
@@ -161,8 +165,6 @@ class GreenhouseScene extends Phaser.Scene {
             this.scene.get("WeeCairScene")?.cameras?.main?.fadeIn?.(600, 0, 0, 0);
         });
     }
-
-
 
     updateHUDState() {
         if (this.dialogueActive) {
