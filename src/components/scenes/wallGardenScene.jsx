@@ -11,7 +11,6 @@ class WallGardenScene extends Phaser.Scene {
   }
 
   create() {
-    // --- Map and background ---
     const { width, height } = this.sys.game.config;
     const scaleFactor = 0.175;
     this.add.image(width / 2, height / 2, "wallGardenBackground").setScale(scaleFactor);
