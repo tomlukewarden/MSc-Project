@@ -17,7 +17,7 @@ class WallGardenScene extends Phaser.Scene {
     const scaleFactor = 0.175;
     this.add.image(width / 2, height / 2, "wallGardenBackground").setScale(scaleFactor);
 
-    const butterfly = createButterfly(this, width / 2 + 200, height / 2 + 100);
+    const butterfly = createButterfly(this, width / 2 , height / 2 );
 
     // --- Dialogue state ---
     this.butterflyDialogueIndex = 0;
