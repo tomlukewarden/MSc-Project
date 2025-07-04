@@ -152,12 +152,6 @@
          "imagewidth":9159,
          "name":"Image Layer 2",
          "opacity":1,
-         "properties":[
-                {
-                 "name":"collision",
-                 "type":"bool",
-                 "value":true
-                }],
          "type":"imagelayer",
          "visible":true,
          "x":0,
@@ -170,12 +164,6 @@
          "imagewidth":9159,
          "name":"Image Layer 3",
          "opacity":1,
-         "properties":[
-                {
-                 "name":"collision",
-                 "type":"bool",
-                 "value":true
-                }],
          "type":"imagelayer",
          "visible":true,
          "x":0,
@@ -188,12 +176,6 @@
          "imagewidth":9159,
          "name":"Image Layer 4",
          "opacity":1,
-         "properties":[
-                {
-                 "name":"collision",
-                 "type":"bool",
-                 "value":true
-                }],
          "type":"imagelayer",
          "visible":true,
          "x":0,
@@ -299,17 +281,6 @@
                  "width":8.24742268041246,
                  "x":5583.50515463918,
                  "y":2474.22680412371
-                }, 
-                {
-                 "height":0,
-                 "id":10,
-                 "name":"wall-garden-collision",
-                 "rotation":0,
-                 "type":"",
-                 "visible":true,
-                 "width":0,
-                 "x":5616.49484536082,
-                 "y":2482.47422680412
                 }, 
                 {
                  "height":181.443298969072,

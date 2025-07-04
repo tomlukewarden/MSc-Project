@@ -44,11 +44,17 @@ class WallGardenScene extends Phaser.Scene {
     // --- Collision objects from the object layer ---
     const collisionGroup = this.physics.add.staticGroup();
     const collisionObjects = map.getObjectLayer && map.getObjectLayer("wall-garden-collision");
-    const xOffset = 0;
+    const xOffset = -160;
     const yOffset = 0;
 
     if (collisionObjects && collisionObjects.objects) {
       collisionObjects.objects.forEach((obj) => {
+        // Check for a 'collision' property and only create a hitbox if it's true
+        const hasCollisionProp = obj.properties && obj.properties.some(
+          (prop) => prop.name === "collision" && prop.value === true
+        );
+        if (!hasCollisionProp) return;
+
         const solid = this.add.rectangle(
           (obj.x + obj.width / 2) * scaleFactor + xOffset,
           (obj.y + obj.height / 2) * scaleFactor + yOffset,
