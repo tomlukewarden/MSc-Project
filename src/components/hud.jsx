@@ -1,19 +1,19 @@
 import Phaser from "phaser";
+import { getCollectedPlants } from "../components/journalManager"; // <-- Import your new journal manager
 
 class HUDScene extends Phaser.Scene {
     constructor() {
         super({ key: "HUDScene", active: true });
     }
     preload() {
-    this.scene.stop("OpenJournal");
-    this.load.image("inventoryIcon","/assets/ui-items/inventory.png");
-    this.load.image("settingsIcon","/assets/ui-items/settings.png");
-    this.load.image("journalIcon","/assets/ui-items/journal.png");
-    this.load.image("toolbarIcon","/assets/ui-items/toolbar.png");
-    this.load.image("energyFull", "/assets/energy/full.png");
-    this.load.image("energyHalf", "/assets/energy/50.png");
-    this.load.image("energyEmpty", "/assets/energy/10.png");
-        // const volume = this.load.image("volumeIcon","src/assets/ui-items/volume.png");
+        this.scene.stop("OpenJournal");
+        this.load.image("inventoryIcon","/assets/ui-items/inventory.png");
+        this.load.image("settingsIcon","/assets/ui-items/settings.png");
+        this.load.image("journalIcon","/assets/ui-items/journal.png");
+        this.load.image("toolbarIcon","/assets/ui-items/toolbar.png");
+        this.load.image("energyFull", "/assets/energy/full.png");
+        this.load.image("energyHalf", "/assets/energy/50.png");
+        this.load.image("energyEmpty", "/assets/energy/10.png");
     }
 
     create() {
@@ -45,7 +45,8 @@ class HUDScene extends Phaser.Scene {
 
         icons["journalIcon"].on("pointerdown", () => {
             console.log("Journal icon clicked");
-            this.scene.launch("OpenJournal");
+            const plants = getCollectedPlants(); // <-- Use your new system
+            this.scene.launch("OpenJournal", { plants });
             this.scene.bringToTop("OpenJournal");
         });
 

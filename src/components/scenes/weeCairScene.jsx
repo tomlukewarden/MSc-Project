@@ -16,6 +16,7 @@ import { saveToLocal, loadFromLocal } from "../../utils/localStorage";
 import { createMainChar } from "../../characters/mainChar";
 import { receivedItem } from "../../components/recievedItem";
 import { inventoryManager } from "../openInventory";
+import { addPlantToJournal } from "../journalManager";
 
 const coinManager = CoinManager.load();
 
@@ -242,6 +243,17 @@ class WeeCairScene extends Phaser.Scene {
           imageKey: this.activeImageKey
         });
       } else {
+        // --- After fairyHelpDialogues, receive foxglove ---
+        const justCompletedSet = this.currentSet - 1;
+        if (
+          this.dialogueSequence[justCompletedSet] &&
+          this.dialogueSequence[justCompletedSet].lines === fairyHelpDialogues
+        ) {
+          receivedItem(this, "foxglovePlant", "Foxglove");
+          this.foxglovePlantReceived = true;
+          addPlantToJournal("foxglovePlant"); // <-- Add to journal
+        }
+
         // --- After beeThanksDialogues, receive spring shard ---
         if (this.activeDialogue === beeThanksDialogues) {
           receivedItem(this, "springShard", "Spring Shard");
@@ -291,16 +303,6 @@ class WeeCairScene extends Phaser.Scene {
         this.updateHUDState();
         this.currentSet++;
         this.currentNPC = null;
-
-        // --- After fairyHelpDialogues, receive foxglove ---
-        const justCompletedSet = this.currentSet - 1;
-        if (
-          this.dialogueSequence[justCompletedSet] &&
-          this.dialogueSequence[justCompletedSet].lines === fairyHelpDialogues
-        ) {
-          receivedItem(this, "foxglovePlant", "Foxglove");
-          this.foxglovePlantReceived = true;
-        }
       }
     });
 
@@ -308,6 +310,8 @@ class WeeCairScene extends Phaser.Scene {
     this.scale.on('resize', (gameSize) => {
       const char = createMainChar(this, width, height, collisionObjects, scaleFactor);      this.handleResize(gameSize);
     });
+
+
   }
 
   updateHUDState() {
