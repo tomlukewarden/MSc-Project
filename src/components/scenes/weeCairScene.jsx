@@ -15,6 +15,7 @@ import { CoinManager } from "../coinManager";
 import { saveToLocal, loadFromLocal } from "../../utils/localStorage";
 import { createMainChar } from "../../characters/mainChar";
 import { receivedItem } from "../../components/recievedItem";
+import { inventoryManager } from "../openInventory";
 
 const coinManager = CoinManager.load();
 
@@ -177,6 +178,11 @@ class WeeCairScene extends Phaser.Scene {
                 destroyDialogueUI(this);
                 this.dialogueActive = true;
                 this.foxglovePlantReceived = false;
+
+                // Remove Foxglove from inventory
+                if (inventoryManager) {
+                  inventoryManager.removeItem("Foxglove");
+                }
 
                 showDialogue(this, "You hand her the plant...", {
                   imageKey: "bee"

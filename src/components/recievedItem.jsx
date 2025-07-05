@@ -1,3 +1,5 @@
+import { inventoryManager } from "./openInventory"; 
+
 export function receivedItem(scene, itemKey, itemName, options = {}) {
   if (!itemKey || !itemName) {
     console.warn("receivedItem called without itemKey or itemName");
@@ -46,6 +48,15 @@ export function receivedItem(scene, itemKey, itemName, options = {}) {
 
   if (scene.sound && scene.sound.play) {
     scene.sound.play("sparkle", { volume: 0.7 });
+  }
+
+  // --- Add to inventory ---
+  if (inventoryManager) {
+    inventoryManager.addItem({
+      name: itemName,
+      color: borderColor, // Or use a color mapping per item if you wish
+      key: itemKey
+    });
   }
 
   // Optionally: fade out and destroy after a delay
