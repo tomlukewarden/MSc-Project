@@ -1,10 +1,12 @@
 import { createButterfly, butterflyPillarDialogues, butterflyShardDialogues, butterflyGoodbyeDialogues } from "../../characters/butterfly";
+import { createMainChar } from "../../characters/mainChar";
+import { CoinManager } from "../coinManager";
 import { saveToLocal } from "../../utils/localStorage";
 import { showDialogue, showOption } from "../../dialogue/dialogueUIHelpers";
 
 class ShardGardenScene extends Phaser.Scene {
   constructor() {
-    super({ key: 'ShardGardenScene' });
+    super({ key: 'ShardGardenScene', physics: { default: 'arcade', arcade: { debug: true } } });
     this.dialogueActive = false;
     this.dialogueBox = null;
     this.dialogueStage = 0;
@@ -32,7 +34,22 @@ class ShardGardenScene extends Phaser.Scene {
     const { width, height } = this.sys.game.config;
     const scaleFactor = 0.175;
     this.add.image(width / 2, height / 2, "background").setScale(scaleFactor);
-    this.add.image(width / 2, height / 2, "folliage").setScale(scaleFactor);
+    const folliageImg = this.add.image(width / 2, height / 2, "folliage").setScale(scaleFactor);
+
+    // --- Collision group for folliage and seasons ---
+    const collisionGroup = this.physics.add.staticGroup();
+
+    // Folliage collision (rectangle matching the image, adjust as needed)
+    const folliageRect = this.add.rectangle(
+      width / 2,
+      height / 2,
+      folliageImg.width * scaleFactor,
+      folliageImg.height * scaleFactor,
+      0x00ff00,
+      0.2
+    ).setDepth(1);
+    this.physics.add.existing(folliageRect, true);
+    collisionGroup.add(folliageRect);
 
     // Arrange the season images in a horizontal line further back (higher y value)
     const seasons = ['spring', 'summer', 'autumn', 'winter'];
@@ -42,12 +59,27 @@ class ShardGardenScene extends Phaser.Scene {
     const y = height * scaleFactor + 100;
 
     seasons.forEach((season, i) => {
-      this.add.image(startX + i * spacing, y, season).setScale(seasonScale);
-    });
+      const seasonImg = this.add.image(startX + i * spacing, y, season)
+        .setScale(seasonScale)
+        .setDepth(10); // Make sure images are above rectangles
 
-    // Butterfly NPC and dialogue logic
+      // Add a collision rectangle for each season image (adjust size as needed)
+      const seasonRect = this.add.rectangle(
+        startX + i * spacing,
+        y,
+        seasonImg.width * seasonScale,
+        seasonImg.height * seasonScale,
+        0xff0000,
+        0.2
+      ).setDepth(1); // Rectangles below images
+      this.physics.add.existing(seasonRect, true);
+      collisionGroup.add(seasonRect);
+    });
+    const char = createMainChar(this, width / 2, height / 2, scaleFactor, collisionGroup);
+
+    // Butterfly
     const butterfly = createButterfly(this, width / 2, height / 2);
-    butterfly.setScale(0.09).setOrigin(0.5, 0.5);
+    butterfly.setScale(0.09).setOrigin(0.5, 0.5).setDepth(20); // Ensure above everything
 
     this.dialogueStage = 0; // 0: pillar, 1: shard, 2: goodbye
     this.setActiveDialogue();
