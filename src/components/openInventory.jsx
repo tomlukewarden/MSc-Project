@@ -14,6 +14,7 @@ class OpenInventory extends Phaser.Scene {
     this.coinText = null;
     this.itemRects = [];
     this.itemTexts = [];
+    this.itemImages = [];
   }
 
   create() {
@@ -47,20 +48,35 @@ class OpenInventory extends Phaser.Scene {
       // Remove old
       this.itemRects.forEach(r => r.destroy());
       this.itemTexts.forEach(t => t.destroy());
+      this.itemImages && this.itemImages.forEach(img => img.destroy());
       this.itemRects = [];
       this.itemTexts = [];
+      this.itemImages = [];
       // Draw new
       items.forEach((item, idx) => {
+        const x = width / 2 - 100 + idx * 110;
+        const y = height / 2;
+
         const rect = this.add.rectangle(
-          width / 2 - 100 + idx * 110, height / 2, 90, 90, item.color
+          x, y, 90, 90, item.color
         ).setStrokeStyle(3, 0x3e2f1c).setDepth(106).setInteractive();
+
+        // Draw image if item.key exists and is loaded as a texture
+        let img = null;
+        if (item.key && this.textures.exists(item.key)) {
+          img = this.add.image(x, y - 10, item.key)
+            .setDisplaySize(60, 60)
+            .setDepth(107);
+          this.itemImages.push(img);
+        }
+
         const text = this.add.text(
-          width / 2 - 100 + idx * 110, height / 2, item.name, {
+          x, y + 35, item.name, {
             fontFamily: "Georgia",
             fontSize: "18px",
             color: "#222"
           }
-        ).setOrigin(0.5).setDepth(106);
+        ).setOrigin(0.5).setDepth(108);
 
         // Example: Remove item on click
         rect.on("pointerdown", () => {

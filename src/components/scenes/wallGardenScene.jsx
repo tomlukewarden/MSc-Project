@@ -1,5 +1,5 @@
 import { createButterfly, butterflyIntroDialogues } from '../../characters/butterfly';
-import { showDialogue, destroyDialogueUI } from '../../dialogue/dialogueUIHelpers';
+import { showDialogue, destroyDialogueUI, showOption } from '../../dialogue/dialogueUIHelpers';
 import { CoinManager } from '../coinManager';
 import { createMainChar } from '../../characters/mainChar';
 import { saveToLocal } from '../../utils/localStorage';
@@ -70,7 +70,7 @@ class WallGardenScene extends Phaser.Scene {
 
     // --- Main Character ---
     const mainChar = createMainChar(this, width / 2, height / 2, scaleFactor, collisionGroup);
-    mainChar.setDepth(10);
+    mainChar.setDepth(10).setOrigin(1, -5);
 
     // --- Butterfly NPC ---
     const butterfly = createButterfly(this, width / 2 + 100, height / 2 - 50);
@@ -86,6 +86,38 @@ class WallGardenScene extends Phaser.Scene {
       this.butterflyDialogueActive = true;
       this.butterflyDialogueIndex = 0;
       showDialogue(this, butterflyIntroDialogues[this.butterflyDialogueIndex]);
+      this.dialogueOnComplete = () => {
+        this.butterflyDialogueIndex++;
+        if (this.butterflyDialogueIndex < butterflyIntroDialogues.length) {
+          showDialogue(this, butterflyIntroDialogues[this.butterflyDialogueIndex]);
+        } else {
+          // Example: Give player a choice at the end of the dialogue
+          showOption(this, "Would you like to help the butterfly?", {
+            options: [
+              {
+                label: "Yes",
+                callback: () => {
+                  showDialogue(this, "Thank you! The garden is brighter with your kindness.");
+                  this.dialogueOnComplete = () => {
+                    this.destroyDialogueUI();
+                    this.butterflyDialogueActive = false;
+                  };
+                }
+              },
+              {
+                label: "No",
+                callback: () => {
+                  showDialogue(this, "That's okay! Maybe another time.");
+                  this.dialogueOnComplete = () => {
+                    this.destroyDialogueUI();
+                    this.butterflyDialogueActive = false;
+                  };
+                }
+              }
+            ]
+          });
+        }
+      };
     });
 
     // Advance butterfly dialogue on pointerdown (but not if clicking on butterfly itself)
@@ -93,16 +125,32 @@ class WallGardenScene extends Phaser.Scene {
       if (currentlyOver && currentlyOver.includes(butterfly)) return;
       if (!this.butterflyDialogueActive) return;
       if (this.dialogueBox?.optionButtons?.length > 0) return;
-
-      this.butterflyDialogueIndex++;
-      if (this.butterflyDialogueIndex < butterflyIntroDialogues.length) {
-        showDialogue(this, butterflyIntroDialogues[this.butterflyDialogueIndex]);
-      } else {
-        destroyDialogueUI(this);
-        this.butterflyDialogueActive = false;
+      console.log(this.dialogueBox)
+      if (this.dialogueOnComplete) {
+        this.dialogueOnComplete();
       }
     });
   }
+    updateHUDState() {
+    if (this.dialogueActive) {
+      this.scene.sleep("HUDScene");
+    } else {
+      this.scene.wake("HUDScene");
+    }
+  }
+
+  destroyDialogueUI() {
+    if (this.dialogueBox) {
+      this.dialogueBox.box?.destroy();
+      this.dialogueBox.textObj?.destroy();
+      this.dialogueBox.image?.destroy();
+      if (this.dialogueBox.optionButtons) {
+        this.dialogueBox.optionButtons.forEach((btn) => btn.destroy());
+      }
+      this.dialogueBox = null;
+    }
+  }
+
 }
 
 export default WallGardenScene;

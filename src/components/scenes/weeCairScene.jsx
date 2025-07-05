@@ -266,9 +266,9 @@ class WeeCairScene extends Phaser.Scene {
             imageKey: "fairyHappy",
             options: [
               {
-                label: "Go to the greenhouse",
+                label: "Go to the botanic gardens",
                 onSelect: () => {
-                  this.scene.start("GreenhouseScene");
+                  this.scene.start("WallGardenScene");
                 }
               },
               {
