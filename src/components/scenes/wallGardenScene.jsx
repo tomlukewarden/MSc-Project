@@ -52,7 +52,58 @@ class WallGardenScene extends Phaser.Scene {
         // Check for a 'collision' property and only create a hitbox if it's true
         const hasCollisionProp = obj.properties && obj.properties.some(
           (prop) => prop.name === "collision" && prop.value === true
-        );
+        );        // ...existing code above...
+        
+            butterfly.setInteractive();
+            butterfly.on("pointerdown", () => {
+              if (this.butterflyDialogueActive) return;
+              this.butterflyDialogueActive = true;
+              this.butterflyDialogueIndex = 0;
+              showDialogue(this, butterflyIntroDialogues[this.butterflyDialogueIndex]);
+              this.dialogueOnComplete = () => {
+                this.butterflyDialogueIndex++;
+                if (this.butterflyDialogueIndex < butterflyIntroDialogues.length) {
+                  showDialogue(this, butterflyIntroDialogues[this.butterflyDialogueIndex]);
+                } else {
+                  // At the end, offer to move on
+                  showOption(this, "Would you like to move on?", {
+                    options: [
+                      {
+                        text: "Yes",
+                        callback: () => {
+                          this.destroyDialogueUI();
+                          this.butterflyDialogueActive = false;
+                          this.scene.start("ShardGardenScene"); // Change to your next scene key
+                        }
+                      },
+                      {
+                        text: "No",
+                        callback: () => {
+                          showDialogue(this, "Take your time and explore! Talk to me again when you're ready to move on.");
+                          this.dialogueOnComplete = () => {
+                            this.destroyDialogueUI();
+                            this.butterflyDialogueActive = false;
+                            // Allow player to talk to the butterfly again for the option
+                          };
+                        }
+                      }
+                    ]
+                  });
+                }
+              };
+            });
+        
+            // Advance butterfly dialogue on pointerdown (but not if clicking on butterfly itself)
+            this.input.on("pointerdown", (pointer, currentlyOver) => {
+              if (currentlyOver && currentlyOver.includes(butterfly)) return;
+              if (!this.butterflyDialogueActive) return;
+              if (this.dialogueBox?.optionButtons?.length > 0) return;
+              if (this.dialogueOnComplete) {
+                this.dialogueOnComplete();
+              }
+            });
+        
+        // ...rest of your code...
         if (!hasCollisionProp) return;
 
         const solid = this.add.rectangle(
@@ -91,26 +142,24 @@ class WallGardenScene extends Phaser.Scene {
         if (this.butterflyDialogueIndex < butterflyIntroDialogues.length) {
           showDialogue(this, butterflyIntroDialogues[this.butterflyDialogueIndex]);
         } else {
-          // Example: Give player a choice at the end of the dialogue
-          showOption(this, "Would you like to help the butterfly?", {
+          // At the end, offer to move on
+          showOption(this, "Would you like to move on?", {
             options: [
               {
                 label: "Yes",
                 callback: () => {
-                  showDialogue(this, "Thank you! The garden is brighter with your kindness.");
-                  this.dialogueOnComplete = () => {
-                    this.destroyDialogueUI();
-                    this.butterflyDialogueActive = false;
-                  };
+                  this.destroyDialogueUI();
+                  this.butterflyDialogueActive = false;
+                  this.scene.start("ShardGardenScene");
                 }
               },
               {
                 label: "No",
                 callback: () => {
-                  showDialogue(this, "That's okay! Maybe another time.");
+                  showDialogue(this, "Take your time and explore! Talk to me again when you're ready to move on.");
                   this.dialogueOnComplete = () => {
                     this.destroyDialogueUI();
-                    this.butterflyDialogueActive = false;
+                    this.butterflyDialogueActive = false
                   };
                 }
               }
@@ -125,13 +174,13 @@ class WallGardenScene extends Phaser.Scene {
       if (currentlyOver && currentlyOver.includes(butterfly)) return;
       if (!this.butterflyDialogueActive) return;
       if (this.dialogueBox?.optionButtons?.length > 0) return;
-      console.log(this.dialogueBox)
       if (this.dialogueOnComplete) {
         this.dialogueOnComplete();
       }
     });
   }
-    updateHUDState() {
+
+  updateHUDState() {
     if (this.dialogueActive) {
       this.scene.sleep("HUDScene");
     } else {
@@ -150,7 +199,6 @@ class WallGardenScene extends Phaser.Scene {
       this.dialogueBox = null;
     }
   }
-
 }
 
 export default WallGardenScene;
