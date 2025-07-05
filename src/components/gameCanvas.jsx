@@ -12,6 +12,7 @@ import OpenInventory from "./openInventory";
 import OpenSettings from "./openSettings";
 import MapScene from "./scenes/mapScene";
 import WallGardenScene from "./scenes/wallGardenScene";
+import ShardGardenScene from "./scenes/shardGardenScene";
 
 
 function GameCanvas() {
@@ -35,7 +36,7 @@ function GameCanvas() {
                 height: 720
             },
             canvas: canvasRef.current,
-            scene: [Menu,  MapScene, StartScene, ShopScene,  WeeCairScene, GreenhouseScene, WallGardenScene, HUDScene,OpenJournal, OpenInventory, OpenSettings],
+            scene: [Menu,  MapScene, StartScene, ShopScene,  WeeCairScene, GreenhouseScene, WallGardenScene, ShardGardenScene, HUDScene,OpenJournal, OpenInventory, OpenSettings],
         };
 
         gameRef.current = new Phaser.Game(config);
