@@ -173,7 +173,7 @@ class WallGardenScene extends Phaser.Scene {
       if (this.mainChar.x >= rightEdge) {
         if (!this.transitioning) {
           this.transitioning = true;
-          this.scene.start("ShardGardenScene");
+          this.scene.start("MiddleGardenScene");
         }
       }
       // Left edge (adjust for origin if needed)

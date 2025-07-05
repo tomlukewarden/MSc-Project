@@ -117,8 +117,8 @@ class ShardGardenScene extends Phaser.Scene {
       collisionGroup.add(seasonRect);
     });
 
-    const char = createMainChar(this, width / 2, height / 2, scaleFactor, collisionGroup);
-char.setDepth(10).setOrigin(4, -4);
+    this.mainChar = createMainChar(this, width / 2, height / 2, scaleFactor, collisionGroup);
+this.mainChar.setDepth(10).setOrigin(0.5, 0.5); // Center origin
     // Butterfly
     const butterfly = createButterfly(this, width / 2, height / 2);
     butterfly.setScale(0.09).setOrigin(0.5, 0.5).setDepth(20); // Ensure above everything
@@ -156,7 +156,21 @@ char.setDepth(10).setOrigin(4, -4);
       }
     });
   }
+  update() {
+    const rightEdge = this.sys.game.config.width - 50;
+    const leftEdge = 50; // Try 50 or 60
 
+    if (this.mainChar) {
+
+      // Left edge
+      if (this.mainChar.x <= leftEdge) {
+        if (!this.transitioning) {
+          this.transitioning = true;
+          this.scene.start("MiddleGardenScene");
+        }
+      }
+    }
+  }
   setActiveDialogue() {
     if (this.dialogueStage === 0) {
       this.activeDialogue = butterflyPillarDialogues;

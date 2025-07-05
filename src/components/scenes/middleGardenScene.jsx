@@ -1,7 +1,7 @@
 import { createMainChar } from "../../characters/mainChar";
-class FinalGardenScene extends Phaser.Scene {
+class MiddleGardenScene extends Phaser.Scene {
   constructor() {
-    super({ key: 'FinalGardenScene', physics: { default: 'arcade', arcade: { debug: false } } });
+    super({ key: 'MiddleGardenScene', physics: { default: 'arcade', arcade: { debug: false } } });
   }
 
   preload() {
@@ -38,7 +38,32 @@ class FinalGardenScene extends Phaser.Scene {
     this.physics.add.existing(folliage2Rect, true);
     collisionGroup.add(folliage2Rect);
 
-    const char = createMainChar(this, 40, height / 2, scaleFactor, collisionGroup);
+    this.mainChar = createMainChar(this, width / 2, height / 2, scaleFactor, collisionGroup);
+this.mainChar.setDepth(10).setOrigin(0.5, 0.5); // Center origin
+  }
+    update() {
+    const rightEdge = this.sys.game.config.width - 50;
+    const leftEdge = 50; 
+
+    if (this.mainChar) {
+
+      console.log("mainChar.x:", this.mainChar.x);
+
+      // Right edge
+      if (this.mainChar.x >= rightEdge) {
+        if (!this.transitioning) {
+          this.transitioning = true;
+          this.scene.start("ShardGardenScene");
+        }
+      }
+      // Left edge
+      if (this.mainChar.x <= leftEdge) {
+        if (!this.transitioning) {
+          this.transitioning = true;
+          this.scene.start("WallGardenScene");
+        }
+      }
+    }
   }
 }
-export default FinalGardenScene;
+export default MiddleGardenScene;
