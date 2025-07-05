@@ -25,8 +25,9 @@ export const butterflyGoodbyeDialogues = [
 export function createButterfly(scene, x, y) {
   const butterfly = scene.add.sprite(x, y, "butterfly")
     .setScale(0.1)
-    .setOrigin(7, 3)
+    .setOrigin(-1.5, 1.1)
     .setInteractive({ useHandCursor: true });
+  butterfly.setDepth(101); // Ensure butterfly is above other elements
 
   return butterfly;
 }
