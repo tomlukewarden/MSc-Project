@@ -25,7 +25,7 @@ class GreenhouseScene extends Phaser.Scene {
         this.load.image("elephant", "/assets/npc/elephant/elephant.png");
         this.load.image("talkIcon", "/assets/interact/talk.png");
         this.load.audio("click", "/assets/sound-effects/click.mp3")
-        this.load.audio("theme1", "/assets/music/theme1.mp3");
+        this.load.audio("theme1", "/assets/music/main-theme1.mp3");
         this.load.audio("sparkle", "/assets/sound-effects/sparkle.mp3");
     } 
 
@@ -48,6 +48,25 @@ class GreenhouseScene extends Phaser.Scene {
         if (!collisionObjects) {
             console.warn("Collision layer not found in Tiled map!");
             return;
+        }
+
+        // Create a collision group
+        const collisionGroup = this.physics.add.staticGroup();
+
+        // Add collision objects to the group
+        if (collisionObjects && collisionObjects.objects) {
+            collisionObjects.objects.forEach(obj => {
+                const rect = this.add.rectangle(
+                    obj.x + obj.width / 2,
+                    obj.y + obj.height / 2,
+                    obj.width,
+                    obj.height,
+                    0x00ff00,
+                    0 // alpha 0 for invisible
+                );
+                this.physics.add.existing(rect, true);
+                collisionGroup.add(rect);
+            });
         }
 
         // Place a smaller elephant in the center
