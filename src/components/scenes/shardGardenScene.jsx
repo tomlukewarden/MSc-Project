@@ -118,7 +118,7 @@ class ShardGardenScene extends Phaser.Scene {
     });
 
     const char = createMainChar(this, width / 2, height / 2, scaleFactor, collisionGroup);
-
+char.setDepth(10).setOrigin(4, -4);
     // Butterfly
     const butterfly = createButterfly(this, width / 2, height / 2);
     butterfly.setScale(0.09).setOrigin(0.5, 0.5).setDepth(20); // Ensure above everything

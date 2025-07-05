@@ -103,6 +103,7 @@ class WallGardenScene extends Phaser.Scene {
     // --- Main Character ---
     const mainChar = createMainChar(this, width / 2, height / 2, scaleFactor, collisionGroup);
     mainChar.setDepth(10).setOrigin(1, -5);
+    this.mainChar = mainChar; 
 
     // --- Butterfly NPC ---
     const butterfly = createButterfly(this, width / 2 + 100, height / 2 - 50);
@@ -150,7 +151,6 @@ class WallGardenScene extends Phaser.Scene {
       };
     });
 
-    // Advance butterfly dialogue on pointerdown (but not if clicking on butterfly itself)
     this.input.on("pointerdown", (pointer, currentlyOver) => {
       if (currentlyOver && currentlyOver.includes(butterfly)) return;
       if (!this.butterflyDialogueActive) return;
@@ -159,6 +159,31 @@ class WallGardenScene extends Phaser.Scene {
         this.dialogueOnComplete();
       }
     });
+  }
+
+  update() {
+    const rightEdge = this.sys.game.config.width - 50;
+    const leftEdge = 90; 
+
+    if (this.mainChar) {
+
+      console.log("mainChar.x:", this.mainChar.x);
+
+      // Right edge
+      if (this.mainChar.x >= rightEdge) {
+        if (!this.transitioning) {
+          this.transitioning = true;
+          this.scene.start("ShardGardenScene");
+        }
+      }
+      // Left edge (adjust for origin if needed)
+      if (this.mainChar.x <= leftEdge) {
+        if (!this.transitioning) {
+          this.transitioning = true;
+          this.scene.start("GreenhouseScene");
+        }
+      }
+    }
   }
 
   updateHUDState() {

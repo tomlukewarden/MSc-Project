@@ -32,15 +32,13 @@ class FinalGardenScene extends Phaser.Scene {
       height / 2,
       folliage2Img.width * scaleFactor,
       folliage2Img.height * scaleFactor,
-      0x00ff00, // Color doesn't matter if alpha is 0
+      0x00ff00, 
       0 // Fully transparent
-    ).setDepth(2); // Set above background, below UI
+    ).setDepth(2); 
     this.physics.add.existing(folliage2Rect, true);
     collisionGroup.add(folliage2Rect);
 
-const char = createMainChar(this, width / 2, height / 2, scaleFactor, collisionGroup);
-
-
+    const char = createMainChar(this, 40, height / 2, scaleFactor, collisionGroup);
   }
 }
 export default FinalGardenScene;
