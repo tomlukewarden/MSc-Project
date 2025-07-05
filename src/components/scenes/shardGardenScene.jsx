@@ -12,6 +12,12 @@ class ShardGardenScene extends Phaser.Scene {
     this.dialogueStage = 0;
     this.activeDialogue = [];
     this.activeDialogueIndex = 0;
+    this.shardCounts = {
+      spring: 3,
+      summer: 2,
+      autumn: 2,
+      winter: 2
+    };
   }
 
   preload() {
@@ -61,9 +67,44 @@ class ShardGardenScene extends Phaser.Scene {
     seasons.forEach((season, i) => {
       const seasonImg = this.add.image(startX + i * spacing, y, season)
         .setScale(seasonScale)
-        .setDepth(10); // Make sure images are above rectangles
+        .setDepth(10);
+      seasonImg.setInteractive();
 
-      // Add a collision rectangle for each season image (adjust size as needed)
+      seasonImg.on("pointerover", () => {
+        seasonImg.setTint(0x88ccff);
+      });
+
+      seasonImg.on("pointerout", () => {
+        seasonImg.clearTint();
+      });
+      seasonImg.on("pointerdown", () => {
+        showOption(
+          this,
+          `Return ${season.charAt(0).toUpperCase() + season.slice(1)} Shard? (${this.shardCounts[season]} left)`,
+          [
+            {
+              text: "Yes",
+              callback: () => {
+                if (this.shardCounts[season] > 0) {
+                  this.shardCounts[season]--;
+                  showDialogue(this, `You returned a ${season} shard! (${this.shardCounts[season]} left)`);
+                } else {
+                  showDialogue(this, `No ${season} shards left to return!`);
+                }
+                this.updateHUDState();
+              }
+            },
+            {
+              text: "No",
+              callback: () => {
+                showDialogue(this, `You kept your ${season} shard.`);
+                this.updateHUDState();
+              }
+            }
+          ]
+        );
+      });
+
       const seasonRect = this.add.rectangle(
         startX + i * spacing,
         y,
@@ -75,6 +116,7 @@ class ShardGardenScene extends Phaser.Scene {
       this.physics.add.existing(seasonRect, true);
       collisionGroup.add(seasonRect);
     });
+
     const char = createMainChar(this, width / 2, height / 2, scaleFactor, collisionGroup);
 
     // Butterfly
