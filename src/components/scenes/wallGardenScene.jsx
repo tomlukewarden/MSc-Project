@@ -92,7 +92,12 @@ class WallGardenScene extends Phaser.Scene {
 
     // Open chest on click
     chest.on("pointerdown", () => {
+      chest.setTexture('chestOpen');
       this.chestLogic.openChest(chestItemsArray);
+
+      this.scene.get("ChestUI").events.once("shutdown", () => {
+        chest.setTexture('chestClosed');
+      });
     });
 
     // --- Main Character ---
