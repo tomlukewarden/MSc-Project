@@ -7,6 +7,9 @@ class ShardGardenScene extends Phaser.Scene {
     super({ key: 'ShardGardenScene' });
     this.dialogueActive = false;
     this.dialogueBox = null;
+    this.dialogueStage = 0;
+    this.activeDialogue = [];
+    this.activeDialogueIndex = 0;
   }
 
   preload() {
@@ -38,42 +41,57 @@ class ShardGardenScene extends Phaser.Scene {
     const startX = width / 2 - ((seasons.length - 1) * spacing) / 2;
     const y = height * scaleFactor + 100;
 
-    const seasonImages = seasons.map((season, i) => {
-      return this.add.image(startX + i * spacing, y, season).setScale(seasonScale);
+    seasons.forEach((season, i) => {
+      this.add.image(startX + i * spacing, y, season).setScale(seasonScale);
     });
 
     // Butterfly NPC and dialogue logic
     const butterfly = createButterfly(this, width / 2, height / 2);
     butterfly.setScale(0.09).setOrigin(0.5, 0.5);
 
-    this.butterflyDialogueIndex = 0;
-    this.butterflyDialogueActive = false;
+    this.dialogueStage = 0; // 0: pillar, 1: shard, 2: goodbye
+    this.setActiveDialogue();
 
     butterfly.setInteractive();
     butterfly.on("pointerdown", () => {
-      if (this.butterflyDialogueActive) return;
-      this.butterflyDialogueActive = true;
-      this.butterflyDialogueIndex = 0;
-      showDialogue(this, butterflyPillarDialogues[this.butterflyDialogueIndex]);
+      if (this.dialogueActive) return;
       this.dialogueActive = true;
+      this.activeDialogueIndex = 0;
+      showDialogue(this, this.activeDialogue[this.activeDialogueIndex]);
       this.updateHUDState();
     });
 
     this.input.on("pointerdown", (pointer, currentlyOver) => {
       if (currentlyOver && currentlyOver.includes(butterfly)) return;
-      if (!this.butterflyDialogueActive) return;
+      if (!this.dialogueActive) return;
       if (this.dialogueBox?.optionButtons?.length > 0) return;
 
-      this.butterflyDialogueIndex++;
-      if (this.butterflyDialogueIndex < butterflyPillarDialogues.length) {
-        showDialogue(this, butterflyPillarDialogues[this.butterflyDialogueIndex]);
+      this.activeDialogueIndex++;
+      if (this.activeDialogueIndex < this.activeDialogue.length) {
+        showDialogue(this, this.activeDialogue[this.activeDialogueIndex]);
       } else {
-        this.destroyDialogueUI();
-        this.butterflyDialogueActive = false;
         this.dialogueActive = false;
         this.updateHUDState();
+        this.destroyDialogueUI();
+
+        // Advance to next dialogue stage if available
+        if (this.dialogueStage < 2) {
+          this.dialogueStage++;
+          this.setActiveDialogue();
+        }
       }
     });
+  }
+
+  setActiveDialogue() {
+    if (this.dialogueStage === 0) {
+      this.activeDialogue = butterflyPillarDialogues;
+    } else if (this.dialogueStage === 1) {
+      this.activeDialogue = butterflyShardDialogues;
+    } else if (this.dialogueStage === 2) {
+      this.activeDialogue = butterflyGoodbyeDialogues;
+    }
+    this.activeDialogueIndex = 0;
   }
 
   updateHUDState() {
