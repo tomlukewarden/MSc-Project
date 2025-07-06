@@ -1,3 +1,4 @@
+import Phaser from 'phaser';
 import { createButterfly, butterflyIntroDialogues } from '../../characters/butterfly';
 import { showDialogue, destroyDialogueUI, showOption } from '../../dialogue/dialogueUIHelpers';
 import { CoinManager } from '../coinManager';
@@ -5,11 +6,11 @@ import { createMainChar } from '../../characters/mainChar';
 import ChestLogic from '../chestLogic';
 import ChestUI from '../chestUI';
 import { saveToLocal } from '../../utils/localStorage';
-import Phaser from 'phaser';
 import plantData from "../../plantData";
 import { inventoryManager } from "../inventoryManager";
 import { addPlantToJournal } from "../journalManager";
 import { receivedItem } from "../recievedItem";
+
 
 const coinManager = CoinManager.load();
 
@@ -17,6 +18,12 @@ class WallGardenScene extends Phaser.Scene {
   constructor() {
     super({ key: 'WallGardenScene', physics: { default: 'arcade', arcade: { debug: true } } });
     this.chestLogic = new ChestLogic();
+    this.butterflyDialogueIndex = 0;
+    this.butterflyDialogueActive = false;
+    this.dialogueActive = false;
+    this.dialogueOnComplete = null;
+    this.mainChar = null;
+    this.transitioning = false;
   }
 
   preload() {
@@ -36,10 +43,11 @@ class WallGardenScene extends Phaser.Scene {
     this.load.image('chestOpen', '/assets/misc/chest-open.png');
     this.load.image("foxglovePlant", "/assets/plants/foxglove.png");
     this.load.image("springShard", "/assets/items/spring.png");
-    this.load.audio("click", "/assets/sound-effects/click.mp3");
     this.load.audio("sparkle", "/assets/sound-effects/sparkle.mp3");
-       this.load.image('butterflyHappy', '/assets/npc/butterfly/happy-butterfly-dio.png')
+    this.load.image('butterflyHappy', '/assets/npc/butterfly/happy-butterfly-dio.png');
     this.load.image('butterflySad', '/assets/npc/butterfly/sad-butterfly-dio.png');
+    this.load.image('periwinklePlant', '/assets/plants/periwinkle.png');
+    this.load.image('coin', '/assets/misc/coin.png')
   }
 
   create() {
@@ -49,8 +57,6 @@ class WallGardenScene extends Phaser.Scene {
 
     // --- Map and background ---
     const map = this.make.tilemap({ key: "wallGardenMap" });
-
-    // Add image layers in correct order
     this.add.image(width / 2, height / 2, "wallGardenBackground").setScale(scaleFactor).setDepth(0);
     this.add.image(width / 2, height / 2, "wall1").setScale(scaleFactor).setDepth(9);
     this.add.image(width / 2, height / 2, "wall2").setScale(scaleFactor).setDepth(103);
@@ -82,21 +88,43 @@ class WallGardenScene extends Phaser.Scene {
       });
     }
 
+    // --- Place chest in the scene ---
+    this.setupChest(width, height);
 
-    // Place chest in the scene
+    // --- Main Character ---
+    this.mainChar = createMainChar(this, width / 2, height / 2, scaleFactor, collisionGroup);
+    this.mainChar.setDepth(10).setOrigin(1, -5);
+
+    // --- Butterfly NPC ---
+    this.setupButterfly(width, height);
+
+    // --- Placeholder bushes: random rectangles ---
+    this.setupBushes(width, height);
+
+    // --- Input handler for dialogue advance ---
+    this.input.on("pointerdown", (pointer, currentlyOver) => {
+      if (currentlyOver && currentlyOver.includes(this.butterfly)) return;
+      if (!this.butterflyDialogueActive && !this.dialogueActive) return;
+      if (this.dialogueBox?.optionButtons?.length > 0) return;
+      if (this.dialogueOnComplete) {
+        this.dialogueOnComplete();
+      }
+    });
+  }
+
+  setupChest(width, height) {
     const chestItemsArray = [
       { name: "Foxglove", color: 0xd9ae7e, key: "foxglovePlant" },
       { name: "Spring Shard", color: 0x88cc88, key: "springShard" }
     ];
-    const chest = this.add.image(width / 2 + 200, height / 2 - 40 , 'chestClosed')
+    const chest = this.add.image(width / 2 + 200, height / 2 - 40, 'chestClosed')
       .setScale(2)
-      .setDepth(15);
-    chest.setInteractive();
+      .setDepth(15)
+      .setInteractive();
 
-    this.chestLogic.scene = this; 
+    this.chestLogic.scene = this;
     this.chestLogic.setChest(chest);
 
-    // Open chest on click
     chest.on("pointerdown", () => {
       chest.setTexture('chestOpen');
       this.chestLogic.openChest(chestItemsArray);
@@ -105,34 +133,27 @@ class WallGardenScene extends Phaser.Scene {
         chest.setTexture('chestClosed');
       });
     });
+  }
 
-    // --- Main Character ---
-    const mainChar = createMainChar(this, width / 2, height / 2, scaleFactor, collisionGroup);
-    mainChar.setDepth(10).setOrigin(1, -5);
-    this.mainChar = mainChar; 
+  setupButterfly(width, height) {
+    this.butterfly = createButterfly(this, width / 2 + 100, height / 2 - 50);
+    this.butterfly.setDepth(20).setInteractive();
 
-    // --- Butterfly NPC ---
-    const butterfly = createButterfly(this, width / 2 + 100, height / 2 - 50);
-    butterfly.setDepth(20);
-
-    // --- Dialogue state ---
     this.butterflyDialogueIndex = 0;
     this.butterflyDialogueActive = false;
 
-    butterfly.setInteractive();
-    butterfly.on("pointerdown", () => {
+    this.butterfly.on("pointerdown", () => {
       if (this.butterflyDialogueActive) return;
       this.butterflyDialogueActive = true;
       this.butterflyDialogueIndex = 0;
-      showDialogue(this, butterflyIntroDialogues[this.butterflyDialogueIndex], { imageKey: "butterflyHappy" }); // <-- Pass imageKey
+      showDialogue(this, butterflyIntroDialogues[this.butterflyDialogueIndex], { imageKey: "butterflyHappy" });
       this.dialogueOnComplete = () => {
         this.butterflyDialogueIndex++;
         if (this.butterflyDialogueIndex < butterflyIntroDialogues.length) {
-          showDialogue(this, butterflyIntroDialogues[this.butterflyDialogueIndex], { imageKey: "butterflyHappy" }); // <-- Pass imageKey
+          showDialogue(this, butterflyIntroDialogues[this.butterflyDialogueIndex], { imageKey: "butterflyHappy" });
         } else {
-          // At the end, offer to move on
           showOption(this, "Would you like to move on?", {
-            imageKey: "butterfly", // <-- Pass imageKey for options too
+            imageKey: "butterfly",
             options: [
               {
                 text: "Yes",
@@ -145,7 +166,7 @@ class WallGardenScene extends Phaser.Scene {
               {
                 text: "No",
                 callback: () => {
-                  showDialogue(this, "Take your time and explore! Talk to me again when you're ready to move on.", { imageKey: "butterflyHappy" }); // <-- Pass imageKey
+                  showDialogue(this, "Take your time and explore! Talk to me again when you're ready to move on.", { imageKey: "butterflyHappy" });
                   this.dialogueOnComplete = () => {
                     this.destroyDialogueUI();
                     this.butterflyDialogueActive = false;
@@ -157,17 +178,9 @@ class WallGardenScene extends Phaser.Scene {
         }
       };
     });
+  }
 
-    this.input.on("pointerdown", (pointer, currentlyOver) => {
-      if (currentlyOver && currentlyOver.includes(butterfly)) return;
-      if (!this.butterflyDialogueActive) return;
-      if (this.dialogueBox?.optionButtons?.length > 0) return;
-      if (this.dialogueOnComplete) {
-        this.dialogueOnComplete();
-      }
-    });
-
-    // --- Placeholder bushes: random rectangles ---
+  setupBushes(width, height) {
     const bushCount = 4;
     const bushMinX = 100;
     const bushMaxX = width / 2 - 30;
@@ -197,7 +210,7 @@ class WallGardenScene extends Phaser.Scene {
 
         if (i === periwinkleBushIndex && !periwinkleFound) {
           // Give periwinkle plant
-          const periwinkle = plantData.find(p => p.key === "periwinkle");
+          const periwinkle = plantData.find(p => p.key === "periwinklePlant");
           if (periwinkle) {
             receivedItem(this, periwinkle.key, periwinkle.name);
             inventoryManager.addItem(periwinkle);
@@ -217,33 +230,31 @@ class WallGardenScene extends Phaser.Scene {
           receivedItem(this, "coin", `${coins} Coins`, { scale: 0.15 });
           showDialogue(this, `You found ${coins} coins hidden in the bush!`);
         }
+
+        this.dialogueOnComplete = () => {
+          this.destroyDialogueUI();
+          this.dialogueActive = false;
+          this.updateHUDState();
+          this.dialogueOnComplete = null;
+        };
       });
     }
-    
   }
-
 
   update() {
     const rightEdge = this.sys.game.config.width - 50;
-    const leftEdge = 90; 
+    const leftEdge = 90;
 
     if (this.mainChar) {
-
-      console.log("mainChar.x:", this.mainChar.x);
-
       // Right edge
-      if (this.mainChar.x >= rightEdge) {
-        if (!this.transitioning) {
-          this.transitioning = true;
-          this.scene.start("MiddleGardenScene");
-        }
+      if (this.mainChar.x >= rightEdge && !this.transitioning) {
+        this.transitioning = true;
+        this.scene.start("MiddleGardenScene");
       }
-      // Left edge (adjust for origin if needed)
-      if (this.mainChar.x <= leftEdge) {
-        if (!this.transitioning) {
-          this.transitioning = true;
-          this.scene.start("GreenhouseScene");
-        }
+      // Left edge
+      if (this.mainChar.x <= leftEdge && !this.transitioning) {
+        this.transitioning = true;
+        this.scene.start("GreenhouseScene");
       }
     }
   }
