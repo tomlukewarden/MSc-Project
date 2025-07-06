@@ -64,7 +64,6 @@ export function receivedItem(scene, itemKey, itemName, options = {}) {
     });
   }
 
-  // Optionally: fade out and destroy after a delay
   scene.time.delayedCall(3000, () => {
     scene.tweens.add({
       targets: container,

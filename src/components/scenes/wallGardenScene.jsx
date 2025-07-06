@@ -47,7 +47,9 @@ class WallGardenScene extends Phaser.Scene {
     this.load.image('butterflyHappy', '/assets/npc/butterfly/happy-butterfly-dio.png');
     this.load.image('butterflySad', '/assets/npc/butterfly/sad-butterfly-dio.png');
     this.load.image('periwinklePlant', '/assets/plants/periwinkle.png');
-    this.load.image('coin', '/assets/misc/coin.png')
+    this.load.image('coin', '/assets/misc/coin.png');
+    this.load.audio('click', '/assets/sound-effects/click.mp3');
+    
   }
 
   create() {
@@ -101,12 +103,9 @@ class WallGardenScene extends Phaser.Scene {
     // --- Placeholder bushes: random rectangles ---
     this.setupBushes(width, height);
 
-    // --- Input handler for dialogue advance ---
-    this.input.on("pointerdown", (pointer, currentlyOver) => {
-      if (currentlyOver && currentlyOver.includes(this.butterfly)) return;
-      if (!this.butterflyDialogueActive && !this.dialogueActive) return;
-      if (this.dialogueBox?.optionButtons?.length > 0) return;
-      if (this.dialogueOnComplete) {
+    this.input.on("pointerdown", () => {
+      // Only advance/close if a dialogue is active and a completion callback is set
+      if (this.dialogueActive && typeof this.dialogueOnComplete === "function") {
         this.dialogueOnComplete();
       }
     });
