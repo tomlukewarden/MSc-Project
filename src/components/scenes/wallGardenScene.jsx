@@ -34,6 +34,8 @@ class WallGardenScene extends Phaser.Scene {
     this.load.image("springShard", "/assets/items/spring.png");
     this.load.audio("click", "/assets/sound-effects/click.mp3");
     this.load.audio("sparkle", "/assets/sound-effects/sparkle.mp3");
+       this.load.image('butterflyHappy', '/assets/npc/butterfly/happy-butterfly-dio.png')
+    this.load.image('butterflySad', '/assets/npc/butterfly/sad-butterfly-dio.png');
   }
 
   create() {
@@ -118,14 +120,15 @@ class WallGardenScene extends Phaser.Scene {
       if (this.butterflyDialogueActive) return;
       this.butterflyDialogueActive = true;
       this.butterflyDialogueIndex = 0;
-      showDialogue(this, butterflyIntroDialogues[this.butterflyDialogueIndex]);
+      showDialogue(this, butterflyIntroDialogues[this.butterflyDialogueIndex], { imageKey: "butterflyHappy" }); // <-- Pass imageKey
       this.dialogueOnComplete = () => {
         this.butterflyDialogueIndex++;
         if (this.butterflyDialogueIndex < butterflyIntroDialogues.length) {
-          showDialogue(this, butterflyIntroDialogues[this.butterflyDialogueIndex]);
+          showDialogue(this, butterflyIntroDialogues[this.butterflyDialogueIndex], { imageKey: "butterflyHappy" }); // <-- Pass imageKey
         } else {
           // At the end, offer to move on
           showOption(this, "Would you like to move on?", {
+            imageKey: "butterfly", // <-- Pass imageKey for options too
             options: [
               {
                 text: "Yes",
@@ -138,7 +141,7 @@ class WallGardenScene extends Phaser.Scene {
               {
                 text: "No",
                 callback: () => {
-                  showDialogue(this, "Take your time and explore! Talk to me again when you're ready to move on.");
+                  showDialogue(this, "Take your time and explore! Talk to me again when you're ready to move on.", { imageKey: "butterflyHappy" }); // <-- Pass imageKey
                   this.dialogueOnComplete = () => {
                     this.destroyDialogueUI();
                     this.butterflyDialogueActive = false;
@@ -159,6 +162,25 @@ class WallGardenScene extends Phaser.Scene {
         this.dialogueOnComplete();
       }
     });
+
+    // --- Placeholder bushes: random rectangles ---
+    const bushCount = 4; // Number of bushes to place
+    const bushMinX = 100;
+    const bushMaxX = width - 100;
+    const bushMinY = 180;
+    const bushMaxY = height - 120;
+
+    for (let i = 0; i < bushCount; i++) {
+      const x = Phaser.Math.Between(bushMinX, bushMaxX);
+      const y = Phaser.Math.Between(bushMinY, bushMaxY);
+      const bushWidth = Phaser.Math.Between(40, 70);
+      const bushHeight = Phaser.Math.Between(30, 50);
+      const color = 0x3e7d3a; // Greenish
+
+      this.add.rectangle(x, y, bushWidth, bushHeight, color, 0.85)
+        .setStrokeStyle(2, 0x245021)
+        .setDepth(12);
+    }
   }
 
   update() {
