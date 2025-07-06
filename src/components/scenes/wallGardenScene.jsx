@@ -180,19 +180,20 @@ class WallGardenScene extends Phaser.Scene {
   }
 
   setupBushes(width, height) {
-    const bushCount = 4;
-    const bushMinX = 100;
-    const bushMaxX = width / 2 - 30;
-    const bushMinY = 180;
-    const bushMaxY = height - 120;
+    const bushPositions = [
+      { x: 180, y: 300 },
+      { x: 260, y: 400 },
+      { x: 340, y: 250 },
+      { x: 420, y: 350 }
+    ];
+    const bushCount = bushPositions.length;
 
     // Randomly pick which bush will have the periwinkle
     const periwinkleBushIndex = Phaser.Math.Between(0, bushCount - 1);
     let periwinkleFound = false;
 
     for (let i = 0; i < bushCount; i++) {
-      const x = Phaser.Math.Between(bushMinX, bushMaxX);
-      const y = Phaser.Math.Between(bushMinY, bushMaxY);
+      const { x, y } = bushPositions[i];
       const bushWidth = Phaser.Math.Between(40, 70);
       const bushHeight = Phaser.Math.Between(30, 50);
       const color = 0x3e7d3a;
