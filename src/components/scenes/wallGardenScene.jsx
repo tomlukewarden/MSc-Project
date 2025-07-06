@@ -3,9 +3,13 @@ import { showDialogue, destroyDialogueUI, showOption } from '../../dialogue/dial
 import { CoinManager } from '../coinManager';
 import { createMainChar } from '../../characters/mainChar';
 import ChestLogic from '../chestLogic';
-import ChestUI from '../chestUI'; // <-- Import your ChestUI scene
+import ChestUI from '../chestUI';
 import { saveToLocal } from '../../utils/localStorage';
 import Phaser from 'phaser';
+import plantData from "../../plantData";
+import { inventoryManager } from "../inventoryManager";
+import { addPlantToJournal } from "../journalManager";
+import { receivedItem } from "../recievedItem";
 
 const coinManager = CoinManager.load();
 
@@ -164,24 +168,60 @@ class WallGardenScene extends Phaser.Scene {
     });
 
     // --- Placeholder bushes: random rectangles ---
-    const bushCount = 4; // Number of bushes to place
+    const bushCount = 4;
     const bushMinX = 100;
-    const bushMaxX = width - 100;
+    const bushMaxX = width / 2 - 30;
     const bushMinY = 180;
     const bushMaxY = height - 120;
+
+    // Randomly pick which bush will have the periwinkle
+    const periwinkleBushIndex = Phaser.Math.Between(0, bushCount - 1);
+    let periwinkleFound = false;
 
     for (let i = 0; i < bushCount; i++) {
       const x = Phaser.Math.Between(bushMinX, bushMaxX);
       const y = Phaser.Math.Between(bushMinY, bushMaxY);
       const bushWidth = Phaser.Math.Between(40, 70);
       const bushHeight = Phaser.Math.Between(30, 50);
-      const color = 0x3e7d3a; // Greenish
+      const color = 0x3e7d3a;
 
-      this.add.rectangle(x, y, bushWidth, bushHeight, color, 0.85)
+      const bush = this.add.rectangle(x, y, bushWidth, bushHeight, color, 0.85)
         .setStrokeStyle(2, 0x245021)
-        .setDepth(12);
+        .setDepth(12)
+        .setInteractive({ useHandCursor: true });
+
+      bush.on("pointerdown", () => {
+        if (this.dialogueActive) return;
+        this.dialogueActive = true;
+        this.updateHUDState();
+
+        if (i === periwinkleBushIndex && !periwinkleFound) {
+          // Give periwinkle plant
+          const periwinkle = plantData.find(p => p.key === "periwinkle");
+          if (periwinkle) {
+            receivedItem(this, periwinkle.key, periwinkle.name);
+            inventoryManager.addItem(periwinkle);
+            addPlantToJournal(periwinkle.key);
+            showDialogue(this, "You found a Periwinkle plant hidden in the bush!", {
+              imageKey: periwinkle.imageKey
+            });
+          } else {
+            showDialogue(this, "You found a rare plant, but its data is missing!", {});
+          }
+          periwinkleFound = true;
+        } else {
+          // Give coins
+          const coins = Phaser.Math.Between(10, 30);
+          coinManager.add(coins);
+          saveToLocal("coins", coinManager.coins);
+          receivedItem(this, "coin", `${coins} Coins`, { scale: 0.15 });
+          showDialogue(this, `You found ${coins} coins hidden in the bush!`);
+        }
+      });
     }
+    
   }
+
 
   update() {
     const rightEdge = this.sys.game.config.width - 50;
