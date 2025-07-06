@@ -37,6 +37,23 @@ class OpenJournal extends Phaser.Scene {
       color: "#3e2f1c"
     }).setOrigin(0.5);
 
+    // --- Close "X" Button ---
+    this.closeBtn = this.add.text(width - 60, 40, "✕", {
+      fontFamily: "Georgia",
+      fontSize: "36px",
+      color: "#a33",
+      backgroundColor: "#fff5",
+      padding: { left: 10, right: 10, top: 2, bottom: 2 }
+    })
+      .setOrigin(0.5)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(10);
+
+    this.closeBtn.on("pointerdown", () => {
+      this.scene.stop();
+      this.scene.resume("HUDScene");
+    });
+
     // Render the first plant
     this.renderPlantPage();
 
