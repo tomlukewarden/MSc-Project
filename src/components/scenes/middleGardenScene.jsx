@@ -1,7 +1,23 @@
 import { createMainChar } from "../../characters/mainChar";
+import plantData from "../../plantData";
+import { inventoryManager } from "../inventoryManager";
+import { addPlantToJournal } from "../journalManager";
+import { receivedItem } from "../recievedItem";
+import { CoinManager } from "../coinManager";
+import { saveToLocal } from "../../utils/localStorage";
+import { showDialogue, showOption } from "../../dialogue/dialogueUIHelpers";
+
+
+const coinManager = CoinManager.load();
+
 class MiddleGardenScene extends Phaser.Scene {
   constructor() {
     super({ key: 'MiddleGardenScene', physics: { default: 'arcade', arcade: { debug: false } } });
+    this.garlicFound = false;
+    this.thymeFound = false;
+    this.dialogueActive = false;
+    this.dialogueOnComplete = null;
+    this.transitioning = false;
   }
 
   preload() {
@@ -12,6 +28,12 @@ class MiddleGardenScene extends Phaser.Scene {
     this.load.image("defaultBack", "/assets/char/default/back-default.png");
     this.load.image("defaultLeft", "/assets/char/default/left-default.png");
     this.load.image("defaultRight", "/assets/char/default/right-default.png");
+    this.load.audio("click", "/assets/sound-effects/click.mp3");
+    this.load.audio('sparkle', '/assets/sound-effects/sparkle.mp3');
+    this.load.image('coin', '/assets/misc/coin.png');
+    this.load.image('garlicPlant', '/assets/plants/garlic.PNG');
+    this.load.image('thymePlant', '/assets/plants/thyme.PNG');
+ 
   }
 
   create() {
@@ -23,7 +45,7 @@ class MiddleGardenScene extends Phaser.Scene {
     this.add.image(width / 2, height / 2, 'finalGardenBackground').setScale(scaleFactor).setDepth(0);
     // Folliage
     this.add.image(width / 2, height / 2, 'folliage1').setScale(scaleFactor).setDepth(1);
-    const folliage2Img = this.add.image(width / 2, height / 2, 'folliage2').setScale(scaleFactor).setDepth(1);
+    const folliage2Img = this.add.image(width / 2, height / 2, 'folliage2').setScale(scaleFactor).setDepth(2);
 
     // --- Collision for folliage2 ---
     const collisionGroup = this.physics.add.staticGroup();
@@ -33,15 +55,155 @@ class MiddleGardenScene extends Phaser.Scene {
       folliage2Img.width * scaleFactor,
       folliage2Img.height * scaleFactor,
       0x00ff00, 
-      0 // Fully transparent
+      0 
     ).setDepth(2); 
     this.physics.add.existing(folliage2Rect, true);
     collisionGroup.add(folliage2Rect);
 
     this.mainChar = createMainChar(this, width / 2, height / 2, scaleFactor, collisionGroup);
-this.mainChar.setDepth(10).setOrigin(0.5, 0.5); // Center origin
+    this.mainChar.setDepth(1).setOrigin(0.5, 0.5);
+
+    // --- Bushes/Flowerbeds logic ---
+    this.setupBushes(width, height);
+
+    // --- Dialogue advance on click ---
+    this.input.on("pointerdown", () => {
+      if (this.dialogueActive && typeof this.dialogueOnComplete === "function") {
+        this.dialogueOnComplete();
+      }
+    });
   }
-    update() {
+
+  setupBushes(width, height) {
+    const bushPositions = [
+      { x: 180, y: 300 }, // Garlic
+      { x: 260, y: 400 }, // Thyme
+      { x: 340, y: 250 }, // Coin
+      { x: 420, y: 350 }  // Coin
+    ];
+    const bushCount = bushPositions.length;
+    const garlicIndex = 0;
+    const thymeIndex = 1;
+
+    for (let i = 0; i < bushCount; i++) {
+      const { x, y } = bushPositions[i];
+      const bushWidth = Phaser.Math.Between(40, 70);
+      const bushHeight = Phaser.Math.Between(30, 50);
+      const color = 0x3e7d3a;
+
+      const bush = this.add.rectangle(x, y, bushWidth, bushHeight, color, 0.85)
+        .setStrokeStyle(2, 0x245021)
+        .setDepth(12)
+        .setInteractive({ useHandCursor: true });
+
+      bush.on("pointerdown", () => {
+        if (this.dialogueActive) return;
+        this.dialogueActive = true;
+        this.updateHUDState && this.updateHUDState();
+
+        // Garlic bush
+        if (i === garlicIndex && !this.garlicFound) {
+          const garlic = plantData.find(p => p.key === "garlicPlant");
+          if (garlic) {
+            this.showPlantMinigame(garlic, "garlicFound");
+          } else {
+            this.showPlantMissing();
+          }
+        }
+        // Thyme bush
+        else if (i === thymeIndex && !this.thymeFound) {
+          const thyme = plantData.find(p => p.key === "thymePlant");
+          if (thyme) {
+            this.showPlantMinigame(thyme, "thymeFound");
+          } else {
+            this.showPlantMissing();
+          }
+        }
+        // All other bushes give coins
+        else {
+          const coins = Phaser.Math.Between(10, 30);
+          coinManager.add(coins);
+          saveToLocal("coins", coinManager.coins);
+          receivedItem(this, "coin", `${coins} Coins`, { scale: 0.15 });
+          showDialogue(this, `You found ${coins} coins hidden in the bush!`);
+          this.dialogueOnComplete = () => {
+            this.destroyDialogueUI && this.destroyDialogueUI();
+            this.dialogueActive = false;
+            this.updateHUDState && this.updateHUDState();
+            this.dialogueOnComplete = null;
+          };
+        }
+      });
+    }
+  }
+
+  showPlantMinigame(plant, foundFlag) {
+    showOption(
+      this,
+      `You found a ${plant.name} plant! But a cheeky animal is trying to steal it!`,
+      {
+        options: [
+          {
+            label: "Play a game to win it!",
+            callback: () => {
+              this.destroyDialogueUI && this.destroyDialogueUI();
+              this.dialogueActive = false;
+              this.updateHUDState && this.updateHUDState();
+              this.dialogueOnComplete = null;
+              this.scene.launch("MiniGameScene", {
+                onWin: () => {
+  this.scene.stop("MiniGameScene");
+  this.scene.resume(); // ✅ Resume BEFORE calling anything else
+
+  receivedItem(this, plant.key, plant.name);
+  inventoryManager.addItem(plant);
+  addPlantToJournal(plant.key);
+
+  showDialogue(this,
+    `You won the game! The animal reluctantly gives you the ${plant.name} plant.`,
+    { imageKey: plant.imageKey }
+  );
+
+  this[foundFlag] = true;
+  this.dialogueActive = true;
+
+  this.dialogueOnComplete = () => {
+    this.destroyDialogueUI();
+    this.dialogueActive = false;
+    this.updateHUDState && this.updateHUDState();
+    this.dialogueOnComplete = null;
+  };
+}
+              });
+              this.scene.pause();
+            }
+          },
+          {
+            label: "Try again later",
+            callback: () => {
+              this.destroyDialogueUI && this.destroyDialogueUI();
+              this.dialogueActive = false;
+              this.updateHUDState && this.updateHUDState();
+              this.dialogueOnComplete = null;
+            }
+          }
+        ],
+        imageKey: plant.imageKey
+      }
+    );
+  }
+
+  showPlantMissing() {
+    showDialogue(this, "You found a rare plant, but its data is missing!", {});
+    this.dialogueOnComplete = () => {
+      this.destroyDialogueUI && this.destroyDialogueUI();
+      this.dialogueActive = false;
+      this.updateHUDState && this.updateHUDState();
+      this.dialogueOnComplete = null;
+    };
+  }
+
+  update() {
     const rightEdge = this.sys.game.config.width - 50;
     const leftEdge = 50; 
 
@@ -63,6 +225,25 @@ this.mainChar.setDepth(10).setOrigin(0.5, 0.5); // Center origin
           this.scene.start("WallGardenScene");
         }
       }
+    }
+  }
+    updateHUDState() {
+    if (this.dialogueActive) {
+      this.scene.sleep("HUDScene");
+    } else {
+      this.scene.wake("HUDScene");
+    }
+  }
+
+  destroyDialogueUI() {
+    if (this.dialogueBox) {
+      this.dialogueBox.box?.destroy();
+      this.dialogueBox.textObj?.destroy();
+      this.dialogueBox.image?.destroy();
+      if (this.dialogueBox.optionButtons) {
+        this.dialogueBox.optionButtons.forEach((btn) => btn.destroy());
+      }
+      this.dialogueBox = null;
     }
   }
 }

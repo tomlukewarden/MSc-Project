@@ -33,6 +33,8 @@ class ShardGardenScene extends Phaser.Scene {
     this.load.image('summer', '/assets/backgrounds/shardGarden/summer/sad.png');
     this.load.image('autumn', '/assets/backgrounds/shardGarden/autumn/sad.png');
     this.load.image('winter', '/assets/backgrounds/shardGarden/winter/sad.png');
+       this.load.image('butterflyHappy', '/assets/npc/butterfly/happy-butterfly-dio.png')
+    this.load.image('butterflySad', '/assets/npc/butterfly/sad-butterfly-dio.png');
   }
 
   create() {
@@ -127,14 +129,16 @@ this.mainChar.setDepth(10).setOrigin(0.5, 0.5); // Center origin
     this.setActiveDialogue();
 
     butterfly.setInteractive();
+    // When starting the dialogue
     butterfly.on("pointerdown", () => {
       if (this.dialogueActive) return;
       this.dialogueActive = true;
       this.activeDialogueIndex = 0;
-      showDialogue(this, this.activeDialogue[this.activeDialogueIndex]);
+      showDialogue(this, this.activeDialogue[this.activeDialogueIndex], { imageKey: "butterflyHappy" });
       this.updateHUDState();
     });
 
+    // When advancing the dialogue
     this.input.on("pointerdown", (pointer, currentlyOver) => {
       if (currentlyOver && currentlyOver.includes(butterfly)) return;
       if (!this.dialogueActive) return;
@@ -142,7 +146,7 @@ this.mainChar.setDepth(10).setOrigin(0.5, 0.5); // Center origin
 
       this.activeDialogueIndex++;
       if (this.activeDialogueIndex < this.activeDialogue.length) {
-        showDialogue(this, this.activeDialogue[this.activeDialogueIndex]);
+        showDialogue(this, this.activeDialogue[this.activeDialogueIndex], { imageKey: "butterflyHappy" });
       } else {
         this.dialogueActive = false;
         this.updateHUDState();
