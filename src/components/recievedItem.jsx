@@ -1,4 +1,7 @@
+import { inventoryManager } from "./openInventory"; 
+
 export function receivedItem(scene, itemKey, itemName, options = {}) {
+  console.log("receivedItem called", itemKey, itemName);
   if (!itemKey || !itemName) {
     console.warn("receivedItem called without itemKey or itemName");
     return;
@@ -8,6 +11,10 @@ export function receivedItem(scene, itemKey, itemName, options = {}) {
   const borderPadding = options.borderPadding || 20;
   const borderColor = options.borderColor || 0x88cc88;
   const textColor = options.textColor || "#ffffff";
+
+  if (!scene.textures.exists(itemKey)) {
+    console.warn("Texture not loaded for itemKey:", itemKey);
+  }
 
   const itemTexture = scene.textures.get(itemKey).getSourceImage();
   const itemWidth = itemTexture.width * scale;
@@ -46,6 +53,15 @@ export function receivedItem(scene, itemKey, itemName, options = {}) {
 
   if (scene.sound && scene.sound.play) {
     scene.sound.play("sparkle", { volume: 0.7 });
+  }
+
+  // --- Add to inventory ---
+  if (inventoryManager) {
+    inventoryManager.addItem({
+      name: itemName,
+      color: borderColor, // Or use a color mapping per item if you wish
+      key: itemKey
+    });
   }
 
   // Optionally: fade out and destroy after a delay

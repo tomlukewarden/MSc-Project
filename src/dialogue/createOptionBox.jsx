@@ -32,7 +32,7 @@ export function createOptionBox(scene, promptText, { imageKey, options = [] } = 
     const btn = scene.add.text(
       text.x,
       currentY,
-      opt.label,
+      opt.label || opt.text || "",
       {
         fontFamily: "Georgia",
         fontSize: "16px",
@@ -55,7 +55,9 @@ export function createOptionBox(scene, promptText, { imageKey, options = [] } = 
         } else if (scene.scene && typeof scene.scene.wake === "function") {
           scene.scene.wake("HUDScene");
         }
-        opt.onSelect?.();
+        // Support both callback and onSelect
+        if (typeof opt.onSelect === "function") opt.onSelect();
+        else if (typeof opt.callback === "function") opt.callback();
         container.destroy();
       });
 

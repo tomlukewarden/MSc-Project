@@ -25,7 +25,7 @@ class GreenhouseScene extends Phaser.Scene {
         this.load.image("elephant", "/assets/npc/elephant/elephant.png");
         this.load.image("talkIcon", "/assets/interact/talk.png");
         this.load.audio("click", "/assets/sound-effects/click.mp3")
-        this.load.audio("theme1", "/assets/music/theme1.mp3");
+        this.load.audio("theme1", "/assets/music/main-theme1.mp3");
         this.load.audio("sparkle", "/assets/sound-effects/sparkle.mp3");
     } 
 
@@ -48,6 +48,25 @@ class GreenhouseScene extends Phaser.Scene {
         if (!collisionObjects) {
             console.warn("Collision layer not found in Tiled map!");
             return;
+        }
+
+        // Create a collision group
+        const collisionGroup = this.physics.add.staticGroup();
+
+        // Add collision objects to the group
+        if (collisionObjects && collisionObjects.objects) {
+            collisionObjects.objects.forEach(obj => {
+                const rect = this.add.rectangle(
+                    obj.x + obj.width / 2,
+                    obj.y + obj.height / 2,
+                    obj.width,
+                    obj.height,
+                    0x00ff00,
+                    0 // alpha 0 for invisible
+                );
+                this.physics.add.existing(rect, true);
+                collisionGroup.add(rect);
+            });
         }
 
         // Place a smaller elephant in the center
@@ -84,65 +103,112 @@ class GreenhouseScene extends Phaser.Scene {
             this.updateHUDState();
             talkIcon.setVisible(false);
 
-            showDialogue(this, elephantIntroDialogues[0]);
+            // 1. Start with elephantIntroDialogues
             this.currentDialogue = elephantIntroDialogues;
             this.currentDialogueIndex = 0;
-            this.dialogueOnComplete = () => {
-                showOption(this, "What would you like to say?", {
-                    options: [
-                        {
-                            label: "Of course I will help!",
-                            onSelect: () => {
-                                coinManager.add(5);
-                                showDialogue(this, "Thank you so much! I really need your help. (+5c)");
-                                this.currentDialogue = ["Thank you so much! I really need your help. (+5c)"];
-                                this.currentDialogueIndex = 0;
-                                this.dialogueOnComplete = () => {
-                                    this.dialogueActive = false;
-                                    this.updateHUDState();
-                                };
-                            }
-                        },
-                        {
-                            label: "I am not quite ready yet.",
-                            onSelect: () => {
-                                showDialogue(this, "Okay, come back when you are ready.");
-                                this.currentDialogue = ["Okay, come back when you are ready."];
-                                this.currentDialogueIndex = 0;
-                                this.dialogueOnComplete = () => {
-                                    this.dialogueActive = false;
-                                    this.updateHUDState();
-                                };
-                            }
-                        }
-                    ]
-                });
-                this.currentDialogue = null;
-                this.currentDialogueIndex = 0;
-                this.dialogueOnComplete = null;
+
+            const showNextIntro = () => {
+                showDialogue(this, this.currentDialogue[this.currentDialogueIndex]);
+                this.dialogueOnComplete = () => {
+                    this.currentDialogueIndex++;
+                    if (this.currentDialogueIndex < this.currentDialogue.length) {
+                        showNextIntro();
+                    } else {
+                        // 2. Option for helping
+                        showOption(this, "What would you like to say?", {
+                            options: [
+                                {
+                                    label: "Of course I will help!",
+                                    onSelect: () => {
+                                        coinManager.add(5);
+                                        // 3. If inventory contains jasmine, offer to give it
+                                        if (this.inventory && this.inventory.includes("jasmine")) {
+                                            showOption(this, "Will you give the jasmine to the elephant?", [
+                                                {
+                                                    text: "Yes",
+                                                    callback: () => {
+                                                        // Remove jasmine from inventory
+                                                        this.inventory = this.inventory.filter(item => item !== "jasmine");
+                                                        // 4. Show thanks dialogue
+                                                        this.currentDialogue = elephantThanksDialogues;
+                                                        this.currentDialogueIndex = 0;
+                                                        showNextThanks();
+                                                    }
+                                                },
+                                                {
+                                                    text: "No",
+                                                    callback: () => {
+                                                        showDialogue(this, "That's okay, let me know if you change your mind.");
+                                                        this.currentDialogue = ["That's okay, let me know if you change your mind."];
+                                                        this.currentDialogueIndex = 0;
+                                                        this.dialogueOnComplete = () => {
+                                                            this.dialogueActive = false;
+                                                            this.updateHUDState();
+                                                        };
+                                                    }
+                                                }
+                                            ]);
+                                            this.currentDialogue = null;
+                                            this.currentDialogueIndex = 0;
+                                            this.dialogueOnComplete = null;
+                                        } else {
+                                            showDialogue(this, "Thank you so much! I really need your help. (+5c)");
+                                            this.currentDialogue = ["Thank you so much! I really need your help. (+5c)"];
+                                            this.currentDialogueIndex = 0;
+                                            this.dialogueOnComplete = () => {
+                                                this.dialogueActive = false;
+                                                this.updateHUDState();
+                                            };
+                                        }
+                                    }
+                                },
+                                {
+                                    label: "I am not quite ready yet.",
+                                    onSelect: () => {
+                                        showDialogue(this, "Okay, come back when you are ready.");
+                                        this.currentDialogue = ["Okay, come back when you are ready."];
+                                        this.currentDialogueIndex = 0;
+                                        this.dialogueOnComplete = () => {
+                                            this.dialogueActive = false;
+                                            this.updateHUDState();
+                                        };
+                                    }
+                                }
+                            ]
+                        });
+                        this.currentDialogue = null;
+                        this.currentDialogueIndex = 0;
+                        this.dialogueOnComplete = null;
+                    }
+                };
             };
+
+            const showNextThanks = () => {
+                showDialogue(this, this.currentDialogue[this.currentDialogueIndex]);
+                this.dialogueOnComplete = () => {
+                    this.currentDialogueIndex++;
+                    if (this.currentDialogueIndex < this.currentDialogue.length) {
+                        showNextThanks();
+                    } else {
+                        this.dialogueActive = false;
+                        this.updateHUDState();
+                    }
+                };
+            };
+
+            showNextIntro();
         });
 
         // --- Advance dialogue on pointerdown ---
         this.input.on("pointerdown", () => {
             this.sound.play("click", { volume: 0.5 });
 
-            // Always destroy any existing dialogue UI before advancing or showing new dialogue
             destroyDialogueUI(this);
 
             if (!this.dialogueActive || !this.currentDialogue) return;
-            // Don't advance if option box is open
             if (this.dialogueBox && this.dialogueBox.optionButtons) return;
 
-            this.currentDialogueIndex++;
-            if (this.currentDialogueIndex < this.currentDialogue.length) {
-                showDialogue(this, this.currentDialogue[this.currentDialogueIndex]);
-            } else {
-                // Dialogue finished, clean up
-                this.currentDialogue = null;
-                this.currentDialogueIndex = 0;
-                if (this.dialogueOnComplete) this.dialogueOnComplete();
-            }
+            if (this.dialogueOnComplete) this.dialogueOnComplete();
         });
 
         const char = createMainChar(this, width, height, collisionObjects, scaleFactor);
