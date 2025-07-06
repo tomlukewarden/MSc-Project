@@ -23,7 +23,7 @@ class MiddleGardenScene extends Phaser.Scene {
     this.add.image(width / 2, height / 2, 'finalGardenBackground').setScale(scaleFactor).setDepth(0);
     // Folliage
     this.add.image(width / 2, height / 2, 'folliage1').setScale(scaleFactor).setDepth(1);
-    const folliage2Img = this.add.image(width / 2, height / 2, 'folliage2').setScale(scaleFactor).setDepth(1);
+    const folliage2Img = this.add.image(width / 2, height / 2, 'folliage2').setScale(scaleFactor).setDepth(2);
 
     // --- Collision for folliage2 ---
     const collisionGroup = this.physics.add.staticGroup();
@@ -39,7 +39,7 @@ class MiddleGardenScene extends Phaser.Scene {
     collisionGroup.add(folliage2Rect);
 
     this.mainChar = createMainChar(this, width / 2, height / 2, scaleFactor, collisionGroup);
-this.mainChar.setDepth(10).setOrigin(0.5, 0.5); // Center origin
+this.mainChar.setDepth(1).setOrigin(0.5, 0.5); // Center origin
   }
     update() {
     const rightEdge = this.sys.game.config.width - 50;
