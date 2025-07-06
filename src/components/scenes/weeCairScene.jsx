@@ -15,8 +15,8 @@ import { CoinManager } from "../coinManager";
 import { saveToLocal, loadFromLocal } from "../../utils/localStorage";
 import { createMainChar } from "../../characters/mainChar";
 import { receivedItem } from "../../components/recievedItem";
-import { inventoryManager } from "../openInventory";
-import { addPlantToJournal } from "../journalManager";
+import {addPlantToJournal} from "../journalManager";
+
 
 const coinManager = CoinManager.load();
 
@@ -180,10 +180,7 @@ class WeeCairScene extends Phaser.Scene {
                 this.dialogueActive = true;
                 this.foxglovePlantReceived = false;
 
-                // Remove Foxglove from inventory
-                if (inventoryManager) {
-                  inventoryManager.removeItem("Foxglove");
-                }
+                // No need to addItem/addPlantToJournal here, already done when received
 
                 showDialogue(this, "You hand her the plant...", {
                   imageKey: "bee"
@@ -243,20 +240,11 @@ class WeeCairScene extends Phaser.Scene {
           imageKey: this.activeImageKey
         });
       } else {
-        // --- After fairyHelpDialogues, receive foxglove ---
-        const justCompletedSet = this.currentSet - 1;
-        if (
-          this.dialogueSequence[justCompletedSet] &&
-          this.dialogueSequence[justCompletedSet].lines === fairyHelpDialogues
-        ) {
-          receivedItem(this, "foxglovePlant", "Foxglove");
-          this.foxglovePlantReceived = true;
-          addPlantToJournal("foxglovePlant"); // <-- Add to journal
-        }
-
         // --- After beeThanksDialogues, receive spring shard ---
-        if (this.activeDialogue === beeThanksDialogues) {
+        if (this.activeDialogue === beeThanksDialogues && !this.springShardReceived) {
           receivedItem(this, "springShard", "Spring Shard");
+          addPlantToJournal("springShard");
+          this.springShardReceived = true;
 
           this.time.delayedCall(1000, () => {
             this.activeDialogue = fairyGoodbyeDialogues;
@@ -303,6 +291,18 @@ class WeeCairScene extends Phaser.Scene {
         this.updateHUDState();
         this.currentSet++;
         this.currentNPC = null;
+
+        // --- After fairyHelpDialogues, receive foxglove ---
+        const justCompletedSet = this.currentSet - 1;
+        if (
+          this.dialogueSequence[justCompletedSet] &&
+          this.dialogueSequence[justCompletedSet].lines === fairyHelpDialogues &&
+          !this.foxglovePlantReceived
+        ) {
+          receivedItem(this, "foxglovePlant", "Foxglove");
+          addPlantToJournal("foxglovePlant");
+          this.foxglovePlantReceived = true;
+        }
       }
     });
 
@@ -310,8 +310,6 @@ class WeeCairScene extends Phaser.Scene {
     this.scale.on('resize', (gameSize) => {
       const char = createMainChar(this, width, height, collisionObjects, scaleFactor);      this.handleResize(gameSize);
     });
-
-
   }
 
   updateHUDState() {

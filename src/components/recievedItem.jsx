@@ -1,6 +1,7 @@
 import { inventoryManager } from "./openInventory"; 
 
 export function receivedItem(scene, itemKey, itemName, options = {}) {
+  console.log("receivedItem called", itemKey, itemName);
   if (!itemKey || !itemName) {
     console.warn("receivedItem called without itemKey or itemName");
     return;
@@ -10,6 +11,10 @@ export function receivedItem(scene, itemKey, itemName, options = {}) {
   const borderPadding = options.borderPadding || 20;
   const borderColor = options.borderColor || 0x88cc88;
   const textColor = options.textColor || "#ffffff";
+
+  if (!scene.textures.exists(itemKey)) {
+    console.warn("Texture not loaded for itemKey:", itemKey);
+  }
 
   const itemTexture = scene.textures.get(itemKey).getSourceImage();
   const itemWidth = itemTexture.width * scale;

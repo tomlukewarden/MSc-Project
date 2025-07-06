@@ -43,4 +43,6 @@ export class InventoryManager {
   }
 }
 
+export const inventoryManager = new InventoryManager();
+
 export default InventoryManager;
