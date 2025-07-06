@@ -12,6 +12,7 @@ class MiddleGardenScene extends Phaser.Scene {
     this.load.image("defaultBack", "/assets/char/default/back-default.png");
     this.load.image("defaultLeft", "/assets/char/default/left-default.png");
     this.load.image("defaultRight", "/assets/char/default/right-default.png");
+ 
   }
 
   create() {
@@ -33,13 +34,13 @@ class MiddleGardenScene extends Phaser.Scene {
       folliage2Img.width * scaleFactor,
       folliage2Img.height * scaleFactor,
       0x00ff00, 
-      0 // Fully transparent
+      0 
     ).setDepth(2); 
     this.physics.add.existing(folliage2Rect, true);
     collisionGroup.add(folliage2Rect);
 
     this.mainChar = createMainChar(this, width / 2, height / 2, scaleFactor, collisionGroup);
-this.mainChar.setDepth(1).setOrigin(0.5, 0.5); // Center origin
+this.mainChar.setDepth(1).setOrigin(0.5, 0.5);
   }
     update() {
     const rightEdge = this.sys.game.config.width - 50;
