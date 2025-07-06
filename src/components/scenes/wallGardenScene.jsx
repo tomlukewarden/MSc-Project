@@ -45,7 +45,6 @@ class WallGardenScene extends Phaser.Scene {
     this.load.image("springShard", "/assets/items/spring.png");
     this.load.audio("sparkle", "/assets/sound-effects/sparkle.mp3");
     this.load.image('butterflyHappy', '/assets/npc/butterfly/happy-butterfly-dio.png');
-    this.load.image('butterflySad', '/assets/npc/butterfly/sad-butterfly-dio.png');
     this.load.image('periwinklePlant', '/assets/plants/periwinkle.png');
     this.load.image('coin', '/assets/misc/coin.png');
     this.load.audio('click', '/assets/sound-effects/click.mp3');
@@ -209,19 +208,68 @@ class WallGardenScene extends Phaser.Scene {
         this.updateHUDState();
 
         if (i === periwinkleBushIndex && !periwinkleFound) {
-          // Give periwinkle plant
+          // Give periwinkle plant (after minigame)
           const periwinkle = plantData.find(p => p.key === "periwinklePlant");
           if (periwinkle) {
-            receivedItem(this, periwinkle.key, periwinkle.name);
-            inventoryManager.addItem(periwinkle);
-            addPlantToJournal(periwinkle.key);
-            showDialogue(this, "You found a Periwinkle plant hidden in the bush!", {
-              imageKey: periwinkle.imageKey
-            });
+            showOption(
+              this,
+              "You found a Periwinkle plant hidden in the bush... But a cheeky little animal is trying to steal it!",
+              {
+                options: [
+                  {
+                    label: "Play a game to win it!",
+                    callback: () => {
+                      this.destroyDialogueUI();
+                      this.dialogueActive = false;
+                      this.updateHUDState();
+                      this.dialogueOnComplete = null;
+                      this.scene.launch("MiniGameScene", {
+                        onWin: () => {
+                          this.scene.stop("MiniGameScene");
+                          this.dialogueActive = true;
+                          this.updateHUDState();
+                          receivedItem(this, periwinkle.key, periwinkle.name);
+                          inventoryManager.addItem(periwinkle);
+                          addPlantToJournal(periwinkle.key);
+                          showDialogue(this,
+                            "You won the game! The animal reluctantly gives you the Periwinkle plant.",
+                            { imageKey: periwinkle.imageKey }
+                          );
+                          periwinkleFound = true;
+                          this.dialogueOnComplete = () => {
+                            this.destroyDialogueUI();
+                            this.dialogueActive = false;
+                            this.updateHUDState();
+                            this.dialogueOnComplete = null;
+                          };
+                        }
+                      });
+                      this.scene.pause();
+                    }
+                  },
+                  {
+                    label: "Try again later",
+                    callback: () => {
+                      this.destroyDialogueUI();
+                      this.dialogueActive = false;
+                      this.updateHUDState();
+                      this.dialogueOnComplete = null;
+                    }
+                  }
+                ],
+                imageKey: periwinkle.imageKey
+              }
+            );
           } else {
             showDialogue(this, "You found a rare plant, but its data is missing!", {});
+            this.dialogueOnComplete = () => {
+              this.destroyDialogueUI();
+              this.dialogueActive = false;
+              this.updateHUDState();
+              this.dialogueOnComplete = null;
+            };
           }
-          periwinkleFound = true;
+          // periwinkleFound is set only after winning the minigame!
         } else {
           // Give coins
           const coins = Phaser.Math.Between(10, 30);
@@ -229,14 +277,13 @@ class WallGardenScene extends Phaser.Scene {
           saveToLocal("coins", coinManager.coins);
           receivedItem(this, "coin", `${coins} Coins`, { scale: 0.15 });
           showDialogue(this, `You found ${coins} coins hidden in the bush!`);
+          this.dialogueOnComplete = () => {
+            this.destroyDialogueUI();
+            this.dialogueActive = false;
+            this.updateHUDState();
+            this.dialogueOnComplete = null;
+          };
         }
-
-        this.dialogueOnComplete = () => {
-          this.destroyDialogueUI();
-          this.dialogueActive = false;
-          this.updateHUDState();
-          this.dialogueOnComplete = null;
-        };
       });
     }
   }
