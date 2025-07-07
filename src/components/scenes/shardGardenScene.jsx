@@ -6,7 +6,7 @@ import { showDialogue, showOption } from "../../dialogue/dialogueUIHelpers";
 
 class ShardGardenScene extends Phaser.Scene {
   constructor() {
-    super({ key: 'ShardGardenScene', physics: { default: 'arcade', arcade: { debug: true } } });
+    super({ key: 'ShardGardenScene', physics: { default: 'arcade', arcade: { debug: false } } });
     this.dialogueActive = false;
     this.dialogueBox = null;
     this.dialogueStage = 0;
@@ -21,7 +21,7 @@ class ShardGardenScene extends Phaser.Scene {
   }
 
   preload() {
-    this.load.image('background', '/assets/backgrounds/shardGarden/backgound.png');
+    this.load.image('shardBackground', '/assets/backgrounds/shardGarden/shardBackgound.png');
     this.load.image('folliage' , '/assets/backgrounds/shardGarden/folliage.png');
     this.load.image('butterfly', '/assets/npc/butterfly/front-butterfly.png');
     this.load.image("defaultFront", "/assets/char/default/front-default.png");
@@ -41,7 +41,7 @@ class ShardGardenScene extends Phaser.Scene {
     this.scene.launch("HUDScene");
     const { width, height } = this.sys.game.config;
     const scaleFactor = 0.175;
-    this.add.image(width / 2, height / 2, "background").setScale(scaleFactor);
+    this.add.image(width / 2, height / 2, "shardBackground").setScale(scaleFactor);
     const folliageImg = this.add.image(width / 2, height / 2, "folliage").setScale(scaleFactor);
 
     // --- Collision group for folliage and seasons ---
