@@ -12,6 +12,7 @@ const coinManager = CoinManager.load();
 
 class MiddleGardenScene extends Phaser.Scene {
   constructor() {
+    
     super({ key: 'MiddleGardenScene', physics: { default: 'arcade', arcade: { debug: false } } });
     this.garlicFound = false;
     this.thymeFound = false;
@@ -21,7 +22,7 @@ class MiddleGardenScene extends Phaser.Scene {
   }
 
   preload() {
-   this.load.image('finalGardenBackground', '/assets/backgrounds/finalGarden/background.png');
+   this.load.image('finalGardenBackground', '/assets/backgrounds/finalGarden/middleBackground.png');
    this.load.image('folliage1', '/assets/backgrounds/finalGarden/folliage1.png');
    this.load.image('folliage2', '/assets/backgrounds/finalGarden/folliage2.png');
        this.load.image("defaultFront", "/assets/char/default/front-default.png");
@@ -38,6 +39,7 @@ class MiddleGardenScene extends Phaser.Scene {
 
   create() {
     this.scene.launch("HUDScene");
+    this.scene.stop("StartScene");
     const { width, height } = this.sys.game.config;
     const scaleFactor = 0.175;
 
@@ -153,7 +155,7 @@ class MiddleGardenScene extends Phaser.Scene {
               this.scene.launch("MiniGameScene", {
                 onWin: () => {
   this.scene.stop("MiniGameScene");
-  this.scene.resume(); // ✅ Resume BEFORE calling anything else
+  this.scene.resume();
 
   receivedItem(this, plant.key, plant.name);
   inventoryManager.addItem(plant);
