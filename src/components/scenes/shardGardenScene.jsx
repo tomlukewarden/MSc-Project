@@ -2,11 +2,14 @@ import { createButterfly, butterflyPillarDialogues, butterflyShardDialogues, but
 import { createMainChar } from "../../characters/mainChar";
 import { CoinManager } from "../coinManager";
 import { saveToLocal } from "../../utils/localStorage";
+import plantData from "../../plantData";
 import { showDialogue, showOption } from "../../dialogue/dialogueUIHelpers";
 import {shardLogic} from "../shardLogic";
 import { inventoryManager } from "../openInventory";
 import { addPlantToJournal } from "../journalManager";
 import { receivedItem } from "../recievedItem";
+
+const coinManager = CoinManager.load();
 
 class ShardGardenScene extends Phaser.Scene {
   constructor() {
@@ -40,6 +43,7 @@ class ShardGardenScene extends Phaser.Scene {
     this.load.image('winter', '/assets/backgrounds/shardGarden/winter/sad.png');
     this.load.image('butterflyHappy', '/assets/npc/butterfly/happy-butterfly-dio.png');
     this.load.image('periwinklePlant', '/assets/plants/periwinkle.png');
+    this.load.image('marigoldPlant', '/assets/plants/marigold.PNG');
     this.load.image('coin', '/assets/misc/coin.png');
     this.load.audio('sparkle', '/assets/sound-effects/sparkle.mp3');
     this.load.audio('click', '/assets/sound-effects/click.mp3');
@@ -178,91 +182,53 @@ class ShardGardenScene extends Phaser.Scene {
 
   setupBushes(width, height) {
     const bushPositions = [
-      { x: 180, y: 300 },
-      { x: 260, y: 400 },
-      { x: 340, y: 250 },
-      { x: 420, y: 350 }
+      { x: 180, y: 300 }, // Garlic
+      { x: 260, y: 400 }, // Thyme
+      { x: 340, y: 250 }, // Coin
+      { x: 420, y: 350 }  // Coin
     ];
     const bushCount = bushPositions.length;
-    const periwinkleBushIndex = Phaser.Math.Between(0, bushCount - 1);
-    let periwinkleFound = false;
+    const garlicIndex = 0;
+    const thymeIndex = 1;
+
     for (let i = 0; i < bushCount; i++) {
       const { x, y } = bushPositions[i];
       const bushWidth = Phaser.Math.Between(40, 70);
       const bushHeight = Phaser.Math.Between(30, 50);
       const color = 0x3e7d3a;
+
       const bush = this.add.rectangle(x, y, bushWidth, bushHeight, color, 0.85)
         .setStrokeStyle(2, 0x245021)
         .setDepth(12)
         .setInteractive({ useHandCursor: true });
+
       bush.on("pointerdown", () => {
         if (this.dialogueActive) return;
         this.dialogueActive = true;
         this.updateHUDState && this.updateHUDState();
-        if (i === periwinkleBushIndex && !periwinkleFound) {
-          let periwinkle = null;
-          if (typeof plantData !== 'undefined' && Array.isArray(plantData)) {
-            periwinkle = plantData.find(p => p.key === "periwinklePlant");
+
+        // Garlic bush
+        if (i === garlicIndex && !this.garlicFound) {
+          const garlic = plantData.find(p => p.key === "periwinklePlant");
+          if (garlic) {
+            this.showPlantMinigame(garlic, "periwinkleFound");
+          } else {
+            this.showPlantMissing();
           }
-          if (!periwinkle) {
-            periwinkle = { name: "Periwinkle", key: "periwinklePlant", imageKey: "periwinklePlant" };
+        }
+        // Thyme bush
+        else if (i === thymeIndex && !this.thymeFound) {
+          const thyme = plantData.find(p => p.key === "marigoldPlant");
+          if (thyme) {
+            this.showPlantMinigame(thyme, "marigoldFound");
+          } else {
+            this.showPlantMissing();
           }
-          showOption(
-            this,
-            "You found a Periwinkle plant hidden in the bush... But a cheeky little animal is trying to steal it!",
-            {
-              options: [
-                {
-                  label: "Play a game to win it!",
-                  callback: () => {
-                    this.destroyDialogueUI && this.destroyDialogueUI();
-                    this.dialogueActive = false;
-                    this.updateHUDState && this.updateHUDState();
-                    this.dialogueOnComplete = null;
-                    this.scene.launch("MiniGameScene", {
-                      onWin: () => {
-                        this.scene.stop("MiniGameScene");
-                        receivedItem(this, periwinkle.key, periwinkle.name);
-                        inventoryManager.addItem(periwinkle);
-                        addPlantToJournal(periwinkle.key);
-                        showDialogue(this,
-                          "You won the game! The animal reluctantly gives you the Periwinkle plant.",
-                          {
-                            imageKey: periwinkle.imageKey,
-                            onComplete: () => {
-                              this.dialogueOnComplete = () => {
-                                this.destroyDialogueUI();
-                                this.dialogueActive = false;
-                                this.updateHUDState();
-                                this.dialogueOnComplete = null;
-                              };
-                            }
-                          }
-                        );
-                        periwinkleFound = true;
-                      }
-                    });
-                    this.scene.pause();
-                  }
-                },
-                {
-                  label: "Try again later",
-                  callback: () => {
-                    this.destroyDialogueUI && this.destroyDialogueUI();
-                    this.dialogueActive = false;
-                    this.updateHUDState && this.updateHUDState();
-                    this.dialogueOnComplete = null;
-                  }
-                }
-              ],
-              imageKey: periwinkle.imageKey
-            }
-          );
-        } else {
+        }
+        else {
           const coins = Phaser.Math.Between(10, 30);
-          CoinManager.load().add(coins);
-          saveToLocal("coins", CoinManager.load().coins);
-          this.destroyDialogueUI && this.destroyDialogueUI();
+          coinManager.add(coins);
+          saveToLocal("coins", coinManager.coins);
           receivedItem(this, "coin", `${coins} Coins`, { scale: 0.15 });
           showDialogue(this, `You found ${coins} coins hidden in the bush!`);
           this.dialogueOnComplete = () => {
@@ -275,6 +241,73 @@ class ShardGardenScene extends Phaser.Scene {
       });
     }
   }
+
+  showPlantMinigame(plant, foundFlag) {
+    showOption(
+      this,
+      `You found a ${plant.name} plant! But a cheeky animal is trying to steal it!`,
+      {
+        options: [
+          {
+            label: "Play a game to win it!",
+            callback: () => {
+              this.destroyDialogueUI && this.destroyDialogueUI();
+              this.dialogueActive = false;
+              this.updateHUDState && this.updateHUDState();
+              this.dialogueOnComplete = null;
+              this.scene.launch("MiniGameScene", {
+                onWin: () => {
+  this.scene.stop("MiniGameScene");
+  this.scene.resume();
+
+  receivedItem(this, plant.key, plant.name);
+  inventoryManager.addItem(plant);
+  addPlantToJournal(plant.key);
+
+  showDialogue(this,
+    `You won the game! The animal reluctantly gives you the ${plant.name} plant.`,
+    { imageKey: plant.imageKey }
+  );
+
+  this[foundFlag] = true;
+  this.dialogueActive = true;
+
+  this.dialogueOnComplete = () => {
+    this.destroyDialogueUI();
+    this.dialogueActive = false;
+    this.updateHUDState && this.updateHUDState();
+    this.dialogueOnComplete = null;
+  };
+}
+              });
+              this.scene.pause();
+            }
+          },
+          {
+            label: "Try again later",
+            callback: () => {
+              this.destroyDialogueUI && this.destroyDialogueUI();
+              this.dialogueActive = false;
+              this.updateHUDState && this.updateHUDState();
+              this.dialogueOnComplete = null;
+            }
+          }
+        ],
+        imageKey: plant.imageKey
+      }
+    );
+  }
+
+  showPlantMissing() {
+    showDialogue(this, "You found a rare plant, but its data is missing!", {});
+    this.dialogueOnComplete = () => {
+      this.destroyDialogueUI && this.destroyDialogueUI();
+      this.dialogueActive = false;
+      this.updateHUDState && this.updateHUDState();
+      this.dialogueOnComplete = null;
+    };
+  }
+
 }
 
 export default ShardGardenScene;
