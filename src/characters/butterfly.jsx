@@ -37,7 +37,7 @@ export const butetrflyPersGardenDialogues = [
   "Welcome to your plant garden.",
   "Here you’ll craft remedies, brew healing draughts, and grow everything you’ll need...",
   "And here, a little something to help you get started."
-]
+];
 
 export function createButterfly(scene, x, y) {
   const butterfly = scene.add.sprite(x, y, "butterfly")

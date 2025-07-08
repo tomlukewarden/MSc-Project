@@ -139,7 +139,6 @@ class ShardGardenScene extends Phaser.Scene {
       this.dialogueActive = true;
       this.activeDialogueIndex = 0;
       showDialogue(this, this.activeDialogue[this.activeDialogueIndex], { imageKey: "butterflySad" });
-      butterfly.setTexture("")
       this.updateHUDState();
     });
    
