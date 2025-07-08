@@ -259,32 +259,45 @@ class WeeCairScene extends Phaser.Scene {
 
         // --- After fairyGoodbyeDialogues, show options ---
         if (this.activeDialogue === fairyGoodbyeDialogues) {
-          destroyDialogueUI(this);
-          this.dialogueActive = false;
-          this.updateHUDState();
+      destroyDialogueUI(this);
+      this.dialogueActive = false;
+      this.updateHUDState();
 
-          showOption(this, "What would you like to do?", {
-            imageKey: "fairyHappy",
-            options: [
-              {
-                label: "Go to the botanic gardens",
-                onSelect: () => {
-                  this.scene.start("WallGardenScene");
-                }
-              },
-              {
-                label: "Stay here",
-                onSelect: () => {
-                  destroyDialogueUI(this);
-                  this.dialogueActive = true;
-                  this.updateHUDState();
-                  showDialogue(this, "You decide to wait a bit longer...");
-                }
+      this.showStayOrGoOptions = () => {
+        showOption(this, "What would you like to do?", {
+          imageKey: "fairyHappy",
+          options: [
+            {
+              label: "Go to the botanic gardens",
+              onSelect: () => {
+                this.scene.start("WallGardenScene");
               }
-            ]
-          });
-          return;
-        }
+            },
+            {
+              label: "Stay here",
+              onSelect: () => {
+                this.activeDialogue = ["Come back when you're ready!"];
+                this.activeImageKey = "fairyHappy";
+                this.currentDialogueIndex = 0;
+                this.dialogueActive = true;
+                this.updateHUDState();
+                showDialogue(this, this.activeDialogue[0], {
+                  imageKey: this.activeImageKey,
+                  onComplete: () => {
+                    this.dialogueActive = false;
+                    this.updateHUDState();
+                    this.showStayOrGoOptions();
+                  }
+                });
+              }
+            }
+          ]
+        });
+      };
+
+      this.showStayOrGoOptions();
+      return;
+    }
 
         // --- Normal sequence advancement ---
         destroyDialogueUI(this);
