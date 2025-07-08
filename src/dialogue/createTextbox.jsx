@@ -47,8 +47,11 @@ if (options.imageKey) {
     );
 }
 
+// If there is an image, add extra margin; otherwise, use a smaller margin and full width
     const textMargin = options.imageKey ? (boxWidth * 0.25) : 24;
-    const maxTextWidth = boxWidth - textMargin - 24; 
+    const maxTextWidth = options.imageKey
+      ? boxWidth - textMargin - 24
+      : boxWidth - 48; // 24px margin on both sides if no image
     const textObj = scene.add.text(
         width / 2 - boxWidth / 2 + textMargin,
         boxY,

@@ -94,7 +94,7 @@ class ShardGardenScene extends Phaser.Scene {
             showDialogue(this, `No ${season} shards left to return!`);
           }
         } else {
-          showDialogue(this, `You don't have a ${season} shard in your inventory.`);
+          showDialogue(this, `You don't have a ${season} shard in your inventory.`,  { imageKey: {shardKey} }); ;
         }
         this.updateHUDState();
       });
