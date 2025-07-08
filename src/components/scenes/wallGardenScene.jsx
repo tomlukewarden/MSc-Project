@@ -38,7 +38,7 @@ class WallGardenScene extends Phaser.Scene {
     this.load.image("defaultLeft", "/assets/char/default/left-default.png");
     this.load.image("defaultRight", "/assets/char/default/right-default.png");
     this.load.audio('click', '/assets/sound-effects/click.mp3');
-    this.load.image('talkIcon', '/assets/interact/talk.png');
+    this.load.image('talk', '/assets/interact/talk.png');
     this.load.image('chestClosed', '/assets/misc/chest-closed.png');
     this.load.image('chestOpen', '/assets/misc/chest-open.png');
     this.load.image("foxglovePlant", "/assets/plants/foxglove.png");
@@ -98,45 +98,28 @@ class WallGardenScene extends Phaser.Scene {
     this.mainChar.setDepth(10).setOrigin(1, -5);
 
     // --- Butterfly NPC ---
-    this.setupButterfly(width, height);
-
-    // --- Placeholder bushes: random rectangles ---
-    this.setupBushes(width, height);
-
-    this.input.on("pointerdown", () => {
-      // Only advance/close if a dialogue is active and a completion callback is set
-      if (this.dialogueActive && typeof this.dialogueOnComplete === "function") {
-        this.dialogueOnComplete();
-      }
-    });
-  }
-
-  setupChest(width, height) {
-    const chestItemsArray = [
-      { name: "Foxglove", color: 0xd9ae7e, key: "foxglovePlant" },
-      { name: "Spring Shard", color: 0x88cc88, key: "springShard" }
-    ];
-    const chest = this.add.image(width / 2 + 200, height / 2 - 40, 'chestClosed')
-      .setScale(2)
-      .setDepth(15)
-      .setInteractive();
-
-    this.chestLogic.scene = this;
-    this.chestLogic.setChest(chest);
-
-    chest.on("pointerdown", () => {
-      chest.setTexture('chestOpen');
-      this.chestLogic.openChest(chestItemsArray);
-
-      this.scene.get("ChestUI").events.once("shutdown", () => {
-        chest.setTexture('chestClosed');
-      });
-    });
-  }
-
-  setupButterfly(width, height) {
     this.butterfly = createButterfly(this, width / 2 + 100, height / 2 - 50);
     this.butterfly.setDepth(20).setInteractive();
+
+            // --- Talk icon ---
+    const talkIcon = this.add
+      .image(0, 0, "talk")
+      .setScale(0.05)
+      .setVisible(false)
+      .setDepth(110)
+      .setOrigin(0.5);
+
+    // --- Talk icon hover logic ---
+    this.butterfly.on("pointerover", (pointer) => {
+      talkIcon.setVisible(true);
+      talkIcon.setPosition(pointer.worldX + 32, pointer.worldY);
+    });
+    this.butterfly.on("pointermove", (pointer) => {
+      talkIcon.setPosition(pointer.worldX + 32, pointer.worldY);
+    });
+    this.butterfly.on("pointerout", () => {
+      talkIcon.setVisible(false);
+    });
 
     this.butterflyDialogueIndex = 0;
     this.butterflyDialogueActive = false;
@@ -176,6 +159,39 @@ class WallGardenScene extends Phaser.Scene {
           });
         }
       };
+    });
+
+    // --- Placeholder bushes: random rectangles ---
+    this.setupBushes(width, height);
+
+    this.input.on("pointerdown", () => {
+      // Only advance/close if a dialogue is active and a completion callback is set
+      if (this.dialogueActive && typeof this.dialogueOnComplete === "function") {
+        this.dialogueOnComplete();
+      }
+    });
+  }
+
+  setupChest(width, height) {
+    const chestItemsArray = [
+      { name: "Foxglove", color: 0xd9ae7e, key: "foxglovePlant" },
+      { name: "Spring Shard", color: 0x88cc88, key: "springShard" }
+    ];
+    const chest = this.add.image(width / 2 + 200, height / 2 - 40, 'chestClosed')
+      .setScale(2)
+      .setDepth(15)
+      .setInteractive();
+
+    this.chestLogic.scene = this;
+    this.chestLogic.setChest(chest);
+
+    chest.on("pointerdown", () => {
+      chest.setTexture('chestOpen');
+      this.chestLogic.openChest(chestItemsArray);
+
+      this.scene.get("ChestUI").events.once("shutdown", () => {
+        chest.setTexture('chestClosed');
+      });
     });
   }
 

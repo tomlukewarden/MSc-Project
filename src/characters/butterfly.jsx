@@ -27,7 +27,7 @@ export function createButterfly(scene, x, y) {
     .setScale(0.1)
     .setOrigin(-1.5, 1.1)
     .setInteractive({ useHandCursor: true });
-  butterfly.setDepth(101); // Ensure butterfly is above other elements
+  butterfly.setDepth(101);
 
   return butterfly;
 }

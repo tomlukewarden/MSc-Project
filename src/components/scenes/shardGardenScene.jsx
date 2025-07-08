@@ -48,6 +48,7 @@ class ShardGardenScene extends Phaser.Scene {
     this.load.audio('sparkle', '/assets/sound-effects/sparkle.mp3');
     this.load.audio('click', '/assets/sound-effects/click.mp3');
     this.load.image('dialogueBoxBg', '/assets/ui-items/dialogue.png');
+    this.load.image('talk', '/assets/interact/talk.png');
   }
 
   create() {
@@ -103,6 +104,19 @@ class ShardGardenScene extends Phaser.Scene {
         this.updateHUDState();
       });
     });
+
+        // --- Talk icon ---
+    const talkIcon = this.add
+      .image(0, 0, "talk")
+      .setScale(0.05)
+      .setVisible(false)
+      .setDepth(10)
+      .setOrigin(0.5);
+
+      butterfly.on("pointerover", () => {
+        talkIcon.setVisible(true);
+        talkIcon.setPosition(butterfly.x, butterfly.y - 50);
+      });
 
     // 🧍 Main Character
     this.mainChar = createMainChar(this, width / 2, height / 2, scaleFactor, collisionGroup);
