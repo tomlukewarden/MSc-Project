@@ -48,6 +48,7 @@ class WallGardenScene extends Phaser.Scene {
     this.load.image('periwinklePlant', '/assets/plants/periwinkle.png');
     this.load.image('coin', '/assets/misc/coin.png');
     this.load.audio('click', '/assets/sound-effects/click.mp3');
+    this.load.image('dialogueBoxBg', '/assets/ui-items/dialogue.png');
     
   }
 

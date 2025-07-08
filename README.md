@@ -1,5 +1,4 @@
 # MSc Project - The Botanist
-# MSc Project – The Botanist
 
 Welcome to **The Botanist**, an MSc project by Thomas Warden with art by Emma Formosa.
 
@@ -20,7 +19,7 @@ Welcome to **The Botanist**, an MSc project by Thomas Warden with art by Emma Fo
 ### Prerequisites
 
 - [Node.js](https://nodejs.org/) (v14+ recommended)
-- [npm](https://www.npmjs.com/) or [yarn](https://yarnpkg.com/)
+- [npm](https://www.npmjs.com/) 
 
 ### Installation
 
@@ -58,7 +57,7 @@ README.md
 
 ## Controls
 
-- **WASD** or **Arrow Keys**: Move your character
+- **WASD**: Move your character
 - **Mouse**: Interact with NPCs, shop items, and UI
 - **Click**: Advance dialogue and select options
 

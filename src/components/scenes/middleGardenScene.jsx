@@ -34,6 +34,7 @@ class MiddleGardenScene extends Phaser.Scene {
     this.load.image('coin', '/assets/misc/coin.png');
     this.load.image('garlicPlant', '/assets/plants/garlic.PNG');
     this.load.image('thymePlant', '/assets/plants/thyme.PNG');
+    this.load.image('dialogueBoxBg', '/assets/ui-items/dialogue.png');
  
   }
 
