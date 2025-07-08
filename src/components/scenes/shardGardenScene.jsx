@@ -34,7 +34,7 @@ class ShardGardenScene extends Phaser.Scene {
     this.load.image('autumn', '/assets/backgrounds/shardGarden/autumn/sad.png');
     this.load.image('winter', '/assets/backgrounds/shardGarden/winter/sad.png');
        this.load.image('butterflyHappy', '/assets/npc/butterfly/happy-butterfly-dio.png')
-    this.load.image('butterflySad', '/assets/npc/butterfly/sad-butterfly-dio.png');
+this.load.image('dialogueBoxBg', '/assets/ui-items/dialogue.png');
   }
 
   create() {
@@ -44,10 +44,8 @@ class ShardGardenScene extends Phaser.Scene {
     this.add.image(width / 2, height / 2, "shardBackground").setScale(scaleFactor);
     const folliageImg = this.add.image(width / 2, height / 2, "folliage").setScale(scaleFactor);
 
-    // --- Collision group for folliage and seasons ---
     const collisionGroup = this.physics.add.staticGroup();
 
-    // Folliage collision (rectangle matching the image, adjust as needed)
     const folliageRect = this.add.rectangle(
       width / 2,
       height / 2,
@@ -85,7 +83,7 @@ class ShardGardenScene extends Phaser.Scene {
           `Return ${season.charAt(0).toUpperCase() + season.slice(1)} Shard? (${this.shardCounts[season]} left)`,
           [
             {
-              text: "Yes",
+              label: "Yes",
               callback: () => {
                 if (this.shardCounts[season] > 0) {
                   this.shardCounts[season]--;
@@ -97,7 +95,7 @@ class ShardGardenScene extends Phaser.Scene {
               }
             },
             {
-              text: "No",
+              label: "No",
               callback: () => {
                 showDialogue(this, `You kept your ${season} shard.`);
                 this.updateHUDState();

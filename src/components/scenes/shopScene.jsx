@@ -14,6 +14,7 @@ class ShopScene extends Phaser.Scene {
     this.load.image('item2', '/assets/plants/foxglove.png');
     this.load.audio('click', '/assets/sound-effects/click.mp3');
     this.load.audio("shopTheme", "/assets/music/shop-theme.mp3");
+    this.load.image('dialogueBoxBg', '/assets/ui-items/dialogue.png');
   }
 
   create() {
