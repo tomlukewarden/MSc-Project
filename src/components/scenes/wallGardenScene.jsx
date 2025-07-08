@@ -99,7 +99,7 @@ class WallGardenScene extends Phaser.Scene {
 
     // --- Butterfly NPC ---
     this.butterfly = createButterfly(this, width / 2 + 100, height / 2 - 50);
-    this.butterfly.setDepth(20).setInteractive();
+    this.butterfly.setDepth(20).setScale(0.09).setInteractive();
 
             // --- Talk icon ---
     const talkIcon = this.add

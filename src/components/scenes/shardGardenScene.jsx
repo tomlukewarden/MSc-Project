@@ -42,6 +42,7 @@ class ShardGardenScene extends Phaser.Scene {
     this.load.image('autumn', '/assets/backgrounds/shardGarden/autumn/sad.png');
     this.load.image('winter', '/assets/backgrounds/shardGarden/winter/sad.png');
     this.load.image('butterflyHappy', '/assets/npc/butterfly/happy-butterfly-dio.png');
+    this.load.image('butterflySad', '/assets/npc/butterfly/sad-butterfly-dio.PNG');
     this.load.image('periwinklePlant', '/assets/plants/periwinkle.png');
     this.load.image('marigoldPlant', '/assets/plants/marigold.PNG');
     this.load.image('coin', '/assets/misc/coin.png');
@@ -105,26 +106,30 @@ class ShardGardenScene extends Phaser.Scene {
       });
     });
 
-        // --- Talk icon ---
-    const talkIcon = this.add
+
+    this.mainChar = createMainChar(this, width / 2, height / 2, scaleFactor, collisionGroup);
+    this.mainChar.setDepth(10).setOrigin(0.5, 0.5);
+    const butterfly = createButterfly(this, width / 2, height / 2);
+    butterfly.setScale(0.09).setOrigin(-2, 0.3).setDepth(20).setInteractive();
+
+ const talkIcon = this.add
       .image(0, 0, "talk")
       .setScale(0.05)
       .setVisible(false)
-      .setDepth(10)
+      .setDepth(110)
       .setOrigin(0.5);
 
-      butterfly.on("pointerover", () => {
-        talkIcon.setVisible(true);
-        talkIcon.setPosition(butterfly.x, butterfly.y - 50);
-      });
-
-    // 🧍 Main Character
-    this.mainChar = createMainChar(this, width / 2, height / 2, scaleFactor, collisionGroup);
-    this.mainChar.setDepth(10).setOrigin(0.5, 0.5);
-
-    // 🦋 Butterfly setup
-    const butterfly = createButterfly(this, width / 2, height / 2);
-    butterfly.setScale(0.09).setOrigin(0.5, 0.5).setDepth(20).setInteractive();
+    // --- Talk icon hover logic ---
+    butterfly.on("pointerover", (pointer) => {
+      talkIcon.setVisible(true);
+      talkIcon.setPosition(pointer.worldX + 32, pointer.worldY);
+    });
+    butterfly.on("pointermove", (pointer) => {
+      talkIcon.setPosition(pointer.worldX + 32, pointer.worldY);
+    });
+    butterfly.on("pointerout", () => {
+      talkIcon.setVisible(false);
+    });
 
     this.dialogueStage = 0;
     this.setActiveDialogue();
@@ -133,17 +138,19 @@ class ShardGardenScene extends Phaser.Scene {
       if (this.dialogueActive) return;
       this.dialogueActive = true;
       this.activeDialogueIndex = 0;
-      showDialogue(this, this.activeDialogue[this.activeDialogueIndex], { imageKey: "butterflyHappy" });
+      showDialogue(this, this.activeDialogue[this.activeDialogueIndex], { imageKey: "butterflySad" });
+      butterfly.setTexture("")
       this.updateHUDState();
     });
-
+   
+            
     this.input.on("pointerdown", (pointer, currentlyOver) => {
       if (currentlyOver && currentlyOver.includes(butterfly)) return;
       if (!this.dialogueActive) return;
       if (this.dialogueBox?.optionButtons?.length > 0) return;
       this.activeDialogueIndex++;
       if (this.activeDialogueIndex < this.activeDialogue.length) {
-        showDialogue(this, this.activeDialogue[this.activeDialogueIndex], { imageKey: "butterflyHappy" });
+        showDialogue(this, this.activeDialogue[this.activeDialogueIndex], { imageKey: "butterflySad" });
       } else {
         this.dialogueActive = false;
         this.updateHUDState();
