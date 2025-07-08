@@ -7,7 +7,6 @@ export const butterflyIntroDialogues = [
 ];
 
 export const butterflyPillarDialogues = [
-  "",
   "These are the Season Pillars.",
   "They’re the heartbeat of our gardens, the very rhythm of the land.",
   "But they’re broken, missing pieces scattered far and wide.",
@@ -15,7 +14,6 @@ export const butterflyPillarDialogues = [
 ];
 
 export const butterflyShardDialogues = [
-    "",
   "There’s something else...",
   ",Around the same time the shards vanished, the garden folk began to fall ill. ",
   "I don’t believe it’s a coincidence.",

@@ -38,6 +38,7 @@ class ShardGardenScene extends Phaser.Scene {
     this.load.image("defaultRight", "/assets/char/default/right-default.png");
     this.load.image("elephant", "/assets/npc/elephant/elephant.png");
     this.load.image('spring', '/assets/backgrounds/shardGarden/spring/sad.png');
+    this.load.image('springHappy', '/assets/backgrounds/shardGarden/spring/happy.png');
     this.load.image('summer', '/assets/backgrounds/shardGarden/summer/sad.png');
     this.load.image('autumn', '/assets/backgrounds/shardGarden/autumn/sad.png');
     this.load.image('winter', '/assets/backgrounds/shardGarden/winter/sad.png');
@@ -89,23 +90,23 @@ class ShardGardenScene extends Phaser.Scene {
       seasonImg.on("pointerout", () => seasonImg.clearTint());
       seasonImg.on("pointerup", () => {
         const shardKey = season + "Shard";
-        const hasShard = inventoryManager.hasItem && inventoryManager.hasItem(shardKey);
+        const hasShard = inventoryManager.hasItemByKey && inventoryManager.hasItemByKey(shardKey);
         if (hasShard) {
           if (this.shardCounts[season] > 0) {
             this.shardCounts[season]--;
-            inventoryManager.removeItem && inventoryManager.removeItem(shardKey);
+            inventoryManager.removeItemByKey && inventoryManager.removeItemByKey(shardKey);
             showDialogue(this, `You returned a ${season} shard! (${this.shardCounts[season]} left)`);
             shardLogic(this);
           } else {
             showDialogue(this, `No ${season} shards left to return!`);
+    
           }
         } else {
-          showDialogue(this, `You don't have a ${season} shard in your inventory.`,  { imageKey: {shardKey} }); ;
+          showDialogue(this, `You don't have a ${season} shard in your inventory.`,  { imageKey: {shardKey} });
         }
         this.updateHUDState();
       });
     });
-
 
     this.mainChar = createMainChar(this, width / 2, height / 2, scaleFactor, collisionGroup);
     this.mainChar.setDepth(10).setOrigin(0.5, 0.5);
