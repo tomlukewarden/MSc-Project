@@ -80,7 +80,7 @@ class HUDScene extends Phaser.Scene {
             slotItemImages.push(null); // Placeholder for item image overlays
         }
 
-        // Add hover effects for toolbar slots
+        let selectedSlotIndex = null;
         slots.forEach((slot, i) => {
             slot.on("pointerover", () => {
                 slot.setTint(0xaaaaaa);
@@ -89,21 +89,34 @@ class HUDScene extends Phaser.Scene {
                 slot.clearTint();
             });
             slot.on("pointerdown", () => {
-                console.log("Toolbar slot clicked", i);
+                // Deselect all slots visually
+                slots.forEach((s, idx) => {
+                    if (idx !== i) s.setAlpha(1);
+                });
+                // Toggle selection
+                if (selectedSlotIndex === i) {
+                    slot.setAlpha(1);
+                    selectedSlotIndex = null;
+                } else {
+                    slot.setAlpha(0.6);
+                    selectedSlotIndex = i;
+                }
+                this.game.scene.getScenes(true).forEach(scene => {
+                    if (scene.events) {
+                        scene.events.emit("selectToolbarSlot", selectedSlotIndex);
+                    }
+                });
             });
         });
 
-        // Helper to update slot overlays
         const updateToolbarSlots = (toolbarSlots) => {
             for (let i = 0; i < slotCount; i++) {
-                // Remove old overlay if exists
                 if (slotItemImages[i]) {
                     slotItemImages[i].destroy();
                     slotItemImages[i] = null;
                 }
                 const item = toolbarSlots[i];
                 if (item && item.key && this.textures.exists(item.key)) {
-                    // Overlay item image on slot
                     const img = this.add.image(slots[i].x, slots[i].y - 2, item.key)
                         .setDisplaySize(38, 38)
                         .setDepth(slots[i].depth + 1 || 1);
@@ -112,12 +125,12 @@ class HUDScene extends Phaser.Scene {
             }
         };
 
-        // Initial render
         updateToolbarSlots(inventoryManager.getToolbarSlots());
-        // Listen for toolbar changes
         inventoryManager.onToolbarChange(updateToolbarSlots);
+        inventoryManager.onChange(() => {
+            updateToolbarSlots(inventoryManager.getToolbarSlots());
+        });
 
-        // Energy icon directly above toolbar
         const energyY = toolbarY - 70;
         const energyIcon = this.add.image(width / 2, energyY, "energyFull")
             .setOrigin(0.5)

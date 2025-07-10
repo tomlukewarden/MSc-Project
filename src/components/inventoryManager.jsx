@@ -21,7 +21,6 @@ export class InventoryManager {
       this._notifyToolbar();
       return true;
     }
-    // If all slots are full, do nothing (or could replace first? Up to design)
     return false;
   }
 
@@ -39,7 +38,6 @@ export class InventoryManager {
 
 
   removeItem(itemNameOrKey) {
-    // Remove by name (default), but if not found, try by key (for shards)
     let idx = this.items.findIndex(i => i.name === itemNameOrKey);
     if (idx === -1) {
       idx = this.items.findIndex(i => i.key === itemNameOrKey);
@@ -47,7 +45,6 @@ export class InventoryManager {
     if (idx !== -1) {
       const [removed] = this.items.splice(idx, 1);
       this._notify();
-      // Also remove from toolbar if present
       const slotIdx = this.toolbarSlots.findIndex(slot => slot && (slot.name === itemNameOrKey || slot.key === itemNameOrKey));
       if (slotIdx !== -1) {
         this.toolbarSlots[slotIdx] = null;
@@ -72,7 +69,6 @@ export class InventoryManager {
     if (idx !== -1) {
       const [removed] = this.items.splice(idx, 1);
       this._notify();
-      // Also remove from toolbar if present
       const slotIdx = this.toolbarSlots.findIndex(slot => slot && slot.key === itemKey);
       if (slotIdx !== -1) {
         this.toolbarSlots[slotIdx] = null;
