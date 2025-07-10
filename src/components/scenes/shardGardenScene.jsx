@@ -1,7 +1,7 @@
 import { createButterfly, butterflyPillarDialogues, butterflyShardDialogues, butterflyGoodbyeDialogues } from "../../characters/butterfly";
 import { createMainChar } from "../../characters/mainChar";
 import { CoinManager } from "../coinManager";
-import { saveToLocal } from "../../utils/localStorage";
+import { saveToLocal, loadFromLocal } from "../../utils/localStorage";
 import plantData from "../../plantData";
 import { showDialogue, showOption } from "../../dialogue/dialogueUIHelpers";
 import {shardLogic} from "../shardLogic";
@@ -24,6 +24,12 @@ class ShardGardenScene extends Phaser.Scene {
       summer: 1,
       autumn: 1,
       winter: 1
+    };
+    this.happySprites = {
+      spring: false,
+      summer: false,
+      autumn: false,
+      winter: false
     };
     this.winDialogueActive = false;
   }
@@ -60,6 +66,30 @@ class ShardGardenScene extends Phaser.Scene {
     this.scene.launch("HUDScene");
     const { width, height } = this.sys.game.config;
     const scaleFactor = 0.175;
+
+    // --- LOAD STATE FROM LOCAL STORAGE ---
+    const sceneState = loadFromLocal('shardGardenSceneState') || {};
+    // Restore coins if present
+    if (sceneState.coins !== undefined) {
+      coinManager.set(sceneState.coins);
+    }
+    // Restore inventory if present (assumes inventoryManager is imported)
+    if (sceneState.inventory && Array.isArray(sceneState.inventory)) {
+      inventoryManager.clear();
+      sceneState.inventory.forEach(item => inventoryManager.addItem(item));
+    }
+    // Restore shard counts, happySprites, and dialogue stage
+    if (sceneState.shardCounts) {
+      this.shardCounts = { ...this.shardCounts, ...sceneState.shardCounts };
+    }
+    if (sceneState.happySprites) {
+      this.happySprites = { ...this.happySprites, ...sceneState.happySprites };
+    }
+    if (sceneState.dialogueStage !== undefined) {
+      this.dialogueStage = sceneState.dialogueStage;
+    }
+    this.dialogueActive = !!sceneState.dialogueActive;
+    this.activeDialogueIndex = sceneState.activeDialogueIndex || 0;
 
     this.add.image(width / 2, height / 2, "shardBackground").setScale(scaleFactor);
     const foliageImg = this.add.image(width / 2, height / 2, "folliage").setScale(scaleFactor);
@@ -116,7 +146,7 @@ class ShardGardenScene extends Phaser.Scene {
     const butterfly = createButterfly(this, width / 2, height / 2);
     butterfly.setScale(0.09).setOrigin(-2, 0.3).setDepth(20).setInteractive();
 
- const talkIcon = this.add
+    const talkIcon = this.add
       .image(0, 0, "talk")
       .setScale(0.05)
       .setVisible(false)
@@ -135,7 +165,6 @@ class ShardGardenScene extends Phaser.Scene {
       talkIcon.setVisible(false);
     });
 
-    this.dialogueStage = 0;
     this.setActiveDialogue();
 
     butterfly.on("pointerdown", () => {
@@ -145,8 +174,7 @@ class ShardGardenScene extends Phaser.Scene {
       showDialogue(this, this.activeDialogue[this.activeDialogueIndex], { imageKey: "butterflySad" });
       this.updateHUDState();
     });
-   
-            
+
     this.input.on("pointerdown", (pointer, currentlyOver) => {
       if (currentlyOver && currentlyOver.includes(butterfly)) return;
       if (!this.dialogueActive) return;
@@ -167,6 +195,35 @@ class ShardGardenScene extends Phaser.Scene {
 
     // Add bushes with periwinkle and coins
     this.setupBushes(width, height);
+
+    // --- PERIODIC SAVE TO LOCAL STORAGE ---
+    this._saveInterval = setInterval(() => {
+      this.saveSceneState();
+    }, 8000);
+
+    // Save on shutdown/stop
+    this.events.on('shutdown', () => {
+      this.saveSceneState();
+      clearInterval(this._saveInterval);
+    });
+    this.events.on('destroy', () => {
+      this.saveSceneState();
+      clearInterval(this._saveInterval);
+    });
+  }
+
+  // Save relevant state to localStorage
+  saveSceneState() {
+    const state = {
+      coins: coinManager.get ? coinManager.get() : 0,
+      inventory: inventoryManager.getItems ? inventoryManager.getItems() : [],
+      shardCounts: { ...this.shardCounts },
+      happySprites: { ...this.happySprites },
+      dialogueStage: this.dialogueStage,
+      dialogueActive: !!this.dialogueActive,
+      activeDialogueIndex: this.activeDialogueIndex
+    };
+    saveToLocal('shardGardenSceneState', state);
   }
 
   update() {

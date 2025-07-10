@@ -5,7 +5,7 @@ import { CoinManager } from '../coinManager';
 import { createMainChar } from '../../characters/mainChar';
 import ChestLogic from '../chestLogic';
 import ChestUI from '../chestUI';
-import { saveToLocal } from '../../utils/localStorage';
+import { saveToLocal, loadFromLocal } from '../../utils/localStorage';
 import plantData from "../../plantData";
 import { inventoryManager } from "../inventoryManager";
 import { addPlantToJournal } from "../journalManager";
@@ -57,6 +57,62 @@ class WallGardenScene extends Phaser.Scene {
     const { width, height } = this.sys.game.config;
     const scaleFactor = 0.175;
 
+    // --- LOAD STATE FROM LOCAL STORAGE ---
+    const sceneState = loadFromLocal('wallGardenSceneState') || {};
+    // Restore coins if present
+    if (sceneState.coins !== undefined) {
+      coinManager.set(sceneState.coins);
+    }
+    // Restore inventory if present (assumes inventoryManager is imported)
+    if (sceneState.inventory && Array.isArray(sceneState.inventory)) {
+      inventoryManager.clear();
+      sceneState.inventory.forEach(item => inventoryManager.addItem(item));
+    }
+    // Restore periwinkleFound (for bush logic)
+    let periwinkleFound = !!sceneState.periwinkleFound;
+    // Restore butterfly dialogue state
+    this.butterflyDialogueIndex = sceneState.butterflyDialogueIndex || 0;
+    this.butterflyDialogueActive = !!sceneState.butterflyDialogueActive;
+    this.dialogueActive = !!sceneState.dialogueActive;
+
+    // --- Restore dialogue UI if needed ---
+    // Only restore if dialogue was active when leaving
+    if (this.butterflyDialogueActive) {
+      showDialogue(this, butterflyIntroDialogues[this.butterflyDialogueIndex], { imageKey: "butterflyHappy" });
+      this.dialogueOnComplete = () => {
+        this.butterflyDialogueIndex++;
+        if (this.butterflyDialogueIndex < butterflyIntroDialogues.length) {
+          showDialogue(this, butterflyIntroDialogues[this.butterflyDialogueIndex], { imageKey: "butterflyHappy" });
+        } else {
+          showOption(this, "Would you like to move on?", {
+            imageKey: "butterfly",
+            options: [
+              {
+                text: "Yes",
+                callback: () => {
+                  this.destroyDialogueUI();
+                  this.butterflyDialogueActive = false;
+                  this.saveSceneState(periwinkleFound);
+                  this.scene.start("ShardGardenScene");
+                }
+              },
+              {
+                text: "No",
+                callback: () => {
+                  showDialogue(this, "Take your time and explore! Talk to me again when you're ready to move on.", { imageKey: "butterflyHappy" });
+                  this.dialogueOnComplete = () => {
+                    this.destroyDialogueUI();
+                    this.butterflyDialogueActive = false;
+                    this.saveSceneState(periwinkleFound);
+                  };
+                }
+              }
+            ]
+          });
+        }
+      };
+    }
+
     // --- Map and background ---
     const map = this.make.tilemap({ key: "wallGardenMap" });
     this.add.image(width / 2, height / 2, "wallGardenBackground").setScale(scaleFactor).setDepth(0);
@@ -101,7 +157,7 @@ class WallGardenScene extends Phaser.Scene {
     this.butterfly = createButterfly(this, width / 2 + 100, height / 2 - 50);
     this.butterfly.setDepth(20).setScale(0.09).setInteractive();
 
-            // --- Talk icon ---
+    // --- Talk icon ---
     const talkIcon = this.add
       .image(0, 0, "talk")
       .setScale(0.05)
@@ -127,7 +183,8 @@ class WallGardenScene extends Phaser.Scene {
     this.butterfly.on("pointerdown", () => {
       if (this.butterflyDialogueActive) return;
       this.butterflyDialogueActive = true;
-      this.butterflyDialogueIndex = 0;
+      // Do not reset index if restoring
+      if (!this.dialogueBox) this.butterflyDialogueIndex = 0;
       showDialogue(this, butterflyIntroDialogues[this.butterflyDialogueIndex], { imageKey: "butterflyHappy" });
       this.dialogueOnComplete = () => {
         this.butterflyDialogueIndex++;
@@ -142,6 +199,7 @@ class WallGardenScene extends Phaser.Scene {
                 callback: () => {
                   this.destroyDialogueUI();
                   this.butterflyDialogueActive = false;
+                  this.saveSceneState(periwinkleFound);
                   this.scene.start("ShardGardenScene");
                 }
               },
@@ -152,6 +210,7 @@ class WallGardenScene extends Phaser.Scene {
                   this.dialogueOnComplete = () => {
                     this.destroyDialogueUI();
                     this.butterflyDialogueActive = false;
+                    this.saveSceneState(periwinkleFound);
                   };
                 }
               }
@@ -162,7 +221,7 @@ class WallGardenScene extends Phaser.Scene {
     });
 
     // --- Placeholder bushes: random rectangles ---
-    this.setupBushes(width, height);
+    this.setupBushes(width, height, periwinkleFound);
 
     this.input.on("pointerdown", () => {
       // Only advance/close if a dialogue is active and a completion callback is set
@@ -170,6 +229,34 @@ class WallGardenScene extends Phaser.Scene {
         this.dialogueOnComplete();
       }
     });
+
+    // --- PERIODIC SAVE TO LOCAL STORAGE ---
+    this._saveInterval = setInterval(() => {
+      this.saveSceneState(periwinkleFound);
+    }, 8000);
+
+    // Save on shutdown/stop
+    this.events.on('shutdown', () => {
+      this.saveSceneState(periwinkleFound);
+      clearInterval(this._saveInterval);
+    });
+    this.events.on('destroy', () => {
+      this.saveSceneState(periwinkleFound);
+      clearInterval(this._saveInterval);
+    });
+  }
+
+  // Save relevant state to localStorage
+  saveSceneState(periwinkleFound) {
+    const state = {
+      coins: coinManager.get ? coinManager.get() : 0,
+      inventory: inventoryManager.getItems ? inventoryManager.getItems() : [],
+      periwinkleFound: !!periwinkleFound,
+      butterflyDialogueIndex: this.butterflyDialogueIndex,
+      butterflyDialogueActive: !!this.butterflyDialogueActive,
+      dialogueActive: !!this.dialogueActive
+    };
+    saveToLocal('wallGardenSceneState', state);
   }
 
   setupChest(width, height) {
@@ -197,7 +284,7 @@ class WallGardenScene extends Phaser.Scene {
     });
   }
 
-  setupBushes(width, height) {
+  setupBushes(width, height, periwinkleFound) {
     const bushPositions = [
       { x: 180, y: 300 },
       { x: 260, y: 400 },
@@ -208,7 +295,6 @@ class WallGardenScene extends Phaser.Scene {
 
     // Randomly pick which bush will have the periwinkle
     const periwinkleBushIndex = Phaser.Math.Between(0, bushCount - 1);
-    let periwinkleFound = false;
 
     for (let i = 0; i < bushCount; i++) {
       const { x, y } = bushPositions[i];

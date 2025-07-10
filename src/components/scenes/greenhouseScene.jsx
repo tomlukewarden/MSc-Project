@@ -16,7 +16,7 @@ class GreenhouseScene extends Phaser.Scene {
     }
 
     preload() {
-        this.load.tilemapTiledJSON("greenhouseMap", "/assets/maps/greenhouseMap.json");
+  
         this.load.image("greenhouseBackground", "/assets/backgrounds/greenhouse/greenhouse.png");
         this.load.image("defaultFront", "/assets/char/default/front-default.png");
         this.load.image("defaultBack", "/assets/char/default/back-default.png");
@@ -28,7 +28,7 @@ class GreenhouseScene extends Phaser.Scene {
         this.load.audio("theme1", "/assets/music/main-theme1.mp3");
         this.load.audio("sparkle", "/assets/sound-effects/sparkle.mp3");
         this.load.image('dialogueBoxBg', '/assets/ui-items/dialogue.png');
-    } 
+    }
 
     create() {
         this.scene.stop("OpenJournal");
@@ -40,37 +40,21 @@ class GreenhouseScene extends Phaser.Scene {
         const { width, height } = this.sys.game.config;
         const scaleFactor = 0.175;
 
-        // Add scaled background
+        // --- LOAD STATE FROM LOCAL STORAGE ---
+        const sceneState = loadFromLocal('greenhouseSceneState') || {};
+
+        if (sceneState.coins !== undefined) {
+            coinManager.set(sceneState.coins);
+        }
+        
+        if (sceneState.inventory && Array.isArray(sceneState.inventory) && window.inventoryManager) {
+            window.inventoryManager.clear();
+            sceneState.inventory.forEach(item => window.inventoryManager.addItem(item));
+        }
+        
+
         this.add.image(width / 2, height / 2, "greenhouseBackground").setScale(scaleFactor);
 
-        const map = this.make.tilemap({ key: "greenhouseMap" });
-        const collisionObjects = map.getObjectLayer("greenhouse-collisions"); 
-
-        if (!collisionObjects) {
-            console.warn("Collision layer not found in Tiled map!");
-            return;
-        }
-
-        // Create a collision group
-        const collisionGroup = this.physics.add.staticGroup();
-
-        // Add collision objects to the group
-        if (collisionObjects && collisionObjects.objects) {
-            collisionObjects.objects.forEach(obj => {
-                const rect = this.add.rectangle(
-                    obj.x + obj.width / 2,
-                    obj.y + obj.height / 2,
-                    obj.width,
-                    obj.height,
-                    0x00ff00,
-                    0 // alpha 0 for invisible
-                );
-                this.physics.add.existing(rect, true);
-                collisionGroup.add(rect);
-            });
-        }
-
-        // Place a smaller elephant in the center
         const elephant = createElephant(this, width / 2, height / 2);
         elephant.setScale(0.09).setOrigin(0.5, 0.5);
 
@@ -212,13 +196,40 @@ class GreenhouseScene extends Phaser.Scene {
             if (this.dialogueOnComplete) this.dialogueOnComplete();
         });
 
-        const char = createMainChar(this, width, height, collisionObjects, scaleFactor);
+        // No collisions, so pass null for collisionObjects
+        const char = createMainChar(this, width, height, null, scaleFactor);
 
         this.events.on('update', () => {
             if (char.x - char.displayWidth / 2 < 5) { 
                 this.exitToNextScene();
             }
         });
+
+        // --- PERIODIC SAVE TO LOCAL STORAGE ---
+        this._saveInterval = setInterval(() => {
+            this.saveSceneState();
+        }, 8000);
+
+        // Save on shutdown/stop
+        this.events.on('shutdown', () => {
+            this.saveSceneState();
+            clearInterval(this._saveInterval);
+        });
+        this.events.on('destroy', () => {
+            this.saveSceneState();
+            clearInterval(this._saveInterval);
+        });
+    }
+
+    // Save relevant state to localStorage
+    saveSceneState() {
+        // Save coins and inventory (customize as needed)
+        const state = {
+            coins: coinManager.get ? coinManager.get() : 0,
+            inventory: (window.inventoryManager && window.inventoryManager.getItems) ? window.inventoryManager.getItems() : [],
+            // Add more state here as needed (e.g., quest progress)
+        };
+        saveToLocal('greenhouseSceneState', state);
     }
 
     // Add this method to your class:

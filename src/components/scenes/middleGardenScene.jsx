@@ -4,7 +4,7 @@ import { inventoryManager } from "../inventoryManager";
 import { addPlantToJournal } from "../journalManager";
 import { receivedItem } from "../recievedItem";
 import { CoinManager } from "../coinManager";
-import { saveToLocal } from "../../utils/localStorage";
+import { saveToLocal, loadFromLocal } from "../../utils/localStorage";
 import { showDialogue, showOption } from "../../dialogue/dialogueUIHelpers";
 import { createWolf, wolfIntroDialogues, wolfThanksDialogues } from "../../characters/wolf";
 
@@ -47,6 +47,22 @@ class MiddleGardenScene extends Phaser.Scene {
     this.scene.stop("StartScene");
     const { width, height } = this.sys.game.config;
     const scaleFactor = 0.175;
+
+    // --- LOAD STATE FROM LOCAL STORAGE ---
+    const sceneState = loadFromLocal('middleGardenSceneState') || {};
+    // Restore coins if present
+    if (sceneState.coins !== undefined) {
+      coinManager.set(sceneState.coins);
+    }
+    if (sceneState.inventory && Array.isArray(sceneState.inventory)) {
+      inventoryManager.clear();
+      sceneState.inventory.forEach(item => inventoryManager.addItem(item));
+    }
+    this.garlicFound = !!sceneState.garlicFound;
+    this.thymeFound = !!sceneState.thymeFound;
+    this.wolfIntroDone = !!sceneState.wolfIntroDone;
+    this.wolfThanksDone = !!sceneState.wolfThanksDone;
+    this.wolfHasPeriwinkle = !!sceneState.wolfHasPeriwinkle;
 
     // Background
     this.add.image(width / 2, height / 2, 'finalGardenBackground').setScale(scaleFactor).setDepth(0);
@@ -98,11 +114,8 @@ class MiddleGardenScene extends Phaser.Scene {
     });
 
     // --- Wolf dialogue and gifting logic ---
-    this.wolfIntroDone = false;
-    this.wolfThanksDone = false;
     this.wolfDialogueActive = false;
     this.wolfDialogueIndex = 0;
-    this.wolfHasPeriwinkle = false;
 
     this.hasPeriwinkle = () => inventoryManager.hasItemByKey && inventoryManager.hasItemByKey("periwinklePlant");
 
@@ -188,15 +201,44 @@ class MiddleGardenScene extends Phaser.Scene {
       }
       if (this.wolfThanksDone) {
         receivedItem(this, "summerShard", "Summer Shard");
-      this.destroyDialogueUI();
-          this.dialogueActive = false;
-          this.updateHUDState && this.updateHUDState();
+        this.destroyDialogueUI();
+        this.dialogueActive = false;
+        this.updateHUDState && this.updateHUDState();
       }
       // Plant/coin dialogue advance
       if (this.dialogueActive && typeof this.dialogueOnComplete === "function") {
         this.dialogueOnComplete();
       }
     });
+
+    // --- PERIODIC SAVE TO LOCAL STORAGE ---
+    this._saveInterval = setInterval(() => {
+      this.saveSceneState();
+    }, 8000);
+
+    // Save on shutdown/stop
+    this.events.on('shutdown', () => {
+      this.saveSceneState();
+      clearInterval(this._saveInterval);
+    });
+    this.events.on('destroy', () => {
+      this.saveSceneState();
+      clearInterval(this._saveInterval);
+    });
+  }
+
+  // Save relevant state to localStorage
+  saveSceneState() {
+    const state = {
+      coins: coinManager.get ? coinManager.get() : 0,
+      inventory: inventoryManager.getItems ? inventoryManager.getItems() : [],
+      garlicFound: !!this.garlicFound,
+      thymeFound: !!this.thymeFound,
+      wolfIntroDone: !!this.wolfIntroDone,
+      wolfThanksDone: !!this.wolfThanksDone,
+      wolfHasPeriwinkle: !!this.wolfHasPeriwinkle
+    };
+    saveToLocal('middleGardenSceneState', state);
   }
 
   setupBushes(width, height) {
