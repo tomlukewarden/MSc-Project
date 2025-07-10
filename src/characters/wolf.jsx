@@ -1,4 +1,5 @@
 export const wolfIntroDialogues = [
+    "",
 "Well, if it isn’t the newest addition to the gardens! Nice to see ya, how’ve you bee-OWW... ugh, sorry.",
 "That one hit the fang. This tooth’s been giving me grief for days now.",
 "Think it’s messing with my favourite K9... literally. ",

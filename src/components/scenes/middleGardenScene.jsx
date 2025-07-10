@@ -26,7 +26,7 @@ class MiddleGardenScene extends Phaser.Scene {
    this.load.image('finalGardenBackground', '/assets/backgrounds/finalGarden/middleBackground.png');
    this.load.image('folliage1', '/assets/backgrounds/finalGarden/folliage1.png');
    this.load.image('folliage2', '/assets/backgrounds/finalGarden/folliage2.png');
-       this.load.image("defaultFront", "/assets/char/default/front-default.png");
+   this.load.image("defaultFront", "/assets/char/default/front-default.png");
     this.load.image("defaultBack", "/assets/char/default/back-default.png");
     this.load.image("defaultLeft", "/assets/char/default/left-default.png");
     this.load.image("defaultRight", "/assets/char/default/right-default.png");
@@ -37,6 +37,8 @@ class MiddleGardenScene extends Phaser.Scene {
     this.load.image('thymePlant', '/assets/plants/thyme.PNG');
     this.load.image('dialogueBoxBg', '/assets/ui-items/dialogue.png');
     this.load.image('wolf', '/assets/npc/wolf/wolf.png')
+    this.load.image('talk', '/assets/ui-items/talk.png');
+    this.load.image('summerShard', '/assets/items/summer.png');
  
   }
 
@@ -69,20 +71,19 @@ class MiddleGardenScene extends Phaser.Scene {
     this.mainChar.setDepth(1).setOrigin(0.5, 0.5);
 
     // --- Wolf NPC ---
-    // Place wolf at a visible, reasonable position and scale
     const wolf = createWolf(this, width / 2 + 200, height / 2 + 100);
     wolf
       .setInteractive({ useHandCursor: true })
       .setDepth(10)
-      .setScale(0.18)
-      .setOrigin(0.5, 0.9); // Center bottom, adjust as needed
+      .setScale(0.15)
+      .setOrigin(0.5, 0.9); 
 
     // --- Talk icon ---
     const talkIcon = this.add
       .image(0, 0, "talk")
       .setScale(0.05)
       .setVisible(false)
-      .setDepth(10)
+      .setDepth(11)
       .setOrigin(0.5);
 
     wolf.on("pointerover", (pointer) => {
@@ -96,20 +97,69 @@ class MiddleGardenScene extends Phaser.Scene {
       talkIcon.setVisible(false);
     });
 
-    // --- Wolf dialogue sequence ---
-    this.wolfDialogues = [
-      ...wolfIntroDialogues,
-      ...wolfThanksDialogues
-    ];
-    this.wolfDialogueIndex = 0;
+    // --- Wolf dialogue and gifting logic ---
+    this.wolfIntroDone = false;
+    this.wolfThanksDone = false;
     this.wolfDialogueActive = false;
+    this.wolfDialogueIndex = 0;
+    this.wolfHasPeriwinkle = false;
 
+    this.hasPeriwinkle = () => inventoryManager.hasItemByKey && inventoryManager.hasItemByKey("periwinklePlant");
+
+    // Wolf click handler
     wolf.on("pointerdown", () => {
-      if (!this.wolfDialogueActive) {
+      if (!this.wolfIntroDone && !this.wolfDialogueActive) {
+        // Start intro dialogues
         this.wolfDialogueActive = true;
         this.wolfDialogueIndex = 0;
+        this.activeWolfDialogues = wolfIntroDialogues;
+        showDialogue(this, this.activeWolfDialogues[this.wolfDialogueIndex], { imageKey: "wolf" });
         this.updateHUDState && this.updateHUDState();
-        showDialogue(this, this.wolfDialogues[this.wolfDialogueIndex], { imageKey: "wolf" });
+        return;
+      }
+      if (this.wolfIntroDone && !this.wolfThanksDone && this.hasPeriwinkle()) {
+        showOption(this, "Give the wolf the Periwinkle?", {
+          imageKey: "wolf",
+          options: [
+            {
+              label: "Yes",
+              onSelect: () => {
+                this.destroyDialogueUI();
+                this.updateHUDState && this.updateHUDState();
+                inventoryManager.removeItemByKey && inventoryManager.removeItemByKey("periwinklePlant");
+                this.wolfHasPeriwinkle = true;
+                showDialogue(this, "You hand the wolf the Periwinkle...", { imageKey: "wolf" });
+                this.time.delayedCall(800, () => {
+                  this.destroyDialogueUI();
+                  this.updateHUDState && this.updateHUDState();
+                  this.wolfDialogueActive = true;
+                  this.wolfDialogueIndex = 0;
+                  this.activeWolfDialogues = wolfThanksDialogues;
+                  showDialogue(this, this.activeWolfDialogues[this.wolfDialogueIndex], { imageKey: "wolf" });
+                  this.updateHUDState && this.updateHUDState();
+                });
+              }
+            },
+            {
+              label: "No",
+              onSelect: () => {
+                this.destroyDialogueUI();
+                this.updateHUDState && this.updateHUDState();
+                showDialogue(this, "You decide to hold off for now.", { imageKey: "wolf" });
+              }
+            }
+          ]
+        });
+        return;
+      }
+      if (this.wolfIntroDone && !this.wolfThanksDone && !this.hasPeriwinkle()) {
+        showDialogue(this, "The wolf looks at you expectantly. Maybe you need to find something for him...", { imageKey: "wolf" });
+        this.time.delayedCall(1800, () => {
+          this.destroyDialogueUI();
+          this.dialogueActive = false;
+          this.updateHUDState && this.updateHUDState();
+        });
+        return;
       }
     });
 
@@ -121,14 +171,26 @@ class MiddleGardenScene extends Phaser.Scene {
       // Wolf dialogue advance
       if (this.wolfDialogueActive) {
         this.wolfDialogueIndex++;
-        if (this.wolfDialogueIndex < this.wolfDialogues.length) {
-          showDialogue(this, this.wolfDialogues[this.wolfDialogueIndex], { imageKey: "wolf" });
+        if (this.activeWolfDialogues && this.wolfDialogueIndex < this.activeWolfDialogues.length) {
+          showDialogue(this, this.activeWolfDialogues[this.wolfDialogueIndex], { imageKey: "wolf" });
         } else {
-          destroyDialogueUI(this);
-          this.wolfDialogueActive = false;
+          this.destroyDialogueUI();
           this.updateHUDState && this.updateHUDState();
+          if (!this.wolfIntroDone && this.activeWolfDialogues === wolfIntroDialogues) {
+            this.wolfIntroDone = true;
+          }
+          if (this.wolfHasPeriwinkle && this.activeWolfDialogues === wolfThanksDialogues) {
+            this.wolfThanksDone = true;
+          }
+          this.wolfDialogueActive = false;
         }
         return;
+      }
+      if (this.wolfThanksDone) {
+        receivedItem(this, "summerShard", "Summer Shard");
+      this.destroyDialogueUI();
+          this.dialogueActive = false;
+          this.updateHUDState && this.updateHUDState();
       }
       // Plant/coin dialogue advance
       if (this.dialogueActive && typeof this.dialogueOnComplete === "function") {
@@ -267,7 +329,7 @@ class MiddleGardenScene extends Phaser.Scene {
   }
 
   update() {
-    const rightEdge = this.sys.game.config.width - 50;
+    const rightEdge = this.sys.game.config.width - 60;
     const leftEdge = 50; 
 
     if (this.mainChar) {
@@ -290,7 +352,7 @@ class MiddleGardenScene extends Phaser.Scene {
       }
     }
   }
-    updateHUDState() {
+   updateHUDState() {
     if (this.dialogueActive) {
       this.scene.sleep("HUDScene");
     } else {
