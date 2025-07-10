@@ -12,7 +12,7 @@ export const wolfThanksDialogues = [
 ];
 
 export function createWolf(scene, x, y) {
-    const mole = scene.add.sprite(x, y, "wolf")
+    const wolf = scene.add.sprite(x, y, "wolf")
         .setScale(0.09)
         .setOrigin(5, -1)
         .setInteractive({ useHandCursor: true });

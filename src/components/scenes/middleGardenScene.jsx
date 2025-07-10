@@ -6,6 +6,7 @@ import { receivedItem } from "../recievedItem";
 import { CoinManager } from "../coinManager";
 import { saveToLocal } from "../../utils/localStorage";
 import { showDialogue, showOption } from "../../dialogue/dialogueUIHelpers";
+import { createWolf, wolfIntroDialogues, wolfThanksDialogues } from "../../characters/wolf";
 
 
 const coinManager = CoinManager.load();
@@ -35,6 +36,7 @@ class MiddleGardenScene extends Phaser.Scene {
     this.load.image('garlicPlant', '/assets/plants/garlic.PNG');
     this.load.image('thymePlant', '/assets/plants/thyme.PNG');
     this.load.image('dialogueBoxBg', '/assets/ui-items/dialogue.png');
+    this.load.image('wolf', '/assets/npc/wolf/wolf.png')
  
   }
 
@@ -66,11 +68,69 @@ class MiddleGardenScene extends Phaser.Scene {
     this.mainChar = createMainChar(this, width / 2, height / 2, scaleFactor, collisionGroup);
     this.mainChar.setDepth(1).setOrigin(0.5, 0.5);
 
+    // --- Wolf NPC ---
+    // Place wolf at a visible, reasonable position and scale
+    const wolf = createWolf(this, width / 2 + 200, height / 2 + 100);
+    wolf
+      .setInteractive({ useHandCursor: true })
+      .setDepth(10)
+      .setScale(0.18)
+      .setOrigin(0.5, 0.9); // Center bottom, adjust as needed
+
+    // --- Talk icon ---
+    const talkIcon = this.add
+      .image(0, 0, "talk")
+      .setScale(0.05)
+      .setVisible(false)
+      .setDepth(10)
+      .setOrigin(0.5);
+
+    wolf.on("pointerover", (pointer) => {
+      talkIcon.setVisible(true);
+      talkIcon.setPosition(pointer.worldX + 32, pointer.worldY);
+    });
+    wolf.on("pointermove", (pointer) => {
+      talkIcon.setPosition(pointer.worldX + 32, pointer.worldY);
+    });
+    wolf.on("pointerout", () => {
+      talkIcon.setVisible(false);
+    });
+
+    // --- Wolf dialogue sequence ---
+    this.wolfDialogues = [
+      ...wolfIntroDialogues,
+      ...wolfThanksDialogues
+    ];
+    this.wolfDialogueIndex = 0;
+    this.wolfDialogueActive = false;
+
+    wolf.on("pointerdown", () => {
+      if (!this.wolfDialogueActive) {
+        this.wolfDialogueActive = true;
+        this.wolfDialogueIndex = 0;
+        this.updateHUDState && this.updateHUDState();
+        showDialogue(this, this.wolfDialogues[this.wolfDialogueIndex], { imageKey: "wolf" });
+      }
+    });
+
     // --- Bushes/Flowerbeds logic ---
     this.setupBushes(width, height);
 
     // --- Dialogue advance on click ---
     this.input.on("pointerdown", () => {
+      // Wolf dialogue advance
+      if (this.wolfDialogueActive) {
+        this.wolfDialogueIndex++;
+        if (this.wolfDialogueIndex < this.wolfDialogues.length) {
+          showDialogue(this, this.wolfDialogues[this.wolfDialogueIndex], { imageKey: "wolf" });
+        } else {
+          destroyDialogueUI(this);
+          this.wolfDialogueActive = false;
+          this.updateHUDState && this.updateHUDState();
+        }
+        return;
+      }
+      // Plant/coin dialogue advance
       if (this.dialogueActive && typeof this.dialogueOnComplete === "function") {
         this.dialogueOnComplete();
       }
