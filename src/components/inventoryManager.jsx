@@ -9,6 +9,14 @@ export class InventoryManager {
   }
 
   addItem(item) {
+    // Do not add coins to inventory
+    if (item && (item.key === 'coin' || item.name === 'coin' || item.type === 'coin')) {
+      return;
+    }
+    // Prevent coins from being added to inventory
+    if (item && (item.name === 'coin' || item.key === 'coin')) {
+      return;
+    }
     this.items.push(item);
     this._notify();
     this.addToToolbar(item);
