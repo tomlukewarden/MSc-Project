@@ -5,7 +5,6 @@ import InventoryManager from "./inventoryManager";
 const startingCoins = loadFromLocal("coins") || 0;
 const coinManager = new CoinManager(startingCoins);
 
-// Use a global or scene-level inventory manager
 export const inventoryManager = new InventoryManager();
 
 class OpenInventory extends Phaser.Scene {
@@ -43,7 +42,7 @@ class OpenInventory extends Phaser.Scene {
       if (this.coinText) this.coinText.setText(`${coins}c`);
     });
 
-    // Render inventory items
+    // Render inventory items in a grid
     const renderItems = (items) => {
       // Remove old
       this.itemRects.forEach(r => r.destroy());
@@ -52,10 +51,20 @@ class OpenInventory extends Phaser.Scene {
       this.itemRects = [];
       this.itemTexts = [];
       this.itemImages = [];
-      // Draw new
+      // Grid settings
+      const cols = 4;
+      const rows = Math.ceil(items.length / cols);
+      const cellW = 100;
+      const cellH = 110;
+      const gridW = cols * cellW;
+      const gridH = rows * cellH;
+      const startX = width / 2 - gridW / 2 + cellW / 2;
+      const startY = height / 2 - gridH / 2 + cellH / 2 + 20;
       items.forEach((item, idx) => {
-        const x = width / 2 - 100 + idx * 110;
-        const y = height / 2;
+        const col = idx % cols;
+        const row = Math.floor(idx / cols);
+        const x = startX + col * cellW;
+        const y = startY + row * cellH;
 
         const rect = this.add.rectangle(
           x, y, 90, 90, item.color
@@ -70,21 +79,27 @@ class OpenInventory extends Phaser.Scene {
           this.itemImages.push(img);
         }
 
-        const text = this.add.text(
-          x, y + 35, item.name, {
+        // Name (top)
+        const nameText = this.add.text(
+          x, y - 38, item.name, {
             fontFamily: "Georgia",
-            fontSize: "18px",
-            color: "#222"
+            fontSize: "16px",
+            color: "#222",
+            fontStyle: "bold"
           }
         ).setOrigin(0.5).setDepth(108);
 
-        // Example: Remove item on click
+        // Optionally: add a quantity or description below
+        // const descText = this.add.text(x, y + 38, item.desc || "", { ... }).setOrigin(0.5).setDepth(108);
+
+        // Remove item on click
         rect.on("pointerdown", () => {
           inventoryManager.removeItem(item.name);
         });
 
         this.itemRects.push(rect);
-        this.itemTexts.push(text);
+        this.itemTexts.push(nameText);
+        // this.itemTexts.push(descText); // if you add desc
       });
     };
 

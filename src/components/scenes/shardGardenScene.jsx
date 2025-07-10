@@ -40,6 +40,9 @@ class ShardGardenScene extends Phaser.Scene {
     this.load.image('spring', '/assets/backgrounds/shardGarden/spring/sad.png');
     this.load.image('springHappy', '/assets/backgrounds/shardGarden/spring/happy.png');
     this.load.image('summer', '/assets/backgrounds/shardGarden/summer/sad.png');
+    this.load.image('summerHappy', '/assets/backgrounds/shardGarden/summer/happy.png');
+    this.load.image('autumnHappy', '/assets/backgrounds/shardGarden/autumn/happy.png');
+    this.load.image('winterHappy', '/assets/backgrounds/shardGarden/winter/happy.png');
     this.load.image('autumn', '/assets/backgrounds/shardGarden/autumn/sad.png');
     this.load.image('winter', '/assets/backgrounds/shardGarden/winter/sad.png');
     this.load.image('butterflyHappy', '/assets/npc/butterfly/happy-butterfly-dio.png');
@@ -85,6 +88,7 @@ class ShardGardenScene extends Phaser.Scene {
         .setScale(seasonScale)
         .setDepth(10)
         .setInteractive({ useHandCursor: true });
+      this[season + 'ShardSprite'] = seasonImg;
 
       seasonImg.on("pointerover", () => seasonImg.setTint(0x88ccff));
       seasonImg.on("pointerout", () => seasonImg.clearTint());
@@ -99,7 +103,6 @@ class ShardGardenScene extends Phaser.Scene {
             shardLogic(this);
           } else {
             showDialogue(this, `No ${season} shards left to return!`);
-    
           }
         } else {
           showDialogue(this, `You don't have a ${season} shard in your inventory.`,  { imageKey: {shardKey} });

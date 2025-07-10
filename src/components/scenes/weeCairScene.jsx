@@ -182,8 +182,7 @@ class WeeCairScene extends Phaser.Scene {
                 destroyDialogueUI(this);
                 this.dialogueActive = true;
                 this.foxglovePlantReceived = false;
-                inventoryManager.removeItemByKey("foxglovePlant");
-                inventoryManager.removeItem("foxglovePlant");
+                inventoryManager.removeItemByKey && inventoryManager.removeItemByKey("foxglovePlant");
 
                 showDialogue(this, "You hand her the plant...", {
                   imageKey: "bee"
