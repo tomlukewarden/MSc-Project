@@ -5,6 +5,7 @@ import { showDialogue, showOption, destroyDialogueUI } from "../../dialogue/dial
 import { CoinManager } from "../coinManager";
 import { saveToLocal, loadFromLocal } from "../../utils/localStorage";
 import { createMainChar } from "../../characters/mainChar";
+import { inventoryManager } from "../inventoryManager";
 
 const coinManager = CoinManager.load();
 
@@ -55,148 +56,123 @@ class GreenhouseScene extends Phaser.Scene {
 
         this.add.image(width / 2, height / 2, "greenhouseBackground").setScale(scaleFactor);
 
-        const elephant = createElephant(this, width / 2, height / 2);
-        elephant.setScale(0.09).setOrigin(0.5, 0.5);
+ const elephant = createElephant(this, width / 2 + 200, height / 2 + 100);
+    elephant
+      .setInteractive({ useHandCursor: true })
+      .setDepth(10)
+      .setScale(0.15)
+      .setOrigin(0.5, 0.9); 
 
-        // --- TALK ICON ---
-        const talkIcon = this.add
-            .image(0, 0, "talkIcon")
-            .setScale(0.05)
-            .setVisible(false)
-            .setDepth(20)
-            .setOrigin(0.5);
+    // --- Talk icon ---
+    const talkIcon = this.add
+      .image(0, 0, "talk")
+      .setScale(0.05)
+      .setVisible(false)
+      .setDepth(11)
+      .setOrigin(0.5);
 
-        elephant.on("pointerover", (pointer) => {
-            if (!this.dialogueActive) {
-                talkIcon.setVisible(true);
-                talkIcon.setPosition(pointer.worldX + 32, pointer.worldY);
+    elephant.on("pointerover", (pointer) => {
+      talkIcon.setVisible(true);
+      talkIcon.setPosition(pointer.worldX + 32, pointer.worldY);
+    });
+   elephant.on("pointermove", (pointer) => {
+      talkIcon.setPosition(pointer.worldX + 32, pointer.worldY);
+    });
+   elephant.on("pointerout", () => {
+      talkIcon.setVisible(false);
+    });
+
+    this.elephantDialogueActive = false;
+    this.elephantDialogueIndex = 0;
+
+    this.hasJasmine = () => inventoryManager.hasItemByKey && inventoryManager.hasItemByKey("jasminePlant");
+
+    elephant.on("pointerdown", () => {
+      if (!this.elephantIntroDone && !this.elephantDialogueActive) {
+        // Start intro dialogues
+        this.elephantDialogueActive = true;
+        this.elephantDialogueIndex = 0;
+        this.activeElephantDialogues = elephantIntroDialogues;
+        showDialogue(this, this.activeElephantDialogues[this.elephantDialogueIndex], { imageKey: "elephant" });
+        this.updateHUDState && this.updateHUDState();
+        return;
+      }
+      if (this.elephantIntroDone && !this.elephantThanksDone && this.hasJasmine()) {
+        showOption(this, "Give the elephant the Jasmine?", {
+          imageKey: "elephant",
+          options: [
+            {
+              label: "Yes",
+              onSelect: () => {
+                this.destroyDialogueUI();
+                this.updateHUDState && this.updateHUDState();
+                inventoryManager.removeItemByKey && inventoryManager.removeItemByKey("jasminePlant");
+                this.elephantHasJasmine = true;
+                showDialogue(this, "You hand the elephant the Jasmine...", { imageKey: "elephant" });
+                this.time.delayedCall(800, () => {
+                  this.destroyDialogueUI();
+                  this.updateHUDState && this.updateHUDState();
+                  this.elephantDialogueActive = true;
+                  this.elephantDialogueIndex = 0;
+                  this.activeElephantDialogues = elephantThanksDialogues;
+                  showDialogue(this, this.activeElephantDialogues[this.elephantDialogueIndex], { imageKey: "elephant" });
+                  this.updateHUDState && this.updateHUDState();
+                });
+              }
+            },
+            {
+              label: "No",
+              onSelect: () => {
+                this.destroyDialogueUI();
+                this.updateHUDState && this.updateHUDState();
+                showDialogue(this, "You decide to hold off for now.", { imageKey: "elephant" });
+              }
             }
+          ]
         });
-        elephant.on("pointermove", (pointer) => {
-            if (!this.dialogueActive) {
-                talkIcon.setPosition(pointer.worldX + 32, pointer.worldY);
-            }
+        return;
+      }
+      if (this.elephantIntroDone && !this.elephantThanksDone && !this.hasJasmine()) {
+        showDialogue(this, "Tia looks really stressed, maybe something soothing will help...", { imageKey: "elephant" });
+        this.time.delayedCall(1800, () => {
+          this.destroyDialogueUI();
+          this.dialogueActive = false;
+          this.updateHUDState && this.updateHUDState();
         });
-        elephant.on("pointerout", () => {
-            talkIcon.setVisible(false);
-        });
+        return;
+      }
+    });
 
-        // --- Dialogue logic ---
-        elephant.on("pointerdown", () => {
-            if (this.dialogueActive) return;
-            this.dialogueActive = true;
-            this.updateHUDState();
-            talkIcon.setVisible(false);
+    this.input.on("pointerdown", () => {
+      if (this.elephantDialogueActive) {
+        this.elephantDialogueIndex++;
+        if (this.activeElephantDialogues && this.elephantDialogueIndex < this.activeElephantDialogues.length) {
+          showDialogue(this, this.activeElephantDialogues[this.elephantDialogueIndex], { imageKey: "elephant" });
+        } else {
+          this.destroyDialogueUI();
+          this.updateHUDState && this.updateHUDState();
+          if (!this.elephantIntroDone && this.activeElephantDialogues === elephantIntroDialogues) {
+            this.elephantIntroDone = true;
+          }
+          if (this.elephantHasJasmine && this.activeElephantDialogues === elephantThanksDialogues) {
+            this.elephantThanksDone = true;
+          }
+          this.elephantDialogueActive = false;
+        }
+        return;
+      }
+      if (this.elephantThanksDone) {
+        receivedItem(this, "autumnShard", "Autumn Shard");
+        this.destroyDialogueUI();
+        this.dialogueActive = false;
+        this.updateHUDState && this.updateHUDState();
+      }
+      // Plant/coin dialogue advance
+      if (this.dialogueActive && typeof this.dialogueOnComplete === "function") {
+        this.dialogueOnComplete();
+      }
+    });
 
-            // 1. Start with elephantIntroDialogues
-            this.currentDialogue = elephantIntroDialogues;
-            this.currentDialogueIndex = 0;
-
-            const showNextIntro = () => {
-                showDialogue(this, this.currentDialogue[this.currentDialogueIndex]);
-                this.dialogueOnComplete = () => {
-                    this.currentDialogueIndex++;
-                    if (this.currentDialogueIndex < this.currentDialogue.length) {
-                        showNextIntro();
-                    } else {
-                        // 2. Option for helping
-                        showOption(this, "What would you like to say?", {
-                            options: [
-                                {
-                                    label: "Of course I will help!",
-                                    onSelect: () => {
-                                        coinManager.add(5);
-                                        // 3. If inventory contains jasmine, offer to give it
-                                        if (this.inventory && this.inventory.includes("jasmine")) {
-                                            showOption(this, "Will you give the jasmine to the elephant?", [
-                                                {
-                                                    text: "Yes",
-                                                    callback: () => {
-                                                        // Remove jasmine from inventory
-                                                        this.inventory = this.inventory.filter(item => item !== "jasmine");
-                                                        // 4. Show thanks dialogue
-                                                        this.currentDialogue = elephantThanksDialogues;
-                                                        this.currentDialogueIndex = 0;
-                                                        showNextThanks();
-                                                    }
-                                                },
-                                                {
-                                                    text: "No",
-                                                    callback: () => {
-                                                        showDialogue(this, "That's okay, let me know if you change your mind.");
-                                                        this.currentDialogue = ["That's okay, let me know if you change your mind."];
-                                                        this.currentDialogueIndex = 0;
-                                                        this.dialogueOnComplete = () => {
-                                                            this.dialogueActive = false;
-                                                            this.updateHUDState();
-                                                        };
-                                                    }
-                                                }
-                                            ]);
-                                            this.currentDialogue = null;
-                                            this.currentDialogueIndex = 0;
-                                            this.dialogueOnComplete = null;
-                                        } else {
-                                            showDialogue(this, "Thank you so much! I really need your help. (+5c)");
-                                            this.currentDialogue = ["Thank you so much! I really need your help. (+5c)"];
-                                            this.currentDialogueIndex = 0;
-                                            this.dialogueOnComplete = () => {
-                                                this.dialogueActive = false;
-                                                this.updateHUDState();
-                                            };
-                                        }
-                                    }
-                                },
-                                {
-                                    label: "I am not quite ready yet.",
-                                    onSelect: () => {
-                                        showDialogue(this, "Okay, come back when you are ready.");
-                                        this.currentDialogue = ["Okay, come back when you are ready."];
-                                        this.currentDialogueIndex = 0;
-                                        this.dialogueOnComplete = () => {
-                                            this.dialogueActive = false;
-                                            this.updateHUDState();
-                                        };
-                                    }
-                                }
-                            ]
-                        });
-                        this.currentDialogue = null;
-                        this.currentDialogueIndex = 0;
-                        this.dialogueOnComplete = null;
-                    }
-                };
-            };
-
-            const showNextThanks = () => {
-                showDialogue(this, this.currentDialogue[this.currentDialogueIndex]);
-                this.dialogueOnComplete = () => {
-                    this.currentDialogueIndex++;
-                    if (this.currentDialogueIndex < this.currentDialogue.length) {
-                        showNextThanks();
-                    } else {
-                        this.dialogueActive = false;
-                        this.updateHUDState();
-                    }
-                };
-            };
-
-            showNextIntro();
-        });
-
-        // --- Advance dialogue on pointerdown ---
-        this.input.on("pointerdown", () => {
-            this.sound.play("click", { volume: 0.5 });
-
-            destroyDialogueUI(this);
-
-            if (!this.dialogueActive || !this.currentDialogue) return;
-            if (this.dialogueBox && this.dialogueBox.optionButtons) return;
-
-            if (this.dialogueOnComplete) this.dialogueOnComplete();
-        });
-
-        // No collisions, so pass null for collisionObjects
         const char = createMainChar(this, width, height, null, scaleFactor);
 
         this.events.on('update', () => {
@@ -252,6 +228,18 @@ class GreenhouseScene extends Phaser.Scene {
             this.scene.wake("HUDScene");
         }
     }
+
+  destroyDialogueUI() {
+    if (this.dialogueBox) {
+      this.dialogueBox.box?.destroy();
+      this.dialogueBox.textObj?.destroy();
+      this.dialogueBox.image?.destroy();
+      if (this.dialogueBox.optionButtons) {
+        this.dialogueBox.optionButtons.forEach((btn) => btn.destroy());
+      }
+      this.dialogueBox = null;
+    }
+  }
 
 }
 
