@@ -59,8 +59,8 @@ class GreenhouseScene extends Phaser.Scene {
     elephant
       .setInteractive({ useHandCursor: true })
       .setDepth(10)
-      .setScale(0.15)
-      .setOrigin(0.5, 0.9); 
+      .setScale(0.1)
+      .setOrigin(3, 1); 
 
     // --- Talk icon ---
     const talkIcon = this.add
