@@ -10,7 +10,7 @@ class HUDScene extends Phaser.Scene {
         this.load.image("inventoryIcon","/assets/ui-items/inventory.png");
         this.load.image("settingsIcon","/assets/ui-items/settings.png");
         this.load.image("journalIcon","/assets/ui-items/journal.png");
-        this.load.image("toolbarIcon","/assets/ui-items/toolbar.png");
+        this.load.image("toolbarSlot", "/assets/ui-items/slot.png");
         this.load.image("energyFull", "/assets/energy/full.png");
         this.load.image("energyHalf", "/assets/energy/50.png");
         this.load.image("energyEmpty", "/assets/energy/10.png");
@@ -31,7 +31,7 @@ class HUDScene extends Phaser.Scene {
         const iconY = 56;
 
         // Center the top icons
-        const totalWidth = iconSpacing * (iconKeys.length - 1);
+        const topIconsTotalWidth = iconSpacing * (iconKeys.length - 1);
 
         // Store references to the created icons
         const icons = {};
@@ -62,15 +62,33 @@ class HUDScene extends Phaser.Scene {
             this.scene.bringToTop("OpenInventory");
         });
 
-        // Toolbar icon at bottom center
+        // Toolbar slots at bottom center
         const toolbarY = height - 50;
-        const toolbar = this.add.image(width / 2, toolbarY, "toolbarIcon")
-            .setOrigin(0.5)
-            .setScale(0.15)
-            .setInteractive({ useHandCursor: true })
-            .on("pointerdown", () => {
-                console.log("Toolbar icon clicked");
+        const slotCount = 6; 
+        const slotSpacing = 90;
+        const slots = [];
+        const toolbarTotalWidth = slotSpacing * (slotCount - 1);
+        const startX = width / 2 - toolbarTotalWidth / 2;
+        for (let i = 0; i < slotCount; i++) {
+            const slot = this.add.image(startX + i * slotSpacing, toolbarY, "toolbarSlot")
+                .setOrigin(0.5)
+                .setScale(0.045)
+                .setInteractive({ useHandCursor: true });
+            slots.push(slot);
+        }
+
+        // Add hover effects for toolbar slots
+        slots.forEach((slot) => {
+            slot.on("pointerover", () => {
+                slot.setTint(0xaaaaaa);
             });
+            slot.on("pointerout", () => {
+                slot.clearTint();
+            });
+            slot.on("pointerdown", () => {
+                console.log("Toolbar slot clicked");
+            });
+        });
 
         // Energy icon directly above toolbar
         const energyY = toolbarY - 70;
