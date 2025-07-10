@@ -1,29 +1,92 @@
-// Simple Inventory Manager for Phaser scenes
+
 
 export class InventoryManager {
   constructor(initialItems = []) {
     this.items = initialItems; 
+    this.toolbarSlots = [null, null, null, null, null, null];
     this.listeners = [];
+    this.toolbarListeners = [];
   }
 
   addItem(item) {
+    // Do not add coins to inventory
+    if (item && (item.key === 'coin' || item.name === 'coin' || item.type === 'coin')) {
+      return;
+    }
+    // Prevent coins from being added to inventory
+    if (item && (item.name === 'coin' || item.key === 'coin')) {
+      return;
+    }
     this.items.push(item);
     this._notify();
+    this.addToToolbar(item);
   }
 
-  removeItem(itemName) {
-    const idx = this.items.findIndex(i => i.name === itemName);
+  addToToolbar(item) {
+    const idx = this.toolbarSlots.findIndex(slot => slot === null);
     if (idx !== -1) {
-      this.items.splice(idx, 1);
-      this._notify();
+      this.toolbarSlots[idx] = item;
+      this._notifyToolbar();
       return true;
     }
     return false;
   }
 
-  hasItem(itemName) {
-    return this.items.some(i => i.name === itemName);
+  getToolbarSlots() {
+    return [...this.toolbarSlots];
   }
+
+  onToolbarChange(cb) {
+    this.toolbarListeners.push(cb);
+  }
+
+  _notifyToolbar() {
+    this.toolbarListeners.forEach(cb => cb(this.getToolbarSlots()));
+  }
+
+
+  removeItem(itemNameOrKey) {
+    let idx = this.items.findIndex(i => i.name === itemNameOrKey);
+    if (idx === -1) {
+      idx = this.items.findIndex(i => i.key === itemNameOrKey);
+    }
+    if (idx !== -1) {
+      const [removed] = this.items.splice(idx, 1);
+      this._notify();
+      const slotIdx = this.toolbarSlots.findIndex(slot => slot && (slot.name === itemNameOrKey || slot.key === itemNameOrKey));
+      if (slotIdx !== -1) {
+        this.toolbarSlots[slotIdx] = null;
+        this._notifyToolbar();
+      }
+      return true;
+    }
+    return false;
+  }
+
+  hasItem(itemNameOrKey) {
+    // Check by name (default), but if not found, try by key (for shards)
+    return this.items.some(i => i.name === itemNameOrKey || i.key === itemNameOrKey);
+  }
+
+    hasItemByKey(itemKey) {
+    return this.items.some(i => i.key === itemKey);
+  }
+
+  removeItemByKey(itemKey) {
+    const idx = this.items.findIndex(i => i.key === itemKey);
+    if (idx !== -1) {
+      const [removed] = this.items.splice(idx, 1);
+      this._notify();
+      const slotIdx = this.toolbarSlots.findIndex(slot => slot && slot.key === itemKey);
+      if (slotIdx !== -1) {
+        this.toolbarSlots[slotIdx] = null;
+        this._notifyToolbar();
+      }
+      return true;
+    }
+    return false;
+  }
+
 
   getItems() {
     return [...this.items];
@@ -31,7 +94,9 @@ export class InventoryManager {
 
   clear() {
     this.items = [];
+    this.toolbarSlots = [null, null, null, null, null, null];
     this._notify();
+    this._notifyToolbar();
   }
 
   onChange(cb) {

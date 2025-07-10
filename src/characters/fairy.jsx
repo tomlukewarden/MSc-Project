@@ -16,7 +16,7 @@ export const fairyHelpDialogues = [
 
 export const fairyGoodbyeDialogues = [
     "I think you've really helped Paula here! I think it's time to head over to the gardens.",
-    "What do you think?"
+    "Are you ready to go to the gardens?",
 ];
 
 export function createFairy(scene, x, y) {

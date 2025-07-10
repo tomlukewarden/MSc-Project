@@ -16,6 +16,7 @@ import { saveToLocal, loadFromLocal } from "../../utils/localStorage";
 import { createMainChar } from "../../characters/mainChar";
 import { receivedItem } from "../../components/recievedItem";
 import {addPlantToJournal} from "../journalManager";
+import {inventoryManager} from "../inventoryManager";
 
 
 const coinManager = CoinManager.load();
@@ -175,13 +176,13 @@ class WeeCairScene extends Phaser.Scene {
           options: [
             {
               label: "Yes",
+
               onSelect: () => {
                 this.hasMadeFoxgloveChoice = true;
                 destroyDialogueUI(this);
                 this.dialogueActive = true;
                 this.foxglovePlantReceived = false;
-
-                // No need to addItem/addPlantToJournal here, already done when received
+                inventoryManager.removeItemByKey && inventoryManager.removeItemByKey("foxglovePlant");
 
                 showDialogue(this, "You hand her the plant...", {
                   imageKey: "bee"
@@ -191,7 +192,6 @@ class WeeCairScene extends Phaser.Scene {
                 saveToLocal("coins", coinManager.coins);
 
                 this.time.delayedCall(800, () => {
-                  // Set currentSet to beeThanksDialogues index so pointerdown handler works
                   this.currentSet = this.dialogueSequence.findIndex(
                     (set) => set.lines === beeThanksDialogues
                   );
@@ -259,32 +259,45 @@ class WeeCairScene extends Phaser.Scene {
 
         // --- After fairyGoodbyeDialogues, show options ---
         if (this.activeDialogue === fairyGoodbyeDialogues) {
-          destroyDialogueUI(this);
-          this.dialogueActive = false;
-          this.updateHUDState();
+      destroyDialogueUI(this);
+      this.dialogueActive = false;
+      this.updateHUDState();
 
-          showOption(this, "What would you like to do?", {
-            imageKey: "fairyHappy",
-            options: [
-              {
-                label: "Go to the botanic gardens",
-                onSelect: () => {
-                  this.scene.start("WallGardenScene");
-                }
-              },
-              {
-                label: "Stay here",
-                onSelect: () => {
-                  destroyDialogueUI(this);
-                  this.dialogueActive = true;
-                  this.updateHUDState();
-                  showDialogue(this, "You decide to wait a bit longer...");
-                }
+      this.showStayOrGoOptions = () => {
+        showOption(this, "What would you like to do?", {
+          imageKey: "fairyHappy",
+          options: [
+            {
+              label: "Go to the botanic gardens",
+              onSelect: () => {
+                this.scene.start("WallGardenScene");
               }
-            ]
-          });
-          return;
-        }
+            },
+            {
+              label: "Stay here",
+              onSelect: () => {
+                this.activeDialogue = ["Come back when you're ready!"];
+                this.activeImageKey = "fairyHappy";
+                this.currentDialogueIndex = 0;
+                this.dialogueActive = true;
+                this.updateHUDState();
+                showDialogue(this, this.activeDialogue[0], {
+                  imageKey: this.activeImageKey,
+                  onComplete: () => {
+                    this.dialogueActive = false;
+                    this.updateHUDState();
+                    this.showStayOrGoOptions();
+                  }
+                });
+              }
+            }
+          ]
+        });
+      };
+
+      this.showStayOrGoOptions();
+      return;
+    }
 
         // --- Normal sequence advancement ---
         destroyDialogueUI(this);
