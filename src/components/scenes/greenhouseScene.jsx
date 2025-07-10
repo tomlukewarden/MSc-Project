@@ -28,6 +28,10 @@ class GreenhouseScene extends Phaser.Scene {
         this.load.audio("click", "/assets/sound-effects/click.mp3")
         this.load.audio("sparkle", "/assets/sound-effects/sparkle.mp3");
         this.load.image('dialogueBoxBg', '/assets/ui-items/dialogue.png');
+        this.load.image('coin', '/assets/misc/coin.png');
+        this.load.image("talk", "/assets/interact/talk.png");
+        this.load.image("jasminePlant", "/assets/plants/jasmine.png");
+        this.load.image("autumnShard", "/assets/shards/autumn.png");
     }
 
     create() {
