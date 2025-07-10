@@ -26,7 +26,6 @@ class GreenhouseScene extends Phaser.Scene {
         this.load.image("elephant", "/assets/npc/elephant/elephant.png");
         this.load.image("talkIcon", "/assets/interact/talk.png");
         this.load.audio("click", "/assets/sound-effects/click.mp3")
-        this.load.audio("theme1", "/assets/music/main-theme1.mp3");
         this.load.audio("sparkle", "/assets/sound-effects/sparkle.mp3");
         this.load.image('dialogueBoxBg', '/assets/ui-items/dialogue.png');
     }
@@ -173,7 +172,13 @@ class GreenhouseScene extends Phaser.Scene {
       }
     });
 
-        const char = createMainChar(this, width, height, null, scaleFactor);
+        // --- Collision objects (example: invisible wall at left edge) ---
+        const collisionGroup = this.physics.add.staticGroup();
+        const leftWall = this.add.rectangle(0, height / 2, 10, height, 0x000000, 0);
+        this.physics.add.existing(leftWall, true);
+        collisionGroup.add(leftWall);
+
+        const char = createMainChar(this, width, height, scaleFactor, collisionGroup);
 
         this.events.on('update', () => {
             if (char.x - char.displayWidth / 2 < 5) { 
@@ -203,7 +208,6 @@ class GreenhouseScene extends Phaser.Scene {
         const state = {
             coins: coinManager.get ? coinManager.get() : 0,
             inventory: (window.inventoryManager && window.inventoryManager.getItems) ? window.inventoryManager.getItems() : [],
-            // Add more state here as needed (e.g., quest progress)
         };
         saveToLocal('greenhouseSceneState', state);
     }
