@@ -1,13 +1,40 @@
 
+
 export class InventoryManager {
   constructor(initialItems = []) {
     this.items = initialItems; 
+    this.toolbarSlots = [null, null, null, null, null, null];
     this.listeners = [];
+    this.toolbarListeners = [];
   }
 
   addItem(item) {
     this.items.push(item);
     this._notify();
+    this.addToToolbar(item);
+  }
+
+  addToToolbar(item) {
+    const idx = this.toolbarSlots.findIndex(slot => slot === null);
+    if (idx !== -1) {
+      this.toolbarSlots[idx] = item;
+      this._notifyToolbar();
+      return true;
+    }
+    // If all slots are full, do nothing (or could replace first? Up to design)
+    return false;
+  }
+
+  getToolbarSlots() {
+    return [...this.toolbarSlots];
+  }
+
+  onToolbarChange(cb) {
+    this.toolbarListeners.push(cb);
+  }
+
+  _notifyToolbar() {
+    this.toolbarListeners.forEach(cb => cb(this.getToolbarSlots()));
   }
 
 
@@ -18,8 +45,14 @@ export class InventoryManager {
       idx = this.items.findIndex(i => i.key === itemNameOrKey);
     }
     if (idx !== -1) {
-      this.items.splice(idx, 1);
+      const [removed] = this.items.splice(idx, 1);
       this._notify();
+      // Also remove from toolbar if present
+      const slotIdx = this.toolbarSlots.findIndex(slot => slot && (slot.name === itemNameOrKey || slot.key === itemNameOrKey));
+      if (slotIdx !== -1) {
+        this.toolbarSlots[slotIdx] = null;
+        this._notifyToolbar();
+      }
       return true;
     }
     return false;
@@ -37,8 +70,14 @@ export class InventoryManager {
   removeItemByKey(itemKey) {
     const idx = this.items.findIndex(i => i.key === itemKey);
     if (idx !== -1) {
-      this.items.splice(idx, 1);
+      const [removed] = this.items.splice(idx, 1);
       this._notify();
+      // Also remove from toolbar if present
+      const slotIdx = this.toolbarSlots.findIndex(slot => slot && slot.key === itemKey);
+      if (slotIdx !== -1) {
+        this.toolbarSlots[slotIdx] = null;
+        this._notifyToolbar();
+      }
       return true;
     }
     return false;
@@ -51,7 +90,9 @@ export class InventoryManager {
 
   clear() {
     this.items = [];
+    this.toolbarSlots = [null, null, null, null, null, null];
     this._notify();
+    this._notifyToolbar();
   }
 
   onChange(cb) {

@@ -1,5 +1,6 @@
 import Phaser from "phaser";
-import { getCollectedPlants } from "../components/journalManager"; // <-- Import your new journal manager
+import { getCollectedPlants } from "../components/journalManager";
+import { inventoryManager } from "./openInventory";
 
 class HUDScene extends Phaser.Scene {
     constructor() {
@@ -67,6 +68,7 @@ class HUDScene extends Phaser.Scene {
         const slotCount = 6; 
         const slotSpacing = 90;
         const slots = [];
+        const slotItemImages = [];
         const toolbarTotalWidth = slotSpacing * (slotCount - 1);
         const startX = width / 2 - toolbarTotalWidth / 2;
         for (let i = 0; i < slotCount; i++) {
@@ -75,10 +77,11 @@ class HUDScene extends Phaser.Scene {
                 .setScale(0.045)
                 .setInteractive({ useHandCursor: true });
             slots.push(slot);
+            slotItemImages.push(null); // Placeholder for item image overlays
         }
 
         // Add hover effects for toolbar slots
-        slots.forEach((slot) => {
+        slots.forEach((slot, i) => {
             slot.on("pointerover", () => {
                 slot.setTint(0xaaaaaa);
             });
@@ -86,9 +89,33 @@ class HUDScene extends Phaser.Scene {
                 slot.clearTint();
             });
             slot.on("pointerdown", () => {
-                console.log("Toolbar slot clicked");
+                console.log("Toolbar slot clicked", i);
             });
         });
+
+        // Helper to update slot overlays
+        const updateToolbarSlots = (toolbarSlots) => {
+            for (let i = 0; i < slotCount; i++) {
+                // Remove old overlay if exists
+                if (slotItemImages[i]) {
+                    slotItemImages[i].destroy();
+                    slotItemImages[i] = null;
+                }
+                const item = toolbarSlots[i];
+                if (item && item.key && this.textures.exists(item.key)) {
+                    // Overlay item image on slot
+                    const img = this.add.image(slots[i].x, slots[i].y - 2, item.key)
+                        .setDisplaySize(38, 38)
+                        .setDepth(slots[i].depth + 1 || 1);
+                    slotItemImages[i] = img;
+                }
+            }
+        };
+
+        // Initial render
+        updateToolbarSlots(inventoryManager.getToolbarSlots());
+        // Listen for toolbar changes
+        inventoryManager.onToolbarChange(updateToolbarSlots);
 
         // Energy icon directly above toolbar
         const energyY = toolbarY - 70;
