@@ -146,7 +146,7 @@ class MiddleGardenScene extends Phaser.Scene {
     // --- Deer dialogue and gifting logic ---
     this.deerDialogueActive = false;
     this.deerDialogueIndex = 0;
-    this.hasFoxglove = () => inventoryManager.hasItemByKey && inventoryManager.hasItemByKey("foxglovePlant");
+    this.hasMarigold = () => inventoryManager.hasItemByKey && inventoryManager.hasItemByKey("marigoldPlant");
 
     // Wolf click handler
     wolf.on("pointerdown", () => {
@@ -272,14 +272,16 @@ class MiddleGardenScene extends Phaser.Scene {
           showDialogue(this, this.activeWolfDialogues[this.wolfDialogueIndex], { imageKey: "wolf" });
         } else {
           this.destroyDialogueUI();
-          this.updateHUDState && this.updateHUDState();
+          // If intro just finished, wake HUD
           if (!this.wolfIntroDone && this.activeWolfDialogues === wolfIntroDialogues) {
             this.wolfIntroDone = true;
+            this.scene.wake("HUDScene");
           }
           if (this.wolfHasPeriwinkle && this.activeWolfDialogues === wolfThanksDialogues) {
             this.wolfThanksDone = true;
           }
           this.wolfDialogueActive = false;
+          this.updateHUDState && this.updateHUDState();
         }
         return;
       }
@@ -290,14 +292,16 @@ class MiddleGardenScene extends Phaser.Scene {
           showDialogue(this, this.activeDeerDialogues[this.deerDialogueIndex], { imageKey: "deer" });
         } else {
           this.destroyDialogueUI();
-          this.updateHUDState && this.updateHUDState();
+          // If intro just finished, wake HUD
           if (!this.deerIntroDone && this.activeDeerDialogues === deerIntroDialogues) {
             this.deerIntroDone = true;
+            this.scene.wake("HUDScene");
           }
           if (this.deerHasMarigold && this.activeDeerDialogues === deerThanksDialogues) {
             this.deerThanksDone = true;
           }
           this.deerDialogueActive = false;
+          this.updateHUDState && this.updateHUDState();
         }
         return;
       }

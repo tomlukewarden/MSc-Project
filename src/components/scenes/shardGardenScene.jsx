@@ -338,28 +338,32 @@ class ShardGardenScene extends Phaser.Scene {
               this.dialogueOnComplete = null;
               this.scene.launch("MiniGameScene", {
                 onWin: () => {
-  this.scene.stop("MiniGameScene");
-  this.scene.resume();
+                  this.scene.stop("MiniGameScene");
+                  this.scene.resume();
 
-  receivedItem(this, plant.key, plant.name);
-  inventoryManager.addItem(plant);
-  addPlantToJournal(plant.key);
+                  const alreadyHas = inventoryManager.hasItemByKey && inventoryManager.hasItemByKey(plant.key);
+                  if (!alreadyHas) {
+                    inventoryManager.addItem(plant);
+                    addPlantToJournal(plant.key);
+                    receivedItem(this, plant.key, plant.name);
+                  }
 
-  showDialogue(this,
-    `You won the game! The animal reluctantly gives you the ${plant.name} plant.`,
-    { imageKey: plant.imageKey }
-  );
+                  showDialogue(this,
+                    alreadyHas
+                      ? `You already have the ${plant.name} plant.`
+                      : `You won the game! The animal reluctantly gives you the ${plant.name} plant.`,
+                  );
 
-  this[foundFlag] = true;
-  this.dialogueActive = true;
+                  this[foundFlag] = true;
+                  this.dialogueActive = true;
 
-  this.dialogueOnComplete = () => {
-    this.destroyDialogueUI();
-    this.dialogueActive = false;
-    this.updateHUDState && this.updateHUDState();
-    this.dialogueOnComplete = null;
-  };
-}
+                  this.dialogueOnComplete = () => {
+                    this.destroyDialogueUI();
+                    this.dialogueActive = false;
+                    this.updateHUDState && this.updateHUDState();
+                    this.dialogueOnComplete = null;
+                  };
+                }
               });
               this.scene.pause();
             }
