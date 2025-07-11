@@ -270,8 +270,8 @@ class ShardGardenScene extends Phaser.Scene {
       { x: 420, y: 350 }  // Coin
     ];
     const bushCount = bushPositions.length;
-    const jasmineIndex = 0;
-    const marigoldIndex = 1;
+    const garlicIndex = 0;
+    const thymeIndex = 1;
 
     for (let i = 0; i < bushCount; i++) {
       const { x, y } = bushPositions[i];
@@ -286,19 +286,19 @@ class ShardGardenScene extends Phaser.Scene {
         this.dialogueActive = true;
         this.updateHUDState && this.updateHUDState();
 
-    
-        if (i === jasmineIndex && !this.jasmineFound) {
-          const jasmine = plantData.find(p => p.key === "jasminePlant");
-          if (jasmine) {
-            this.showPlantMinigame(jasmine, "jasmineFound");
+
+        if (i === garlicIndex && !this.garlicFound) {
+          const garlic = plantData.find(p => p.key === "garlicPlant");
+          if (garlic) {
+            this.showPlantMinigame(garlic, "garlicFound");
           } else {
             this.showPlantMissing();
           }
         }
-        else if (i === marigoldIndex && !this.marigoldFound) {
-          const marigold = plantData.find(p => p.key === "marigoldPlant");
-          if (marigold) {
-            this.showPlantMinigame(marigold, "marigoldFound");
+        else if (i === thymeIndex && !this.thymeFound) {
+          const thyme = plantData.find(p => p.key === "thymePlant");
+          if (thyme) {
+            this.showPlantMinigame(thyme, "thymeFound");
           } else {
             this.showPlantMissing();
           }
