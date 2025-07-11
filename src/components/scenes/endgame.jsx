@@ -7,14 +7,16 @@ class EndGameScene extends Phaser.Scene {
   }
 
   preload() {
-    this.load.audio('sparkle', '/assets/sound-effects/sparkle.mp3');
+    this.load.audio('finalTheme', '/assets/music/final.mp3');
+    this.load.audio('theme1', '/assets/music/main-theme-1.mp3')
   }
 
   create() {
     const { width, height } = this.sys.game.config;
 
     this.cameras.main.setBackgroundColor('#222b2f');
-    this.sound.play('sparkle', { volume: 0.7 });
+    this.sound.pause('theme1', '/assets/music/main-theme-1.mp3')
+    this.sound.play('finalTheme', { loop: true, volume: 0.5 });
 
     showDialogue(this,
       "Congratulations!\n\nYou have restored all the shards and completed the garden.\n\nThank you for playing!",
