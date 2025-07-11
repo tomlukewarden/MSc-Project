@@ -6,6 +6,7 @@ import { CoinManager } from "../coinManager";
 import { saveToLocal, loadFromLocal } from "../../utils/localStorage";
 import { createMainChar } from "../../characters/mainChar";
 import { inventoryManager } from "../inventoryManager";
+import { receivedItem } from "../recievedItem";
 
 const coinManager = CoinManager.load();
 
@@ -53,12 +54,14 @@ class GreenhouseScene extends Phaser.Scene {
             }
         }
 
+
+        // --- Elephant NPC ---
         const elephant = createElephant(this, width / 2 + 200, height / 2 + 100);
         elephant
             .setInteractive({ useHandCursor: true })
             .setDepth(10)
             .setScale(0.1)
-            .setOrigin(3, 1);
+            .setOrigin(0.5, 0.9);
 
         // --- Talk icon ---
         const talkIcon = this.add
@@ -68,6 +71,7 @@ class GreenhouseScene extends Phaser.Scene {
             .setDepth(11)
             .setOrigin(0.5);
 
+        // Elephant talk icon events
         elephant.on("pointerover", (pointer) => {
             talkIcon.setVisible(true);
             talkIcon.setPosition(pointer.worldX + 32, pointer.worldY);
@@ -79,23 +83,13 @@ class GreenhouseScene extends Phaser.Scene {
             talkIcon.setVisible(false);
         });
 
+        // --- Elephant dialogue and gifting logic ---
         this.elephantDialogueActive = false;
         this.elephantDialogueIndex = 0;
+        this.hasJasmine = () => inventoryManager.hasItemByKey && inventoryManager.hasItemByKey("jasminePlant");
 
-        this.hasJasmine = () => {
-            const inv = window.inventoryManager;
-            if (!inv || !inv.getToolbarSlots) return false;
-            const slots = inv.getToolbarSlots();
-            return slots.some(item => item && item.key === "jasminePlant");
-        };
-
+        // Elephant click handler
         elephant.on("pointerdown", () => {
-            // Debug: log inventory contents and keys
-            if (window.inventoryManager && window.inventoryManager.getItems) {
-                const items = window.inventoryManager.getItems();
-                console.log("Inventory items:", items.map(i => ({ key: i.key, name: i.name })));
-            }
-            // If intro not done, start intro dialogue
             if (!this.elephantIntroDone && !this.elephantDialogueActive) {
                 this.elephantDialogueActive = true;
                 this.elephantDialogueIndex = 0;
@@ -104,28 +98,44 @@ class GreenhouseScene extends Phaser.Scene {
                 this.updateHUDState && this.updateHUDState();
                 return;
             }
-            // If intro done, thanks not done, and has jasmine, move directly to thanks dialogue
             if (this.elephantIntroDone && !this.elephantThanksDone && this.hasJasmine()) {
-                // Remove jasmine from global inventory and start thanks dialogue
-                window.inventoryManager.removeItemByKey && window.inventoryManager.removeItemByKey("jasminePlant");
-                this.elephantHasJasmine = true;
-                this.destroyDialogueUI();
-                this.updateHUDState && this.updateHUDState();
-                showDialogue(this, "You hand the elephant the Jasmine...", { imageKey: "elephant" });
-                this.time.delayedCall(800, () => {
-                    this.destroyDialogueUI();
-                    this.updateHUDState && this.updateHUDState();
-                    this.elephantDialogueActive = true;
-                    this.elephantDialogueIndex = 0;
-                    this.activeElephantDialogues = elephantThanksDialogues;
-                    showDialogue(this, this.activeElephantDialogues[this.elephantDialogueIndex], { imageKey: "elephant" });
-                    this.updateHUDState && this.updateHUDState();
+                showOption(this, "Give the elephant the Jasmine?", {
+                    imageKey: "elephant",
+                    options: [
+                        {
+                            label: "Yes",
+                            onSelect: () => {
+                                this.destroyDialogueUI();
+                                this.updateHUDState && this.updateHUDState();
+                                inventoryManager.removeItemByKey && inventoryManager.removeItemByKey("jasminePlant");
+                                this.elephantHasJasmine = true;
+                                elephant.setTexture && elephant.setTexture("elephantHappy");
+                                showDialogue(this, "You hand the elephant the Jasmine...", { imageKey: "elephant" });
+                                this.time.delayedCall(800, () => {
+                                    this.destroyDialogueUI();
+                                    this.updateHUDState && this.updateHUDState();
+                                    this.elephantDialogueActive = true;
+                                    this.elephantDialogueIndex = 0;
+                                    this.activeElephantDialogues = elephantThanksDialogues;
+                                    showDialogue(this, this.activeElephantDialogues[this.elephantDialogueIndex], { imageKey: "elephant" });
+                                    this.updateHUDState && this.updateHUDState();
+                                });
+                            }
+                        },
+                        {
+                            label: "No",
+                            onSelect: () => {
+                                this.destroyDialogueUI();
+                                this.updateHUDState && this.updateHUDState();
+                                showDialogue(this, "You decide to hold off for now.", { imageKey: "elephant" });
+                            }
+                        }
+                    ]
                 });
                 return;
             }
-            // If intro done, thanks not done, and no jasmine
             if (this.elephantIntroDone && !this.elephantThanksDone && !this.hasJasmine()) {
-                showDialogue(this, "Tia looks really stressed, maybe something soothing will help...", { imageKey: "elephant" });
+                showDialogue(this, "The elephant looks at you expectantly. Maybe you need to find something for them...", { imageKey: "elephant" });
                 this.time.delayedCall(1800, () => {
                     this.destroyDialogueUI();
                     this.dialogueActive = false;
@@ -135,23 +145,28 @@ class GreenhouseScene extends Phaser.Scene {
             }
         });
 
+        // --- Dialogue advance on click ---
         this.input.on("pointerdown", () => {
+            // Elephant dialogue advance
             if (this.elephantDialogueActive) {
                 this.elephantDialogueIndex++;
                 if (this.activeElephantDialogues && this.elephantDialogueIndex < this.activeElephantDialogues.length) {
                     showDialogue(this, this.activeElephantDialogues[this.elephantDialogueIndex], { imageKey: "elephant" });
                 } else {
                     this.destroyDialogueUI();
+                    this.dialogueActive = false;
                     this.updateHUDState && this.updateHUDState();
+
                     if (!this.elephantIntroDone && this.activeElephantDialogues === elephantIntroDialogues) {
                         this.elephantIntroDone = true;
                     }
                     if (this.elephantHasJasmine && this.activeElephantDialogues === elephantThanksDialogues) {
                         this.elephantThanksDone = true;
-                        // Give autumn shard after thanks dialogue
+                        // Automatically give autumn shard after thanks dialogue
                         receivedItem(this, "autumnShard", "Autumn Shard");
                     }
                     this.elephantDialogueActive = false;
+                    this.updateHUDState && this.updateHUDState();
                 }
                 return;
             }
@@ -159,7 +174,12 @@ class GreenhouseScene extends Phaser.Scene {
             if (this.dialogueActive && typeof this.dialogueOnComplete === "function") {
                 this.dialogueOnComplete();
             }
+            // Always update HUD after any dialogue completes
+            this.updateHUDState && this.updateHUDState();
         });
+
+
+
 
         // --- Collision objects (example: invisible wall at left edge) ---
         const collisionGroup = this.physics.add.staticGroup();

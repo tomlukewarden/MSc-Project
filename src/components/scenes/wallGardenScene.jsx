@@ -10,6 +10,7 @@ import plantData from "../../plantData";
 import { inventoryManager } from "../inventoryManager";
 import { addPlantToJournal } from "../journalManager";
 import { receivedItem } from "../recievedItem";
+import { createElephant, elephantIntroDialogues, elephantThanksDialogues } from '../../characters/elephant';
 
 
 const coinManager = CoinManager.load();
@@ -49,8 +50,12 @@ class WallGardenScene extends Phaser.Scene {
     this.load.image('coin', '/assets/misc/coin.png');
     this.load.audio('click', '/assets/sound-effects/click.mp3');
     this.load.image('dialogueBoxBg', '/assets/ui-items/dialogue.png');
-    this.load.image('bush', '/assets/misc/bush.png')
-    
+    this.load.image('bush', '/assets/misc/bush.png');
+    this.load.image('elephant', '/assets/npc/elephant/elephant.png');
+    this.load.image('elephantHappy', '/assets/npc/elephant/happy.png');
+    this.load.image('jasminePlant', '/assets/plants/jasmine.PNG');
+    this.load.image('autumnShard', '/assets/items/autumn.png');
+
   }
 
   create() {
@@ -116,6 +121,124 @@ class WallGardenScene extends Phaser.Scene {
         }
       };
     }
+
+      // --- Elephant NPC ---
+            const elephant = createElephant(this, width / 2 + 200, height / 2 + 100);
+            elephant
+                .setInteractive({ useHandCursor: true })
+                .setDepth(10)
+                .setScale(0.1)
+                .setOrigin(4, 0.9);
+    
+            // Elephant talk icon events
+            elephant.on("pointerover", (pointer) => {
+                talkIcon.setVisible(true);
+                talkIcon.setPosition(pointer.worldX + 32, pointer.worldY);
+            });
+            elephant.on("pointermove", (pointer) => {
+                talkIcon.setPosition(pointer.worldX + 32, pointer.worldY);
+            });
+            elephant.on("pointerout", () => {
+                talkIcon.setVisible(false);
+            });
+    
+            // --- Elephant dialogue and gifting logic ---
+            this.elephantDialogueActive = false;
+            this.elephantDialogueIndex = 0;
+            this.hasJasmine = () => inventoryManager.hasItemByKey && inventoryManager.hasItemByKey("jasminePlant");
+    
+            // Elephant click handler
+            elephant.on("pointerdown", () => {
+                if (!this.elephantIntroDone && !this.elephantDialogueActive) {
+                    this.elephantDialogueActive = true;
+                    this.elephantDialogueIndex = 0;
+                    this.activeElephantDialogues = elephantIntroDialogues;
+                    showDialogue(this, this.activeElephantDialogues[this.elephantDialogueIndex], { imageKey: "elephant" });
+                    this.updateHUDState && this.updateHUDState();
+                    return;
+                }
+                if (this.elephantIntroDone && !this.elephantThanksDone && this.hasJasmine()) {
+                    showOption(this, "Give the elephant the Jasmine?", {
+                        imageKey: "elephant",
+                        options: [
+                            {
+                                label: "Yes",
+                                onSelect: () => {
+                                    this.destroyDialogueUI();
+                                    this.updateHUDState && this.updateHUDState();
+                                    inventoryManager.removeItemByKey && inventoryManager.removeItemByKey("jasminePlant");
+                                    this.elephantHasJasmine = true;
+                                    elephant.setTexture && elephant.setTexture("elephantHappy");
+                                    showDialogue(this, "You hand the elephant the Jasmine...", { imageKey: "elephant" });
+                                    this.time.delayedCall(800, () => {
+                                        this.destroyDialogueUI();
+                                        this.updateHUDState && this.updateHUDState();
+                                        this.elephantDialogueActive = true;
+                                        this.elephantDialogueIndex = 0;
+                                        this.activeElephantDialogues = elephantThanksDialogues;
+                                        showDialogue(this, this.activeElephantDialogues[this.elephantDialogueIndex], { imageKey: "elephant" });
+                                        this.updateHUDState && this.updateHUDState();
+                                    });
+                                }
+                            },
+                            {
+                                label: "No",
+                                onSelect: () => {
+                                    this.destroyDialogueUI();
+                                    this.updateHUDState && this.updateHUDState();
+                                    showDialogue(this, "You decide to hold off for now.", { imageKey: "elephant" });
+                                }
+                            }
+                        ]
+                    });
+                    return;
+                }
+                if (this.elephantIntroDone && !this.elephantThanksDone && !this.hasJasmine()) {
+                    showDialogue(this, "The elephant looks at you expectantly. Maybe you need to find something for them...", { imageKey: "elephant" });
+                    this.time.delayedCall(1800, () => {
+                        this.destroyDialogueUI();
+                        this.dialogueActive = false;
+                        this.updateHUDState && this.updateHUDState();
+                    });
+                    return;
+                }
+            });
+    
+            // --- Dialogue advance on click ---
+            this.input.on("pointerdown", () => {
+                // Elephant dialogue advance
+                if (this.elephantDialogueActive) {
+                    this.elephantDialogueIndex++;
+                    if (this.activeElephantDialogues && this.elephantDialogueIndex < this.activeElephantDialogues.length) {
+                        showDialogue(this, this.activeElephantDialogues[this.elephantDialogueIndex], { imageKey: "elephant" });
+                    } else {
+                        this.destroyDialogueUI();
+                        this.dialogueActive = false;
+                        this.updateHUDState && this.updateHUDState();
+    
+                        if (!this.elephantIntroDone && this.activeElephantDialogues === elephantIntroDialogues) {
+                            this.elephantIntroDone = true;
+                        }
+                        if (this.elephantHasJasmine && this.activeElephantDialogues === elephantThanksDialogues) {
+                            this.elephantThanksDone = true;
+                            // Automatically give autumn shard after thanks dialogue
+                            receivedItem(this, "autumnShard", "Autumn Shard");
+                        }
+                        this.elephantDialogueActive = false;
+                        this.updateHUDState && this.updateHUDState();
+                    }
+                    return;
+                }
+                // Plant/coin dialogue advance
+                if (this.dialogueActive && typeof this.dialogueOnComplete === "function") {
+                    this.dialogueOnComplete();
+                }
+                // Always update HUD after any dialogue completes
+                this.updateHUDState && this.updateHUDState();
+            });
+    
+    
+    
 
     // --- Map and background ---
     const map = this.make.tilemap({ key: "wallGardenMap" });
