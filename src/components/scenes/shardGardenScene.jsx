@@ -60,6 +60,7 @@ class ShardGardenScene extends Phaser.Scene {
     this.load.audio('click', '/assets/sound-effects/click.mp3');
     this.load.image('dialogueBoxBg', '/assets/ui-items/dialogue.png');
     this.load.image('talk', '/assets/interact/talk.png');
+    this.load.image('jasminePlant', '/assets/plants/jasmine.png');
   }
 
   create() {
@@ -67,25 +68,25 @@ class ShardGardenScene extends Phaser.Scene {
     const { width, height } = this.sys.game.config;
     const scaleFactor = 0.175;
 
-    // --- LOAD STATE FROM LOCAL STORAGE ---
-    const sceneState = loadFromLocal('shardGardenSceneState') || {};
-    // Restore coins if present
-    if (sceneState.coins !== undefined) {
-      coinManager.set(sceneState.coins);
-    }
-    // Inventory restore removed
-    // Restore shard counts, happySprites, and dialogue stage
-    if (sceneState.shardCounts) {
-      this.shardCounts = { ...this.shardCounts, ...sceneState.shardCounts };
-    }
-    if (sceneState.happySprites) {
-      this.happySprites = { ...this.happySprites, ...sceneState.happySprites };
-    }
-    if (sceneState.dialogueStage !== undefined) {
-      this.dialogueStage = sceneState.dialogueStage;
-    }
-    this.dialogueActive = !!sceneState.dialogueActive;
-    this.activeDialogueIndex = sceneState.activeDialogueIndex || 0;
+    // // --- LOAD STATE FROM LOCAL STORAGE ---
+    // const sceneState = loadFromLocal('shardGardenSceneState') || {};
+    // // Restore coins if present
+    // if (sceneState.coins !== undefined) {
+    //   coinManager.set(sceneState.coins);
+    // }
+    // // Inventory restore removed
+    // // Restore shard counts, happySprites, and dialogue stage
+    // if (sceneState.shardCounts) {
+    //   this.shardCounts = { ...this.shardCounts, ...sceneState.shardCounts };
+    // }
+    // if (sceneState.happySprites) {
+    //   this.happySprites = { ...this.happySprites, ...sceneState.happySprites };
+    // }
+    // if (sceneState.dialogueStage !== undefined) {
+    //   this.dialogueStage = sceneState.dialogueStage;
+    // }
+    // this.dialogueActive = !!sceneState.dialogueActive;
+    // this.activeDialogueIndex = sceneState.activeDialogueIndex || 0;
 
     this.add.image(width / 2, height / 2, "shardBackground").setScale(scaleFactor);
     const foliageImg = this.add.image(width / 2, height / 2, "folliage").setScale(scaleFactor);

@@ -51,21 +51,21 @@ class MiddleGardenScene extends Phaser.Scene {
     const { width, height } = this.sys.game.config;
     const scaleFactor = 0.175;
 
-    // --- LOAD STATE FROM LOCAL STORAGE ---
-    const sceneState = loadFromLocal('middleGardenSceneState') || {};
-    // Restore coins if present
-    if (sceneState.coins !== undefined) {
-      coinManager.set(sceneState.coins);
-    }
-    if (sceneState.inventory && Array.isArray(sceneState.inventory)) {
-      inventoryManager.clear();
-      sceneState.inventory.forEach(item => inventoryManager.addItem(item));
-    }
-    this.garlicFound = !!sceneState.garlicFound;
-    this.thymeFound = !!sceneState.thymeFound;
-    this.wolfIntroDone = !!sceneState.wolfIntroDone;
-    this.wolfThanksDone = !!sceneState.wolfThanksDone;
-    this.wolfHasPeriwinkle = !!sceneState.wolfHasPeriwinkle;
+  //  // --- LOAD STATE FROM LOCAL STORAGE ---
+  //   const sceneState = loadFromLocal('middleGardenSceneState') || {};
+  //   // Restore coins if present
+  //   if (sceneState.coins !== undefined) {
+  //     coinManager.set(sceneState.coins);
+  //   }
+  //   if (sceneState.inventory && Array.isArray(sceneState.inventory)) {
+  //     inventoryManager.clear();
+  //     sceneState.inventory.forEach(item => inventoryManager.addItem(item));
+  //   }
+  //   this.garlicFound = !!sceneState.garlicFound;
+  //   this.thymeFound = !!sceneState.thymeFound;
+  //   this.wolfIntroDone = !!sceneState.wolfIntroDone;
+  //   this.wolfThanksDone = !!sceneState.wolfThanksDone;
+  //   this.wolfHasPeriwinkle = !!sceneState.wolfHasPeriwinkle;
 
     // Background
     this.add.image(width / 2, height / 2, 'finalGardenBackground').setScale(scaleFactor).setDepth(0);

@@ -53,10 +53,7 @@ class WeeCairScene extends Phaser.Scene {
   }
 
   create() {
-    this.sound.play("theme1", {
-      loop: true,
-      volume: 0.1
-    });
+    this.scene.launch("ControlScene");
     // --- Launch HUD ---
     this.scene.launch("HUDScene");
     this.scene.bringToTop("HUDScene");

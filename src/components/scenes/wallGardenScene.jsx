@@ -57,23 +57,23 @@ class WallGardenScene extends Phaser.Scene {
     const { width, height } = this.sys.game.config;
     const scaleFactor = 0.175;
 
-    // --- LOAD STATE FROM LOCAL STORAGE ---
-    const sceneState = loadFromLocal('wallGardenSceneState') || {};
-    // Restore coins if present
-    if (sceneState.coins !== undefined) {
-      coinManager.set(sceneState.coins);
-    }
-    // Restore inventory if present (assumes inventoryManager is imported)
-    if (sceneState.inventory && Array.isArray(sceneState.inventory)) {
-      inventoryManager.clear();
-      sceneState.inventory.forEach(item => inventoryManager.addItem(item));
-    }
-    // Restore periwinkleFound (for bush logic)
-    let periwinkleFound = !!sceneState.periwinkleFound;
-    // Restore butterfly dialogue state
-    this.butterflyDialogueIndex = sceneState.butterflyDialogueIndex || 0;
-    this.butterflyDialogueActive = !!sceneState.butterflyDialogueActive;
-    this.dialogueActive = !!sceneState.dialogueActive;
+    // // --- LOAD STATE FROM LOCAL STORAGE ---
+    // const sceneState = loadFromLocal('wallGardenSceneState') || {};
+    // // Restore coins if present
+    // if (sceneState.coins !== undefined) {
+    //   coinManager.set(sceneState.coins);
+    // }
+    // // Restore inventory if present (assumes inventoryManager is imported)
+    // if (sceneState.inventory && Array.isArray(sceneState.inventory)) {
+    //   inventoryManager.clear();
+    //   sceneState.inventory.forEach(item => inventoryManager.addItem(item));
+    // }
+    // // Restore periwinkleFound (for bush logic)
+    // let periwinkleFound = !!sceneState.periwinkleFound;
+    // // Restore butterfly dialogue state
+    // this.butterflyDialogueIndex = sceneState.butterflyDialogueIndex || 0;
+    // this.butterflyDialogueActive = !!sceneState.butterflyDialogueActive;
+    // this.dialogueActive = !!sceneState.dialogueActive;
 
     // --- Restore dialogue UI if needed ---
     // Only restore if dialogue was active when leaving

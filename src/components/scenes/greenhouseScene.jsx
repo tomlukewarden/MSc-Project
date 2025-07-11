@@ -44,17 +44,17 @@ class GreenhouseScene extends Phaser.Scene {
         const { width, height } = this.sys.game.config;
         const scaleFactor = 0.175;
 
-        // --- LOAD STATE FROM LOCAL STORAGE ---
-        const sceneState = loadFromLocal('greenhouseSceneState') || {};
+        // // --- LOAD STATE FROM LOCAL STORAGE ---
+        // const sceneState = loadFromLocal('greenhouseSceneState') || {};
 
-        if (sceneState.coins !== undefined) {
-            coinManager.set(sceneState.coins);
-        }
+        // if (sceneState.coins !== undefined) {
+        //     coinManager.set(sceneState.coins);
+        // }
         
-        if (sceneState.inventory && Array.isArray(sceneState.inventory) && window.inventoryManager) {
-            window.inventoryManager.clear();
-            sceneState.inventory.forEach(item => window.inventoryManager.addItem(item));
-        }
+        // if (sceneState.inventory && Array.isArray(sceneState.inventory) && window.inventoryManager) {
+        //     window.inventoryManager.clear();
+        //     sceneState.inventory.forEach(item => window.inventoryManager.addItem(item));
+        // }
         
 
         this.add.image(width / 2, height / 2, "greenhouseBackground").setScale(scaleFactor);

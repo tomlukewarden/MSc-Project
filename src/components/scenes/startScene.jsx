@@ -10,9 +10,14 @@ class StartScene extends Phaser.Scene {
         this.load.image("logo", "/assets/backgrounds/start/botanist-logo.png");
         this.load.image("startButton", "/assets/backgrounds/start/start-button.png");
         this.load.image("background", "/assets/backgrounds/start/background.png");
+          this.load.audio("theme1", "/assets/music/main-theme-1.mp3");
     }
 
     create() {
+           this.sound.play("theme1", {
+      loop: true,
+      volume: 0.1
+    });
         const { width, height } = this.sys.game.config;
 
         // Stop HUD and Journal scenes if running
