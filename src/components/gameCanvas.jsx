@@ -40,7 +40,7 @@ function GameCanvas() {
                 height: 720
             },
             canvas: canvasRef.current,
-            scene: [Menu, MapScene, StartScene, ShopScene, WeeCairScene, GreenhouseScene, EndGameScene, WallGardenScene, ShardGardenScene, MiddleGardenScene, HUDScene, OpenJournal, OpenInventory, OpenSettings, chestUI, ControlScene, MiniGameScene],
+            scene: [ StartScene, Menu, MapScene,ShopScene, WeeCairScene, GreenhouseScene, EndGameScene, WallGardenScene, ShardGardenScene, MiddleGardenScene, HUDScene, OpenJournal, OpenInventory, OpenSettings, chestUI, ControlScene, MiniGameScene],
         };
 
         gameRef.current = new Phaser.Game(config);
