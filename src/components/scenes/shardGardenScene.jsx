@@ -60,11 +60,14 @@ class ShardGardenScene extends Phaser.Scene {
     this.load.audio('click', '/assets/sound-effects/click.mp3');
     this.load.image('dialogueBoxBg', '/assets/ui-items/dialogue.png');
     this.load.image('talk', '/assets/interact/talk.png');
-    this.load.image('jasminePlant', '/assets/plants/jasmine.png');
+    this.load.image('jasminePlant', '/assets/plants/jasmine.PNG');
     this.load.image('bush', '/assets/misc/bush.png');
   }
 
   create() {
+    if (typeof window !== "undefined") {
+    window.inventoryManager = inventoryManager;
+}
     this.scene.launch("HUDScene");
     const { width, height } = this.sys.game.config;
     const scaleFactor = 0.175;

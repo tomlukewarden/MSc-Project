@@ -38,17 +38,21 @@ class MiddleGardenScene extends Phaser.Scene {
     this.load.image('thymePlant', '/assets/plants/thyme.PNG');
     this.load.image('dialogueBoxBg', '/assets/ui-items/dialogue.png');
     this.load.image('wolf', '/assets/npc/wolf/wolf.png')
-    this.load.image('wolfHappy', '/assets/npc/wolf/happy.png');
+    this.load.image('wolfHappy', '/assets/npc/wolf/happy.png')
     this.load.image('talk', '/assets/ui-items/talk.png');
     this.load.image('summerShard', '/assets/items/summer.png');
     this.load.image('winterShard', '/assets/items/winter.png');
     this.load.image('deer', '/assets/npc/deer/deer.png')
     this.load.image('deerHappy', '/assets/npc/deer/happy.png')
     this.load.image('bush', '/assets/misc/bush.png');
- 
+    this.load.image('periwinklePlant', '/assets/plants/periwinkle.png');
+    this.load.image('marigoldPlant', '/assets/plants/marigold.PNG');
   }
 
   create() {
+    if (typeof window !== "undefined") {
+    window.inventoryManager = inventoryManager;
+}
     this.scene.launch("HUDScene");
     this.scene.stop("StartScene");
     const { width, height } = this.sys.game.config;
@@ -206,8 +210,6 @@ class MiddleGardenScene extends Phaser.Scene {
         return;
       }
     });
-
-    // Deer click handler (same logic as wolf, but for foxglove)
     deer.on("pointerdown", () => {
       if (!this.deerIntroDone && !this.deerDialogueActive) {
         this.deerDialogueActive = true;
@@ -217,7 +219,7 @@ class MiddleGardenScene extends Phaser.Scene {
         this.updateHUDState && this.updateHUDState();
         return;
       }
-      if (this.deerIntroDone && !this.deerThanksDone && this.hasMarigold()) {
+      if (this.deerIntroDone && this.hasMarigold()) {
         showOption(this, "Give the deer the Marigold?", {
           imageKey: "deer",
           options: [
@@ -252,15 +254,15 @@ class MiddleGardenScene extends Phaser.Scene {
         });
         return;
       }
-      if (this.deerIntroDone && !this.deerThanksDone && !this.hasFoxglove()) {
-        showDialogue(this, "The deer looks at you expectantly. Maybe you need to find something for them...", { imageKey: "deer" });
-        this.time.delayedCall(1800, () => {
-          this.destroyDialogueUI();
-          this.dialogueActive = false;
-          this.updateHUDState && this.updateHUDState();
-        });
-        return;
-      }
+      // if (this.deerIntroDone && !this.deerThanksDone && !this.hasMarigold()) {
+      //   showDialogue(this, "The deer looks at you expectantly. Maybe you need to find something for them...", { imageKey: "deer" });
+      //   this.time.delayedCall(1800, () => {
+      //     this.destroyDialogueUI();
+      //     this.dialogueActive = false;
+      //     this.updateHUDState && this.updateHUDState();
+      //   });
+      //   return;
+      // }
     });
 
     // --- Bushes/Flowerbeds logic ---
@@ -357,15 +359,11 @@ class MiddleGardenScene extends Phaser.Scene {
   }
 
   setupBushes(width, height) {
-    // Center and lower the bushes
-    const centerX = width / 2;
-    const baseY = height / 2 + 120;
-    const spacingX = 70;
     const bushPositions = [
-      { x: centerX - spacingX * 1.5, y: baseY }, // Garlic
-      { x: centerX - spacingX * 0.5, y: baseY + 30 }, // Thyme
-      { x: centerX + spacingX * 0.5, y: baseY }, // Coin
-      { x: centerX + spacingX * 1.5, y: baseY + 30 }  // Coin
+      { x: 180, y: 300 }, 
+      { x: 260, y: 400 }, 
+      { x: 340, y: 250 }, 
+      { x: 420, y: 350 }  
     ];
     const bushCount = bushPositions.length;
     const garlicIndex = 0;

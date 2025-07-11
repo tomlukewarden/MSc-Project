@@ -44,137 +44,129 @@ class GreenhouseScene extends Phaser.Scene {
         const { width, height } = this.sys.game.config;
         const scaleFactor = 0.175;
 
-        // // --- LOAD STATE FROM LOCAL STORAGE ---
-        // const sceneState = loadFromLocal('greenhouseSceneState') || {};
-
-        // if (sceneState.coins !== undefined) {
-        //     coinManager.set(sceneState.coins);
-        // }
-        
-        // if (sceneState.inventory && Array.isArray(sceneState.inventory) && window.inventoryManager) {
-        //     window.inventoryManager.clear();
-        //     sceneState.inventory.forEach(item => window.inventoryManager.addItem(item));
-        // }
-        
-
         this.add.image(width / 2, height / 2, "greenhouseBackground").setScale(scaleFactor);
 
- const elephant = createElephant(this, width / 2 + 200, height / 2 + 100);
-    elephant
-      .setInteractive({ useHandCursor: true })
-      .setDepth(10)
-      .setScale(0.1)
-      .setOrigin(3, 1); 
-
-    // --- Talk icon ---
-    const talkIcon = this.add
-      .image(0, 0, "talk")
-      .setScale(0.05)
-      .setVisible(false)
-      .setDepth(11)
-      .setOrigin(0.5);
-
-    elephant.on("pointerover", (pointer) => {
-      talkIcon.setVisible(true);
-      talkIcon.setPosition(pointer.worldX + 32, pointer.worldY);
-    });
-   elephant.on("pointermove", (pointer) => {
-      talkIcon.setPosition(pointer.worldX + 32, pointer.worldY);
-    });
-   elephant.on("pointerout", () => {
-      talkIcon.setVisible(false);
-    });
-
-    this.elephantDialogueActive = false;
-    this.elephantDialogueIndex = 0;
-
-    this.hasJasmine = () => inventoryManager.hasItemByKey && inventoryManager.hasItemByKey("jasminePlant");
-
-    elephant.on("pointerdown", () => {
-      if (!this.elephantIntroDone && !this.elephantDialogueActive) {
-        // Start intro dialogues
-        this.elephantDialogueActive = true;
-        this.elephantDialogueIndex = 0;
-        this.activeElephantDialogues = elephantIntroDialogues;
-        showDialogue(this, this.activeElephantDialogues[this.elephantDialogueIndex], { imageKey: "elephant" });
-        this.updateHUDState && this.updateHUDState();
-        return;
-      }
-      if (this.elephantIntroDone && !this.elephantThanksDone && this.hasJasmine()) {
-        showOption(this, "Give the elephant the Jasmine?", {
-          imageKey: "elephant",
-          options: [
-            {
-              label: "Yes",
-              onSelect: () => {
-                this.destroyDialogueUI();
-                this.updateHUDState && this.updateHUDState();
-                inventoryManager.removeItemByKey && inventoryManager.removeItemByKey("jasminePlant");
-                this.elephantHasJasmine = true;
-                showDialogue(this, "You hand the elephant the Jasmine...", { imageKey: "elephant" });
-                this.time.delayedCall(800, () => {
-                  this.destroyDialogueUI();
-                  this.updateHUDState && this.updateHUDState();
-                  this.elephantDialogueActive = true;
-                  this.elephantDialogueIndex = 0;
-                  this.activeElephantDialogues = elephantThanksDialogues;
-                  showDialogue(this, this.activeElephantDialogues[this.elephantDialogueIndex], { imageKey: "elephant" });
-                  this.updateHUDState && this.updateHUDState();
-                });
-              }
-            },
-            {
-              label: "No",
-              onSelect: () => {
-                this.destroyDialogueUI();
-                this.updateHUDState && this.updateHUDState();
-                showDialogue(this, "You decide to hold off for now.", { imageKey: "elephant" });
-              }
-            }
-          ]
-        });
-        return;
-      }
-      if (this.elephantIntroDone && !this.elephantThanksDone && !this.hasJasmine()) {
-        showDialogue(this, "Tia looks really stressed, maybe something soothing will help...", { imageKey: "elephant" });
-        this.time.delayedCall(1800, () => {
-          this.destroyDialogueUI();
-          this.dialogueActive = false;
-          this.updateHUDState && this.updateHUDState();
-        });
-        return;
-      }
-    });
-
-    this.input.on("pointerdown", () => {
-      if (this.elephantDialogueActive) {
-        this.elephantDialogueIndex++;
-        if (this.activeElephantDialogues && this.elephantDialogueIndex < this.activeElephantDialogues.length) {
-          showDialogue(this, this.activeElephantDialogues[this.elephantDialogueIndex], { imageKey: "elephant" });
-        } else {
-          this.destroyDialogueUI();
-          this.updateHUDState && this.updateHUDState();
-          if (!this.elephantIntroDone && this.activeElephantDialogues === elephantIntroDialogues) {
-            this.elephantIntroDone = true;
-          }
-          if (this.elephantHasJasmine && this.activeElephantDialogues === elephantThanksDialogues) {
-            this.elephantThanksDone = true;
-          }
-          this.elephantDialogueActive = false;
+      
+        if (typeof window !== "undefined") {
+            window.inventoryManager = inventoryManager;
         }
-        return;
-      }
-      if (this.elephantThanksDone) {
-        receivedItem(this, "autumnShard", "Autumn Shard");
-        this.destroyDialogueUI();
-        this.dialogueActive = false;
-        this.updateHUDState && this.updateHUDState();
-      }
-      // Plant/coin dialogue advance
-      if (this.dialogueActive && typeof this.dialogueOnComplete === "function") {
-        this.dialogueOnComplete();
-      }
-    });
+
+        const elephant = createElephant(this, width / 2 + 200, height / 2 + 100);
+        elephant
+            .setInteractive({ useHandCursor: true })
+            .setDepth(10)
+            .setScale(0.1)
+            .setOrigin(3, 1);
+
+        // --- Talk icon ---
+        const talkIcon = this.add
+            .image(0, 0, "talk")
+            .setScale(0.05)
+            .setVisible(false)
+            .setDepth(11)
+            .setOrigin(0.5);
+
+        elephant.on("pointerover", (pointer) => {
+            talkIcon.setVisible(true);
+            talkIcon.setPosition(pointer.worldX + 32, pointer.worldY);
+        });
+        elephant.on("pointermove", (pointer) => {
+            talkIcon.setPosition(pointer.worldX + 32, pointer.worldY);
+        });
+        elephant.on("pointerout", () => {
+            talkIcon.setVisible(false);
+        });
+
+        this.elephantDialogueActive = false;
+        this.elephantDialogueIndex = 0;
+
+        this.hasJasmine = () => inventoryManager.hasItemByKey && inventoryManager.hasItemByKey("jasminePlant");
+
+        elephant.on("pointerdown", () => {
+            if (!this.elephantIntroDone && !this.elephantDialogueActive) {
+                // Start intro dialogues
+                this.elephantDialogueActive = true;
+                this.elephantDialogueIndex = 0;
+                this.activeElephantDialogues = elephantIntroDialogues;
+                showDialogue(this, this.activeElephantDialogues[this.elephantDialogueIndex], { imageKey: "elephant" });
+                this.updateHUDState && this.updateHUDState();
+                return;
+            }
+            if (this.elephantIntroDone && !this.elephantThanksDone && this.hasJasmine()) {
+                showOption(this, "Give the elephant the Jasmine?", {
+                    imageKey: "elephant",
+                    options: [
+                        {
+                            label: "Yes",
+                            onSelect: () => {
+                                this.destroyDialogueUI();
+                                this.updateHUDState && this.updateHUDState();
+                                inventoryManager.removeItemByKey && inventoryManager.removeItemByKey("jasminePlant");
+                                this.elephantHasJasmine = true;
+                                showDialogue(this, "You hand the elephant the Jasmine...", { imageKey: "elephant" });
+                                this.time.delayedCall(800, () => {
+                                    this.destroyDialogueUI();
+                                    this.updateHUDState && this.updateHUDState();
+                                    this.elephantDialogueActive = true;
+                                    this.elephantDialogueIndex = 0;
+                                    this.activeElephantDialogues = elephantThanksDialogues;
+                                    showDialogue(this, this.activeElephantDialogues[this.elephantDialogueIndex], { imageKey: "elephant" });
+                                    this.updateHUDState && this.updateHUDState();
+                                });
+                            }
+                        },
+                        {
+                            label: "No",
+                            onSelect: () => {
+                                this.destroyDialogueUI();
+                                this.updateHUDState && this.updateHUDState();
+                                showDialogue(this, "You decide to hold off for now.", { imageKey: "elephant" });
+                            }
+                        }
+                    ]
+                });
+                return;
+            }
+            if (this.elephantIntroDone && !this.elephantThanksDone && !this.hasJasmine()) {
+                showDialogue(this, "Tia looks really stressed, maybe something soothing will help...", { imageKey: "elephant" });
+                this.time.delayedCall(1800, () => {
+                    this.destroyDialogueUI();
+                    this.dialogueActive = false;
+                    this.updateHUDState && this.updateHUDState();
+                });
+                return;
+            }
+        });
+
+        this.input.on("pointerdown", () => {
+            if (this.elephantDialogueActive) {
+                this.elephantDialogueIndex++;
+                if (this.activeElephantDialogues && this.elephantDialogueIndex < this.activeElephantDialogues.length) {
+                    showDialogue(this, this.activeElephantDialogues[this.elephantDialogueIndex], { imageKey: "elephant" });
+                } else {
+                    this.destroyDialogueUI();
+                    this.updateHUDState && this.updateHUDState();
+                    if (!this.elephantIntroDone && this.activeElephantDialogues === elephantIntroDialogues) {
+                        this.elephantIntroDone = true;
+                    }
+                    if (this.elephantHasJasmine && this.activeElephantDialogues === elephantThanksDialogues) {
+                        this.elephantThanksDone = true;
+                    }
+                    this.elephantDialogueActive = false;
+                }
+                return;
+            }
+            if (this.elephantThanksDone) {
+                receivedItem(this, "autumnShard", "Autumn Shard");
+                this.destroyDialogueUI();
+                this.dialogueActive = false;
+                this.updateHUDState && this.updateHUDState();
+            }
+            // Plant/coin dialogue advance
+            if (this.dialogueActive && typeof this.dialogueOnComplete === "function") {
+                this.dialogueOnComplete();
+            }
+        });
 
         // --- Collision objects (example: invisible wall at left edge) ---
         const collisionGroup = this.physics.add.staticGroup();
@@ -185,7 +177,7 @@ class GreenhouseScene extends Phaser.Scene {
         const char = createMainChar(this, width, height, scaleFactor, collisionGroup);
 
         this.events.on('update', () => {
-            if (char.x - char.displayWidth / 2 < 5) { 
+            if (char.x - char.displayWidth / 2 < 5) {
                 this.exitToNextScene();
             }
         });

@@ -54,6 +54,9 @@ class WallGardenScene extends Phaser.Scene {
   }
 
   create() {
+    if (typeof window !== "undefined") {
+    window.inventoryManager = inventoryManager;
+}
     this.scene.launch('HUDScene');
     const { width, height } = this.sys.game.config;
     const scaleFactor = 0.175;
