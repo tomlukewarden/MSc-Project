@@ -13,23 +13,29 @@ export function createMainChar(scene, width, height, scaleFactor, collisionGroup
         solidArea.setVisible(true).setAlpha(0.5);
     });
 
-    const speed = 150;
+    const speed = 200;
 
     // Movement controls
     scene.input.keyboard.on("keydown", (event) => {
         char.setVelocity(0);
-        if (event.key === "w") {
+        if (event.key === "w" || event.key === "W") {
             char.setVelocityY(-speed);
             char.setTexture("defaultBack");
-        } else if (event.key === "s") {
+        } else if (event.key === "s" || event.key === "S") {
             char.setVelocityY(speed);
             char.setTexture("defaultFront");
-        } else if (event.key === "a") {
+        } else if (event.key === "a" || event.key === "A") {
             char.setVelocityX(-speed);
             char.setTexture("defaultLeft");
-        } else if (event.key === "d") {
+        } else if (event.key === "d" || event.key === "D") {
             char.setVelocityX(speed);
             char.setTexture("defaultRight");
+        } else if (event.key === "e" || event.key === "E") {
+            scene.scene.launch("OpenInventory");
+        } else if (event.key === "q" || event.key === "Q") {
+            scene.scene.launch("OpenJournal");
+        } else if (event.key === "Escape") {
+            scene.scene.launch("OpenSettings");
         }
     });
 

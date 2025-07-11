@@ -17,6 +17,19 @@ export class InventoryManager {
     if (item && (item.name === 'coin' || item.key === 'coin')) {
       return;
     }
+    // Ensure all plants are saved as their name + 'Plant' (e.g., marigoldPlant)
+    if (item && item.name && typeof item.name === 'string') {
+      // If item is a plant and key does not already end with 'Plant'
+      const plantNames = [
+        'marigold', 'thyme', 'garlic', 'foxglove', 'aloe', 'jasmine', 'lavender', 'periwinkle', 'willow'
+      ];
+      const lowerName = item.name.toLowerCase();
+      if (plantNames.some(p => lowerName.includes(p))) {
+        // Set key to name (lowercase, no spaces) + 'Plant'
+        const baseName = item.name.replace(/\s+/g, '').replace(/[^a-zA-Z]/g, '');
+        item.key = baseName.charAt(0).toLowerCase() + baseName.slice(1) + 'Plant';
+      }
+    }
     this.items.push(item);
     this._notify();
     this.addToToolbar(item);

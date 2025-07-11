@@ -60,36 +60,37 @@ class ShardGardenScene extends Phaser.Scene {
     this.load.audio('click', '/assets/sound-effects/click.mp3');
     this.load.image('dialogueBoxBg', '/assets/ui-items/dialogue.png');
     this.load.image('talk', '/assets/interact/talk.png');
+    this.load.image('jasminePlant', '/assets/plants/jasmine.PNG');
+    this.load.image('bush', '/assets/misc/bush.png');
   }
 
   create() {
+    if (typeof window !== "undefined") {
+    window.inventoryManager = inventoryManager;
+}
     this.scene.launch("HUDScene");
     const { width, height } = this.sys.game.config;
     const scaleFactor = 0.175;
 
-    // --- LOAD STATE FROM LOCAL STORAGE ---
-    const sceneState = loadFromLocal('shardGardenSceneState') || {};
-    // Restore coins if present
-    if (sceneState.coins !== undefined) {
-      coinManager.set(sceneState.coins);
-    }
-    // Restore inventory if present (assumes inventoryManager is imported)
-    if (sceneState.inventory && Array.isArray(sceneState.inventory)) {
-      inventoryManager.clear();
-      sceneState.inventory.forEach(item => inventoryManager.addItem(item));
-    }
-    // Restore shard counts, happySprites, and dialogue stage
-    if (sceneState.shardCounts) {
-      this.shardCounts = { ...this.shardCounts, ...sceneState.shardCounts };
-    }
-    if (sceneState.happySprites) {
-      this.happySprites = { ...this.happySprites, ...sceneState.happySprites };
-    }
-    if (sceneState.dialogueStage !== undefined) {
-      this.dialogueStage = sceneState.dialogueStage;
-    }
-    this.dialogueActive = !!sceneState.dialogueActive;
-    this.activeDialogueIndex = sceneState.activeDialogueIndex || 0;
+    // // --- LOAD STATE FROM LOCAL STORAGE ---
+    // const sceneState = loadFromLocal('shardGardenSceneState') || {};
+    // // Restore coins if present
+    // if (sceneState.coins !== undefined) {
+    //   coinManager.set(sceneState.coins);
+    // }
+    // // Inventory restore removed
+    // // Restore shard counts, happySprites, and dialogue stage
+    // if (sceneState.shardCounts) {
+    //   this.shardCounts = { ...this.shardCounts, ...sceneState.shardCounts };
+    // }
+    // if (sceneState.happySprites) {
+    //   this.happySprites = { ...this.happySprites, ...sceneState.happySprites };
+    // }
+    // if (sceneState.dialogueStage !== undefined) {
+    //   this.dialogueStage = sceneState.dialogueStage;
+    // }
+    // this.dialogueActive = !!sceneState.dialogueActive;
+    // this.activeDialogueIndex = sceneState.activeDialogueIndex || 0;
 
     this.add.image(width / 2, height / 2, "shardBackground").setScale(scaleFactor);
     const foliageImg = this.add.image(width / 2, height / 2, "folliage").setScale(scaleFactor);
@@ -175,7 +176,9 @@ class ShardGardenScene extends Phaser.Scene {
       this.updateHUDState();
     });
 
+    // Play click sound on any pointerdown
     this.input.on("pointerdown", (pointer, currentlyOver) => {
+      this.sound.play("click");
       if (currentlyOver && currentlyOver.includes(butterfly)) return;
       if (!this.dialogueActive) return;
       if (this.dialogueBox?.optionButtons?.length > 0) return;
@@ -216,7 +219,7 @@ class ShardGardenScene extends Phaser.Scene {
   saveSceneState() {
     const state = {
       coins: coinManager.get ? coinManager.get() : 0,
-      inventory: inventoryManager.getItems ? inventoryManager.getItems() : [],
+      // inventory removed from save
       shardCounts: { ...this.shardCounts },
       happySprites: { ...this.happySprites },
       dialogueStage: this.dialogueStage,
@@ -274,34 +277,30 @@ class ShardGardenScene extends Phaser.Scene {
 
     for (let i = 0; i < bushCount; i++) {
       const { x, y } = bushPositions[i];
-      const bushWidth = Phaser.Math.Between(40, 70);
-      const bushHeight = Phaser.Math.Between(30, 50);
-      const color = 0x3e7d3a;
-
-      const bush = this.add.rectangle(x, y, bushWidth, bushHeight, color, 0.85)
-        .setStrokeStyle(2, 0x245021)
-        .setDepth(12)
+      // Use bush sprite instead of rectangle
+      const bush = this.add.image(x, y, 'bush')
+       .setScale(1.8)
+        .setDepth(1)
         .setInteractive({ useHandCursor: true });
 
       bush.on("pointerdown", () => {
+        this.sound.play("click");
         if (this.dialogueActive) return;
         this.dialogueActive = true;
         this.updateHUDState && this.updateHUDState();
 
-        // Garlic bush
         if (i === garlicIndex && !this.garlicFound) {
-          const garlic = plantData.find(p => p.key === "periwinklePlant");
+          const garlic = plantData.find(p => p.key === "garlicPlant");
           if (garlic) {
-            this.showPlantMinigame(garlic, "periwinkleFound");
+            this.showPlantMinigame(garlic, "garlicFound");
           } else {
             this.showPlantMissing();
           }
         }
-        // Thyme bush
         else if (i === thymeIndex && !this.thymeFound) {
-          const thyme = plantData.find(p => p.key === "marigoldPlant");
+          const thyme = plantData.find(p => p.key === "thymePlant");
           if (thyme) {
-            this.showPlantMinigame(thyme, "marigoldFound");
+            this.showPlantMinigame(thyme, "thymeFound");
           } else {
             this.showPlantMissing();
           }
@@ -343,7 +342,6 @@ class ShardGardenScene extends Phaser.Scene {
 
                   const alreadyHas = inventoryManager.hasItemByKey && inventoryManager.hasItemByKey(plant.key);
                   if (!alreadyHas) {
-                    inventoryManager.addItem(plant);
                     addPlantToJournal(plant.key);
                     receivedItem(this, plant.key, plant.name);
                   }

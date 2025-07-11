@@ -11,30 +11,37 @@ export class ChestUI extends Phaser.Scene {
   }
 
   init(data) {
-    // Pass chest items as { items: [...] }
     this.chestItems = data.items || [];
   }
 
   create() {
     const { width, height } = this.sys.game.config;
 
+    // Responsive chest panel size
+    const minPanelWidth = 320;
+    const minPanelHeight = 220;
+    const maxPanelWidth = Math.min(width * 0.8, 600);
+    const maxPanelHeight = Math.min(height * 0.6, 400);
+    const panelWidth = Math.max(minPanelWidth, Math.min(maxPanelWidth, 140 + this.chestItems.length * 110));
+    const panelHeight = Math.max(minPanelHeight, maxPanelHeight);
+
     // Background panel
-    this.add.rectangle(width / 2, height / 2, 420, 320, 0x8d5524)
+    this.add.rectangle(width / 2, height / 2, panelWidth, panelHeight, 0x8d5524)
       .setStrokeStyle(4, 0x3e2f1c)
       .setAlpha(0.97)
       .setDepth(105);
 
-    this.add.text(width / 2, height / 2 - 120, "Chest", {
+    this.add.text(width / 2, height / 2 - panelHeight / 2 + 40, "Chest", {
       fontFamily: "Georgia",
       fontSize: "32px",
       color: "#fff"
     }).setOrigin(0.5).setDepth(106);
 
     // Render chest items
-    this.renderItems();
+    this.renderItems(panelWidth, panelHeight);
 
     // Close button
-    const closeBtn = this.add.text(width / 2, height / 2 + 130, "Close", {
+    const closeBtn = this.add.text(width / 2, height / 2 + panelHeight / 2 - 30, "Close", {
       fontFamily: "Georgia",
       fontSize: "22px",
       color: "#fff",
@@ -54,7 +61,7 @@ export class ChestUI extends Phaser.Scene {
     });
   }
 
-  renderItems() {
+  renderItems(panelWidth = 420, panelHeight = 320) {
     const { width, height } = this.sys.game.config;
     // Remove old
     this.itemRects.forEach(r => r.destroy());
@@ -64,27 +71,33 @@ export class ChestUI extends Phaser.Scene {
     this.itemTexts = [];
     this.itemImages = [];
 
+    // Calculate item layout
+    const itemCount = this.chestItems.length;
+    const itemSize = Math.min(90, Math.max(60, panelWidth / Math.max(itemCount, 1) - 20));
+    const totalWidth = itemCount * (itemSize + 20) - 20;
+    const startX = width / 2 - totalWidth / 2 + itemSize / 2;
+    const y = height / 2;
+
     // Draw new
     this.chestItems.forEach((item, idx) => {
-      const x = width / 2 - 100 + idx * 110;
-      const y = height / 2;
+      const x = startX + idx * (itemSize + 20);
 
       const rect = this.add.rectangle(
-        x, y, 90, 90, item.color || 0xd2b48c
+        x, y, itemSize, itemSize, item.color || 0xd2b48c
       ).setStrokeStyle(3, 0x3e2f1c).setDepth(106).setInteractive();
 
       let img = null;
       if (item.key && this.textures.exists(item.key)) {
         img = this.add.image(x, y - 10, item.key)
-          .setDisplaySize(60, 60)
+          .setDisplaySize(itemSize * 0.7, itemSize * 0.7)
           .setDepth(107);
         this.itemImages.push(img);
       }
 
       const text = this.add.text(
-        x, y + 35, item.name, {
+        x, y + itemSize / 2 - 10, item.name, {
           fontFamily: "Georgia",
-          fontSize: "18px",
+          fontSize: Math.max(14, Math.min(18, itemSize / 5)),
           color: "#222"
         }
       ).setOrigin(0.5).setDepth(108);
@@ -93,7 +106,8 @@ export class ChestUI extends Phaser.Scene {
         // Add to inventory and remove from chest
         inventoryManager.addItem(item);
         this.chestItems.splice(idx, 1);
-        this.renderItems();
+        // Recalculate panel size and redraw
+        this.scene.restart({ items: this.chestItems });
       });
 
       this.itemRects.push(rect);

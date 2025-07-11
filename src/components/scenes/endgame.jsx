@@ -7,40 +7,89 @@ class EndGameScene extends Phaser.Scene {
   }
 
   preload() {
-    this.load.audio('sparkle', '/assets/sound-effects/sparkle.mp3');
+    this.load.audio('finalTheme', '/assets/music/final.mp3');
+    this.load.audio('theme1', '/assets/music/main-theme-1.mp3');
   }
 
   create() {
     const { width, height } = this.sys.game.config;
 
-    this.cameras.main.setBackgroundColor('#222b2f');
-    this.sound.play('sparkle', { volume: 0.7 });
+    // Smooth fade in
+    this.cameras.main.fadeIn(1000, 0, 0, 0);
+    this.cameras.main.setBackgroundColor('#1e2a2f');
 
+    // Soft glow behind the title
+    this.add.text(width / 2, height / 2 - 160, '✨ The Garden is Whole ✨', {
+      fontFamily: 'Georgia',
+      fontSize: '54px',
+      color: '#fff',
+      stroke: '#ffcc66',
+      strokeThickness: 4,
+      shadow: {
+        offsetX: 0,
+        offsetY: 0,
+        color: '#ffc',
+        blur: 18,
+        fill: true
+      }
+    }).setOrigin(0.5).setDepth(1);
+
+    // Play end theme
+    const finalTheme = this.sound.add('finalTheme', { loop: true, volume: 0.35 });
+    finalTheme.play();
+
+    // Ending dialogue box
     showDialogue(this,
-      "Congratulations!\n\nYou have restored all the shards and completed the garden.\n\nThank you for playing!",
+      "Congratulations!\n\nYou have restored all the shards and completed the garden.\n\nThank you for playing 💐",
       {
-        fontSize: 32,
+        fontSize: 34,
         boxImageKey: 'dialogueBoxBg',
-        imageKey: null
+        imageKey: null,
+        boxPadding: 32,
+        textAlign: 'center',
+        textColor: '#2e3d2f',
+        y: height / 2 - 60 // move up
       }
     );
 
-    // Add a button to return to main menu
-    const button = this.add.text(width / 2, height - 100, 'Return to Main Menu', {
-      font: '28px Arial',
-      fill: '#fff',
-      backgroundColor: '#222',
-      padding: { left: 20, right: 20, top: 10, bottom: 10 },
-      borderRadius: 8
-    })
+    // Main menu button (move to right)
+    const buttonX = width - 220;
+    const buttonY = height - 120;
+    const button = this.add.rectangle(buttonX, buttonY, 340, 56, 0x3e7d3a, 0.98)
       .setOrigin(0.5)
-      .setInteractive({ useHandCursor: true })
-      .setDepth(200);
+      .setDepth(2)
+      .setStrokeStyle(3, 0x4caf50)
+      .setInteractive({ useHandCursor: true });
+    const buttonText = this.add.text(buttonX, buttonY, '↩️ Return to Main Menu', {
+      fontFamily: 'Georgia',
+      fontSize: '28px',
+      color: '#ffffff',
+      align: 'center',
+      shadow: {
+        offsetX: 0,
+        offsetY: 0,
+        color: '#4caf50',
+        blur: 8,
+        fill: true
+      }
+    }).setOrigin(0.5).setDepth(3);
 
-    button.on('pointerover', () => button.setStyle({ fill: '#ff0' }));
-    button.on('pointerout', () => button.setStyle({ fill: '#fff' }));
+    button.on('pointerover', () => {
+      button.setFillStyle(0x4caf50, 0.98);
+      button.setStrokeStyle(3, 0x3e7d3a);
+      buttonText.setColor('#ffffcc');
+    });
+    button.on('pointerout', () => {
+      button.setFillStyle(0x3e7d3a, 0.98);
+      button.setStrokeStyle(3, 0x4caf50);
+      buttonText.setColor('#ffffff');
+    });
     button.on('pointerdown', () => {
-      this.scene.start('StartScene');
+      finalTheme.stop();
+      this.cameras.main.fadeOut(500, 0, 0, 0);
+      this.time.delayedCall(500, () => {
+        this.scene.start('StartScene');
+      });
     });
   }
 }

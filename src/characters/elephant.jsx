@@ -1,17 +1,17 @@
 export const elephantIntroDialogues = [
   "",
-     "Hi… Did Butterfly send you? She always knows when something’s off.",
-   " I’ve just... I don’t know. I can’t seem to settle.",
-   "My thoughts keep stomping around in my head and I can’t get them to calm down." ,
-   "Do you think maybe... you could help? Even just a little?"
+     "Hi… Did the Fairy send you? \n She always knows when something’s off.",
+   " I’ve just... I don’t know. \n I can’t seem to settle.",
+   "My thoughts keep stomping around in my head and \n I can’t get them to calm down." ,
+   "Do you think maybe... \n you could help? Even just a little?"
   ]
   export const elephantThanksDialogues =[
- "That smells incredible... Is that for me? Really? I do hope this helps.",
+ "That smells incredible... \n Is that for me? Really? I do hope this helps.",
  "My thoughts have been stomping around all day...",
  "Wow... what a difference...",
- "I feel, slower.Like the world finally took a deep breath with me.",
- "Everything feels softer, like I’m walking on moss instead of pebbles.",
- "Thank you. Truly. Oh please, take this. I don’t know why, but something told me to keep a hold of it... just in case."
+ "I feel, slower. \n Like the world finally took a deep breath with me.",
+ "Everything feels softer, \n like I’m walking on moss instead of pebbles.",
+ "Thank you. Truly. Oh please, take this. \n I don’t know why, but something told me to keep a hold of it... just in case."
   ]
 
 
