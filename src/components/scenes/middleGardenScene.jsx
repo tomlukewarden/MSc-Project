@@ -38,10 +38,13 @@ class MiddleGardenScene extends Phaser.Scene {
     this.load.image('thymePlant', '/assets/plants/thyme.PNG');
     this.load.image('dialogueBoxBg', '/assets/ui-items/dialogue.png');
     this.load.image('wolf', '/assets/npc/wolf/wolf.png')
+    this.load.image('wolfHappy', '/assets/npc/wolf/happy.png');
     this.load.image('talk', '/assets/ui-items/talk.png');
     this.load.image('summerShard', '/assets/items/summer.png');
     this.load.image('winterShard', '/assets/items/winter.png');
     this.load.image('deer', '/assets/npc/deer/deer.png')
+    this.load.image('deerHappy', '/assets/npc/deer/happy.png')
+    this.load.image('bush', '/assets/misc/bush.png');
  
   }
 
@@ -354,11 +357,15 @@ class MiddleGardenScene extends Phaser.Scene {
   }
 
   setupBushes(width, height) {
+    // Center and lower the bushes
+    const centerX = width / 2;
+    const baseY = height / 2 + 120;
+    const spacingX = 70;
     const bushPositions = [
-      { x: 180, y: 300 }, // Garlic
-      { x: 260, y: 400 }, // Thyme
-      { x: 340, y: 250 }, // Coin
-      { x: 420, y: 350 }  // Coin
+      { x: centerX - spacingX * 1.5, y: baseY }, // Garlic
+      { x: centerX - spacingX * 0.5, y: baseY + 30 }, // Thyme
+      { x: centerX + spacingX * 0.5, y: baseY }, // Coin
+      { x: centerX + spacingX * 1.5, y: baseY + 30 }  // Coin
     ];
     const bushCount = bushPositions.length;
     const garlicIndex = 0;
@@ -366,13 +373,9 @@ class MiddleGardenScene extends Phaser.Scene {
 
     for (let i = 0; i < bushCount; i++) {
       const { x, y } = bushPositions[i];
-      const bushWidth = Phaser.Math.Between(40, 70);
-      const bushHeight = Phaser.Math.Between(30, 50);
-      const color = 0x3e7d3a;
-
-      const bush = this.add.rectangle(x, y, bushWidth, bushHeight, color, 0.85)
-        .setStrokeStyle(2, 0x245021)
-        .setDepth(12)
+      const bush = this.add.image(x, y, 'bush')
+        .setScale(1.8)
+        .setDepth(1)
         .setInteractive({ useHandCursor: true });
 
       bush.on("pointerdown", () => {

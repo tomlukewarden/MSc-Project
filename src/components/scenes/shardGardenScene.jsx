@@ -61,6 +61,7 @@ class ShardGardenScene extends Phaser.Scene {
     this.load.image('dialogueBoxBg', '/assets/ui-items/dialogue.png');
     this.load.image('talk', '/assets/interact/talk.png');
     this.load.image('jasminePlant', '/assets/plants/jasmine.png');
+    this.load.image('bush', '/assets/misc/bush.png');
   }
 
   create() {
@@ -271,13 +272,10 @@ class ShardGardenScene extends Phaser.Scene {
 
     for (let i = 0; i < bushCount; i++) {
       const { x, y } = bushPositions[i];
-      const bushWidth = Phaser.Math.Between(40, 70);
-      const bushHeight = Phaser.Math.Between(30, 50);
-      const color = 0x3e7d3a;
-
-      const bush = this.add.rectangle(x, y, bushWidth, bushHeight, color, 0.85)
-        .setStrokeStyle(2, 0x245021)
-        .setDepth(12)
+      // Use bush sprite instead of rectangle
+      const bush = this.add.image(x, y, 'bush')
+       .setScale(1.8)
+        .setDepth(1)
         .setInteractive({ useHandCursor: true });
 
       bush.on("pointerdown", () => {
