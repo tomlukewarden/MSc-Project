@@ -73,11 +73,7 @@ class ShardGardenScene extends Phaser.Scene {
     if (sceneState.coins !== undefined) {
       coinManager.set(sceneState.coins);
     }
-    // Restore inventory if present (assumes inventoryManager is imported)
-    if (sceneState.inventory && Array.isArray(sceneState.inventory)) {
-      inventoryManager.clear();
-      sceneState.inventory.forEach(item => inventoryManager.addItem(item));
-    }
+    // Inventory restore removed
     // Restore shard counts, happySprites, and dialogue stage
     if (sceneState.shardCounts) {
       this.shardCounts = { ...this.shardCounts, ...sceneState.shardCounts };
@@ -216,7 +212,7 @@ class ShardGardenScene extends Phaser.Scene {
   saveSceneState() {
     const state = {
       coins: coinManager.get ? coinManager.get() : 0,
-      inventory: inventoryManager.getItems ? inventoryManager.getItems() : [],
+      // inventory removed from save
       shardCounts: { ...this.shardCounts },
       happySprites: { ...this.happySprites },
       dialogueStage: this.dialogueStage,
@@ -269,8 +265,8 @@ class ShardGardenScene extends Phaser.Scene {
       { x: 420, y: 350 }  // Coin
     ];
     const bushCount = bushPositions.length;
-    const garlicIndex = 0;
-    const thymeIndex = 1;
+    const jasmineIndex = 0;
+    const marigoldIndex = 1;
 
     for (let i = 0; i < bushCount; i++) {
       const { x, y } = bushPositions[i];
@@ -288,20 +284,19 @@ class ShardGardenScene extends Phaser.Scene {
         this.dialogueActive = true;
         this.updateHUDState && this.updateHUDState();
 
-        // Garlic bush
-        if (i === garlicIndex && !this.garlicFound) {
-          const garlic = plantData.find(p => p.key === "periwinklePlant");
-          if (garlic) {
-            this.showPlantMinigame(garlic, "periwinkleFound");
+    
+        if (i === jasmineIndex && !this.jasmineFound) {
+          const jasmine = plantData.find(p => p.key === "jasminePlant");
+          if (jasmine) {
+            this.showPlantMinigame(jasmine, "jasmineFound");
           } else {
             this.showPlantMissing();
           }
         }
-        // Thyme bush
-        else if (i === thymeIndex && !this.thymeFound) {
-          const thyme = plantData.find(p => p.key === "marigoldPlant");
-          if (thyme) {
-            this.showPlantMinigame(thyme, "marigoldFound");
+        else if (i === marigoldIndex && !this.marigoldFound) {
+          const marigold = plantData.find(p => p.key === "marigoldPlant");
+          if (marigold) {
+            this.showPlantMinigame(marigold, "marigoldFound");
           } else {
             this.showPlantMissing();
           }
@@ -343,7 +338,6 @@ class ShardGardenScene extends Phaser.Scene {
 
                   const alreadyHas = inventoryManager.hasItemByKey && inventoryManager.hasItemByKey(plant.key);
                   if (!alreadyHas) {
-                    inventoryManager.addItem(plant);
                     addPlantToJournal(plant.key);
                     receivedItem(this, plant.key, plant.name);
                   }
