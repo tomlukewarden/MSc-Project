@@ -31,7 +31,7 @@ class GreenhouseScene extends Phaser.Scene {
         this.load.image('coin', '/assets/misc/coin.png');
         this.load.image("talk", "/assets/interact/talk.png");
         this.load.image("jasminePlant", "/assets/plants/jasmine.png");
-        this.load.image("autumnShard", "/assets/shards/autumn.png");
+        this.load.image("autumnShard", "/assets/items/autumn.png");
     }
 
     create() {
@@ -48,7 +48,9 @@ class GreenhouseScene extends Phaser.Scene {
 
       
         if (typeof window !== "undefined") {
-            window.inventoryManager = inventoryManager;
+            if (!window.inventoryManager) {
+                window.inventoryManager = inventoryManager;
+            }
         }
 
         const elephant = createElephant(this, width / 2 + 200, height / 2 + 100);
@@ -80,11 +82,21 @@ class GreenhouseScene extends Phaser.Scene {
         this.elephantDialogueActive = false;
         this.elephantDialogueIndex = 0;
 
-        this.hasJasmine = () => inventoryManager.hasItemByKey && inventoryManager.hasItemByKey("jasminePlant");
+        this.hasJasmine = () => {
+            const inv = window.inventoryManager;
+            if (!inv || !inv.getToolbarSlots) return false;
+            const slots = inv.getToolbarSlots();
+            return slots.some(item => item && item.key === "jasminePlant");
+        };
 
         elephant.on("pointerdown", () => {
+            // Debug: log inventory contents and keys
+            if (window.inventoryManager && window.inventoryManager.getItems) {
+                const items = window.inventoryManager.getItems();
+                console.log("Inventory items:", items.map(i => ({ key: i.key, name: i.name })));
+            }
+            // If intro not done, start intro dialogue
             if (!this.elephantIntroDone && !this.elephantDialogueActive) {
-                // Start intro dialogues
                 this.elephantDialogueActive = true;
                 this.elephantDialogueIndex = 0;
                 this.activeElephantDialogues = elephantIntroDialogues;
@@ -92,41 +104,26 @@ class GreenhouseScene extends Phaser.Scene {
                 this.updateHUDState && this.updateHUDState();
                 return;
             }
+            // If intro done, thanks not done, and has jasmine, move directly to thanks dialogue
             if (this.elephantIntroDone && !this.elephantThanksDone && this.hasJasmine()) {
-                showOption(this, "Give the elephant the Jasmine?", {
-                    imageKey: "elephant",
-                    options: [
-                        {
-                            label: "Yes",
-                            onSelect: () => {
-                                this.destroyDialogueUI();
-                                this.updateHUDState && this.updateHUDState();
-                                inventoryManager.removeItemByKey && inventoryManager.removeItemByKey("jasminePlant");
-                                this.elephantHasJasmine = true;
-                                showDialogue(this, "You hand the elephant the Jasmine...", { imageKey: "elephant" });
-                                this.time.delayedCall(800, () => {
-                                    this.destroyDialogueUI();
-                                    this.updateHUDState && this.updateHUDState();
-                                    this.elephantDialogueActive = true;
-                                    this.elephantDialogueIndex = 0;
-                                    this.activeElephantDialogues = elephantThanksDialogues;
-                                    showDialogue(this, this.activeElephantDialogues[this.elephantDialogueIndex], { imageKey: "elephant" });
-                                    this.updateHUDState && this.updateHUDState();
-                                });
-                            }
-                        },
-                        {
-                            label: "No",
-                            onSelect: () => {
-                                this.destroyDialogueUI();
-                                this.updateHUDState && this.updateHUDState();
-                                showDialogue(this, "You decide to hold off for now.", { imageKey: "elephant" });
-                            }
-                        }
-                    ]
+                // Remove jasmine from global inventory and start thanks dialogue
+                window.inventoryManager.removeItemByKey && window.inventoryManager.removeItemByKey("jasminePlant");
+                this.elephantHasJasmine = true;
+                this.destroyDialogueUI();
+                this.updateHUDState && this.updateHUDState();
+                showDialogue(this, "You hand the elephant the Jasmine...", { imageKey: "elephant" });
+                this.time.delayedCall(800, () => {
+                    this.destroyDialogueUI();
+                    this.updateHUDState && this.updateHUDState();
+                    this.elephantDialogueActive = true;
+                    this.elephantDialogueIndex = 0;
+                    this.activeElephantDialogues = elephantThanksDialogues;
+                    showDialogue(this, this.activeElephantDialogues[this.elephantDialogueIndex], { imageKey: "elephant" });
+                    this.updateHUDState && this.updateHUDState();
                 });
                 return;
             }
+            // If intro done, thanks not done, and no jasmine
             if (this.elephantIntroDone && !this.elephantThanksDone && !this.hasJasmine()) {
                 showDialogue(this, "Tia looks really stressed, maybe something soothing will help...", { imageKey: "elephant" });
                 this.time.delayedCall(1800, () => {
@@ -151,16 +148,12 @@ class GreenhouseScene extends Phaser.Scene {
                     }
                     if (this.elephantHasJasmine && this.activeElephantDialogues === elephantThanksDialogues) {
                         this.elephantThanksDone = true;
+                        // Give autumn shard after thanks dialogue
+                        receivedItem(this, "autumnShard", "Autumn Shard");
                     }
                     this.elephantDialogueActive = false;
                 }
                 return;
-            }
-            if (this.elephantThanksDone) {
-                receivedItem(this, "autumnShard", "Autumn Shard");
-                this.destroyDialogueUI();
-                this.dialogueActive = false;
-                this.updateHUDState && this.updateHUDState();
             }
             // Plant/coin dialogue advance
             if (this.dialogueActive && typeof this.dialogueOnComplete === "function") {

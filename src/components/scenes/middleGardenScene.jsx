@@ -219,7 +219,7 @@ class MiddleGardenScene extends Phaser.Scene {
         this.updateHUDState && this.updateHUDState();
         return;
       }
-      if (this.deerIntroDone && this.hasMarigold()) {
+      if (this.deerIntroDone && !this.deerThanksDone && this.hasMarigold()) {
         showOption(this, "Give the deer the Marigold?", {
           imageKey: "deer",
           options: [
@@ -254,15 +254,15 @@ class MiddleGardenScene extends Phaser.Scene {
         });
         return;
       }
-      // if (this.deerIntroDone && !this.deerThanksDone && !this.hasMarigold()) {
-      //   showDialogue(this, "The deer looks at you expectantly. Maybe you need to find something for them...", { imageKey: "deer" });
-      //   this.time.delayedCall(1800, () => {
-      //     this.destroyDialogueUI();
-      //     this.dialogueActive = false;
-      //     this.updateHUDState && this.updateHUDState();
-      //   });
-      //   return;
-      // }
+      if (this.deerIntroDone && !this.deerThanksDone && !this.hasMarigold()) {
+        showDialogue(this, "The deer looks at you expectantly. Maybe you need to find something for them...", { imageKey: "deer" });
+        this.time.delayedCall(1800, () => {
+          this.destroyDialogueUI();
+          this.dialogueActive = false;
+          this.updateHUDState && this.updateHUDState();
+        });
+        return;
+      }
     });
 
     // --- Bushes/Flowerbeds logic ---
@@ -366,8 +366,8 @@ class MiddleGardenScene extends Phaser.Scene {
       { x: 420, y: 350 }  
     ];
     const bushCount = bushPositions.length;
-    const garlicIndex = 0;
-    const thymeIndex = 1;
+    const jasmineIndex = 0;
+    const marigoldIndex = 1;
 
     for (let i = 0; i < bushCount; i++) {
       const { x, y } = bushPositions[i];
@@ -381,20 +381,20 @@ class MiddleGardenScene extends Phaser.Scene {
         this.dialogueActive = true;
         this.updateHUDState && this.updateHUDState();
 
-        // Garlic bush
-        if (i === garlicIndex && !this.garlicFound) {
-          const garlic = plantData.find(p => p.key === "garlicPlant");
-          if (garlic) {
-            this.showPlantMinigame(garlic, "garlicFound");
+        // Marigold bush
+        if (i === marigoldIndex && !this.marigoldFound) {
+          const marigold = plantData.find(p => p.key === "marigoldPlant");
+          if (marigold) {
+            this.showPlantMinigame(marigold, "marigoldFound");
           } else {
             this.showPlantMissing();
           }
         }
         // Thyme bush
-        else if (i === thymeIndex && !this.thymeFound) {
-          const thyme = plantData.find(p => p.key === "thymePlant");
-          if (thyme) {
-            this.showPlantMinigame(thyme, "thymeFound");
+        else if (i === jasmineIndex && !this.jasmineFound) {
+          const jasmine = plantData.find(p => p.key === "jasminePlant");
+          if (jasmine) {
+            this.showPlantMinigame(jasmine, "jasmineFound");
           } else {
             this.showPlantMissing();
           }
