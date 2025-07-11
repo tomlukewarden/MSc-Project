@@ -231,6 +231,7 @@ class MiddleGardenScene extends Phaser.Scene {
                 inventoryManager.removeItemByKey && inventoryManager.removeItemByKey("marigoldPlant");
                 this.deerHasMarigold = true;
                 showDialogue(this, "You hand the deer the Marigold...", { imageKey: "deer" });
+                deer.setTexture("deerHappy");
                 this.time.delayedCall(800, () => {
                   this.destroyDialogueUI();
                   this.updateHUDState && this.updateHUDState();
@@ -284,6 +285,8 @@ class MiddleGardenScene extends Phaser.Scene {
           }
           if (this.wolfHasPeriwinkle && this.activeWolfDialogues === wolfThanksDialogues) {
             this.wolfThanksDone = true;
+            // Automatically give summer shard after thanks dialogue
+            receivedItem(this, "summerShard", "Summer Shard");
           }
           this.wolfDialogueActive = false;
           this.updateHUDState && this.updateHUDState();
@@ -304,23 +307,13 @@ class MiddleGardenScene extends Phaser.Scene {
           }
           if (this.deerHasMarigold && this.activeDeerDialogues === deerThanksDialogues) {
             this.deerThanksDone = true;
+            // Automatically give winter shard after thanks dialogue
+            receivedItem(this, "winterShard", "Winter Shard");
           }
           this.deerDialogueActive = false;
           this.updateHUDState && this.updateHUDState();
         }
         return;
-      }
-      if (this.wolfThanksDone) {
-        receivedItem(this, "summerShard", "Summer Shard");
-        this.destroyDialogueUI();
-        this.dialogueActive = false;
-        this.updateHUDState && this.updateHUDState();
-      }
-      if (this.deerThanksDone) {
-        receivedItem(this, "winterShard", "Winter Shard");
-        this.destroyDialogueUI();
-        this.dialogueActive = false;
-        this.updateHUDState && this.updateHUDState();
       }
       // Plant/coin dialogue advance
       if (this.dialogueActive && typeof this.dialogueOnComplete === "function") {
