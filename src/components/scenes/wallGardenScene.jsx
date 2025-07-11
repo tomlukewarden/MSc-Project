@@ -49,6 +49,7 @@ class WallGardenScene extends Phaser.Scene {
     this.load.image('coin', '/assets/misc/coin.png');
     this.load.audio('click', '/assets/sound-effects/click.mp3');
     this.load.image('dialogueBoxBg', '/assets/ui-items/dialogue.png');
+    this.load.image('bush', '/assets/misc/bush.png')
     
   }
 
@@ -286,9 +287,9 @@ class WallGardenScene extends Phaser.Scene {
 
   setupBushes(width, height, periwinkleFound) {
     const bushPositions = [
-      { x: 180, y: 300 },
-      { x: 260, y: 400 },
-      { x: 340, y: 250 },
+      { x: 180, y: 400 },
+      { x: 260, y: 500 },
+      { x: 340, y: 450 },
       { x: 420, y: 350 }
     ];
     const bushCount = bushPositions.length;
@@ -298,13 +299,9 @@ class WallGardenScene extends Phaser.Scene {
 
     for (let i = 0; i < bushCount; i++) {
       const { x, y } = bushPositions[i];
-      const bushWidth = Phaser.Math.Between(40, 70);
-      const bushHeight = Phaser.Math.Between(30, 50);
-      const color = 0x3e7d3a;
-
-      const bush = this.add.rectangle(x, y, bushWidth, bushHeight, color, 0.85)
-        .setStrokeStyle(2, 0x245021)
-        .setDepth(12)
+      const bush = this.add.image(x, y, 'bush')
+        .setScale(1.8)
+        .setDepth(1)
         .setInteractive({ useHandCursor: true });
 
       bush.on("pointerdown", () => {
