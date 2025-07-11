@@ -10,19 +10,20 @@ export const butterflyPillarDialogues = [
   "These are the Season Pillars.",
   "They’re the heartbeat of our gardens, the very rhythm of the land.",
   "But they’re broken, missing pieces scattered far and wide.",
-  "That’s where you come in. With your help, we can find the shards and bring the gardens back to life."
+  "That’s where you come in.",
+  "With your help, we can find the shards and bring the gardens back to life."
 ];
 
 export const butterflyShardDialogues = [
   "There’s something else...",
-  ",Around the same time the shards vanished, the garden folk began to fall ill. ",
+  "Around the same time the shards vanished \n the garden folk began to fall ill. ",
   "I don’t believe it’s a coincidence.",
   "No... something connects these happenings.", 
-  "If we can restore the Pillars, I believe we can heal the people too...",
+  "If we can restore the Pillars, \n I believe we can heal the people too.",
   "How marvellous! You already have a shard!",
   "Go on, place it into one of the shard slots.",
-  "I had a feeling about you. You’re the one we’ve been waiting for.",
-  "Let’s begin with Spring. Its magic is delicate, the easiest to nudge back into balance."
+  "I had a feeling about you. \n You’re the one we’ve been waiting for.",
+  "Let’s begin with Spring. \n Its magic is delicate, the easiest to nudge back into balance."
 ];
 
 export const butterflyGoodbyeDialogues = [

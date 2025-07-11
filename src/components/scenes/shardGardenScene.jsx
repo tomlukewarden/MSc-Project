@@ -176,7 +176,9 @@ class ShardGardenScene extends Phaser.Scene {
       this.updateHUDState();
     });
 
+    // Play click sound on any pointerdown
     this.input.on("pointerdown", (pointer, currentlyOver) => {
+      this.sound.play("click");
       if (currentlyOver && currentlyOver.includes(butterfly)) return;
       if (!this.dialogueActive) return;
       if (this.dialogueBox?.optionButtons?.length > 0) return;
@@ -282,10 +284,10 @@ class ShardGardenScene extends Phaser.Scene {
         .setInteractive({ useHandCursor: true });
 
       bush.on("pointerdown", () => {
+        this.sound.play("click");
         if (this.dialogueActive) return;
         this.dialogueActive = true;
         this.updateHUDState && this.updateHUDState();
-
 
         if (i === garlicIndex && !this.garlicFound) {
           const garlic = plantData.find(p => p.key === "garlicPlant");

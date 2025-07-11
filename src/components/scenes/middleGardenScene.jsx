@@ -273,6 +273,7 @@ class MiddleGardenScene extends Phaser.Scene {
 
     // --- Dialogue advance on click ---
     this.input.on("pointerdown", () => {
+      this.sound.play("click");
       // Wolf dialogue advance
       if (this.wolfDialogueActive) {
         this.wolfDialogueIndex++;
@@ -376,6 +377,7 @@ class MiddleGardenScene extends Phaser.Scene {
         .setInteractive({ useHandCursor: true });
 
       bush.on("pointerdown", () => {
+        this.sound.play("click");
         if (this.dialogueActive) return;
         this.dialogueActive = true;
         this.updateHUDState && this.updateHUDState();

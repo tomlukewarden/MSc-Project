@@ -17,7 +17,7 @@ const coinManager = CoinManager.load();
 
 class WallGardenScene extends Phaser.Scene {
   constructor() {
-    super({ key: 'WallGardenScene', physics: { default: 'arcade', arcade: { debug: true } } });
+    super({ key: 'WallGardenScene', physics: { default: 'arcade', arcade: { debug: false } } });
     this.chestLogic = new ChestLogic();
     this.butterflyDialogueIndex = 0;
     this.butterflyDialogueActive = false;
@@ -351,6 +351,7 @@ class WallGardenScene extends Phaser.Scene {
     this.setupBushes(width, height, periwinkleFound);
 
     this.input.on("pointerdown", () => {
+      this.sound.play("click");
       // Only advance/close if a dialogue is active and a completion callback is set
       if (this.dialogueActive && typeof this.dialogueOnComplete === "function") {
         this.dialogueOnComplete();
@@ -431,6 +432,7 @@ class WallGardenScene extends Phaser.Scene {
         .setInteractive({ useHandCursor: true });
 
       bush.on("pointerdown", () => {
+        this.sound.play("click");
         if (this.dialogueActive) return;
         this.dialogueActive = true;
         this.updateHUDState();
