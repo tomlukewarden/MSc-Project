@@ -18,7 +18,7 @@ class ControlScene extends Phaser.Scene {
 
         Welcome and thank you for playing! Here are the controls to help you navigate the game:
 
-        We really hope you have fun!
+        We really hope you have fun! - Tom & Emma x
 
         WASD – Move
         E – Open Inventory
