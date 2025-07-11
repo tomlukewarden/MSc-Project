@@ -176,6 +176,7 @@ class MiddleGardenScene extends Phaser.Scene {
                 this.updateHUDState && this.updateHUDState();
                 inventoryManager.removeItemByKey && inventoryManager.removeItemByKey("periwinklePlant");
                 this.wolfHasPeriwinkle = true;
+                wolf.setTexture("wolfHappy");
                 showDialogue(this, "You hand the wolf the Periwinkle...", { imageKey: "wolf" });
                 this.time.delayedCall(800, () => {
                   this.destroyDialogueUI();
@@ -278,10 +279,11 @@ class MiddleGardenScene extends Phaser.Scene {
           showDialogue(this, this.activeWolfDialogues[this.wolfDialogueIndex], { imageKey: "wolf" });
         } else {
           this.destroyDialogueUI();
-          // If intro just finished, wake HUD
+          this.dialogueActive = false;
+          this.updateHUDState && this.updateHUDState();
+
           if (!this.wolfIntroDone && this.activeWolfDialogues === wolfIntroDialogues) {
             this.wolfIntroDone = true;
-            this.scene.wake("HUDScene");
           }
           if (this.wolfHasPeriwinkle && this.activeWolfDialogues === wolfThanksDialogues) {
             this.wolfThanksDone = true;
@@ -300,10 +302,11 @@ class MiddleGardenScene extends Phaser.Scene {
           showDialogue(this, this.activeDeerDialogues[this.deerDialogueIndex], { imageKey: "deer" });
         } else {
           this.destroyDialogueUI();
-          // If intro just finished, wake HUD
+          this.dialogueActive = false;
+          this.updateHUDState && this.updateHUDState();
+          
           if (!this.deerIntroDone && this.activeDeerDialogues === deerIntroDialogues) {
             this.deerIntroDone = true;
-            this.scene.wake("HUDScene");
           }
           if (this.deerHasMarigold && this.activeDeerDialogues === deerThanksDialogues) {
             this.deerThanksDone = true;
@@ -319,6 +322,8 @@ class MiddleGardenScene extends Phaser.Scene {
       if (this.dialogueActive && typeof this.dialogueOnComplete === "function") {
         this.dialogueOnComplete();
       }
+      // Always update HUD after any dialogue completes
+      this.updateHUDState && this.updateHUDState();
     });
 
     // --- PERIODIC SAVE TO LOCAL STORAGE ---
