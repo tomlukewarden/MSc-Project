@@ -265,10 +265,10 @@ class WallGardenScene extends Phaser.Scene {
 
   setupChest(width, height) {
     const chestItemsArray = [
-      { name: "Foxglove", color: 0xd9ae7e, key: "foxglovePlant" },
       { name: "Spring Shard", color: 0x88cc88, key: "springShard" },
-      { name: "Spring Shard", color: 0x88cc88, key: "springShard" },
-      { name: "Spring Shard", color: 0x88cc88, key: "springShard" }
+      {name: "Summer Shard", color: 0x88cc88, key: "summerShard"},
+      {name: "Autumn Shard", color: 0x88cc88, key: "autumnShard"},
+      {name: "Winter Shard", color: 0x88cc88, key: "winterShard"},
     ];
     const chest = this.add.image(width / 2 + 200, height / 2 - 40, 'chestClosed')
       .setScale(2)

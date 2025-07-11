@@ -52,7 +52,6 @@ class MapScene extends Phaser.Scene {
         .on("pointerover", () => btn.setStyle({ backgroundColor: "#c7f4c9" }))
         .on("pointerout", () => btn.setStyle({ backgroundColor: "#a9d7aa" }))
         .on("pointerdown", () => {
-          clickSound.play();
           this.scene.stop("MapScene");
           this.scene.start(loc.scene);
         });
