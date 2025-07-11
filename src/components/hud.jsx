@@ -18,7 +18,7 @@ class HUDScene extends Phaser.Scene {
     }
 
     create() {
-        // HUD icon settings for top row
+
         const { width, height } = this.scale;
 
         const iconKeys = [
@@ -31,7 +31,6 @@ class HUDScene extends Phaser.Scene {
         const iconScale = 0.045;
         const iconY = 56;
 
-        // Center the top icons
         const topIconsTotalWidth = iconSpacing * (iconKeys.length - 1);
 
         // Store references to the created icons
@@ -42,6 +41,20 @@ class HUDScene extends Phaser.Scene {
                 .setOrigin(0.5)
                 .setScale(iconScale)
                 .setInteractive({ useHandCursor: true });
+        });
+        // Add map text in top left corner (no button)
+        const mapTextX = 56;
+        const mapTextY = 32;
+        const mapText = this.add.text(mapTextX, mapTextY, "MAP", {
+            font: "bold 16px Arial",
+            color: "#fff",
+            align: "center",
+            backgroundColor: "rgba(0,0,0,0.3)",
+            padding: { left: 8, right: 8, top: 4, bottom: 4 }
+        }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+        mapText.on("pointerdown", () => {
+            this.scene.launch("MapScene");
+            this.scene.bringToTop("MapScene");
         });
 
         icons["journalIcon"].on("pointerdown", () => {
