@@ -58,22 +58,35 @@ class OpenJournal extends Phaser.Scene {
     this.renderPlantPage();
 
     // Next/Prev buttons
+    // Add background rectangles for better hit area
+    this.nextBtnBg = this.add.rectangle(width / 2 + 120, height - 60, 110, 40, 0xe0cda9, 0.8)
+      .setOrigin(0.5)
+      .setInteractive({ useHandCursor: true });
     this.nextBtn = this.add.text(width / 2 + 120, height - 60, "Next ▶", {
       fontFamily: "Georgia",
       fontSize: "22px",
       color: "#3e2f1c",
       backgroundColor: "#e0cda9",
       padding: { left: 12, right: 12, top: 6, bottom: 6 }
-    }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+    }).setOrigin(0.5);
 
+    this.prevBtnBg = this.add.rectangle(width / 2 - 120, height - 60, 110, 40, 0xe0cda9, 0.8)
+      .setOrigin(0.5)
+      .setInteractive({ useHandCursor: true });
     this.prevBtn = this.add.text(width / 2 - 120, height - 60, "◀ Prev", {
       fontFamily: "Georgia",
       fontSize: "22px",
       color: "#3e2f1c",
       backgroundColor: "#e0cda9",
       padding: { left: 12, right: 12, top: 6, bottom: 6 }
-    }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+    }).setOrigin(0.5);
 
+    this.nextBtnBg.on("pointerdown", () => {
+      if (this.currentPage < this.collectedPlants.length - 1) {
+        this.currentPage++;
+        this.renderPlantPage();
+      }
+    });
     this.nextBtn.on("pointerdown", () => {
       if (this.currentPage < this.collectedPlants.length - 1) {
         this.currentPage++;
@@ -81,6 +94,12 @@ class OpenJournal extends Phaser.Scene {
       }
     });
 
+    this.prevBtnBg.on("pointerdown", () => {
+      if (this.currentPage > 0) {
+        this.currentPage--;
+        this.renderPlantPage();
+      }
+    });
     this.prevBtn.on("pointerdown", () => {
       if (this.currentPage > 0) {
         this.currentPage--;
