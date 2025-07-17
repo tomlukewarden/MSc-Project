@@ -53,6 +53,49 @@ class WeeCairScene extends Phaser.Scene {
   }
 
   create() {
+    // --- Crafting Button ---
+    const craftBtnX = 120;
+    const craftBtnY = 80;
+    const craftBtnWidth = 140;
+    const craftBtnHeight = 48;
+    const craftBtnBg = this.add.rectangle(craftBtnX, craftBtnY, craftBtnWidth, craftBtnHeight, 0x3e7d3a, 0.95)
+      .setOrigin(0.5)
+      .setDepth(100)
+      .setInteractive({ useHandCursor: true });
+    const craftBtnText = this.add.text(craftBtnX, craftBtnY, 'Craft', {
+      fontFamily: 'Georgia',
+      fontSize: '26px',
+      color: '#fff',
+      align: 'center',
+      shadow: {
+        offsetX: 0,
+        offsetY: 0,
+        color: '#4caf50',
+        blur: 8,
+        fill: true
+      }
+    }).setOrigin(0.5).setDepth(101);
+
+    craftBtnBg.on('pointerover', () => {
+      craftBtnBg.setFillStyle(0x4caf50, 0.98);
+      craftBtnText.setColor('#ffffcc');
+    });
+    craftBtnBg.on('pointerout', () => {
+      craftBtnBg.setFillStyle(0x3e7d3a, 0.95);
+      craftBtnText.setColor('#fff');
+    });
+    craftBtnBg.on('pointerdown', () => {
+      this.scene.launch('CraftUI', {
+        inventory: inventoryManager.getItems ? inventoryManager.getItems() : [],
+        // Optionally pass recipes here
+      });
+      this.scene.pause();
+    });
+
+    craftBtnText.setInteractive({ useHandCursor: true });
+    craftBtnText.on('pointerdown', () => {
+      craftBtnBg.emit('pointerdown');
+    });
     this.scene.launch("ControlScene");
     // --- Launch HUD ---
     this.scene.launch("HUDScene");
