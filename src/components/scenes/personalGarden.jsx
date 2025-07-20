@@ -1,5 +1,6 @@
 import { Plot } from "../farmingLogic";
 import { createMainChar } from "../../characters/mainChar";
+import { showDialogue, showOption } from "../../dialogue/dialogueUIHelpers";
 
 class PersonalGarden extends Phaser.Scene {
   constructor() {
@@ -22,6 +23,7 @@ class PersonalGarden extends Phaser.Scene {
     this.load.image("defaultRight", "/assets/char/default/right-default.png");
     this.load.image("hoe", "/assets/tools/hoe.png");
     this.load.image("wateringCan", "/assets/tools/wateringCan.png");
+    this.load.image("sign", "/assets/misc/sign.png")
   }
 
   create() {
@@ -116,6 +118,34 @@ class PersonalGarden extends Phaser.Scene {
         }
       }
     }
+
+    const signX = 80;
+    const signY = height - 80;
+    const sign = this.add.image(signX, signY, "sign")
+      .setScale(1.5)
+      .setDepth(20)
+      .setInteractive({ useHandCursor: true });
+
+    sign.on("pointerdown", () => {
+      showOption(this, "Would you like to go to the shop?", {
+        imageKey: "sign",
+        options: [
+          {
+            text: "Yes",
+            callback: () => {
+              if (this.destroyDialogueUI) this.destroyDialogueUI();
+              this.scene.start("ShopScene");
+            }
+          },
+          {
+            text: "No",
+            callback: () => {
+              if (this.destroyDialogueUI) this.destroyDialogueUI();
+            }
+          }
+        ]
+      });
+    });
   }
 
   useToolOnPlot(plot) {
