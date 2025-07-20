@@ -1,6 +1,7 @@
 import { Plot } from "../farmingLogic";
 import { createMainChar } from "../../characters/mainChar";
 import { showDialogue, showOption } from "../../dialogue/dialogueUIHelpers";
+import globalTimeManager from "../../day/timeManager";
 
 class PersonalGarden extends Phaser.Scene {
   constructor() {
@@ -27,6 +28,10 @@ class PersonalGarden extends Phaser.Scene {
   }
 
   create() {
+      globalTimeManager.init(this);
+  if (!globalTimeManager.startTimestamp) {
+    globalTimeManager.start();
+  }
     const { width, height } = this.sys.game.config;
     // --- Launch HUD ---
     this.scene.launch("HUDScene");

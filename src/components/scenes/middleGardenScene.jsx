@@ -8,6 +8,8 @@ import { saveToLocal, loadFromLocal } from "../../utils/localStorage";
 import { showDialogue, showOption } from "../../dialogue/dialogueUIHelpers";
 import { createWolf, wolfIntroDialogues, wolfThanksDialogues } from "../../characters/wolf";
 import {createDeer, deerIntroDialogues, deerThanksDialogues} from "../../characters/deer";
+import globalTimeManager from "../../day/timeManager";
+
 
 
 const coinManager = CoinManager.load();
@@ -51,6 +53,10 @@ class MiddleGardenScene extends Phaser.Scene {
   }
 
   create() {
+      globalTimeManager.init(this);
+  if (!globalTimeManager.startTimestamp) {
+    globalTimeManager.start();
+  }
     if (typeof window !== "undefined") {
     window.inventoryManager = inventoryManager;
 }

@@ -8,6 +8,7 @@ import {shardLogic} from "../shardLogic";
 import { inventoryManager } from "../openInventory";
 import { addPlantToJournal } from "../journalManager";
 import { receivedItem } from "../recievedItem";
+import globalTimeManager from "../../day/timeManager";
 
 const coinManager = CoinManager.load();
 
@@ -65,6 +66,10 @@ class ShardGardenScene extends Phaser.Scene {
   }
 
   create() {
+      globalTimeManager.init(this);
+  if (!globalTimeManager.startTimestamp) {
+    globalTimeManager.start();
+  }
     if (typeof window !== "undefined") {
     window.inventoryManager = inventoryManager;
 }

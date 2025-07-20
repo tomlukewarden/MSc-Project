@@ -7,6 +7,7 @@ import { saveToLocal, loadFromLocal } from "../../utils/localStorage";
 import { createMainChar } from "../../characters/mainChar";
 import { inventoryManager } from "../inventoryManager";
 import { receivedItem } from "../recievedItem";
+import globalTimeManager from "../../day/timeManager";
 
 const coinManager = CoinManager.load();
 
@@ -36,6 +37,10 @@ class GreenhouseScene extends Phaser.Scene {
     }
 
     create() {
+          globalTimeManager.init(this);
+  if (!globalTimeManager.startTimestamp) {
+    globalTimeManager.start();
+  }
         this.scene.stop("OpenJournal");
         this.scene.stop("WeeCairScene");
         this.scene.stop("StartScene");

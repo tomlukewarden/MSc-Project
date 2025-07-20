@@ -1,4 +1,4 @@
-// DayCycle manager for Phaser scenes
+
 class DayCycle {
   constructor(scene) {
     this.scene = scene;
@@ -14,7 +14,6 @@ class DayCycle {
     }
     const { width, height } = this.scene.sys.game.config;
     if (time === 'midday') {
-      // No overlay
       return;
     }
     if (time === 'evening') {
