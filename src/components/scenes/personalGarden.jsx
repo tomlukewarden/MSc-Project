@@ -7,17 +7,30 @@ class PersonalGarden extends Phaser.Scene {
     this.rows = 3;
     this.cols = 5;
     this.plots = [];
-    this.currentTool = "hoe"; 
+    this.currentTool = "hoe";
+    this.inventory = {
+      tools: ['hoe', 'wateringCan', 'harvestGlove'],
+      seeds: ['carrotSeed', 'thymeSeed', 'garlicSeed'],
+      items: [] // harvested items
+    };
   }
 
   create() {
     const { width, height } = this.sys.game.config;
+    // --- Launch HUD ---
+    this.scene.launch("HUDScene");
+    this.scene.bringToTop("HUDScene");
+
+    // --- Add main character ---
+    if (this.createMainChar) {
+      this.mainChar = this.createMainChar(this, width / 2, height - 100, 0.18);
+    } else {
+      this.mainChar = this.add.circle(width / 2, height - 100, 24, 0x2196f3).setDepth(10);
+    }
+
+    // --- Create grid of plots ---
     const startX = width / 2 - (this.cols / 2) * this.plotSize;
     const startY = height / 2 - (this.rows / 2) * this.plotSize;
-
-    // Add tool buttons for switching
-    this.createToolButtons();
-
     for (let y = 0; y < this.rows; y++) {
       for (let x = 0; x < this.cols; x++) {
         const px = startX + x * this.plotSize;
@@ -50,21 +63,22 @@ class PersonalGarden extends Phaser.Scene {
   }
 
   useToolOnPlot(plot) {
-    switch (this.currentTool) {
-      case 'hoe':
-        return plot.prepare();
-      case 'seeds':
-        return plot.plant('seed');
-      case 'water':
-        return plot.water();
-      case 'harvest':
-        return plot.harvest();
-      case 'reset':
-        plot.reset();
-        return { success: true, message: 'Plot reset.' };
-      default:
-        return { success: false, message: 'Unknown tool.' };
+    // Only handle via inventory
+    // Tool logic uses inventory
+    if (this.currentTool === 'hoe' && this.inventory.tools.includes('hoe')) {
+      return plot.prepare();
     }
+    if (this.currentTool === 'wateringCan' && this.inventory.tools.includes('wateringCan')) {
+      return plot.water();
+    }
+    if (this.currentTool === 'harvestGlove' && this.inventory.tools.includes('harvestGlove')) {
+      const result = plot.harvest();
+      if (result.success && result.item) {
+        this.inventory.items.push(result.item);
+      }
+      return result;
+    }
+    return { success: false, message: 'Unknown tool or missing from inventory.' };
   }
 
   updatePlotText(text, plot) {
@@ -94,7 +108,7 @@ class PersonalGarden extends Phaser.Scene {
   }
 
   createToolButtons() {
-    const tools = ['hoe', 'seeds', 'water', 'harvest', 'reset'];
+    const tools = ['hoe', 'wateringCan', 'harvestGlove'];
     tools.forEach((tool, i) => {
       const btn = this.add.text(20, 20 + i * 30, tool.toUpperCase(), {
         fontSize: '16px',
