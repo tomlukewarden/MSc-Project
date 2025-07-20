@@ -17,6 +17,7 @@ class PersonalGarden extends Phaser.Scene {
       items: []
     };
   }
+
   preload() {
     this.load.image("defaultFront", "/assets/char/default/front-default.png");
     this.load.image("defaultBack", "/assets/char/default/back-default.png");
@@ -24,44 +25,56 @@ class PersonalGarden extends Phaser.Scene {
     this.load.image("defaultRight", "/assets/char/default/right-default.png");
     this.load.image("hoe", "/assets/tools/hoe.png");
     this.load.image("wateringCan", "/assets/tools/wateringCan.png");
-    this.load.image("sign", "/assets/misc/sign.png")
+    this.load.image("sign", "/assets/misc/sign.png");
   }
 
   create() {
-      globalTimeManager.init(this);
-  if (!globalTimeManager.startTimestamp) {
-    globalTimeManager.start();
-  }
+    globalTimeManager.init(this);
+    if (!globalTimeManager.startTimestamp) {
+      globalTimeManager.start();
+    }
+
     const { width, height } = this.sys.game.config;
-    // --- Launch HUD ---
     this.scene.launch("HUDScene");
     this.scene.bringToTop("HUDScene");
 
-    // --- Create collision groups ---
+    const sceneState = window.localStorage.getItem('personalGardenSceneState');
+    let loadedState = null;
+    if (sceneState) {
+      try {
+        loadedState = JSON.parse(sceneState);
+      } catch (e) {
+        loadedState = null;
+      }
+    }
+
     if (this.physics && this.physics.add) {
       this.plotGroup = this.physics.add.staticGroup();
       this.charGroup = this.physics.add.group();
 
-      // --- Add main character ---
       this.mainChar = createMainChar(this, width / 2, height / 2, 0.18, this.charGroup);
-      this.mainChar.setDepth(1).setOrigin(0.5, 0.5);
+      this.mainChar.setDepth(1).setOrigin(0.5);
       this.charGroup.add(this.mainChar);
 
-      // --- Create grid of plots ---
       const startX = width / 2 - (this.cols / 2) * this.plotSize;
       const startY = height / 2 - (this.rows / 2) * this.plotSize;
+
       for (let y = 0; y < this.rows; y++) {
         for (let x = 0; x < this.cols; x++) {
           const px = startX + x * this.plotSize;
           const py = startY + y * this.plotSize;
 
           const plot = new Plot();
-          // Create a physics-enabled static rectangle for collision
+          if (loadedState?.plots?.[y * this.cols + x]) {
+            Object.assign(plot, loadedState.plots[y * this.cols + x]);
+          }
+
           const rect = this.add.rectangle(px, py, this.plotSize - 4, this.plotSize - 4, 0x8bc34a, 0.85)
             .setStrokeStyle(2, 0x4caf50)
             .setOrigin(0.5)
             .setInteractive({ useHandCursor: true });
-          this.physics.add.existing(rect, true); // true = static body
+
+          this.physics.add.existing(rect, true);
           this.plotGroup.add(rect);
 
           const text = this.add.text(px, py, '', {
@@ -76,6 +89,7 @@ class PersonalGarden extends Phaser.Scene {
             if (result.message) console.log(result.message);
             this.updatePlotText(text, plot);
             this.updatePlotColor(rect, plot);
+            this.saveSceneState();
           });
 
           this.plots.push({ plot, rect, text });
@@ -83,22 +97,25 @@ class PersonalGarden extends Phaser.Scene {
         }
       }
 
-      // --- Enable collision between main character and plots ---
       this.physics.add.collider(this.charGroup, this.plotGroup);
     } else {
-      // Fallback: no physics available
+      // fallback if physics isn't available
       this.mainChar = createMainChar(this, width / 2, height / 2, 0.18);
-      this.mainChar.setDepth(1).setOrigin(0.5, 0.5);
+      this.mainChar.setDepth(1).setOrigin(0.5);
 
-      // --- Create grid of plots ---
       const startX = width / 2 - (this.cols / 2) * this.plotSize;
       const startY = height / 2 - (this.rows / 2) * this.plotSize;
+
       for (let y = 0; y < this.rows; y++) {
         for (let x = 0; x < this.cols; x++) {
           const px = startX + x * this.plotSize;
           const py = startY + y * this.plotSize;
 
           const plot = new Plot();
+          if (loadedState?.plots?.[y * this.cols + x]) {
+            Object.assign(plot, loadedState.plots[y * this.cols + x]);
+          }
+
           const rect = this.add.rectangle(px, py, this.plotSize - 4, this.plotSize - 4, 0x8bc34a, 0.85)
             .setStrokeStyle(2, 0x4caf50)
             .setOrigin(0.5)
@@ -116,6 +133,7 @@ class PersonalGarden extends Phaser.Scene {
             if (result.message) console.log(result.message);
             this.updatePlotText(text, plot);
             this.updatePlotColor(rect, plot);
+            this.saveSceneState();
           });
 
           this.plots.push({ plot, rect, text });
@@ -124,6 +142,14 @@ class PersonalGarden extends Phaser.Scene {
       }
     }
 
+    // Restore inventory, tool, and time
+    if (loadedState?.inventory) this.inventory = loadedState.inventory;
+    if (loadedState?.currentTool) this.currentTool = loadedState.currentTool;
+    if (loadedState?.timeOfDay) {
+      globalTimeManager.dayCycle.setTimeOfDay(loadedState.timeOfDay);
+    }
+
+    // Sign to enter shop
     const signX = 80;
     const signY = height - 80;
     const sign = this.add.image(signX, signY, "sign")
@@ -151,6 +177,32 @@ class PersonalGarden extends Phaser.Scene {
         ]
       });
     });
+
+    this.createToolButtons();
+
+    this._saveInterval = setInterval(() => {
+      this.saveSceneState();
+    }, 8000);
+
+    this.events.on('shutdown', () => {
+      this.saveSceneState();
+      clearInterval(this._saveInterval);
+    });
+
+    this.events.on('destroy', () => {
+      this.saveSceneState();
+      clearInterval(this._saveInterval);
+    });
+  }
+
+  saveSceneState() {
+    const state = {
+      plots: this.plots.map(({ plot }) => ({ ...plot })),
+      inventory: this.inventory,
+      currentTool: this.currentTool,
+      timeOfDay: globalTimeManager.getCurrentTimeOfDay()
+    };
+    window.localStorage.setItem('personalGardenSceneState', JSON.stringify(state));
   }
 
   useToolOnPlot(plot) {
@@ -188,10 +240,10 @@ class PersonalGarden extends Phaser.Scene {
         rect.setFillStyle(0x33691e, 0.9);
         break;
       case 'grown':
-        rect.setFillStyle(0x4caf50, 0.9); 
+        rect.setFillStyle(0x4caf50, 0.9);
         break;
       case 'harvested':
-        rect.setFillStyle(0x9e9e9e, 0.8); 
+        rect.setFillStyle(0x9e9e9e, 0.8);
         break;
     }
   }
@@ -216,12 +268,15 @@ class PersonalGarden extends Phaser.Scene {
   }
 
   highlightSelectedTool(tools, selectedIndex) {
-    this.children.list.forEach((child, i) => {
-      if (child.style && tools.includes(child.text.toLowerCase())) {
-        child.setStyle({
-          backgroundColor: i - 1 === selectedIndex ? '#4caf50' : '#333'
-        });
-      }
+    tools.forEach((tool, i) => {
+      const label = tool.toUpperCase();
+      this.children.list.forEach(child => {
+        if (child.text === label) {
+          child.setStyle({
+            backgroundColor: i === selectedIndex ? '#4caf50' : '#333'
+          });
+        }
+      });
     });
   }
 }

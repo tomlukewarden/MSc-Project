@@ -65,22 +65,6 @@ class MiddleGardenScene extends Phaser.Scene {
     const { width, height } = this.sys.game.config;
     const scaleFactor = 0.175;
 
-  //  // --- LOAD STATE FROM LOCAL STORAGE ---
-  //   const sceneState = loadFromLocal('middleGardenSceneState') || {};
-  //   // Restore coins if present
-  //   if (sceneState.coins !== undefined) {
-  //     coinManager.set(sceneState.coins);
-  //   }
-  //   if (sceneState.inventory && Array.isArray(sceneState.inventory)) {
-  //     inventoryManager.clear();
-  //     sceneState.inventory.forEach(item => inventoryManager.addItem(item));
-  //   }
-  //   this.garlicFound = !!sceneState.garlicFound;
-  //   this.thymeFound = !!sceneState.thymeFound;
-  //   this.wolfIntroDone = !!sceneState.wolfIntroDone;
-  //   this.wolfThanksDone = !!sceneState.wolfThanksDone;
-  //   this.wolfHasPeriwinkle = !!sceneState.wolfHasPeriwinkle;
-
     // Background
     this.add.image(width / 2, height / 2, 'finalGardenBackground').setScale(scaleFactor).setDepth(0);
     // Folliage
@@ -105,16 +89,16 @@ class MiddleGardenScene extends Phaser.Scene {
 
 
     // --- Wolf NPC ---
-    const wolf = createWolf(this, width / 2 + 200, height / 2 + 100);
-    wolf
+    this.wolf = createWolf(this, width / 2 + 200, height / 2 + 100);
+    this.wolf
       .setInteractive({ useHandCursor: true })
       .setDepth(10)
       .setScale(0.15)
       .setOrigin(0.5, 0.9);
 
     // --- Deer NPC ---
-    const deer = createDeer(this, width / 2 - 200, height / 2 + 100);
-    deer
+    this.deer = createDeer(this, width / 2 - 200, height / 2 + 100);
+    this.deer
       .setInteractive({ useHandCursor: true })
       .setDepth(1)
       .setScale(0.15)
@@ -129,26 +113,26 @@ class MiddleGardenScene extends Phaser.Scene {
       .setOrigin(0.5);
 
     // Wolf talk icon events
-    wolf.on("pointerover", (pointer) => {
+    this.wolf.on("pointerover", (pointer) => {
       talkIcon.setVisible(true);
       talkIcon.setPosition(pointer.worldX + 32, pointer.worldY);
     });
-    wolf.on("pointermove", (pointer) => {
+    this.wolf.on("pointermove", (pointer) => {
       talkIcon.setPosition(pointer.worldX + 32, pointer.worldY);
     });
-    wolf.on("pointerout", () => {
+    this.wolf.on("pointerout", () => {
       talkIcon.setVisible(false);
     });
 
     // Deer talk icon events
-    deer.on("pointerover", (pointer) => {
+    this.deer.on("pointerover", (pointer) => {
       talkIcon.setVisible(true);
       talkIcon.setPosition(pointer.worldX + 32, pointer.worldY);
     });
-    deer.on("pointermove", (pointer) => {
+    this.deer.on("pointermove", (pointer) => {
       talkIcon.setPosition(pointer.worldX + 32, pointer.worldY);
     });
-    deer.on("pointerout", () => {
+    this.deer.on("pointerout", () => {
       talkIcon.setVisible(false);
     });
 
@@ -163,7 +147,7 @@ class MiddleGardenScene extends Phaser.Scene {
     this.hasMarigold = () => inventoryManager.hasItemByKey && inventoryManager.hasItemByKey("marigoldPlant");
 
     // Wolf click handler
-    wolf.on("pointerdown", () => {
+    this.wolf.on("pointerdown", () => {
       if (!this.wolfIntroDone && !this.wolfDialogueActive) {
         this.wolfDialogueActive = true;
         this.wolfDialogueIndex = 0;
@@ -183,7 +167,7 @@ class MiddleGardenScene extends Phaser.Scene {
                 this.updateHUDState && this.updateHUDState();
                 inventoryManager.removeItemByKey && inventoryManager.removeItemByKey("periwinklePlant");
                 this.wolfHasPeriwinkle = true;
-                wolf.setTexture("wolfHappy");
+                this.wolf.setTexture("wolfHappy");
                 showDialogue(this, "You hand the wolf the Periwinkle...", { imageKey: "wolf" });
                 this.time.delayedCall(800, () => {
                   this.destroyDialogueUI();
@@ -218,7 +202,7 @@ class MiddleGardenScene extends Phaser.Scene {
         return;
       }
     });
-    deer.on("pointerdown", () => {
+    this.deer.on("pointerdown", () => {
       if (!this.deerIntroDone && !this.deerDialogueActive) {
         this.deerDialogueActive = true;
         this.deerDialogueIndex = 0;
@@ -239,7 +223,7 @@ class MiddleGardenScene extends Phaser.Scene {
                 inventoryManager.removeItemByKey && inventoryManager.removeItemByKey("marigoldPlant");
                 this.deerHasMarigold = true;
                 showDialogue(this, "You hand the deer the Marigold...", { imageKey: "deer" });
-                deer.setTexture("deerHappy");
+                this.deer.setTexture("deerHappy");
                 this.time.delayedCall(800, () => {
                   this.destroyDialogueUI();
                   this.updateHUDState && this.updateHUDState();
@@ -348,19 +332,19 @@ class MiddleGardenScene extends Phaser.Scene {
       this.saveSceneState();
       clearInterval(this._saveInterval);
     });
-  }
 
-  saveSceneState() {
-    const state = {
-      coins: coinManager.get ? coinManager.get() : 0,
-      inventory: inventoryManager.getItems ? inventoryManager.getItems() : [],
-      garlicFound: !!this.garlicFound,
-      thymeFound: !!this.thymeFound,
-      wolfIntroDone: !!this.wolfIntroDone,
-      wolfThanksDone: !!this.wolfThanksDone,
-      wolfHasPeriwinkle: !!this.wolfHasPeriwinkle
-    };
-    saveToLocal('middleGardenSceneState', state);
+    // --- LOAD SCENE STATE FROM LOCAL STORAGE ---
+    const sceneState = loadFromLocal('middleGardenSceneState');
+if (sceneState) {
+  // Restore flags, inventory, coins, etc.
+  this.wolfThanksDone = !!sceneState.wolfThanksDone;
+  this.deerHasMarigold = !!sceneState.deerHasMarigold;
+  // Restore NPC textures
+  if (sceneState.wolfTexture && this.wolf) this.wolf.setTexture(sceneState.wolfTexture);
+  if (sceneState.deerTexture && this.deer) this.deer.setTexture(sceneState.deerTexture);
+  // Restore time of day
+  if (sceneState.timeOfDay) globalTimeManager.dayCycle.setTimeOfDay(sceneState.timeOfDay);
+}
   }
 
   setupBushes(width, height) {
@@ -520,6 +504,25 @@ class MiddleGardenScene extends Phaser.Scene {
       this.scene.wake("HUDScene");
     }
   }
+
+  saveSceneState() {
+  const state = {
+    coins: coinManager.get ? coinManager.get() : 0,
+    inventory: inventoryManager.getItems ? inventoryManager.getItems() : [],
+    garlicFound: !!this.garlicFound,
+    thymeFound: !!this.thymeFound,
+    wolfIntroDone: !!this.wolfIntroDone,
+    wolfThanksDone: !!this.wolfThanksDone,
+    wolfHasPeriwinkle: !!this.wolfHasPeriwinkle,
+    deerIntroDone: !!this.deerIntroDone,
+    deerThanksDone: !!this.deerThanksDone,
+    deerHasMarigold: !!this.deerHasMarigold,
+    wolfTexture: this.wolf ? this.wolf.texture.key : null,
+    deerTexture: this.deer ? this.deer.texture.key : null,
+    timeOfDay: globalTimeManager.getCurrentTimeOfDay()
+  };
+  saveToLocal('middleGardenSceneState', state);
+}
 
   destroyDialogueUI() {
     if (this.dialogueBox) {

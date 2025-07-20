@@ -159,6 +159,10 @@ class WallGardenScene extends Phaser.Scene {
     this.butterflyDialogueIndex = sceneState.butterflyDialogueIndex || 0;
     this.butterflyDialogueActive = !!sceneState.butterflyDialogueActive;
     this.dialogueActive = !!sceneState.dialogueActive;
+    // Restore time of day
+    if (sceneState.timeOfDay) {
+      globalTimeManager.dayCycle.setTimeOfDay(sceneState.timeOfDay);
+    }
 
     // --- Restore dialogue UI if needed ---
     // Only restore if dialogue was active when leaving
@@ -456,7 +460,8 @@ class WallGardenScene extends Phaser.Scene {
       periwinkleFound: !!periwinkleFound,
       butterflyDialogueIndex: this.butterflyDialogueIndex,
       butterflyDialogueActive: !!this.butterflyDialogueActive,
-      dialogueActive: !!this.dialogueActive
+      dialogueActive: !!this.dialogueActive,
+      timeOfDay: globalTimeManager.getCurrentTimeOfDay()
     };
     saveToLocal('wallGardenSceneState', state);
   }

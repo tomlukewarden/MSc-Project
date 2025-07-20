@@ -37,10 +37,26 @@ class GreenhouseScene extends Phaser.Scene {
     }
 
     create() {
-          globalTimeManager.init(this);
-  if (!globalTimeManager.startTimestamp) {
-    globalTimeManager.start();
-  }
+        globalTimeManager.init(this);
+        if (!globalTimeManager.startTimestamp) {
+            globalTimeManager.start();
+        }
+        // --- LOAD STATE FROM LOCAL STORAGE ---
+        const sceneState = loadFromLocal('greenhouseSceneState') || {};
+        // Restore coins if present
+        if (sceneState.coins !== undefined) {
+            coinManager.set(sceneState.coins);
+        }
+        // Restore inventory
+        if (sceneState.inventory) {
+            if (window.inventoryManager && window.inventoryManager.setItems) {
+                window.inventoryManager.setItems(sceneState.inventory);
+            }
+        }
+        // Restore time of day
+        if (sceneState.timeOfDay) {
+            globalTimeManager.dayCycle.setTimeOfDay(sceneState.timeOfDay);
+        }
         this.scene.stop("OpenJournal");
         this.scene.stop("WeeCairScene");
         this.scene.stop("StartScene");
@@ -218,10 +234,11 @@ class GreenhouseScene extends Phaser.Scene {
 
     // Save relevant state to localStorage
     saveSceneState() {
-        // Save coins and inventory (customize as needed)
+        // Save coins, inventory, and time of day
         const state = {
             coins: coinManager.get ? coinManager.get() : 0,
             inventory: (window.inventoryManager && window.inventoryManager.getItems) ? window.inventoryManager.getItems() : [],
+            timeOfDay: globalTimeManager.getCurrentTimeOfDay()
         };
         saveToLocal('greenhouseSceneState', state);
     }
