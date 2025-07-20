@@ -59,6 +59,77 @@ class WallGardenScene extends Phaser.Scene {
   }
 
   create() {
+
+    const craftBtnX = 120;
+    const craftBtnY = 80;
+    const craftBtnWidth = 140;
+    const craftBtnHeight = 48;
+    const craftBtnBg = this.add.rectangle(craftBtnX, craftBtnY, craftBtnWidth, craftBtnHeight, 0x3e7d3a, 0.95)
+      .setOrigin(0.5)
+      .setDepth(100)
+      .setInteractive({ useHandCursor: true });
+    const craftBtnText = this.add.text(craftBtnX, craftBtnY, '🛠️ Craft', {
+      fontFamily: 'Georgia',
+      fontSize: '26px',
+      color: '#fff',
+      align: 'center',
+      shadow: {
+        offsetX: 0,
+        offsetY: 0,
+        color: '#4caf50',
+        blur: 8,
+        fill: true
+      }
+    }).setOrigin(0.5).setDepth(101);
+
+    craftBtnText.setInteractive({ useHandCursor: true });
+    craftBtnText.on('pointerdown', () => {
+      craftBtnBg.emit('pointerdown');
+    });
+    craftBtnBg.on('pointerover', () => {
+      craftBtnBg.setFillStyle(0x4caf50, 0.98);
+      craftBtnText.setColor('#ffffcc');
+    });
+    craftBtnBg.on('pointerout', () => {
+      craftBtnBg.setFillStyle(0x3e7d3a, 0.95);
+      craftBtnText.setColor('#fff');
+    });
+    craftBtnBg.on('pointerdown', () => {
+      // Remove any existing CraftUI overlay
+      if (this.craftUIOverlay) {
+        this.craftUIOverlay.destroy(true);
+        this.craftUIOverlay = null;
+      }
+      // Get inventory items (as objects)
+      const items = inventoryManager.getItems ? inventoryManager.getItems() : [];
+      // Center overlay
+      const { width, height } = this.sys.game.config;
+      // Dynamically import the CraftUI class
+      import('../../components/craftUI').then(({ default: CraftUI }) => {
+        this.craftUIOverlay = new CraftUI(this, width / 2, height / 2);
+        this.craftUIOverlay.setDepth && this.craftUIOverlay.setDepth(200);
+        // Set inventory items as ingredients (first 3 for demo)
+        this.craftUIOverlay.setIngredients(items.slice(0, 3));
+        // Optionally, you could allow drag/drop or selection logic here
+        // Add a close button to the overlay
+        const closeBtn = this.add.text(width / 2 + 140, height / 2 - 90, '✕', {
+          fontFamily: 'Georgia',
+          fontSize: '28px',
+          color: '#a33',
+          backgroundColor: '#fff5',
+          padding: { left: 10, right: 10, top: 2, bottom: 2 }
+        })
+          .setOrigin(0.5)
+          .setInteractive({ useHandCursor: true })
+          .setDepth(201);
+        closeBtn.on('pointerdown', () => {
+          this.craftUIOverlay.destroy(true);
+          closeBtn.destroy();
+          this.craftUIOverlay = null;
+        });
+      });
+    });
+    
     if (typeof window !== "undefined") {
     window.inventoryManager = inventoryManager;
 }
@@ -326,7 +397,6 @@ class WallGardenScene extends Phaser.Scene {
                 callback: () => {
                   this.destroyDialogueUI();
                   this.butterflyDialogueActive = false;
-                  this.saveSceneState(periwinkleFound);
                   this.scene.start("ShardGardenScene");
                 }
               },
@@ -336,8 +406,7 @@ class WallGardenScene extends Phaser.Scene {
                   showDialogue(this, "Take your time and explore! Talk to me again when you're ready to move on.", { imageKey: "butterflyHappy" });
                   this.dialogueOnComplete = () => {
                     this.destroyDialogueUI();
-                    this.butterflyDialogueActive = false;
-                    this.saveSceneState(periwinkleFound);
+                      this.butterflyDialogueActive = false;
                   };
                 }
               }

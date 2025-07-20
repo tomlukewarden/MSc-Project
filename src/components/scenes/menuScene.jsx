@@ -19,7 +19,8 @@ class Menu extends Phaser.Scene {
         { key: "WallGardenScene", label: "Wall Garden" },
         { key: "MiddleGardenScene", label: "Middle Garden" },
            { key: "ShardGardenScene", label: "Shard Garden" },
-           {key:"EndGameScene", label: "End Game" },
+           { key: "EndGameScene", label: "End Game" },
+           { key: "PersonalGarden", label: "Personal Garden" }
     ];
 
     this.add.text(width / 2, 80, "Scene Menu", {
