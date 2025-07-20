@@ -19,6 +19,7 @@ import MiniGameScene from "./scenes/minigameScene";
 import ControlScene from "./scenes/controlsScene";
 import EndGameScene from "./scenes/endgame";
 import PersonalGarden from "./scenes/personalGarden";
+import NewGameScene from "./scenes/newGameScene";
 
 function GameCanvas() {
     const canvasRef = useRef(null);
@@ -47,6 +48,9 @@ function GameCanvas() {
       gravity: { y: 0 } 
     }
   },
+      dom: {
+        createContainer: true
+      },
   canvas: canvasRef.current,
   scene: [
     Menu,
@@ -66,7 +70,8 @@ function GameCanvas() {
     chestUI,
     ControlScene,
     MiniGameScene,
-    PersonalGarden
+    PersonalGarden,
+    NewGameScene
   ]
 };
 

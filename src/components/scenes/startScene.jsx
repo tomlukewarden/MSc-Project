@@ -36,9 +36,9 @@ class StartScene extends Phaser.Scene {
             .setInteractive();
 
         startButton.on("pointerdown", () => {
-            console.log("Switching to WeeCair");
+            console.log("Switching to NewGameScene");
             this.scene.stop("StartScene");
-            this.scene.start("WeeCairScene");
+            this.scene.start("NewGameScene");
         });
 
         // --- Text Background Rectangle ---
