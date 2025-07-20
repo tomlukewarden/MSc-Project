@@ -5,7 +5,7 @@ class GlobalTimeManager {
   constructor() {
     this.scene = null;
     this.dayCycle = null;
-    this.totalDuration = 40; // 40 seconds for testing
+    this.totalDuration = 2000; 
     this.stageCount = 4;
     this.stageDuration = this.totalDuration / this.stageCount;
     this.stages = ['morning', 'midday', 'afternoon', 'evening'];
