@@ -1,184 +1,181 @@
 import Phaser from "phaser";
-import { getCollectedPlants } from "../components/journalManager";
 import { inventoryManager } from "./openInventory";
+import globalTimeManager from "../day/timeManager";
 
 class HUDScene extends Phaser.Scene {
-    constructor() {
-        super({ key: "HUDScene", active: true });
+  constructor() {
+    super({ key: "HUDScene", active: true });
+  }
+
+  preload() {
+    this.scene.stop("OpenJournal");
+
+    this.load.image("inventoryIcon", "/assets/ui-items/inventory.png");
+    this.load.image("settingsIcon", "/assets/ui-items/settings.png");
+    this.load.image("journalIcon", "/assets/ui-items/journal.png");
+    this.load.image("toolbarSlot", "/assets/ui-items/slot.png");
+    this.load.image("energyFull", "/assets/energy/full.png");
+    this.load.image("energyHalf", "/assets/energy/50.png");
+    this.load.image("energyEmpty", "/assets/energy/10.png");
+  }
+
+  create() {
+    const { width, height } = this.scale;
+
+    // === Top-right icons ===
+    const iconKeys = ["inventoryIcon", "journalIcon", "settingsIcon"];
+    const iconSpacing = 140;
+    const iconStartX = 900;
+    const iconScale = 0.045;
+    const iconY = 56;
+
+    const icons = {};
+
+    iconKeys.forEach((key, index) => {
+      const icon = this.add
+        .image(iconStartX + index * iconSpacing, iconY, key)
+        .setInteractive({ useHandCursor: true })
+        .setScale(iconScale)
+        .setScrollFactor(0)
+        .setDepth(999);
+
+      icons[key] = icon;
+    });
+
+    icons["journalIcon"].on("pointerdown", () => {
+      this.scene.launch("OpenJournal");
+      this.scene.bringToTop("OpenJournal");
+    });
+
+    icons["settingsIcon"].on("pointerdown", () => {
+      this.scene.launch("OpenSettings");
+      this.scene.bringToTop("OpenSettings");
+    });
+
+    icons["inventoryIcon"].on("pointerdown", () => {
+      this.scene.launch("OpenInventory");
+      this.scene.bringToTop("OpenInventory");
+    });
+
+    // === Time Box (Bottom Left) ===
+    const boxWidth = 180;
+    const boxHeight = 56;
+    const boxX = 16 + boxWidth / 2;
+    const boxY = height - 16 - boxHeight / 2;
+
+    this.timeBox = this.add
+      .rectangle(boxX, boxY, boxWidth, boxHeight, 0x222a2a, 0.85)
+      .setStrokeStyle(2, 0x4caf50)
+      .setDepth(99999);
+
+    this.timeText = this.add
+      .text(boxX, boxY - 10, "", {
+        fontSize: "18px",
+        fontFamily: "Georgia",
+        color: "#fff",
+        align: "center",
+      })
+      .setOrigin(0.5)
+      .setDepth(99999);
+
+    this.progressBarBg = this.add
+      .rectangle(boxX, boxY + 14, boxWidth - 32, 8, 0x444, 0.7)
+      .setOrigin(0.5)
+      .setDepth(99999);
+
+    this.progressBar = this.add
+      .rectangle(boxX - (boxWidth - 32) / 2, boxY + 14, 0, 8, 0xffc107, 0.9)
+      .setOrigin(0, 0.5)
+      .setDepth(99999);
+
+    this.updateTimeText = () => {
+      const timeOfDay = globalTimeManager.getCurrentTimeOfDay();
+      this.timeText.setText(`Time: ${timeOfDay.charAt(0).toUpperCase() + timeOfDay.slice(1)}`);
+
+      const stage = globalTimeManager.getCurrentStage();
+      const stageDuration = globalTimeManager.stageDuration;
+      const elapsed = (Date.now() - globalTimeManager.startTimestamp) / 1000;
+      const stageElapsed = elapsed - stage * stageDuration;
+      const progress = Math.min(stageElapsed / stageDuration, 1);
+      const barWidth = (boxWidth - 32) * progress;
+      this.progressBar.width = barWidth;
+    };
+
+    this.updateTimeText();
+
+    this.time.addEvent({
+      delay: 2000,
+      loop: true,
+      callback: this.updateTimeText,
+    });
+
+    // === Toolbar (Bottom Center) ===
+    const toolbarY = height - 50;
+    const slotCount = 6;
+    const slotSpacing = 90;
+    const toolbarTotalWidth = slotSpacing * (slotCount - 1);
+    const startX = width / 2 - toolbarTotalWidth / 2;
+
+    const slots = [];
+    const slotItemImages = [];
+    let selectedSlotIndex = null;
+
+    for (let i = 0; i < slotCount; i++) {
+      const slot = this.add
+        .image(startX + i * slotSpacing, toolbarY, "toolbarSlot")
+        .setOrigin(0.5)
+        .setScale(0.045)
+        .setInteractive({ useHandCursor: true });
+
+      slots.push(slot);
+      slotItemImages.push(null);
+
+      slot.on("pointerover", () => slot.setTint(0xaaaaaa));
+      slot.on("pointerout", () => slot.clearTint());
+      slot.on("pointerdown", () => {
+        slots.forEach((s, idx) => {
+          s.setAlpha(idx === i ? 0.6 : 1);
+        });
+        selectedSlotIndex = selectedSlotIndex === i ? null : i;
+
+        this.game.scene.getScenes(true).forEach((scene) => {
+          if (scene.events) {
+            scene.events.emit("selectToolbarSlot", selectedSlotIndex);
+          }
+        });
+      });
     }
-    preload() {
-        this.scene.stop("OpenJournal");
-        this.load.image("inventoryIcon","/assets/ui-items/inventory.png");
-        this.load.image("settingsIcon","/assets/ui-items/settings.png");
-        this.load.image("journalIcon","/assets/ui-items/journal.png");
-        this.load.image("toolbarSlot", "/assets/ui-items/slot.png");
-        this.load.image("energyFull", "/assets/energy/full.png");
-        this.load.image("energyHalf", "/assets/energy/50.png");
-        this.load.image("energyEmpty", "/assets/energy/10.png");
-    }
 
-    create() {
-
-        const { width, height } = this.scale;
-
-        const iconKeys = [
-            "inventoryIcon",
-            "journalIcon",
-            "settingsIcon",
-        ];
-        const iconSpacing = 140;
-        const iconStartX = 900;
-        const iconScale = 0.045;
-        const iconY = 56;
-
-        const topIconsTotalWidth = iconSpacing * (iconKeys.length - 1);
-
-        // Store references to the created icons
-        const icons = {};
-
-        iconKeys.forEach((key, idx) => {
-            icons[key] = this.add.image(iconStartX + idx * iconSpacing, iconY, key)
-                .setOrigin(0.5)
-                .setScale(iconScale)
-                .setInteractive({ useHandCursor: true });
-        });
-        // Add map text in top left corner (no button)
-        const mapTextX = 56;
-        const mapTextY = 32;
-        const mapText = this.add.text(mapTextX, mapTextY, "MAP", {
-            font: "bold 16px Arial",
-            color: "#fff",
-            align: "center",
-            backgroundColor: "rgba(0,0,0,0.3)",
-            padding: { left: 8, right: 8, top: 4, bottom: 4 }
-        }).setOrigin(0.5).setInteractive({ useHandCursor: true });
-        mapText.on("pointerdown", () => {
-            this.scene.launch("MapScene");
-            this.scene.bringToTop("MapScene");
-        });
-
-        icons["journalIcon"].on("pointerdown", () => {
-            console.log("Journal icon clicked");
-            const plants = getCollectedPlants(); // <-- Use your new system
-            this.scene.launch("OpenJournal", { plants });
-            this.scene.bringToTop("OpenJournal");
-        });
-
-        icons["settingsIcon"].on("pointerdown", () => {
-            console.log("Settings icon clicked");
-            this.scene.launch("OpenSettings");
-            this.scene.bringToTop("OpenSettings");
-        });
-
-        icons["inventoryIcon"].on("pointerdown", () => {
-            console.log("Inventory icon clicked");
-            this.scene.launch("OpenInventory");
-            this.scene.bringToTop("OpenInventory");
-        });
-
-        // Toolbar slots at bottom center
-        const toolbarY = height - 50;
-        const slotCount = 6; 
-        const slotSpacing = 90;
-        const slots = [];
-        const slotItemImages = [];
-        const toolbarTotalWidth = slotSpacing * (slotCount - 1);
-        const startX = width / 2 - toolbarTotalWidth / 2;
-        for (let i = 0; i < slotCount; i++) {
-            const slot = this.add.image(startX + i * slotSpacing, toolbarY, "toolbarSlot")
-                .setOrigin(0.5)
-                .setScale(0.045)
-                .setInteractive({ useHandCursor: true });
-            slots.push(slot);
-            slotItemImages.push(null); // Placeholder for item image overlays
+    const updateToolbarSlots = (toolbarSlots) => {
+      for (let i = 0; i < slotCount; i++) {
+        if (slotItemImages[i]) {
+          slotItemImages[i].destroy();
+          slotItemImages[i] = null;
         }
 
-        let selectedSlotIndex = null;
-        slots.forEach((slot, i) => {
-            slot.on("pointerover", () => {
-                slot.setTint(0xaaaaaa);
-            });
-            slot.on("pointerout", () => {
-                slot.clearTint();
-            });
-            slot.on("pointerdown", () => {
-                // Deselect all slots visually
-                slots.forEach((s, idx) => {
-                    if (idx !== i) s.setAlpha(1);
-                });
-                // Toggle selection
-                if (selectedSlotIndex === i) {
-                    slot.setAlpha(1);
-                    selectedSlotIndex = null;
-                } else {
-                    slot.setAlpha(0.6);
-                    selectedSlotIndex = i;
-                }
-                this.game.scene.getScenes(true).forEach(scene => {
-                    if (scene.events) {
-                        scene.events.emit("selectToolbarSlot", selectedSlotIndex);
-                    }
-                });
-            });
-        });
+        const item = toolbarSlots[i];
+        if (item && item.key && this.textures.exists(item.key)) {
+          const img = this.add
+            .image(slots[i].x, slots[i].y - 2, item.key)
+            .setDisplaySize(38, 38)
+            .setDepth(slots[i].depth + 1 || 1);
 
-        const updateToolbarSlots = (toolbarSlots) => {
-            for (let i = 0; i < slotCount; i++) {
-                if (slotItemImages[i]) {
-                    slotItemImages[i].destroy();
-                    slotItemImages[i] = null;
-                }
-                const item = toolbarSlots[i];
-                if (item && item.key && this.textures.exists(item.key)) {
-                    const img = this.add.image(slots[i].x, slots[i].y - 2, item.key)
-                        .setDisplaySize(38, 38)
-                        .setDepth(slots[i].depth + 1 || 1);
-                    slotItemImages[i] = img;
-                }
-            }
-        };
-
-        updateToolbarSlots(inventoryManager.getToolbarSlots());
-        inventoryManager.onToolbarChange(updateToolbarSlots);
-        inventoryManager.onChange(() => {
-            updateToolbarSlots(inventoryManager.getToolbarSlots());
-        });
-
-        const energyY = toolbarY - 70;
-        const energyIcon = this.add.image(width / 2, energyY, "energyFull")
-            .setOrigin(0.5)
-            .setScale(0.1)
-            .setInteractive({ useHandCursor: true });
-
-        // Add time-of-day indicator (top right)
-        try {
-            const globalTimeManager = require("../../day/timeManager").default;
-            this.timeText = this.add.text(width - 180, 24, "", {
-                fontSize: "22px",
-                fontFamily: "Georgia",
-                color: "#fff",
-                backgroundColor: "#222a",
-                padding: { left: 12, right: 12, top: 6, bottom: 6 },
-                align: "center"
-            }).setDepth(99999);
-            // Initial update
-            this.updateTimeText = () => {
-                if (this.timeText) {
-                    const timeOfDay = globalTimeManager.getCurrentTimeOfDay();
-                    this.timeText.setText(`Time: ${timeOfDay.charAt(0).toUpperCase() + timeOfDay.slice(1)}`);
-                }
-            };
-            this.updateTimeText();
-            // Update every 2 seconds
-            this.time.addEvent({
-                delay: 2000,
-                loop: true,
-                callback: () => this.updateTimeText()
-            });
-        } catch (e) {
-            // If globalTimeManager is not available, do nothing
+          slotItemImages[i] = img;
         }
-    }
+      }
+    };
+
+    updateToolbarSlots(inventoryManager.getToolbarSlots());
+    inventoryManager.onToolbarChange(updateToolbarSlots);
+    inventoryManager.onChange(() => updateToolbarSlots(inventoryManager.getToolbarSlots()));
+
+    const energyY = toolbarY - 70;
+    this.add
+      .image(width / 2, energyY, "energyFull")
+      .setOrigin(0.5)
+      .setScale(0.1)
+      .setInteractive({ useHandCursor: true });
+  }
 }
 
 export default HUDScene;

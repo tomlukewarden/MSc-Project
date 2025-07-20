@@ -350,7 +350,6 @@ class MiddleGardenScene extends Phaser.Scene {
     });
   }
 
-  // Save relevant state to localStorage
   saveSceneState() {
     const state = {
       coins: coinManager.get ? coinManager.get() : 0,
