@@ -1,8 +1,9 @@
 import { Plot } from "../farmingLogic";
+import { createMainChar } from "../../characters/mainChar";
 
 class PersonalGarden extends Phaser.Scene {
   constructor() {
-    super("PersonalGarden");
+    super("PersonalGarden", { physics: { default: 'arcade', arcade: { debug: false } } });
     this.plotSize = 64;
     this.rows = 3;
     this.cols = 5;
@@ -14,6 +15,14 @@ class PersonalGarden extends Phaser.Scene {
       items: [] // harvested items
     };
   }
+  preload() {
+    this.load.image("defaultFront", "/assets/char/default/front-default.png");
+    this.load.image("defaultBack", "/assets/char/default/back-default.png");
+    this.load.image("defaultLeft", "/assets/char/default/left-default.png");
+    this.load.image("defaultRight", "/assets/char/default/right-default.png");
+    this.load.image("hoe", "/assets/tools/hoe.png");
+    this.load.image("wateringCan", "/assets/tools/wateringCan.png");
+  }
 
   create() {
     const { width, height } = this.sys.game.config;
@@ -21,50 +30,95 @@ class PersonalGarden extends Phaser.Scene {
     this.scene.launch("HUDScene");
     this.scene.bringToTop("HUDScene");
 
-    // --- Add main character ---
-    if (this.createMainChar) {
-      this.mainChar = this.createMainChar(this, width / 2, height - 100, 0.18);
-    } else {
-      this.mainChar = this.add.circle(width / 2, height - 100, 24, 0x2196f3).setDepth(10);
-    }
+    // --- Create collision groups ---
+    if (this.physics && this.physics.add) {
+      this.plotGroup = this.physics.add.staticGroup();
+      this.charGroup = this.physics.add.group();
 
-    // --- Create grid of plots ---
-    const startX = width / 2 - (this.cols / 2) * this.plotSize;
-    const startY = height / 2 - (this.rows / 2) * this.plotSize;
-    for (let y = 0; y < this.rows; y++) {
-      for (let x = 0; x < this.cols; x++) {
-        const px = startX + x * this.plotSize;
-        const py = startY + y * this.plotSize;
+      // --- Add main character ---
+      this.mainChar = createMainChar(this, width / 2, height / 2, 0.18, this.charGroup);
+      this.mainChar.setDepth(1).setOrigin(0.5, 0.5);
+      this.charGroup.add(this.mainChar);
 
-        const plot = new Plot();
-        const rect = this.add.rectangle(px, py, this.plotSize - 4, this.plotSize - 4, 0x8bc34a, 0.85)
-          .setStrokeStyle(2, 0x4caf50)
-          .setOrigin(0.5)
-          .setInteractive({ useHandCursor: true });
+      // --- Create grid of plots ---
+      const startX = width / 2 - (this.cols / 2) * this.plotSize;
+      const startY = height / 2 - (this.rows / 2) * this.plotSize;
+      for (let y = 0; y < this.rows; y++) {
+        for (let x = 0; x < this.cols; x++) {
+          const px = startX + x * this.plotSize;
+          const py = startY + y * this.plotSize;
 
-        const text = this.add.text(px, py, '', {
-          fontSize: '14px',
-          color: '#fff',
-          fontFamily: 'Georgia',
-          align: 'center'
-        }).setOrigin(0.5);
+          const plot = new Plot();
+          // Create a physics-enabled static rectangle for collision
+          const rect = this.add.rectangle(px, py, this.plotSize - 4, this.plotSize - 4, 0x8bc34a, 0.85)
+            .setStrokeStyle(2, 0x4caf50)
+            .setOrigin(0.5)
+            .setInteractive({ useHandCursor: true });
+          this.physics.add.existing(rect, true); // true = static body
+          this.plotGroup.add(rect);
 
-        rect.on('pointerdown', () => {
-          const result = this.useToolOnPlot(plot);
-          if (result.message) console.log(result.message);
+          const text = this.add.text(px, py, '', {
+            fontSize: '14px',
+            color: '#fff',
+            fontFamily: 'Georgia',
+            align: 'center'
+          }).setOrigin(0.5);
+
+          rect.on('pointerdown', () => {
+            const result = this.useToolOnPlot(plot);
+            if (result.message) console.log(result.message);
+            this.updatePlotText(text, plot);
+            this.updatePlotColor(rect, plot);
+          });
+
+          this.plots.push({ plot, rect, text });
           this.updatePlotText(text, plot);
-          this.updatePlotColor(rect, plot);
-        });
+        }
+      }
 
-        this.plots.push({ plot, rect, text });
-        this.updatePlotText(text, plot);
+      // --- Enable collision between main character and plots ---
+      this.physics.add.collider(this.charGroup, this.plotGroup);
+    } else {
+      // Fallback: no physics available
+      this.mainChar = createMainChar(this, width / 2, height / 2, 0.18);
+      this.mainChar.setDepth(1).setOrigin(0.5, 0.5);
+
+      // --- Create grid of plots ---
+      const startX = width / 2 - (this.cols / 2) * this.plotSize;
+      const startY = height / 2 - (this.rows / 2) * this.plotSize;
+      for (let y = 0; y < this.rows; y++) {
+        for (let x = 0; x < this.cols; x++) {
+          const px = startX + x * this.plotSize;
+          const py = startY + y * this.plotSize;
+
+          const plot = new Plot();
+          const rect = this.add.rectangle(px, py, this.plotSize - 4, this.plotSize - 4, 0x8bc34a, 0.85)
+            .setStrokeStyle(2, 0x4caf50)
+            .setOrigin(0.5)
+            .setInteractive({ useHandCursor: true });
+
+          const text = this.add.text(px, py, '', {
+            fontSize: '14px',
+            color: '#fff',
+            fontFamily: 'Georgia',
+            align: 'center'
+          }).setOrigin(0.5);
+
+          rect.on('pointerdown', () => {
+            const result = this.useToolOnPlot(plot);
+            if (result.message) console.log(result.message);
+            this.updatePlotText(text, plot);
+            this.updatePlotColor(rect, plot);
+          });
+
+          this.plots.push({ plot, rect, text });
+          this.updatePlotText(text, plot);
+        }
       }
     }
   }
 
   useToolOnPlot(plot) {
-    // Only handle via inventory
-    // Tool logic uses inventory
     if (this.currentTool === 'hoe' && this.inventory.tools.includes('hoe')) {
       return plot.prepare();
     }

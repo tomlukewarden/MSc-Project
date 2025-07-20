@@ -29,20 +29,46 @@ function GameCanvas() {
             return;
         }
 
-        const config = {
-            type: Phaser.WEBGL,
-            width: 1280,
-            height: 720,
-            scale: {
-                mode: Phaser.Scale.FIT,
-                autoCenter: Phaser.Scale.CENTER_BOTH,
-                parent: "game-container",
-                width: 1280,
-                height: 720
-            },
-            canvas: canvasRef.current,
-            scene: [Menu, StartScene, MapScene,ShopScene, WeeCairScene, GreenhouseScene, EndGameScene, WallGardenScene, ShardGardenScene, MiddleGardenScene, HUDScene, OpenJournal, OpenInventory, OpenSettings, chestUI, ControlScene, MiniGameScene, PersonalGarden],
-        };
+  const config = {
+  type: Phaser.WEBGL,
+  width: 1280,
+  height: 720,
+  scale: {
+    mode: Phaser.Scale.FIT,
+    autoCenter: Phaser.Scale.CENTER_BOTH,
+    parent: "game-container",
+    width: 1280,
+    height: 720
+  },
+  physics: {
+    default: 'arcade',
+    arcade: {
+      debug: false,
+      gravity: { y: 0 } 
+    }
+  },
+  canvas: canvasRef.current,
+  scene: [
+    Menu,
+    StartScene,
+    MapScene,
+    ShopScene,
+    WeeCairScene,
+    GreenhouseScene,
+    EndGameScene,
+    WallGardenScene,
+    ShardGardenScene,
+    MiddleGardenScene,
+    HUDScene,
+    OpenJournal,
+    OpenInventory,
+    OpenSettings,
+    chestUI,
+    ControlScene,
+    MiniGameScene,
+    PersonalGarden
+  ]
+};
 
         gameRef.current = new Phaser.Game(config);
 
