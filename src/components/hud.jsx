@@ -149,6 +149,35 @@ class HUDScene extends Phaser.Scene {
             .setOrigin(0.5)
             .setScale(0.1)
             .setInteractive({ useHandCursor: true });
+
+        // Add time-of-day indicator (top right)
+        try {
+            const globalTimeManager = require("../../day/timeManager").default;
+            this.timeText = this.add.text(width - 180, 24, "", {
+                fontSize: "22px",
+                fontFamily: "Georgia",
+                color: "#fff",
+                backgroundColor: "#222a",
+                padding: { left: 12, right: 12, top: 6, bottom: 6 },
+                align: "center"
+            }).setDepth(99999);
+            // Initial update
+            this.updateTimeText = () => {
+                if (this.timeText) {
+                    const timeOfDay = globalTimeManager.getCurrentTimeOfDay();
+                    this.timeText.setText(`Time: ${timeOfDay.charAt(0).toUpperCase() + timeOfDay.slice(1)}`);
+                }
+            };
+            this.updateTimeText();
+            // Update every 2 seconds
+            this.time.addEvent({
+                delay: 2000,
+                loop: true,
+                callback: () => this.updateTimeText()
+            });
+        } catch (e) {
+            // If globalTimeManager is not available, do nothing
+        }
     }
 }
 
