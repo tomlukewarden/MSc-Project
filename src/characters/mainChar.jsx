@@ -14,34 +14,108 @@ export function createMainChar(scene, width, height, scaleFactor, collisionGroup
     });
 
     const speed = 200;
+    let lastDirection = "down"; 
+  // Animations
+  scene.anims.create({
+    key: "walk-up",
+    frames: [
+      { key: "defaultBack" },
+      { key: "defaultBackWalk1" },
+      { key: "defaultBackWalk2" }
+    ],
+    frameRate: 8,
+    repeat: -1
+  });
 
-    // Movement controls
-    scene.input.keyboard.on("keydown", (event) => {
-        char.setVelocity(0);
-        if (event.key === "w" || event.key === "W") {
-            char.setVelocityY(-speed);
-            char.setTexture("defaultBack");
-        } else if (event.key === "s" || event.key === "S") {
-            char.setVelocityY(speed);
-            char.setTexture("defaultFront");
-        } else if (event.key === "a" || event.key === "A") {
-            char.setVelocityX(-speed);
-            char.setTexture("defaultLeft");
-        } else if (event.key === "d" || event.key === "D") {
-            char.setVelocityX(speed);
-            char.setTexture("defaultRight");
-        } else if (event.key === "e" || event.key === "E") {
-            scene.scene.launch("OpenInventory");
-        } else if (event.key === "q" || event.key === "Q") {
-            scene.scene.launch("OpenJournal");
-        } else if (event.key === "Escape") {
-            scene.scene.launch("OpenSettings");
-        }
-    });
+  scene.anims.create({
+    key: "walk-down",
+    frames: [
+      { key: "defaultFront" },
+      { key: "defaultFrontWalk1" },
+      { key: "defaultFrontWalk2" }
+    ],
+    frameRate: 8,
+    repeat: -1
+  });
 
-    scene.input.keyboard.on("keyup", () => {
-        char.setVelocity(0);
-    });
+  scene.anims.create({
+    key: "walk-left",
+    frames: [
+      { key: "defaultLeftWalk1" },
+      { key: "defaultLeftWalk2" }
+    ],
+    frameRate: 8,
+    repeat: -1
+  });
 
-    return char;
+  scene.anims.create({
+    key: "walk-right",
+    frames: [
+      { key: "defaultRightWalk1" },
+      { key: "defaultRightWalk2" }
+    ],
+    frameRate: 8,
+    repeat: -1
+  });
+
+  // Movement input
+  scene.input.keyboard.on("keydown", (event) => {
+    const key = event.key.toLowerCase();
+    char.setVelocity(0);
+
+    switch (key) {
+      case "w":
+        char.setVelocityY(-speed);
+        char.anims.play("walk-up", true);
+        lastDirection = "up";
+        break;
+      case "s":
+        char.setVelocityY(speed);
+        char.anims.play("walk-down", true);
+        lastDirection = "down";
+        break;
+      case "a":
+        char.setVelocityX(-speed);
+        char.anims.play("walk-left", true);
+        lastDirection = "left";
+        break;
+      case "d":
+        char.setVelocityX(speed);
+        char.anims.play("walk-right", true);
+        lastDirection = "right";
+        break;
+      case "e":
+        scene.scene.launch("OpenInventory");
+        break;
+      case "q":
+        scene.scene.launch("OpenJournal");
+        break;
+      case "escape":
+        scene.scene.launch("OpenSettings");
+        break;
+    }
+  });
+
+  scene.input.keyboard.on("keyup", () => {
+    char.setVelocity(0);
+    char.anims.stop();
+
+    // Reset to idle frame depending on last direction
+    switch (lastDirection) {
+      case "up":
+        char.setTexture("defaultBack");
+        break;
+      case "down":
+        char.setTexture("defaultFront");
+        break;
+      case "left":
+        char.setTexture("defaultLeftWalk1");
+        break;
+      case "right":
+        char.setTexture("defaultRightWalk1");
+        break;
+    }
+  });
+
+  return char;
 }

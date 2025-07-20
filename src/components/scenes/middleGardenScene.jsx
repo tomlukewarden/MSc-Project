@@ -33,6 +33,14 @@ class MiddleGardenScene extends Phaser.Scene {
     this.load.image("defaultBack", "/assets/char/default/back-default.png");
     this.load.image("defaultLeft", "/assets/char/default/left-default.png");
     this.load.image("defaultRight", "/assets/char/default/right-default.png");
+    this.load.image("defaultFrontWalk1", "/assets/char/default/front-step-1.PNG");
+    this.load.image("defaultFrontWalk2", "/assets/char/default/front-step-2.PNG");
+this.load.image("defaultBackWalk1", "/assets/char/default/back-step-1.PNG");
+        this.load.image("defaultBackWalk2", "/assets/char/default/back-step-2.PNG");
+        this.load.image("defaultLeftWalk1", "/assets/char/default/left-step-1.PNG");
+        this.load.image("defaultLeftWalk2", "/assets/char/default/left-step-2.PNG");
+        this.load.image("defaultRightWalk1", "/assets/char/default/right-step-1.PNG");
+        this.load.image("defaultRightWalk2", "/assets/char/default/right-step-2.PNG");
     this.load.audio("click", "/assets/sound-effects/click.mp3");
     this.load.audio('sparkle', '/assets/sound-effects/sparkle.mp3');
     this.load.image('coin', '/assets/misc/coin.png');
