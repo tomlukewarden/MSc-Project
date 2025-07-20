@@ -8,6 +8,7 @@ import {shardLogic} from "../shardLogic";
 import { inventoryManager } from "../openInventory";
 import { addPlantToJournal } from "../journalManager";
 import { receivedItem } from "../recievedItem";
+import globalTimeManager from "../../day/timeManager";
 
 const coinManager = CoinManager.load();
 
@@ -65,32 +66,39 @@ class ShardGardenScene extends Phaser.Scene {
   }
 
   create() {
+    globalTimeManager.init(this);
+    if (!globalTimeManager.startTimestamp) {
+      globalTimeManager.start();
+    }
     if (typeof window !== "undefined") {
-    window.inventoryManager = inventoryManager;
-}
+      window.inventoryManager = inventoryManager;
+    }
     this.scene.launch("HUDScene");
     const { width, height } = this.sys.game.config;
     const scaleFactor = 0.175;
 
-    // // --- LOAD STATE FROM LOCAL STORAGE ---
-    // const sceneState = loadFromLocal('shardGardenSceneState') || {};
-    // // Restore coins if present
-    // if (sceneState.coins !== undefined) {
-    //   coinManager.set(sceneState.coins);
-    // }
-    // // Inventory restore removed
-    // // Restore shard counts, happySprites, and dialogue stage
-    // if (sceneState.shardCounts) {
-    //   this.shardCounts = { ...this.shardCounts, ...sceneState.shardCounts };
-    // }
-    // if (sceneState.happySprites) {
-    //   this.happySprites = { ...this.happySprites, ...sceneState.happySprites };
-    // }
-    // if (sceneState.dialogueStage !== undefined) {
-    //   this.dialogueStage = sceneState.dialogueStage;
-    // }
-    // this.dialogueActive = !!sceneState.dialogueActive;
-    // this.activeDialogueIndex = sceneState.activeDialogueIndex || 0;
+    // --- LOAD STATE FROM LOCAL STORAGE ---
+    const sceneState = loadFromLocal('shardGardenSceneState') || {};
+    // Restore coins if present
+    if (sceneState.coins !== undefined) {
+      coinManager.set(sceneState.coins);
+    }
+    // Restore shard counts, happySprites, and dialogue stage
+    if (sceneState.shardCounts) {
+      this.shardCounts = { ...this.shardCounts, ...sceneState.shardCounts };
+    }
+    if (sceneState.happySprites) {
+      this.happySprites = { ...this.happySprites, ...sceneState.happySprites };
+    }
+    if (sceneState.dialogueStage !== undefined) {
+      this.dialogueStage = sceneState.dialogueStage;
+    }
+    this.dialogueActive = !!sceneState.dialogueActive;
+    this.activeDialogueIndex = sceneState.activeDialogueIndex || 0;
+    // Restore time of day
+    if (sceneState.timeOfDay) {
+      globalTimeManager.dayCycle.setTimeOfDay(sceneState.timeOfDay);
+    }
 
     this.add.image(width / 2, height / 2, "shardBackground").setScale(scaleFactor);
     const foliageImg = this.add.image(width / 2, height / 2, "folliage").setScale(scaleFactor);
@@ -251,12 +259,12 @@ class ShardGardenScene extends Phaser.Scene {
   saveSceneState() {
     const state = {
       coins: coinManager.get ? coinManager.get() : 0,
-      // inventory removed from save
       shardCounts: { ...this.shardCounts },
       happySprites: { ...this.happySprites },
       dialogueStage: this.dialogueStage,
       dialogueActive: !!this.dialogueActive,
-      activeDialogueIndex: this.activeDialogueIndex
+      activeDialogueIndex: this.activeDialogueIndex,
+      timeOfDay: globalTimeManager.getCurrentTimeOfDay()
     };
     saveToLocal('shardGardenSceneState', state);
   }

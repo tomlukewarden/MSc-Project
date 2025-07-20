@@ -11,6 +11,7 @@ import { inventoryManager } from "../inventoryManager";
 import { addPlantToJournal } from "../journalManager";
 import { receivedItem } from "../recievedItem";
 import { createElephant, elephantIntroDialogues, elephantThanksDialogues } from '../../characters/elephant';
+import globalTimeManager from "../../day/timeManager";
 
 
 const coinManager = CoinManager.load();
@@ -55,11 +56,15 @@ class WallGardenScene extends Phaser.Scene {
     this.load.image('elephantHappy', '/assets/npc/elephant/happy.png');
     this.load.image('jasminePlant', '/assets/plants/jasmine.PNG');
     this.load.image('autumnShard', '/assets/items/autumn.png');
+    
 
   }
 
   create() {
-
+  globalTimeManager.init(this);
+  if (!globalTimeManager.startTimestamp) {
+    globalTimeManager.start();
+  }
     const craftBtnX = 120;
     const craftBtnY = 80;
     const craftBtnWidth = 140;
@@ -154,6 +159,10 @@ class WallGardenScene extends Phaser.Scene {
     this.butterflyDialogueIndex = sceneState.butterflyDialogueIndex || 0;
     this.butterflyDialogueActive = !!sceneState.butterflyDialogueActive;
     this.dialogueActive = !!sceneState.dialogueActive;
+    // Restore time of day
+    if (sceneState.timeOfDay) {
+      globalTimeManager.dayCycle.setTimeOfDay(sceneState.timeOfDay);
+    }
 
     // --- Restore dialogue UI if needed ---
     // Only restore if dialogue was active when leaving
@@ -451,7 +460,8 @@ class WallGardenScene extends Phaser.Scene {
       periwinkleFound: !!periwinkleFound,
       butterflyDialogueIndex: this.butterflyDialogueIndex,
       butterflyDialogueActive: !!this.butterflyDialogueActive,
-      dialogueActive: !!this.dialogueActive
+      dialogueActive: !!this.dialogueActive,
+      timeOfDay: globalTimeManager.getCurrentTimeOfDay()
     };
     saveToLocal('wallGardenSceneState', state);
   }

@@ -1,4 +1,30 @@
 /**
+ * Save the current time of day to localStorage
+ * @param {string} timeOfDay
+ */
+export function saveTimeOfDay(timeOfDay) {
+  try {
+    localStorage.setItem('timeOfDay', timeOfDay);
+    return true;
+  } catch (e) {
+    console.error('Failed to save timeOfDay:', e);
+    return false;
+  }
+}
+
+/**
+ * Load the current time of day from localStorage
+ * @returns {string|null}
+ */
+export function loadTimeOfDay() {
+  try {
+    return localStorage.getItem('timeOfDay');
+  } catch (e) {
+    console.error('Failed to load timeOfDay:', e);
+    return null;
+  }
+}
+/**
  * @param {string} key
  * @param {object} data
  */

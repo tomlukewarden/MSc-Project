@@ -143,9 +143,65 @@ class OpenSettings extends Phaser.Scene {
       .on("pointerover", () => clearBtn.setStyle({ backgroundColor: "#a61b2b" }))
       .on("pointerout", () => clearBtn.setStyle({ backgroundColor: "#d7263d" }))
       .on("pointerdown", () => {
-        removeFromLocal("botanistSave");
-        removeFromLocal("coins");
-        showTempMessage("All save data cleared!", height / 2 + 140);
+        // Show confirmation dialog
+        const confirmBg = this.add.rectangle(width / 2, height / 2 + 200, 340, 120, 0xf5f5dc, 0.98)
+          .setStrokeStyle(4, 0xd7263d)
+          .setDepth(30);
+        const confirmText = this.add.text(width / 2, height / 2 + 170, "Are you sure you want \n to clear this save?", {
+          fontFamily: "Georgia",
+          fontSize: "22px",
+          color: "#d7263d",
+          fontStyle: "bold"
+        }).setOrigin(0.5).setDepth(31);
+        const yesBtn = this.add.text(width / 2 - 60, height / 2 + 230, "Yes", {
+          fontFamily: "Georgia",
+          fontSize: "22px",
+          color: "#fff",
+          backgroundColor: "#d7263d",
+          fontStyle: "bold",
+          padding: { left: 18, right: 18, top: 8, bottom: 8 }
+        }).setOrigin(0.5).setDepth(32).setInteractive({ useHandCursor: true });
+        const noBtn = this.add.text(width / 2 + 60, height / 2 + 230, "No", {
+          fontFamily: "Georgia",
+          fontSize: "22px",
+          color: "#fff",
+          backgroundColor: "#3388cc",
+          fontStyle: "bold",
+          padding: { left: 18, right: 18, top: 8, bottom: 8 }
+        }).setOrigin(0.5).setDepth(32).setInteractive({ useHandCursor: true });
+
+        yesBtn.on("pointerdown", () => {
+          // Remove all relevant state keys
+          removeFromLocal("botanistSave");
+          removeFromLocal("coins");
+          removeFromLocal("personalGardenSceneState");
+          removeFromLocal("middleGardenSceneState");
+          removeFromLocal("wallGardenSceneState");
+          removeFromLocal("shardGardenSceneState");
+          removeFromLocal("greenhouseSceneState");
+          removeFromLocal("timeOfDay");
+          confirmBg.destroy();
+          confirmText.destroy();
+          yesBtn.destroy();
+          noBtn.destroy();
+          showTempMessage("All save data cleared! Restarting...", height / 2 + 140);
+          this.time.delayedCall(1200, () => {
+            this.scene.stop();
+            this.scene.get("HUDScene")?.scene?.stop();
+            this.scene.get("PersonalGarden")?.scene?.stop();
+            this.scene.get("MiddleGardenScene")?.scene?.stop();
+            this.scene.get("WallGardenScene")?.scene?.stop();
+            this.scene.get("ShardGardenScene")?.scene?.stop();
+            this.scene.get("GreenhouseScene")?.scene?.stop();
+            this.scene.start("StartScene");
+          });
+        });
+        noBtn.on("pointerdown", () => {
+          confirmBg.destroy();
+          confirmText.destroy();
+          yesBtn.destroy();
+          noBtn.destroy();
+        });
       });
   }
 }
