@@ -26,9 +26,12 @@ class PersonalGarden extends Phaser.Scene {
     this.load.image("hoe", "/assets/tools/hoe.png");
     this.load.image("wateringCan", "/assets/tools/wateringCan.png");
     this.load.image("sign", "/assets/misc/sign.png");
+    this.load.image("gardenBackground", "/assets/backgrounds/personal/personalGardenbg.JPG");
   }
 
   create() {
+    this.add.image(0, 0, "gardenBackground").setOrigin(0).setScale(1.5);
+    
     globalTimeManager.init(this);
     if (!globalTimeManager.startTimestamp) {
       globalTimeManager.start();
