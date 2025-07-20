@@ -12,7 +12,7 @@ class PersonalGarden extends Phaser.Scene {
     this.inventory = {
       tools: ['hoe', 'wateringCan', 'harvestGlove'],
       seeds: ['carrotSeed', 'thymeSeed', 'garlicSeed'],
-      items: [] // harvested items
+      items: []
     };
   }
   preload() {

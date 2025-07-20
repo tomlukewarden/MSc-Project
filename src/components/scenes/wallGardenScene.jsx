@@ -397,7 +397,6 @@ class WallGardenScene extends Phaser.Scene {
                 callback: () => {
                   this.destroyDialogueUI();
                   this.butterflyDialogueActive = false;
-                  this.saveSceneState(periwinkleFound);
                   this.scene.start("ShardGardenScene");
                 }
               },
@@ -407,8 +406,7 @@ class WallGardenScene extends Phaser.Scene {
                   showDialogue(this, "Take your time and explore! Talk to me again when you're ready to move on.", { imageKey: "butterflyHappy" });
                   this.dialogueOnComplete = () => {
                     this.destroyDialogueUI();
-                    this.butterflyDialogueActive = false;
-                    this.saveSceneState(periwinkleFound);
+                      this.butterflyDialogueActive = false;
                   };
                 }
               }

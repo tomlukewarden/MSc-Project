@@ -186,15 +186,47 @@ class ShardGardenScene extends Phaser.Scene {
       if (this.activeDialogueIndex < this.activeDialogue.length) {
         showDialogue(this, this.activeDialogue[this.activeDialogueIndex], { imageKey: "butterflySad" });
       } else {
+        // Dialogue finished, ask if player wants to move on
         this.dialogueActive = false;
         this.updateHUDState();
         this.destroyDialogueUI();
         if (this.dialogueStage < 2) {
           this.dialogueStage++;
           this.setActiveDialogue();
+        } else {
+          // Show move on question
+          this.showMoveOnQuestion();
         }
       }
     });
+
+    // Add move on question method
+    this.showMoveOnQuestion = () => {
+      showOption(this, "Would you like to move on?", {
+        imageKey: "butterfly",
+        options: [
+          {
+            text: "Yes",
+            callback: () => {
+              this.destroyDialogueUI();
+              this.scene.start("PersonalGarden");
+            }
+          },
+          {
+            text: "No",
+            callback: () => {
+              showDialogue(this, "Take your time and explore! Talk to me again when you're ready to move on.", { imageKey: "butterflyHappy" });
+              this.dialogueOnComplete = () => {
+                this.destroyDialogueUI();
+                this.dialogueActive = false;
+                this.updateHUDState();
+                this.dialogueOnComplete = null;
+              };
+            }
+          }
+        ]
+      });
+    };
 
     // Add bushes with periwinkle and coins
     this.setupBushes(width, height);
