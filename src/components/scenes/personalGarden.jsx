@@ -8,6 +8,7 @@ class PersonalGarden extends Phaser.Scene {
     super("PersonalGarden", { physics: { default: 'arcade', arcade: { debug: false } } });
     this.plotSize = 64;
     this.rows = 3;
+
     this.cols = 5;
     this.plots = [];
     this.currentTool = "hoe";
@@ -30,8 +31,9 @@ class PersonalGarden extends Phaser.Scene {
   }
 
   create() {
-    this.add.image(0, 0, "gardenBackground").setOrigin(0).setScale(1.5);
-    
+
+    this.add.image(0, 0, "gardenBackground").setOrigin(0).setScale(1.75);
+
     globalTimeManager.init(this);
     if (!globalTimeManager.startTimestamp) {
       globalTimeManager.start();
@@ -50,6 +52,32 @@ class PersonalGarden extends Phaser.Scene {
         loadedState = null;
       }
     }
+
+    // Add tent rectangle in the middle left
+    const tentWidth = 80;
+    const tentHeight = 100;
+    const tentX = width / 4;
+    const tentY = height / 2;
+    const tent = this.add.rectangle(tentX, tentY, tentWidth, tentHeight, 0xc2b280, 0.95)
+      .setStrokeStyle(4, 0x8d5524)
+      .setDepth(5);
+    this.add.text(tentX, tentY - tentHeight / 2 - 18, "Tent", {
+      fontFamily: "Georgia",
+      fontSize: "18px",
+      color: "#4e342e",
+      fontStyle: "bold"
+    }).setOrigin(0.5).setDepth(6);
+
+    tent.setInteractive({ useHandCursor: true });
+    tent.on("pointerdown", () => {
+      // Pause this scene and launch overlay with current day
+      this.scene.pause();
+      this.scene.launch("DayEndScene", { day: globalTimeManager.getDayNumber() });
+      this.scene.get("DayEndScene").events.once("dayEnded", () => {
+        globalTimeManager.nextDay();
+        this.scene.resume();
+      });
+    });
 
     if (this.physics && this.physics.add) {
       this.plotGroup = this.physics.add.staticGroup();
@@ -76,10 +104,6 @@ class PersonalGarden extends Phaser.Scene {
             .setStrokeStyle(2, 0x4caf50)
             .setOrigin(0.5)
             .setInteractive({ useHandCursor: true });
-
-          this.physics.add.existing(rect, true);
-          this.plotGroup.add(rect);
-
           const text = this.add.text(px, py, '', {
             fontSize: '14px',
             color: '#fff',
