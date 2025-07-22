@@ -122,8 +122,7 @@ class WallGardenScene extends Phaser.Scene {
         this.craftUIOverlay.setDepth && this.craftUIOverlay.setDepth(200);
         // Set inventory items as ingredients (first 3 for demo)
         this.craftUIOverlay.setIngredients(items.slice(0, 3));
-        // Optionally, you could allow drag/drop or selection logic here
-        // Add a close button to the overlay
+    
         const closeBtn = this.add.text(width / 2 + 140, height / 2 - 90, '✕', {
           fontFamily: 'Georgia',
           fontSize: '28px',
