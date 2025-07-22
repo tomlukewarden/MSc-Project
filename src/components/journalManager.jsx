@@ -1,11 +1,13 @@
-let collectedPlantKeys = [];
+import { saveToLocal, loadFromLocal } from "../utils/localStorage";
 
 export function addPlantToJournal(key) {
-  if (!collectedPlantKeys.includes(key)) {
-    collectedPlantKeys.push(key);
+  const keys = loadFromLocal("collectedPlantKeys") || [];
+  if (!keys.includes(key)) {
+    keys.push(key);
+    saveToLocal("collectedPlantKeys", keys);
   }
 }
 
 export function getCollectedPlants() {
-  return [...collectedPlantKeys];
+  return loadFromLocal("collectedPlantKeys") || [];
 }
