@@ -8,7 +8,6 @@ class OpenJournal extends Phaser.Scene {
   }
 
   init(data) {
-    // data.plants should be an array of plant keys
     const collectedKeys = data.plants || [];
     this.collectedPlants = collectedKeys
       .map(key => plantData.find(p => p.key === key))
