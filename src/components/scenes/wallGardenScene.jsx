@@ -4,7 +4,6 @@ import { showDialogue, destroyDialogueUI, showOption } from '../../dialogue/dial
 import { CoinManager } from '../coinManager';
 import { createMainChar } from '../../characters/mainChar';
 import ChestLogic from '../chestLogic';
-import ChestUI from '../chestUI';
 import { saveToLocal, loadFromLocal } from '../../utils/localStorage';
 import plantData from "../../plantData";
 import { inventoryManager } from "../inventoryManager";

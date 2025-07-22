@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { getCollectedPlants } from "./journalManager";
 import plantData from "../plantData";
 
 class OpenJournal extends Phaser.Scene {
@@ -8,7 +9,12 @@ class OpenJournal extends Phaser.Scene {
   }
 
   init(data) {
-    const collectedKeys = data.plants || [];
+    let collectedKeys = [];
+    if (data && Array.isArray(data.plants) && data.plants.length > 0) {
+      collectedKeys = data.plants;
+    } else {
+      collectedKeys = getCollectedPlants();
+    }
     this.collectedPlants = collectedKeys
       .map(key => plantData.find(p => p.key === key))
       .filter(Boolean); // Remove any not found
@@ -16,6 +22,15 @@ class OpenJournal extends Phaser.Scene {
   }
 
   preload() {
+    this.load.image('foxglovePlant', '/assets/plants/foxglove.png');
+    this.load.image('marigoldPlant', '/assets/plants/marigold.PNG');
+    this.load.image('jasminePlant', '/assets/plants/jasmine.PNG');
+    this.load.image('aloePlant', '/assets/plants/aloe.PNG');
+    this.load.image('lavenderPlant', '/assets/plants/lavender.PNG');
+    this.load.image('periwinklePlant', '/assets/plants/periwinkle.png');
+    this.load.image('garlicPlant', '/assets/plants/garlic.PNG');
+    this.load.image('thymePlant', '/assets/plants/thyme.PNG');
+    this.load.image('willowPlant', '/assets/plants/willow.PNG');
     this.load.image('journal', '/assets/ui-items/book.png');
     // Optionally, load all plant images here if not already loaded elsewhere
     plantData.forEach(plant => {
@@ -53,11 +68,7 @@ class OpenJournal extends Phaser.Scene {
       this.scene.resume("HUDScene");
     });
 
-    // Render the first plant
-    this.renderPlantPage();
-
-    // Next/Prev buttons
-    // Add background rectangles for better hit area
+    // Next/Prev buttons (created before renderPlantPage so they can be shown/hidden)
     this.nextBtnBg = this.add.rectangle(width / 2 + 120, height - 60, 110, 40, 0xe0cda9, 0.8)
       .setOrigin(0.5)
       .setInteractive({ useHandCursor: true });
@@ -105,6 +116,9 @@ class OpenJournal extends Phaser.Scene {
         this.renderPlantPage();
       }
     });
+
+    // Render the first plant (after buttons are created)
+    this.renderPlantPage();
   }
 
   renderPlantPage() {
@@ -155,9 +169,17 @@ class OpenJournal extends Phaser.Scene {
       color: "#3e2f1c"
     }).setOrigin(0.5);
 
+    // Show/hide buttons based on number of plants
+    const showNav = this.collectedPlants.length > 1;
+    this.nextBtn.setVisible(showNav);
+    this.nextBtnBg.setVisible(showNav);
+    this.prevBtn.setVisible(showNav);
+    this.prevBtnBg.setVisible(showNav);
     // Enable/disable buttons
-    this.nextBtn.setAlpha(this.currentPage < this.collectedPlants.length - 1 ? 1 : 0.4);
-    this.prevBtn.setAlpha(this.currentPage > 0 ? 1 : 0.4);
+    if (showNav) {
+      this.nextBtn.setAlpha(this.currentPage < this.collectedPlants.length - 1 ? 1 : 0.4);
+      this.prevBtn.setAlpha(this.currentPage > 0 ? 1 : 0.4);
+    }
   }
 }
 
