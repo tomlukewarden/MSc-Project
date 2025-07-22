@@ -1,5 +1,4 @@
 import Phaser from 'phaser';
-import { showDialogue } from '../../dialogue/dialogueUIHelpers';
 
 class EndGameScene extends Phaser.Scene {
   constructor() {
@@ -38,9 +37,9 @@ class EndGameScene extends Phaser.Scene {
     const finalTheme = this.sound.add('finalTheme', { loop: true, volume: 0.35 });
     finalTheme.play();
 
-    // Ending dialogue box
-    showDialogue(this,
-      "Congratulations!\n\nYou have restored all the shards and completed the garden.\n\nThank you for playing 💐",
+    // Ending dialogue box (moved further left)
+    this.add.text(width / 2 - 420, height / 2 + 20, 
+      "Congratulations!\n\nYou have restored all the shards \n\nand completed the garden.\n\nThank you for playing 💐",
       {
         fontSize: 34,
         boxImageKey: 'dialogueBoxBg',
@@ -48,7 +47,7 @@ class EndGameScene extends Phaser.Scene {
         boxPadding: 32,
         textAlign: 'center',
         textColor: '#2e3d2f',
-        y: height / 2 - 60 // move up
+        y: height / 2  
       }
     );
 
