@@ -20,10 +20,18 @@ class PersonalGarden extends Phaser.Scene {
   }
 
   preload() {
-    this.load.image("defaultFront", "/assets/char/default/front-default.png");
-    this.load.image("defaultBack", "/assets/char/default/back-default.png");
-    this.load.image("defaultLeft", "/assets/char/default/left-default.png");
-    this.load.image("defaultRight", "/assets/char/default/right-default.png");
+        this.load.image("defaultFront", "/assets/char/default/front-default.png");
+        this.load.image("defaultBack", "/assets/char/default/back-default.png");
+        this.load.image("defaultLeft", "/assets/char/default/left-default.png");
+        this.load.image("defaultRight", "/assets/char/default/right-default.png");
+        this.load.image("defaultFrontWalk1", "/assets/char/default/front-step-1.PNG");
+        this.load.image("defaultFrontWalk2", "/assets/char/default/front-step-2.PNG");
+        this.load.image("defaultBackWalk1", "/assets/char/default/back-step-1.PNG");
+        this.load.image("defaultBackWalk2", "/assets/char/default/back-step-2.PNG");
+        this.load.image("defaultLeftWalk1", "/assets/char/default/left-step-1.PNG");
+        this.load.image("defaultLeftWalk2", "/assets/char/default/left-step-2.PNG");
+        this.load.image("defaultRightWalk1", "/assets/char/default/right-step-1.PNG");
+        this.load.image("defaultRightWalk2", "/assets/char/default/right-step-2.PNG");
     this.load.image("hoe", "/assets/tools/hoe.png");
     this.load.image("wateringCan", "/assets/tools/wateringCan.png");
     this.load.image("sign", "/assets/misc/sign.png");
