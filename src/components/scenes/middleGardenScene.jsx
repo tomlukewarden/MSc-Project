@@ -365,6 +365,8 @@ if (sceneState) {
     const bushCount = bushPositions.length;
     const jasmineIndex = 0;
     const marigoldIndex = 1;
+    // Track dispensed state for each bush
+    this.bushDispensed = this.bushDispensed || Array(bushCount).fill(false);
 
     for (let i = 0; i < bushCount; i++) {
       const { x, y } = bushPositions[i];
@@ -384,17 +386,21 @@ if (sceneState) {
           const marigold = plantData.find(p => p.key === "marigoldPlant");
           if (marigold) {
             this.showPlantMinigame(marigold, "marigoldFound");
+            this.bushDispensed[i] = true;
           } else {
             this.showPlantMissing();
+            this.bushDispensed[i] = true;
           }
         }
-        // Thyme bush
+        // Jasmine bush
         else if (i === jasmineIndex && !this.jasmineFound) {
           const jasmine = plantData.find(p => p.key === "jasminePlant");
           if (jasmine) {
             this.showPlantMinigame(jasmine, "jasmineFound");
+            this.bushDispensed[i] = true;
           } else {
             this.showPlantMissing();
+            this.bushDispensed[i] = true;
           }
         }
         // All other bushes give coins
@@ -410,6 +416,7 @@ if (sceneState) {
             this.updateHUDState && this.updateHUDState();
             this.dialogueOnComplete = null;
           };
+          this.bushDispensed[i] = true;
         }
       });
     }
