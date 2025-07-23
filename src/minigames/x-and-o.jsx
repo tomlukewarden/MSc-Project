@@ -29,17 +29,21 @@ class XOGameScene extends Phaser.Scene {
     this.add.image(boardX + boardSize / 2, boardY + boardSize / 2, "gameBoard")
       .setDisplaySize(boardSize, boardSize);
 
+    // Reset cells array to avoid duplicate listeners after restart
+    this.cells = [];
     for (let i = 0; i < 9; i++) {
       const col = i % 3;
       const row = Math.floor(i / 3);
+      // Adjust horizontal position: left column more right, right column more left
       let x = boardX + col * this.cellSize + this.cellSize / 2;
-      if (col === 0) x += this.cellSize * 0.15;
+      if (col === 0) x += this.cellSize * 0.15; // left column more right
       if (col === 2) x -= this.cellSize * 0.15; 
       let y = boardY + row * this.cellSize + this.cellSize / 2;
       if (row === 2) y -= this.cellSize * 0.15; 
 
       const cell = this.add.image(x, y, null)
-        .setDisplaySize(this.cellSize * 0.6, this.cellSize * 0.6) 
+        .setDisplaySize(this.cellSize * 0.6, this.cellSize * 0.6)
+        .setInteractive()
         .on("pointerdown", () => this.handleMove(i, cell));
 
       this.cells.push(cell);
@@ -64,12 +68,38 @@ class XOGameScene extends Phaser.Scene {
     if (this.checkWinner()) {
       this.statusText.setText(`Player ${this.currentPlayer} wins!`);
       this.disableBoard();
+      this.showRestartButton();
     } else if (this.board.every(cell => cell)) {
       this.statusText.setText("It's a draw!");
+      this.disableBoard();
+      this.showRestartButton();
     } else {
       this.currentPlayer = this.currentPlayer === "X" ? "O" : "X";
       this.statusText.setText(`Player ${this.currentPlayer}'s turn`);
     }
+  }
+  showRestartButton() {
+    const { width, height } = this.sys.game.config;
+    // Remove previous restart button if it exists
+    if (this.restartGroup) {
+      this.restartGroup.clear(true, true);
+    }
+    this.restartGroup = this.add.group();
+    const button = this.add.rectangle(width / 2, height - 80, 220, 60, 0x1976d2, 1)
+      .setStrokeStyle(2, 0x333)
+      .setInteractive({ useHandCursor: true });
+    const buttonText = this.add.text(width / 2, height - 80, "Restart Minigame", {
+      fontSize: "26px",
+      color: "#fff",
+      fontFamily: "Georgia"
+    }).setOrigin(0.5);
+    this.restartGroup.addMultiple([button, buttonText]);
+    button.on("pointerdown", () => {
+      this.restartGroup.clear(true, true);
+      this.board = Array(9).fill(null);
+      this.currentPlayer = "X";
+      this.scene.restart();
+    });
   }
 
   checkWinner() {
