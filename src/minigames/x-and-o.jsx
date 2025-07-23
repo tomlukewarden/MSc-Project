@@ -7,6 +7,7 @@ class XOGameScene extends Phaser.Scene {
     this.currentPlayer = "X";
     this.cellSize = 180; // Increased cell size for a bigger board and icons
     this.cells = [];
+    this.onWin = null;
   }
 
   preload() {
@@ -18,6 +19,10 @@ class XOGameScene extends Phaser.Scene {
 
   create() {
     const { width, height } = this.sys.game.config;
+    // Get onWin callback from scene data if provided
+    if (this.scene.settings && this.scene.settings.data && typeof this.scene.settings.data.onWin === "function") {
+      this.onWin = this.scene.settings.data.onWin;
+    }
     const boardSize = this.cellSize * 3;
     const boardX = (width - boardSize) / 2;
     const boardY = (height - boardSize) / 2;
@@ -63,19 +68,42 @@ class XOGameScene extends Phaser.Scene {
     this.board[index] = this.currentPlayer;
     const iconKey = this.currentPlayer === "X" ? "xIcon" : "oIcon";
     cell.setTexture(iconKey);
-    cell.setDisplaySize(this.cellSize * 0.6, this.cellSize * 0.6); // Match icon size to cell
+    cell.setDisplaySize(this.cellSize * 0.6, this.cellSize * 0.6); 
 
     if (this.checkWinner()) {
       this.statusText.setText(`Player ${this.currentPlayer} wins!`);
       this.disableBoard();
       this.showRestartButton();
+      // If X wins, call onWin callback to push back to MiniGameScene
+      if (this.currentPlayer === "X" && this.onWin) {
+        this.onWin();
+      }
+      return;
     } else if (this.board.every(cell => cell)) {
       this.statusText.setText("It's a draw!");
       this.disableBoard();
       this.showRestartButton();
-    } else {
-      this.currentPlayer = this.currentPlayer === "X" ? "O" : "X";
-      this.statusText.setText(`Player ${this.currentPlayer}'s turn`);
+      return;
+    }
+
+    // Switch turn
+    this.currentPlayer = this.currentPlayer === "X" ? "O" : "X";
+    this.statusText.setText(`Player ${this.currentPlayer}'s turn`);
+
+    // If it's O's turn, let computer play up to 3 random moves
+    if (this.currentPlayer === "O") {
+      if (!this.oMoves) this.oMoves = 0;
+      if (this.oMoves < 3) {
+        this.time.delayedCall(400, () => {
+          const emptyIndices = this.board
+            .map((v, i) => v === null ? i : null)
+            .filter(i => i !== null);
+          if (emptyIndices.length === 0) return;
+          const randIndex = emptyIndices[Math.floor(Math.random() * emptyIndices.length)];
+          this.oMoves++;
+          this.handleMove(randIndex, this.cells[randIndex]);
+        });
+      }
     }
   }
   showRestartButton() {
