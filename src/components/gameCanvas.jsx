@@ -21,6 +21,7 @@ import EndGameScene from "./scenes/endgame";
 import PersonalGarden from "./scenes/personalGarden";
 import NewGameScene from "./scenes/newGameScene";
 import DayEndScene from "./scenes/dayOverlay";
+import XOGameScene from "../minigames/x-and-o";
 
 function GameCanvas() {
     const canvasRef = useRef(null);
@@ -73,7 +74,8 @@ function GameCanvas() {
     MiniGameScene,
     PersonalGarden,
     NewGameScene,
-    DayEndScene
+    DayEndScene,
+    XOGameScene
   ]
 };
 

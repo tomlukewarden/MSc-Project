@@ -231,13 +231,15 @@ class ShardGardenScene extends Phaser.Scene {
           {
             text: "No",
             callback: () => {
-              showDialogue(this, "Take your time and explore! Talk to me again when you're ready to move on.", { imageKey: "butterflyHappy" });
               this.dialogueOnComplete = () => {
                 this.destroyDialogueUI();
                 this.dialogueActive = false;
                 this.updateHUDState();
                 this.dialogueOnComplete = null;
               };
+              // Ensure HUD reappears immediately
+              this.dialogueActive = false;
+              this.updateHUDState();
             }
           }
         ]
@@ -322,6 +324,8 @@ class ShardGardenScene extends Phaser.Scene {
     const bushCount = bushPositions.length;
     const garlicIndex = 0;
     const thymeIndex = 1;
+    // Track dispensed state for each bush
+    this.bushDispensed = this.bushDispensed || Array(bushCount).fill(false);
 
     for (let i = 0; i < bushCount; i++) {
       const { x, y } = bushPositions[i];
@@ -337,20 +341,36 @@ class ShardGardenScene extends Phaser.Scene {
         this.dialogueActive = true;
         this.updateHUDState && this.updateHUDState();
 
+        // If already dispensed, show empty dialogue
+        if (this.bushDispensed[i]) {
+          showDialogue(this, "This bush is empty!");
+          this.dialogueOnComplete = () => {
+            this.destroyDialogueUI && this.destroyDialogueUI();
+            this.dialogueActive = false;
+            this.updateHUDState && this.updateHUDState();
+            this.dialogueOnComplete = null;
+          };
+          return;
+        }
+
         if (i === garlicIndex && !this.garlicFound) {
           const garlic = plantData.find(p => p.key === "garlicPlant");
           if (garlic) {
             this.showPlantMinigame(garlic, "garlicFound");
+            this.bushDispensed[i] = true;
           } else {
             this.showPlantMissing();
+            this.bushDispensed[i] = true;
           }
         }
         else if (i === thymeIndex && !this.thymeFound) {
           const thyme = plantData.find(p => p.key === "thymePlant");
           if (thyme) {
             this.showPlantMinigame(thyme, "thymeFound");
+            this.bushDispensed[i] = true;
           } else {
             this.showPlantMissing();
+            this.bushDispensed[i] = true;
           }
         }
         else {
@@ -365,6 +385,7 @@ class ShardGardenScene extends Phaser.Scene {
             this.updateHUDState && this.updateHUDState();
             this.dialogueOnComplete = null;
           };
+          this.bushDispensed[i] = true;
         }
       });
     }

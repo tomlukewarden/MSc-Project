@@ -122,8 +122,7 @@ class WallGardenScene extends Phaser.Scene {
         this.craftUIOverlay.setDepth && this.craftUIOverlay.setDepth(200);
         // Set inventory items as ingredients (first 3 for demo)
         this.craftUIOverlay.setIngredients(items.slice(0, 3));
-        // Optionally, you could allow drag/drop or selection logic here
-        // Add a close button to the overlay
+    
         const closeBtn = this.add.text(width / 2 + 140, height / 2 - 90, '✕', {
           fontFamily: 'Georgia',
           fontSize: '28px',
@@ -422,7 +421,10 @@ class WallGardenScene extends Phaser.Scene {
                   showDialogue(this, "Take your time and explore! Talk to me again when you're ready to move on.", { imageKey: "butterflyHappy" });
                   this.dialogueOnComplete = () => {
                     this.destroyDialogueUI();
-                      this.butterflyDialogueActive = false;
+                    this.butterflyDialogueActive = false;
+                    this.dialogueActive = false;
+                    this.updateHUDState();
+                    this.dialogueOnComplete = null;
                   };
                 }
               }
@@ -506,9 +508,10 @@ class WallGardenScene extends Phaser.Scene {
       { x: 420, y: 350 }
     ];
     const bushCount = bushPositions.length;
-
     // Randomly pick which bush will have the periwinkle
     const periwinkleBushIndex = Phaser.Math.Between(0, bushCount - 1);
+    // Track dispensed state for each bush
+    this.bushDispensed = this.bushDispensed || Array(bushCount).fill(false);
 
     for (let i = 0; i < bushCount; i++) {
       const { x, y } = bushPositions[i];
@@ -522,6 +525,18 @@ class WallGardenScene extends Phaser.Scene {
         if (this.dialogueActive) return;
         this.dialogueActive = true;
         this.updateHUDState();
+
+        // If already dispensed, show empty dialogue
+        if (this.bushDispensed[i]) {
+          showDialogue(this, "This bush is empty!");
+          this.dialogueOnComplete = () => {
+            this.destroyDialogueUI();
+            this.dialogueActive = false;
+            this.updateHUDState();
+            this.dialogueOnComplete = null;
+          };
+          return;
+        }
 
         if (i === periwinkleBushIndex && !periwinkleFound) {
           // Give periwinkle plant (after minigame)
@@ -558,6 +573,7 @@ class WallGardenScene extends Phaser.Scene {
                             this.updateHUDState();
                             this.dialogueOnComplete = null;
                           };
+                          this.bushDispensed[i] = true;
                         }
                       });
                       this.scene.pause();
@@ -584,6 +600,7 @@ class WallGardenScene extends Phaser.Scene {
               this.updateHUDState();
               this.dialogueOnComplete = null;
             };
+            this.bushDispensed[i] = true;
           }
           // periwinkleFound is set only after winning the minigame!
         } else {
@@ -599,6 +616,7 @@ class WallGardenScene extends Phaser.Scene {
             this.updateHUDState();
             this.dialogueOnComplete = null;
           };
+          this.bushDispensed[i] = true;
         }
       });
     }
