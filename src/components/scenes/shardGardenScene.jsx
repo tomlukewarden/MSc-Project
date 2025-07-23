@@ -231,13 +231,15 @@ class ShardGardenScene extends Phaser.Scene {
           {
             text: "No",
             callback: () => {
-              showDialogue(this, "Take your time and explore! Talk to me again when you're ready to move on.", { imageKey: "butterflyHappy" });
               this.dialogueOnComplete = () => {
                 this.destroyDialogueUI();
                 this.dialogueActive = false;
                 this.updateHUDState();
                 this.dialogueOnComplete = null;
               };
+              // Ensure HUD reappears immediately
+              this.dialogueActive = false;
+              this.updateHUDState();
             }
           }
         ]
