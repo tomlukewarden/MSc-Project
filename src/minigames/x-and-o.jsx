@@ -81,19 +81,43 @@ class XOGameScene extends Phaser.Scene {
       fontFamily: "Georgia"
     });
 
-    // Add draggable X and O icons to the right of the board
-    const iconYStart = this.boardOrigin.y + this.cellSize;
-    const iconSpacing = 120;
-    this.xIconDraggable = this.add.sprite(this.boardOrigin.x + this.cellSize * 3.5, iconYStart, "xIcon")
-      .setOrigin(0.5)
-      .setDisplaySize(80, 80)
-      .setInteractive({ draggable: true });
-    this.oIconDraggable = this.add.sprite(this.boardOrigin.x + this.cellSize * 3.5, iconYStart + iconSpacing, "oIcon")
-      .setOrigin(0.5)
-      .setDisplaySize(80, 80)
-      .setInteractive({ draggable: true });
+    // Add 5 draggable X and 5 draggable O icons stacked to the right of the board
+    const iconX = this.boardOrigin.x + this.cellSize * 3.5;
+    const xIcons = [];
+    const oIcons = [];
+    for (let i = 0; i < 5; i++) {
+      const xIcon = this.add.sprite(iconX, this.boardOrigin.y + 40 + i * 90, "xIcon")
+        .setOrigin(0.5)
+        .setDisplaySize(80, 80)
+        .setInteractive({ draggable: true });
+      xIcons.push(xIcon);
+      const oIcon = this.add.sprite(iconX + 100, this.boardOrigin.y + 40 + i * 90, "oIcon")
+        .setOrigin(0.5)
+        .setDisplaySize(80, 80)
+        .setInteractive({ draggable: true });
+      oIcons.push(oIcon);
+    }
+    this.xIcons = xIcons;
+    this.oIcons = oIcons;
+    this.input.setDraggable([...xIcons, ...oIcons]);
+    // Show only X icons at start
+    xIcons.forEach(icon => icon.setAlpha(1));
+    oIcons.forEach(icon => icon.setAlpha(0.5));
 
-    this.input.setDraggable([this.xIconDraggable, this.oIconDraggable]);
+    // Confirm button
+    this.confirmButton = this.add.text(iconX, this.boardOrigin.y + 520, "Confirm Move", {
+      fontSize: "24px",
+      color: "#fff",
+      backgroundColor: "#1976d2",
+      fontFamily: "Georgia",
+      padding: { left: 20, right: 20, top: 10, bottom: 10 }
+    })
+      .setOrigin(0.5)
+      .setInteractive({ useHandCursor: true })
+      .setAlpha(0.5);
+
+    // Store pending move info
+    this.pendingMove = null;
 
     // Only allow dragging the current player's icon
     this.input.on('dragstart', (pointer, gameObject) => {
@@ -103,7 +127,6 @@ class XOGameScene extends Phaser.Scene {
         gameObject.input.enabled = false;
         return;
       }
-      // Do not change scale on drag
     });
     this.input.on('drag', (pointer, gameObject, dragX, dragY) => {
       gameObject.x = dragX;
@@ -121,18 +144,51 @@ class XOGameScene extends Phaser.Scene {
         // Snap icon into place
         gameObject.x = dropZone.x;
         gameObject.y = dropZone.y;
-        this.handleMove(cellIndex, currentPlayer);
-      }
-      // Always reset icon position after drop
-      if (gameObject.texture.key === "xIcon") {
-        gameObject.x = this.boardOrigin.x + this.cellSize * 3.5;
-        gameObject.y = iconYStart;
+        // Store pending move info
+        this.pendingMove = { cellIndex, currentPlayer, gameObject };
+        // Enable confirm button
+        this.confirmButton.setAlpha(1);
+        this.confirmButton.setInteractive({ useHandCursor: true });
       } else {
-        gameObject.x = this.boardOrigin.x + this.cellSize * 3.5;
-        gameObject.y = iconYStart + iconSpacing;
+        // Always reset icon position after drop
+        if (gameObject.texture.key === "xIcon") {
+          gameObject.x = this.boardOrigin.x + this.cellSize * 3.5;
+          gameObject.y = this.boardOrigin.y + 40 + this.xIcons.indexOf(gameObject) * 90;
+        } else {
+          gameObject.x = this.boardOrigin.x + this.cellSize * 3.5 + 100;
+          gameObject.y = this.boardOrigin.y + 40 + this.oIcons.indexOf(gameObject) * 90;
+        }
+        gameObject.input.enabled = true;
       }
-      gameObject.input.enabled = true;
     });
+
+    // Confirm button logic
+    this.confirmButton.on('pointerdown', () => {
+  if (!this.pendingMove) return;
+  const { cellIndex, currentPlayer, gameObject } = this.pendingMove;
+  this.handleMove(cellIndex, currentPlayer);
+
+  // Lock used icon in place
+  gameObject.removeInteractive();
+  gameObject.input = null;
+  this.input.disable(gameObject);
+
+  // Update draggable icon alpha for next turn
+  const nextPlayer = this.gameLogic.getCurrentPlayer();
+  if (nextPlayer === "X") {
+    this.xIcons.forEach(icon => icon.input?.enabled && icon.setAlpha(1));
+    this.oIcons.forEach(icon => icon.input?.enabled && icon.setAlpha(0.5));
+  } else {
+    this.xIcons.forEach(icon => icon.input?.enabled && icon.setAlpha(0.5));
+    this.oIcons.forEach(icon => icon.input?.enabled && icon.setAlpha(1));
+  }
+
+  // Reset confirm button and pending move
+  this.confirmButton.setAlpha(0.5);
+  this.confirmButton.disableInteractive();
+  this.pendingMove = null;
+});
+
 
   }
  drawBoard() {
@@ -163,6 +219,7 @@ class XOGameScene extends Phaser.Scene {
     const iconKey = this.gameLogic.board[i] === "X" ? "xIcon" :
                     this.gameLogic.board[i] === "O" ? "oIcon" : null;
     const cellSprite = this.add.sprite(x, y, iconKey).setOrigin(0.5).setDisplaySize(80, 80);
+    if (!iconKey) cellSprite.setAlpha(0); // Hide empty cell sprite
     this.cells.push(cellSprite);
   }
 }
