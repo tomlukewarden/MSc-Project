@@ -1,262 +1,92 @@
 import Phaser from "phaser";
 
-class XOGame {
-  constructor() {
-    this.board = Array(9).fill(null);
-    this.currentPlayer = "X";
-    this.winner = null;
-  }
-
-  getCurrentPlayer() {
-    return this.currentPlayer;
-  }
-
-  makeMove(index) {
-    if (this.board[index] || this.winner) return false;
-    this.board[index] = this.currentPlayer;
-    if (this.checkWin()) {
-      this.winner = this.currentPlayer;
-    } else {
-      this.currentPlayer = this.currentPlayer === "X" ? "O" : "X";
-    }
-    return true;
-  }
-
-  checkWin() {
-    const winPatterns = [
-      [0, 1, 2], [3, 4, 5], [6, 7, 8], // rows
-      [0, 3, 6], [1, 4, 7], [2, 5, 8], // cols
-      [0, 4, 8], [2, 4, 6] // diags
-    ];
-    for (const pattern of winPatterns) {
-      const [a, b, c] = pattern;
-      if (
-        this.board[a] &&
-        this.board[a] === this.board[b] &&
-        this.board[a] === this.board[c]
-      ) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  isDraw() {
-    return this.board.every(cell => cell) && !this.checkWin();
-  }
-
-  reset() {
-    this.board = Array(9).fill(null);
-    this.currentPlayer = "X";
-    this.winner = null;
-  }
-}
-
 class XOGameScene extends Phaser.Scene {
   constructor() {
     super({ key: "XOGameScene" });
-    this.gameLogic = new XOGame();
-    this.cellSize = 100;
-    this.boardOrigin = { x: 200, y: 150 };
+    this.board = Array(9).fill(null);
+    this.currentPlayer = "X";
+    this.cellSize = 180; // Increased cell size for a bigger board and icons
     this.cells = [];
-    this.statusText = null;
   }
 
   preload() {
     this.load.image("xIcon", "/assets/minigame/xo/xIcon.png");
     this.load.image("oIcon", "/assets/minigame/xo/oIcon.png");
     this.load.image("gameBoard", "/assets/minigame/xo/gameBoard.png");
+    this.load.image("background", "/assets/minigame/xo/xobackground.png");
   }
 
   create() {
     const { width, height } = this.sys.game.config;
-    const bg = this.add.graphics();
-    bg.fillStyle(0xb3e5fc, 1); 
-    bg.fillRect(0, 0, width, height);
+    const boardSize = this.cellSize * 3;
+    const boardX = (width - boardSize) / 2;
+    const boardY = (height - boardSize) / 2;
 
-    this.drawBoard();
-    this.statusText = this.add.text(200, 80, "Player X's turn", {
-      fontSize: "28px",
-      color: "#333",
-      fontFamily: "Georgia"
-    });
+    // Background
+    this.add.image(width / 2, height / 2, "background").setDisplaySize(width, height);
 
-    // Add 5 draggable X and 5 draggable O icons stacked to the right of the board
-    const iconX = this.boardOrigin.x + this.cellSize * 3.5;
-    const xIcons = [];
-    const oIcons = [];
-    for (let i = 0; i < 5; i++) {
-      const xIcon = this.add.sprite(iconX, this.boardOrigin.y + 40 + i * 90, "xIcon")
-        .setOrigin(0.5)
-        .setDisplaySize(80, 80)
-        .setInteractive({ draggable: true });
-      xIcons.push(xIcon);
-      const oIcon = this.add.sprite(iconX + 100, this.boardOrigin.y + 40 + i * 90, "oIcon")
-        .setOrigin(0.5)
-        .setDisplaySize(80, 80)
-        .setInteractive({ draggable: true });
-      oIcons.push(oIcon);
-    }
-    this.xIcons = xIcons;
-    this.oIcons = oIcons;
-    this.input.setDraggable([...xIcons, ...oIcons]);
-    // Show only X icons at start
-    xIcons.forEach(icon => icon.setAlpha(1));
-    oIcons.forEach(icon => icon.setAlpha(0.5));
+    // Draw game board image
+    this.add.image(boardX + boardSize / 2, boardY + boardSize / 2, "gameBoard")
+      .setDisplaySize(boardSize, boardSize);
 
-    // Confirm button
-    this.confirmButton = this.add.text(iconX, this.boardOrigin.y + 520, "Confirm Move", {
-      fontSize: "24px",
-      color: "#fff",
-      backgroundColor: "#1976d2",
-      fontFamily: "Georgia",
-      padding: { left: 20, right: 20, top: 10, bottom: 10 }
-    })
-      .setOrigin(0.5)
-      .setInteractive({ useHandCursor: true })
-      .setAlpha(0.5);
-
-    // Store pending move info
-    this.pendingMove = null;
-
-    // Only allow dragging the current player's icon
-    this.input.on('dragstart', (pointer, gameObject) => {
-      const currentPlayer = this.gameLogic.getCurrentPlayer();
-      if ((currentPlayer === "X" && gameObject.texture.key !== "xIcon") ||
-          (currentPlayer === "O" && gameObject.texture.key !== "oIcon")) {
-        gameObject.input.enabled = false;
-        return;
-      }
-    });
-    this.input.on('drag', (pointer, gameObject, dragX, dragY) => {
-      gameObject.x = dragX;
-      gameObject.y = dragY;
-    });
-    this.input.on('drop', (pointer, gameObject, dropZone) => {
-      const cellIndex = dropZone.getData('index');
-      const currentPlayer = this.gameLogic.getCurrentPlayer();
-      // Validate move
-      if (this.cells[cellIndex].texture.key) return;
-      if (
-        (currentPlayer === "X" && gameObject.texture.key === "xIcon") ||
-        (currentPlayer === "O" && gameObject.texture.key === "oIcon")
-      ) {
-        // Snap icon into place
-        gameObject.x = dropZone.x;
-        gameObject.y = dropZone.y;
-        // Store pending move info
-        this.pendingMove = { cellIndex, currentPlayer, gameObject };
-        // Enable confirm button
-        this.confirmButton.setAlpha(1);
-        this.confirmButton.setInteractive({ useHandCursor: true });
-      } else {
-        // Always reset icon position after drop
-        if (gameObject.texture.key === "xIcon") {
-          gameObject.x = this.boardOrigin.x + this.cellSize * 3.5;
-          gameObject.y = this.boardOrigin.y + 40 + this.xIcons.indexOf(gameObject) * 90;
-        } else {
-          gameObject.x = this.boardOrigin.x + this.cellSize * 3.5 + 100;
-          gameObject.y = this.boardOrigin.y + 40 + this.oIcons.indexOf(gameObject) * 90;
-        }
-        gameObject.input.enabled = true;
-      }
-    });
-
-    // Confirm button logic
-    this.confirmButton.on('pointerdown', () => {
-  if (!this.pendingMove) return;
-  const { cellIndex, currentPlayer, gameObject } = this.pendingMove;
-  this.handleMove(cellIndex, currentPlayer);
-
-  // Lock used icon in place
-  gameObject.removeInteractive();
-  gameObject.input = null;
-  this.input.disable(gameObject);
-
-  // Update draggable icon alpha for next turn
-  const nextPlayer = this.gameLogic.getCurrentPlayer();
-  if (nextPlayer === "X") {
-    this.xIcons.forEach(icon => icon.input?.enabled && icon.setAlpha(1));
-    this.oIcons.forEach(icon => icon.input?.enabled && icon.setAlpha(0.5));
-  } else {
-    this.xIcons.forEach(icon => icon.input?.enabled && icon.setAlpha(0.5));
-    this.oIcons.forEach(icon => icon.input?.enabled && icon.setAlpha(1));
-  }
-
-  // Reset confirm button and pending move
-  this.confirmButton.setAlpha(0.5);
-  this.confirmButton.disableInteractive();
-  this.pendingMove = null;
-});
-
-
-  }
- drawBoard() {
-  this.add.image(
-    this.boardOrigin.x + this.cellSize * 1.5,
-    this.boardOrigin.y + this.cellSize * 1.5,
-    "gameBoard"
-  ).setOrigin(0.5).setDisplaySize(this.cellSize * 3, this.cellSize * 3);
-
-  this.cells = [];
-  this.dropZones = [];
-
-  for (let i = 0; i < 9; i++) {
-    const col = i % 3;
-    const row = Math.floor(i / 3);
-    const x = this.boardOrigin.x + col * this.cellSize + this.cellSize / 2;
-    const y = this.boardOrigin.y + row * this.cellSize + this.cellSize / 2;
-
-    // Create a transparent drop zone
-    const zone = this.add.zone(x, y, this.cellSize, this.cellSize)
-      .setRectangleDropZone(this.cellSize, this.cellSize)
-      .setData('index', i)
-      .setName(`cell-${i}`);
-    zone.setOrigin(0.5);
-    this.dropZones.push(zone);
-
-    // Cell sprites (with icon if any)
-    const iconKey = this.gameLogic.board[i] === "X" ? "xIcon" :
-                    this.gameLogic.board[i] === "O" ? "oIcon" : null;
-    const cellSprite = this.add.sprite(x, y, iconKey).setOrigin(0.5).setDisplaySize(80, 80);
-    if (!iconKey) cellSprite.setAlpha(0); // Hide empty cell sprite
-    this.cells.push(cellSprite);
-  }
-}
-
-
-  getCellAt(x, y) {
-    // Returns cell index if pointer is inside a cell, else null
     for (let i = 0; i < 9; i++) {
       const col = i % 3;
       const row = Math.floor(i / 3);
-      const cellX = this.boardOrigin.x + col * this.cellSize;
-      const cellY = this.boardOrigin.y + row * this.cellSize;
-      if (x > cellX && x < cellX + this.cellSize && y > cellY && y < cellY + this.cellSize) {
-        return i;
-      }
+      let x = boardX + col * this.cellSize + this.cellSize / 2;
+      if (col === 0) x += this.cellSize * 0.15;
+      if (col === 2) x -= this.cellSize * 0.15; 
+      let y = boardY + row * this.cellSize + this.cellSize / 2;
+      if (row === 2) y -= this.cellSize * 0.15; 
+
+      const cell = this.add.image(x, y, null)
+        .setDisplaySize(this.cellSize * 0.6, this.cellSize * 0.6) 
+        .on("pointerdown", () => this.handleMove(i, cell));
+
+      this.cells.push(cell);
     }
-    return null;
+
+    // Status text
+    this.statusText = this.add.text(width / 2, boardY - 30, "Player X's turn", {
+      fontSize: "24px",
+      color: "#333",
+      fontFamily: "Georgia"
+    }).setOrigin(0.5);
   }
 
-  handleMove(cell, playerOverride = null) {
-    const currentPlayer = playerOverride || this.gameLogic.getCurrentPlayer();
-    // Only allow move if cell is empty
-    if (this.cells[cell].texture.key) return;
-    // Only allow correct player to play
-    if (playerOverride && currentPlayer !== this.gameLogic.getCurrentPlayer()) return;
-    this.gameLogic.makeMove(cell);
-    // Set icon for move
-    const iconKey = currentPlayer === "X" ? "xIcon" : "oIcon";
-    this.cells[cell].setTexture(iconKey);
-    this.statusText.setText(`Player ${currentPlayer === "X" ? "O" : "X"}'s turn`);
-    if (this.gameLogic.checkWin()) {
-      this.statusText.setText(`Player ${currentPlayer} wins!`);
-      this.input.off("pointerdown");
-    } else if (this.gameLogic.isDraw()) {
+  handleMove(index, cell) {
+    if (this.board[index] || this.checkWinner()) return;
+
+    this.board[index] = this.currentPlayer;
+    const iconKey = this.currentPlayer === "X" ? "xIcon" : "oIcon";
+    cell.setTexture(iconKey);
+    cell.setDisplaySize(this.cellSize * 0.6, this.cellSize * 0.6); // Match icon size to cell
+
+    if (this.checkWinner()) {
+      this.statusText.setText(`Player ${this.currentPlayer} wins!`);
+      this.disableBoard();
+    } else if (this.board.every(cell => cell)) {
       this.statusText.setText("It's a draw!");
-      this.input.off("pointerdown");
+    } else {
+      this.currentPlayer = this.currentPlayer === "X" ? "O" : "X";
+      this.statusText.setText(`Player ${this.currentPlayer}'s turn`);
     }
+  }
+
+  checkWinner() {
+    const wins = [
+      [0, 1, 2], [3, 4, 5], [6, 7, 8],
+      [0, 3, 6], [1, 4, 7], [2, 5, 8], 
+      [0, 4, 8], [2, 4, 6]            
+    ];
+    return wins.some(([a, b, c]) =>
+      this.board[a] &&
+      this.board[a] === this.board[b] &&
+      this.board[a] === this.board[c]
+    );
+  }
+
+  disableBoard() {
+    this.cells.forEach(cell => cell.disableInteractive());
   }
 }
 
