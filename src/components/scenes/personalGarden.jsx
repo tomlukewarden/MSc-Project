@@ -35,12 +35,27 @@ class PersonalGarden extends Phaser.Scene {
     this.load.image("hoe", "/assets/tools/hoe.png");
     this.load.image("wateringCan", "/assets/tools/wateringCan.png");
     this.load.image("sign", "/assets/misc/sign.png");
-    this.load.image("gardenBackground", "/assets/backgrounds/personal/personalGardenbg.JPG");
+    this.load.image("gardenBackground", "/assets/backgrounds/personal/personalBackground.png");
+    this.load.image("tent", "/assets/backgrounds/personal/tent.png");
+    this.load.image("fence", "/assets/backgrounds/personal/fence.png");
   }
 
   create() {
 
-    this.add.image(0, 0, "gardenBackground").setOrigin(0).setScale(1.75);
+        const scaleFactor = 0.175;
+    this.add.image(0, 0, "gardenBackground").setOrigin(0).setScale(scaleFactor);
+   const tentImg =  this.add.image(0, 0, "tent").setOrigin(0).setScale(scaleFactor).setDepth(5);
+   tentImg.setInteractive({ useHandCursor: true });
+   tentImg.on("pointerdown", () => {
+     // Pause this scene and launch overlay with current day
+     this.scene.pause();
+     this.scene.launch("DayEndScene", { day: globalTimeManager.getDayNumber() });
+     this.scene.get("DayEndScene").events.once("dayEnded", () => {
+       globalTimeManager.nextDay();
+       this.scene.resume();
+     });
+   });
+    this.add.image(0, 0, "fence").setOrigin(0).setScale(scaleFactor).setDepth(10);
 
     globalTimeManager.init(this);
     if (!globalTimeManager.startTimestamp) {
@@ -80,30 +95,9 @@ class PersonalGarden extends Phaser.Scene {
 
     backButton.setDepth(10);
 
-    const tentWidth = 80;
-    const tentHeight = 100;
-    const tentX = width / 4;
-    const tentY = height / 2;
-    const tent = this.add.rectangle(tentX, tentY, tentWidth, tentHeight, 0xc2b280, 0.95)
-      .setStrokeStyle(4, 0x8d5524)
-      .setDepth(5);
-    this.add.text(tentX, tentY - tentHeight / 2 - 18, "Tent", {
-      fontFamily: "Georgia",
-      fontSize: "18px",
-      color: "#4e342e",
-      fontStyle: "bold"
-    }).setOrigin(0.5).setDepth(6);
-
-    tent.setInteractive({ useHandCursor: true });
-    tent.on("pointerdown", () => {
-      // Pause this scene and launch overlay with current day
-      this.scene.pause();
-      this.scene.launch("DayEndScene", { day: globalTimeManager.getDayNumber() });
-      this.scene.get("DayEndScene").events.once("dayEnded", () => {
-        globalTimeManager.nextDay();
-        this.scene.resume();
-      });
-    });
+    // Move plots down and to the right
+    const plotOffsetX = 60;
+    const plotOffsetY = 40;
 
     if (this.physics && this.physics.add) {
       this.plotGroup = this.physics.add.staticGroup();
@@ -113,8 +107,11 @@ class PersonalGarden extends Phaser.Scene {
       this.mainChar.setDepth(1).setOrigin(0.5);
       this.charGroup.add(this.mainChar);
 
-      const startX = width / 2 - (this.cols / 2) * this.plotSize;
-      const startY = height / 2 - (this.rows / 2) * this.plotSize;
+      // Move plots down and to the right
+      const plotOffsetX = 60;
+      const plotOffsetY = 40;
+      const startX = width / 2 - (this.cols / 2) * this.plotSize + plotOffsetX;
+      const startY = height / 2 - (this.rows / 2) * this.plotSize + plotOffsetY;
 
       for (let y = 0; y < this.rows; y++) {
         for (let x = 0; x < this.cols; x++) {
@@ -156,8 +153,8 @@ class PersonalGarden extends Phaser.Scene {
       this.mainChar = createMainChar(this, width / 2, height / 2, 0.18);
       this.mainChar.setDepth(1).setOrigin(0.5);
 
-      const startX = width / 2 - (this.cols / 2) * this.plotSize;
-      const startY = height / 2 - (this.rows / 2) * this.plotSize;
+      const startX = width / 2 - (this.cols / 2) * this.plotSize + plotOffsetX;
+      const startY = height / 2 - (this.rows / 2) * this.plotSize + plotOffsetY;
 
       for (let y = 0; y < this.rows; y++) {
         for (let x = 0; x < this.cols; x++) {
@@ -302,7 +299,7 @@ class PersonalGarden extends Phaser.Scene {
   }
 
   createToolButtons() {
-    const tools = ['hoe', 'wateringCan', 'harvestGlove'];
+    const tools = ['hoe', 'seeds', 'wateringCan', 'harvestGlove'];
     tools.forEach((tool, i) => {
       const btn = this.add.text(20, 20 + i * 30, tool.toUpperCase(), {
         fontSize: '16px',
