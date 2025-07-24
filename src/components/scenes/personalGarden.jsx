@@ -61,21 +61,25 @@ class PersonalGarden extends Phaser.Scene {
       }
     }
 
-    const backButton = this.add.text(20, 20, "Back", {
+    const backBtnX = width - 40;
+    const backBtnY = height / 2;
+    const backButton = this.add.text(backBtnX, backBtnY, "Back", {
       fontSize: "24px",
       color: "#fff",
       fontFamily: "Georgia",
       backgroundColor: "#3bb273",
       padding: { left: 12, right: 12, top: 6, bottom: 6 }
     })
-      .setOrigin(0)
+      .setOrigin(1, 0.5)
       .setInteractive({ useHandCursor: true })
       .on("pointerdown", () => {
         this.scene.stop("PersonalGarden");
         this.scene.start("WallGardenScene");
         this.scene.resume("HUDScene");
       });
-    // Add tent rectangle in the middle left
+
+    backButton.setDepth(10);
+
     const tentWidth = 80;
     const tentHeight = 100;
     const tentX = width / 4;

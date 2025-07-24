@@ -15,9 +15,11 @@ class ShopScene extends Phaser.Scene {
     this.load.audio('click', '/assets/sound-effects/click.mp3');
     this.load.audio("shopTheme", "/assets/music/shop-theme.mp3");
     this.load.image('dialogueBoxBg', '/assets/ui-items/dialogue.png');
+    
   }
 
   create() {
+    this.scene.sleep("HUDScene");
     this.sound.play('shopTheme', { loop: true, volume: 0.1 });
     const { width, height } = this.scale;
 
