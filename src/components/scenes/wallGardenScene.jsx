@@ -68,6 +68,8 @@ class WallGardenScene extends Phaser.Scene {
   }
 
   create() {
+    // Reset transitioning flag on scene creation
+    this.transitioning = false;
     // --- Personal Garden Button (above bushes) ---
     const btnX = 220;
     const btnY = 300;
@@ -495,10 +497,12 @@ class WallGardenScene extends Phaser.Scene {
     this.events.on('shutdown', () => {
       this.saveSceneState(periwinkleFound);
       clearInterval(this._saveInterval);
+      this.transitioning = false;
     });
     this.events.on('destroy', () => {
       this.saveSceneState(periwinkleFound);
       clearInterval(this._saveInterval);
+      this.transitioning = false;
     });
   }
 

@@ -61,10 +61,12 @@ class MiddleGardenScene extends Phaser.Scene {
   }
 
   create() {
-      globalTimeManager.init(this);
-  if (!globalTimeManager.startTimestamp) {
-    globalTimeManager.start();
-  }
+    globalTimeManager.init(this);
+    if (!globalTimeManager.startTimestamp) {
+      globalTimeManager.start();
+    }
+    // Reset transitioning flag on scene creation
+    this.transitioning = false;
     if (typeof window !== "undefined") {
     window.inventoryManager = inventoryManager;
 }
@@ -312,7 +314,7 @@ class MiddleGardenScene extends Phaser.Scene {
             this.deerThanksDone = true;
             // Automatically give winter shard after thanks dialogue
             receivedItem(this, "winterShard", "Winter Shard");
-            
+
           }
           this.deerDialogueActive = false;
           this.updateHUDState && this.updateHUDState();
@@ -336,10 +338,12 @@ class MiddleGardenScene extends Phaser.Scene {
     this.events.on('shutdown', () => {
       this.saveSceneState();
       clearInterval(this._saveInterval);
+      this.transitioning = false;
     });
     this.events.on('destroy', () => {
       this.saveSceneState();
       clearInterval(this._saveInterval);
+      this.transitioning = false;
     });
 
     // --- LOAD SCENE STATE FROM LOCAL STORAGE ---

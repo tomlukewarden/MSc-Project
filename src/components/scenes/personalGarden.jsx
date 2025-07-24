@@ -55,6 +55,7 @@ class PersonalGarden extends Phaser.Scene {
        this.scene.resume();
      });
    });
+
     this.add.image(0, 0, "fence").setOrigin(0).setScale(scaleFactor).setDepth(10);
 
     globalTimeManager.init(this);
