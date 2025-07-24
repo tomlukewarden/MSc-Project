@@ -68,6 +68,47 @@ class WallGardenScene extends Phaser.Scene {
   }
 
   create() {
+    // --- Personal Garden Button (above bushes) ---
+    const btnX = 220;
+    const btnY = 300;
+    const btnWidth = 180;
+    const btnHeight = 48;
+    const personalBtnBg = this.add.rectangle(btnX, btnY, btnWidth, btnHeight, 0x3e7d3a, 0.95)
+      .setOrigin(0.5)
+      .setDepth(100)
+      .setInteractive({ useHandCursor: true });
+    const personalBtnText = this.add.text(btnX, btnY, 'Go to Personal Garden', {
+      fontFamily: 'Georgia',
+      fontSize: '22px',
+      color: '#fff',
+      align: 'center',
+      shadow: {
+        offsetX: 0,
+        offsetY: 0,
+        color: '#4caf50',
+        blur: 8,
+        fill: true
+      }
+    }).setOrigin(0.5).setDepth(101);
+
+    personalBtnText.setInteractive({ useHandCursor: true });
+    personalBtnText.on('pointerdown', () => {
+      personalBtnBg.emit('pointerdown');
+    });
+    personalBtnBg.on('pointerover', () => {
+      personalBtnBg.setFillStyle(0x4caf50, 0.98);
+      personalBtnText.setColor('#ffffcc');
+    });
+    personalBtnBg.on('pointerout', () => {
+      personalBtnBg.setFillStyle(0x3e7d3a, 0.95);
+      personalBtnText.setColor('#fff');
+    });
+    personalBtnBg.on('pointerdown', () => {
+      if (!this.transitioning) {
+        this.transitioning = true;
+        this.scene.start("PersonalGarden");
+      }
+    });
   globalTimeManager.init(this);
   if (!globalTimeManager.startTimestamp) {
     globalTimeManager.start();
