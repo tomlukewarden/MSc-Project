@@ -312,6 +312,7 @@ class MiddleGardenScene extends Phaser.Scene {
             this.deerThanksDone = true;
             // Automatically give winter shard after thanks dialogue
             receivedItem(this, "winterShard", "Winter Shard");
+            
           }
           this.deerDialogueActive = false;
           this.updateHUDState && this.updateHUDState();

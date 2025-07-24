@@ -557,8 +557,7 @@ class WallGardenScene extends Phaser.Scene {
                       this.scene.launch("MiniGameScene", {
                         onWin: () => {
                           this.scene.stop("MiniGameScene");
-                          this.dialogueActive = true;
-                          this.updateHUDState();
+                          this.scene.resume();
                           receivedItem(this, periwinkle.key, periwinkle.name);
                           inventoryManager.addItem(periwinkle);
                           addPlantToJournal(periwinkle.key);
@@ -567,6 +566,7 @@ class WallGardenScene extends Phaser.Scene {
                             { imageKey: periwinkle.imageKey }
                           );
                           periwinkleFound = true;
+                          this.dialogueActive = true;
                           this.dialogueOnComplete = () => {
                             this.destroyDialogueUI();
                             this.dialogueActive = false;

@@ -14,10 +14,11 @@ class XOGameScene extends Phaser.Scene {
     this.load.image("xIcon", "/assets/minigame/xo/xIcon.png");
     this.load.image("oIcon", "/assets/minigame/xo/oIcon.png");
     this.load.image("gameBoard", "/assets/minigame/xo/gameBoard.png");
-    this.load.image("background", "/assets/minigame/xo/xobackground.png");
+    this.load.image("xoBackground", "/assets/minigame/xo/xobackground.png");
   }
 
   create() {
+    this.scene.sleep("HUDScene");
     const { width, height } = this.sys.game.config;
     // Get onWin callback from scene data if provided
     if (this.scene.settings && this.scene.settings.data && typeof this.scene.settings.data.onWin === "function") {
@@ -28,7 +29,7 @@ class XOGameScene extends Phaser.Scene {
     const boardY = (height - boardSize) / 2;
 
     // Background
-    this.add.image(width / 2, height / 2, "background").setDisplaySize(width, height);
+    this.add.image(width / 2, height / 2, "xoBackground").setDisplaySize(width, height);
 
     // Draw game board image
     this.add.image(boardX + boardSize / 2, boardY + boardSize / 2, "gameBoard")
