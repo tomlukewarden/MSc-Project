@@ -1,22 +1,9 @@
-
-
-export const recipes = [
-  {
-    ingredients: ['garlicPlant', 'thymePlant'],
-    result: { key: 'healingPotion', name: 'Healing Potion' }
-  },
-  {
-    ingredients: ['foxglovePlant', 'marigoldPlant'],
-    result: { key: 'manaPotion', name: 'Mana Potion' }
-  },
-  
-];
+import { recipeData } from '../recipieData';
 
 export function tryCraft(selectedItems, inventoryManager) {
-  // Get keys of selected items
   const selectedKeys = selectedItems.map(item => item?.key).filter(Boolean);
   // Find a recipe that matches (order-insensitive)
-  const match = recipes.find(recipe => {
+  const match = recipeData.find(recipe => {
     if (recipe.ingredients.length !== selectedKeys.length) return false;
     // Check if every ingredient is present
     const keysCopy = [...selectedKeys];
