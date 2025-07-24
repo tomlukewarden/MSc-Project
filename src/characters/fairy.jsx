@@ -15,7 +15,7 @@ export const fairyHelpDialogues = [
 ];
 
 export const fairyGoodbyeDialogues = [
-    "I think you've really helped Paula here! I think it's time to head over to the gardens.",
+    "I think you've really helped Paula here!\n I think it's time to head over to the gardens.",
     "Are you ready to go to the gardens?",
 ];
 
