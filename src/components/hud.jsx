@@ -165,6 +165,11 @@ class HUDScene extends Phaser.Scene {
       }
     };
 
+    // Expose a public method to forcibly refresh toolbar slots
+    this.refreshToolbarSlots = () => {
+      updateToolbarSlots(inventoryManager.getToolbarSlots());
+    };
+
     updateToolbarSlots(inventoryManager.getToolbarSlots());
     inventoryManager.onToolbarChange(updateToolbarSlots);
     inventoryManager.onChange(() => updateToolbarSlots(inventoryManager.getToolbarSlots()));

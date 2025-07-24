@@ -251,21 +251,16 @@ class WeeCairScene extends Phaser.Scene {
           options: [
             {
               label: "Yes",
-
               onSelect: () => {
                 this.hasMadeFoxgloveChoice = true;
                 destroyDialogueUI(this);
                 this.dialogueActive = true;
                 this.foxglovePlantReceived = false;
-                inventoryManager.removeItemByKey && inventoryManager.removeItemByKey("foxglovePlant");
-
                 showDialogue(this, "You hand her the plant...", {
                   imageKey: "bee"
                 });
-
                 coinManager.add(200);
                 saveToLocal("coins", coinManager.coins);
-
                 this.time.delayedCall(800, () => {
                   this.currentSet = this.dialogueSequence.findIndex(
                     (set) => set.lines === beeThanksDialogues
@@ -321,6 +316,32 @@ class WeeCairScene extends Phaser.Scene {
           receivedItem(this, "springShard", "Spring Shard");
           addPlantToJournal("springShard");
           this.springShardReceived = true;
+
+          // Remove foxglove from inventory and toolbar slots, then refresh HUD
+          if (typeof inventoryManager.removeItemByKey === 'function') {
+            inventoryManager.removeItemByKey("foxglovePlant");
+          }
+          if (Array.isArray(inventoryManager.toolbarSlots)) {
+            for (let i = 0; i < inventoryManager.toolbarSlots.length; i++) {
+              const slot = inventoryManager.toolbarSlots[i];
+              if (slot && slot.key === "foxglovePlant") {
+                inventoryManager.toolbarSlots[i] = null;
+                console.log("Cleared foxglove from toolbar slot", i);
+              }
+            }
+            if (typeof inventoryManager._notifyToolbar === 'function') {
+              inventoryManager._notifyToolbar();
+            }
+          }
+          if (this.scene.get("HUDScene")) {
+            const hud = this.scene.get("HUDScene");
+            if (typeof hud.refreshToolbarSlots === 'function') {
+              hud.refreshToolbarSlots();
+            }
+            if (typeof hud.refreshInventory === 'function') {
+              hud.refreshInventory();
+            }
+          }
 
           this.time.delayedCall(1000, () => {
             this.activeDialogue = fairyGoodbyeDialogues;

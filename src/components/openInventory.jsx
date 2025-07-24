@@ -43,7 +43,7 @@ class OpenInventory extends Phaser.Scene {
     });
 
     // Render inventory items in a grid
-    const renderItems = (items) => {
+    this.renderItems = (items) => {
       // Remove old
       this.itemRects.forEach(r => r.destroy());
       this.itemTexts.forEach(t => t.destroy());
@@ -89,9 +89,6 @@ class OpenInventory extends Phaser.Scene {
           }
         ).setOrigin(0.5).setDepth(108);
 
-        // Optionally: add a quantity or description below
-        // const descText = this.add.text(x, y + 38, item.desc || "", { ... }).setOrigin(0.5).setDepth(108);
-
         // Remove item on click
         rect.on("pointerdown", () => {
           inventoryManager.removeItem(item.name);
@@ -99,12 +96,11 @@ class OpenInventory extends Phaser.Scene {
 
         this.itemRects.push(rect);
         this.itemTexts.push(nameText);
-        // this.itemTexts.push(descText); // if you add desc
       });
     };
 
-    renderItems(inventoryManager.getItems());
-    inventoryManager.onChange(renderItems);
+    this.renderItems(inventoryManager.getItems());
+    inventoryManager.onChange((items) => this.renderItems(items));
 
     // Click anywhere else to exit inventory
     this.input.once("pointerdown", (pointer, currentlyOver) => {
