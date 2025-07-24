@@ -158,8 +158,13 @@ class MiddleGardenScene extends Phaser.Scene {
 
     // Listen for periwinkle and marigold handover events from inventory
     this.events.on("periwinkleGiven", () => {
-      this.wolfHasPeriwinkle = false;
-      if (!inventoryManager.hasItemByKey || !inventoryManager.hasItemByKey("periwinklePlant")) {
+      this.awaitingPeriwinkleGive = false;
+      // Remove periwinkle by key as a failsafe
+      if (inventoryManager.hasItemByKey && inventoryManager.hasItemByKey("periwinklePlant")) {
+        inventoryManager.removeItemByKey("periwinklePlant");
+      }
+      // Now check if it's gone
+      if (!inventoryManager.hasItemByKey("periwinklePlant")) {
         showDialogue(this, "You hand the wolf the Periwinkle...", { imageKey: "wolf" });
         this.wolf.setTexture && this.wolf.setTexture("wolfHappy");
         this.time.delayedCall(800, () => {
@@ -169,13 +174,15 @@ class MiddleGardenScene extends Phaser.Scene {
           showDialogue(this, this.activeWolfDialogues[this.wolfDialogueIndex], { imageKey: "wolf" });
           this.updateHUDState && this.updateHUDState();
         });
+        this.wolfHasPeriwinkle = true;
       } else {
         showDialogue(this, "You still have the Periwinkle.", { imageKey: "wolf" });
       }
     });
     this.events.on("marigoldGiven", () => {
-      this.deerHasMarigold = false;
-      if (!inventoryManager.hasItemByKey || !inventoryManager.hasItemByKey("marigoldPlant")) {
+      this.awaitingMarigoldGive = false;
+      // Always check by key for removal
+      if (!inventoryManager.hasItemByKey("marigoldPlant")) {
         showDialogue(this, "You hand the deer the Marigold...", { imageKey: "deer" });
         this.deer.setTexture && this.deer.setTexture("deerHappy");
         this.time.delayedCall(800, () => {
@@ -185,6 +192,7 @@ class MiddleGardenScene extends Phaser.Scene {
           showDialogue(this, this.activeDeerDialogues[this.deerDialogueIndex], { imageKey: "deer" });
           this.updateHUDState && this.updateHUDState();
         });
+        this.deerHasMarigold = true;
       } else {
         showDialogue(this, "You still have the Marigold.", { imageKey: "deer" });
       }
@@ -207,19 +215,19 @@ class MiddleGardenScene extends Phaser.Scene {
             {
               label: "Yes",
               onSelect: () => {
+                this.hasMadePeriwinkleChoice = true;
                 this.destroyDialogueUI();
-                this.updateHUDState && this.updateHUDState();
+                this.dialogueActive = true;
+                // Set flag to await periwinkle handover
+                this.awaitingPeriwinkleGive = true;
                 this.scene.launch("OpenInventory");
-                this.events.once("inventoryClosed", () => {
-                  this.events.emit("periwinkleGiven");
-                });
               }
             },
             {
               label: "No",
               onSelect: () => {
                 this.destroyDialogueUI();
-                this.updateHUDState && this.updateHUDState();
+                this.dialogueActive = true;
                 showDialogue(this, "You decide to hold off for now.", { imageKey: "wolf" });
               }
             }
@@ -237,6 +245,7 @@ class MiddleGardenScene extends Phaser.Scene {
         return;
       }
     });
+    // Deer click handler
     this.deer.on("pointerdown", () => {
       if (!this.deerIntroDone && !this.deerDialogueActive) {
         this.deerDialogueActive = true;
@@ -253,19 +262,19 @@ class MiddleGardenScene extends Phaser.Scene {
             {
               label: "Yes",
               onSelect: () => {
+                this.hasMadeMarigoldChoice = true;
                 this.destroyDialogueUI();
-                this.updateHUDState && this.updateHUDState();
+                this.dialogueActive = true;
+                // Set flag to await marigold handover
+                this.awaitingMarigoldGive = true;
                 this.scene.launch("OpenInventory");
-                this.events.once("inventoryClosed", () => {
-                  this.events.emit("marigoldGiven");
-                });
               }
             },
             {
               label: "No",
               onSelect: () => {
                 this.destroyDialogueUI();
-                this.updateHUDState && this.updateHUDState();
+                this.dialogueActive = true;
                 showDialogue(this, "You decide to hold off for now.", { imageKey: "deer" });
               }
             }
@@ -307,6 +316,10 @@ class MiddleGardenScene extends Phaser.Scene {
             this.wolfThanksDone = true;
             // Automatically give summer shard after thanks dialogue
             receivedItem(this, "summerShard", "Summer Shard");
+            // Remove periwinkle from inventory if still present (failsafe)
+            if (inventoryManager.hasItemByKey && inventoryManager.hasItemByKey("periwinklePlant")) {
+              inventoryManager.removeItemByKey("periwinklePlant");
+            }
           }
           this.wolfDialogueActive = false;
           this.updateHUDState && this.updateHUDState();

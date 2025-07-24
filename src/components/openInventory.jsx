@@ -103,8 +103,8 @@ class OpenInventory extends Phaser.Scene {
             return;
           }
           // Marigold handover logic for deer
-          if (middleGardenScene && middleGardenScene.deerIntroDone && !middleGardenScene.deerThanksDone && middleGardenScene.hasMarigold && item.key === "marigoldPlant") {
-            inventoryManager.removeItemByKey && inventoryManager.removeItemByKey("marigoldPlant");
+          if (middleGardenScene && middleGardenScene.awaitingMarigoldGive && item.key === "marigoldPlant") {
+            inventoryManager.removeItem("marigoldPlant");
             this.scene.stop(); // Close inventory
             middleGardenScene.events.emit("marigoldGiven");
             middleGardenScene.events.emit("inventoryClosed");
@@ -113,7 +113,7 @@ class OpenInventory extends Phaser.Scene {
           // Jasmine handover logic for elephant
           const wallGardenScene = this.scene.get('WallGardenScene');
           if (wallGardenScene && wallGardenScene.awaitingJasmineGive && item.key === "jasminePlant") {
-            inventoryManager.removeItemByKey && inventoryManager.removeItemByKey("jasminePlant");
+            inventoryManager.removeItem("jasminePlant");
             this.scene.stop(); // Close inventory
             wallGardenScene.events.emit("jasmineGiven");
             wallGardenScene.events.emit("inventoryClosed");
