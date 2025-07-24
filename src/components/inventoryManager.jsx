@@ -1,3 +1,5 @@
+import plantData from "../plantData";
+
 export class InventoryManager {
   constructor(initialItems = []) {
     this.items = initialItems;
@@ -38,10 +40,22 @@ export class InventoryManager {
   addItem(item) {
     if (!item || this._isCoin(item)) return;
 
-    this._normalizePlantKey(item);
+    const nameLower = item.name?.toLowerCase();
+    const keyLower = item.key?.toLowerCase();
+    let plantInfo = null;
+    if (nameLower || keyLower) {
+      plantInfo = plantData.find(p =>
+        p.name.toLowerCase() === nameLower ||
+        p.key.toLowerCase() === keyLower
+      );
+    }
+    if (plantInfo) {
+      item = { ...plantInfo, ...item };
+    } else {
+      this._normalizePlantKey(item);
+    }
     this.items.push(item);
     this._notify();
-
     this.addToToolbar(item);
   }
 

@@ -1,6 +1,9 @@
 import { CoinManager } from "../components/coinManager";
 import { loadFromLocal } from "../utils/localStorage";
 import InventoryManager from "./inventoryManager";
+import { showDialogue } from "../dialogue/dialogueUIHelpers";
+import { saveToLocal } from "../utils/localStorage";
+
 
 const startingCoins = loadFromLocal("coins") || 0;
 const coinManager = new CoinManager(startingCoins);
@@ -89,8 +92,42 @@ class OpenInventory extends Phaser.Scene {
           }
         ).setOrigin(0.5).setDepth(108);
 
-        // Remove item on click
         rect.on("pointerdown", () => {
+          const middleGardenScene = this.scene.get('MiddleGardenScene');
+          // Periwinkle handover logic for wolf
+          if (middleGardenScene && middleGardenScene.wolfIntroDone && !middleGardenScene.wolfThanksDone && middleGardenScene.hasPeriwinkle && item.key === "periwinklePlant") {
+            inventoryManager.removeItemByKey && inventoryManager.removeItemByKey("periwinklePlant");
+            this.scene.stop(); // Close inventory
+            middleGardenScene.events.emit("periwinkleGiven");
+            middleGardenScene.events.emit("inventoryClosed");
+            return;
+          }
+          // Marigold handover logic for deer
+          if (middleGardenScene && middleGardenScene.deerIntroDone && !middleGardenScene.deerThanksDone && middleGardenScene.hasMarigold && item.key === "marigoldPlant") {
+            inventoryManager.removeItemByKey && inventoryManager.removeItemByKey("marigoldPlant");
+            this.scene.stop(); // Close inventory
+            middleGardenScene.events.emit("marigoldGiven");
+            middleGardenScene.events.emit("inventoryClosed");
+            return;
+          }
+          // Jasmine handover logic for elephant
+          const wallGardenScene = this.scene.get('WallGardenScene');
+          if (wallGardenScene && wallGardenScene.awaitingJasmineGive && item.key === "jasminePlant") {
+            inventoryManager.removeItemByKey && inventoryManager.removeItemByKey("jasminePlant");
+            this.scene.stop(); // Close inventory
+            wallGardenScene.events.emit("jasmineGiven");
+            wallGardenScene.events.emit("inventoryClosed");
+            return;
+          }
+          // Foxglove handover logic for bee
+          const mainScene = this.scene.get('WeeCairScene');
+          if (mainScene && mainScene.awaitingFoxgloveGive && item.key === "foxglovePlant") {
+            inventoryManager.removeItem("foxglovePlant");
+            this.scene.stop(); // Close inventory
+            mainScene.events.emit("foxgloveGiven");
+            return;
+          }
+          // Default: remove item
           inventoryManager.removeItem(item.name);
         });
 

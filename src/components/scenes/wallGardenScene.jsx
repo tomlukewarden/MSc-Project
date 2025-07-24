@@ -295,18 +295,10 @@ class WallGardenScene extends Phaser.Scene {
                                 onSelect: () => {
                                     this.destroyDialogueUI();
                                     this.updateHUDState && this.updateHUDState();
-                                    inventoryManager.removeItemByKey && inventoryManager.removeItemByKey("jasminePlant");
-                                    this.elephantHasJasmine = true;
-                                    elephant.setTexture && elephant.setTexture("elephantHappy");
-                                    showDialogue(this, "You hand the elephant the Jasmine...", { imageKey: "elephant" });
-                                    this.time.delayedCall(800, () => {
-                                        this.destroyDialogueUI();
-                                        this.updateHUDState && this.updateHUDState();
-                                        this.elephantDialogueActive = true;
-                                        this.elephantDialogueIndex = 0;
-                                        this.activeElephantDialogues = elephantThanksDialogues;
-                                        showDialogue(this, this.activeElephantDialogues[this.elephantDialogueIndex], { imageKey: "elephant" });
-                                        this.updateHUDState && this.updateHUDState();
+                                    // Remove item and close inventory, then emit event
+                                    this.scene.launch("OpenInventory");
+                                    this.events.once("inventoryClosed", () => {
+                                        this.events.emit("jasmineGiven");
                                     });
                                 }
                             },

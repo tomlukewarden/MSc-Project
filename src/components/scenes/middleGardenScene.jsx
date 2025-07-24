@@ -156,6 +156,40 @@ class MiddleGardenScene extends Phaser.Scene {
     this.deerDialogueIndex = 0;
     this.hasMarigold = () => inventoryManager.hasItemByKey && inventoryManager.hasItemByKey("marigoldPlant");
 
+    // Listen for periwinkle and marigold handover events from inventory
+    this.events.on("periwinkleGiven", () => {
+      this.wolfHasPeriwinkle = false;
+      if (!inventoryManager.hasItemByKey || !inventoryManager.hasItemByKey("periwinklePlant")) {
+        showDialogue(this, "You hand the wolf the Periwinkle...", { imageKey: "wolf" });
+        this.wolf.setTexture && this.wolf.setTexture("wolfHappy");
+        this.time.delayedCall(800, () => {
+          this.wolfDialogueActive = true;
+          this.wolfDialogueIndex = 0;
+          this.activeWolfDialogues = wolfThanksDialogues;
+          showDialogue(this, this.activeWolfDialogues[this.wolfDialogueIndex], { imageKey: "wolf" });
+          this.updateHUDState && this.updateHUDState();
+        });
+      } else {
+        showDialogue(this, "You still have the Periwinkle.", { imageKey: "wolf" });
+      }
+    });
+    this.events.on("marigoldGiven", () => {
+      this.deerHasMarigold = false;
+      if (!inventoryManager.hasItemByKey || !inventoryManager.hasItemByKey("marigoldPlant")) {
+        showDialogue(this, "You hand the deer the Marigold...", { imageKey: "deer" });
+        this.deer.setTexture && this.deer.setTexture("deerHappy");
+        this.time.delayedCall(800, () => {
+          this.deerDialogueActive = true;
+          this.deerDialogueIndex = 0;
+          this.activeDeerDialogues = deerThanksDialogues;
+          showDialogue(this, this.activeDeerDialogues[this.deerDialogueIndex], { imageKey: "deer" });
+          this.updateHUDState && this.updateHUDState();
+        });
+      } else {
+        showDialogue(this, "You still have the Marigold.", { imageKey: "deer" });
+      }
+    });
+
     // Wolf click handler
     this.wolf.on("pointerdown", () => {
       if (!this.wolfIntroDone && !this.wolfDialogueActive) {
@@ -175,18 +209,9 @@ class MiddleGardenScene extends Phaser.Scene {
               onSelect: () => {
                 this.destroyDialogueUI();
                 this.updateHUDState && this.updateHUDState();
-                inventoryManager.removeItemByKey && inventoryManager.removeItemByKey("periwinklePlant");
-                this.wolfHasPeriwinkle = true;
-                this.wolf.setTexture("wolfHappy");
-                showDialogue(this, "You hand the wolf the Periwinkle...", { imageKey: "wolf" });
-                this.time.delayedCall(800, () => {
-                  this.destroyDialogueUI();
-                  this.updateHUDState && this.updateHUDState();
-                  this.wolfDialogueActive = true;
-                  this.wolfDialogueIndex = 0;
-                  this.activeWolfDialogues = wolfThanksDialogues;
-                  showDialogue(this, this.activeWolfDialogues[this.wolfDialogueIndex], { imageKey: "wolf" });
-                  this.updateHUDState && this.updateHUDState();
+                this.scene.launch("OpenInventory");
+                this.events.once("inventoryClosed", () => {
+                  this.events.emit("periwinkleGiven");
                 });
               }
             },
@@ -230,18 +255,9 @@ class MiddleGardenScene extends Phaser.Scene {
               onSelect: () => {
                 this.destroyDialogueUI();
                 this.updateHUDState && this.updateHUDState();
-                inventoryManager.removeItemByKey && inventoryManager.removeItemByKey("marigoldPlant");
-                this.deerHasMarigold = true;
-                showDialogue(this, "You hand the deer the Marigold...", { imageKey: "deer" });
-                this.deer.setTexture("deerHappy");
-                this.time.delayedCall(800, () => {
-                  this.destroyDialogueUI();
-                  this.updateHUDState && this.updateHUDState();
-                  this.deerDialogueActive = true;
-                  this.deerDialogueIndex = 0;
-                  this.activeDeerDialogues = deerThanksDialogues;
-                  showDialogue(this, this.activeDeerDialogues[this.deerDialogueIndex], { imageKey: "deer" });
-                  this.updateHUDState && this.updateHUDState();
+                this.scene.launch("OpenInventory");
+                this.events.once("inventoryClosed", () => {
+                  this.events.emit("marigoldGiven");
                 });
               }
             },
