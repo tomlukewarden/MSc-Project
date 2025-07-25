@@ -61,10 +61,12 @@ class MiddleGardenScene extends Phaser.Scene {
   }
 
   create() {
-      globalTimeManager.init(this);
-  if (!globalTimeManager.startTimestamp) {
-    globalTimeManager.start();
-  }
+    globalTimeManager.init(this);
+    if (!globalTimeManager.startTimestamp) {
+      globalTimeManager.start();
+    }
+    // Reset transitioning flag on scene creation
+    this.transitioning = false;
     if (typeof window !== "undefined") {
     window.inventoryManager = inventoryManager;
 }
@@ -154,6 +156,46 @@ class MiddleGardenScene extends Phaser.Scene {
     this.deerDialogueIndex = 0;
     this.hasMarigold = () => inventoryManager.hasItemByKey && inventoryManager.hasItemByKey("marigoldPlant");
 
+    // Listen for periwinkle and marigold handover events from inventory
+    this.events.on("periwinkleGiven", () => {
+      this.awaitingPeriwinkleGive = false;
+      // Remove periwinkle by key as a failsafe
+      inventoryManager.removeItemByKey && inventoryManager.removeItemByKey("periwinklePlant");
+      if (!inventoryManager.hasItemByKey || !inventoryManager.hasItemByKey("periwinklePlant")) {
+        showDialogue(this, "You hand the wolf the Periwinkle...", { imageKey: "wolf" });
+        this.wolf.setTexture && this.wolf.setTexture("wolfHappy");
+        this.time.delayedCall(800, () => {
+          this.wolfDialogueActive = true;
+          this.wolfDialogueIndex = 0;
+          this.activeWolfDialogues = wolfThanksDialogues;
+          showDialogue(this, this.activeWolfDialogues[this.wolfDialogueIndex], { imageKey: "wolf" });
+          this.updateHUDState && this.updateHUDState();
+        });
+        this.wolfHasPeriwinkle = true;
+      } else {
+        showDialogue(this, "You still have the Periwinkle.", { imageKey: "wolf" });
+      }
+    });
+    this.events.on("marigoldGiven", () => {
+      this.awaitingMarigoldGive = false;
+      // Remove marigold by key as a failsafe
+      inventoryManager.removeItemByKey && inventoryManager.removeItemByKey("marigoldPlant");
+      if (!inventoryManager.hasItemByKey || !inventoryManager.hasItemByKey("marigoldPlant")) {
+        showDialogue(this, "You hand the deer the Marigold...", { imageKey: "deer" });
+        this.deer.setTexture && this.deer.setTexture("deerHappy");
+        this.time.delayedCall(800, () => {
+          this.deerDialogueActive = true;
+          this.deerDialogueIndex = 0;
+          this.activeDeerDialogues = deerThanksDialogues;
+          showDialogue(this, this.activeDeerDialogues[this.deerDialogueIndex], { imageKey: "deer" });
+          this.updateHUDState && this.updateHUDState();
+        });
+        this.deerHasMarigold = true;
+      } else {
+        showDialogue(this, "You still have the Marigold.", { imageKey: "deer" });
+      }
+    });
+
     // Wolf click handler
     this.wolf.on("pointerdown", () => {
       if (!this.wolfIntroDone && !this.wolfDialogueActive) {
@@ -171,28 +213,19 @@ class MiddleGardenScene extends Phaser.Scene {
             {
               label: "Yes",
               onSelect: () => {
+                this.hasMadePeriwinkleChoice = true;
                 this.destroyDialogueUI();
-                this.updateHUDState && this.updateHUDState();
-                inventoryManager.removeItemByKey && inventoryManager.removeItemByKey("periwinklePlant");
-                this.wolfHasPeriwinkle = true;
-                this.wolf.setTexture("wolfHappy");
-                showDialogue(this, "You hand the wolf the Periwinkle...", { imageKey: "wolf" });
-                this.time.delayedCall(800, () => {
-                  this.destroyDialogueUI();
-                  this.updateHUDState && this.updateHUDState();
-                  this.wolfDialogueActive = true;
-                  this.wolfDialogueIndex = 0;
-                  this.activeWolfDialogues = wolfThanksDialogues;
-                  showDialogue(this, this.activeWolfDialogues[this.wolfDialogueIndex], { imageKey: "wolf" });
-                  this.updateHUDState && this.updateHUDState();
-                });
+                this.dialogueActive = true;
+                // Set flag to await periwinkle handover
+                this.awaitingPeriwinkleGive = true;
+                this.scene.launch("OpenInventory");
               }
             },
             {
               label: "No",
               onSelect: () => {
                 this.destroyDialogueUI();
-                this.updateHUDState && this.updateHUDState();
+                this.dialogueActive = true;
                 showDialogue(this, "You decide to hold off for now.", { imageKey: "wolf" });
               }
             }
@@ -210,6 +243,7 @@ class MiddleGardenScene extends Phaser.Scene {
         return;
       }
     });
+    // Deer click handler
     this.deer.on("pointerdown", () => {
       if (!this.deerIntroDone && !this.deerDialogueActive) {
         this.deerDialogueActive = true;
@@ -226,28 +260,19 @@ class MiddleGardenScene extends Phaser.Scene {
             {
               label: "Yes",
               onSelect: () => {
+                this.hasMadeMarigoldChoice = true;
                 this.destroyDialogueUI();
-                this.updateHUDState && this.updateHUDState();
-                inventoryManager.removeItemByKey && inventoryManager.removeItemByKey("marigoldPlant");
-                this.deerHasMarigold = true;
-                showDialogue(this, "You hand the deer the Marigold...", { imageKey: "deer" });
-                this.deer.setTexture("deerHappy");
-                this.time.delayedCall(800, () => {
-                  this.destroyDialogueUI();
-                  this.updateHUDState && this.updateHUDState();
-                  this.deerDialogueActive = true;
-                  this.deerDialogueIndex = 0;
-                  this.activeDeerDialogues = deerThanksDialogues;
-                  showDialogue(this, this.activeDeerDialogues[this.deerDialogueIndex], { imageKey: "deer" });
-                  this.updateHUDState && this.updateHUDState();
-                });
+                this.dialogueActive = true;
+                // Set flag to await marigold handover
+                this.awaitingMarigoldGive = true;
+                this.scene.launch("OpenInventory");
               }
             },
             {
               label: "No",
               onSelect: () => {
                 this.destroyDialogueUI();
-                this.updateHUDState && this.updateHUDState();
+                this.dialogueActive = true;
                 showDialogue(this, "You decide to hold off for now.", { imageKey: "deer" });
               }
             }
@@ -289,6 +314,8 @@ class MiddleGardenScene extends Phaser.Scene {
             this.wolfThanksDone = true;
             // Automatically give summer shard after thanks dialogue
             receivedItem(this, "summerShard", "Summer Shard");
+            // Always remove periwinkle as a failsafe
+            inventoryManager.removeItemByKey && inventoryManager.removeItemByKey("periwinklePlant");
           }
           this.wolfDialogueActive = false;
           this.updateHUDState && this.updateHUDState();
@@ -312,6 +339,7 @@ class MiddleGardenScene extends Phaser.Scene {
             this.deerThanksDone = true;
             // Automatically give winter shard after thanks dialogue
             receivedItem(this, "winterShard", "Winter Shard");
+
           }
           this.deerDialogueActive = false;
           this.updateHUDState && this.updateHUDState();
@@ -335,10 +363,12 @@ class MiddleGardenScene extends Phaser.Scene {
     this.events.on('shutdown', () => {
       this.saveSceneState();
       clearInterval(this._saveInterval);
+      this.transitioning = false;
     });
     this.events.on('destroy', () => {
       this.saveSceneState();
       clearInterval(this._saveInterval);
+      this.transitioning = false;
     });
 
     // --- LOAD SCENE STATE FROM LOCAL STORAGE ---
@@ -365,6 +395,7 @@ if (sceneState) {
     const bushCount = bushPositions.length;
     const jasmineIndex = 0;
     const marigoldIndex = 1;
+    const periwinkleIndex = 2;
     // Track dispensed state for each bush
     this.bushDispensed = this.bushDispensed || Array(bushCount).fill(false);
 
@@ -397,6 +428,17 @@ if (sceneState) {
           const jasmine = plantData.find(p => p.key === "jasminePlant");
           if (jasmine) {
             this.showPlantMinigame(jasmine, "jasmineFound");
+            this.bushDispensed[i] = true;
+          } else {
+            this.showPlantMissing();
+            this.bushDispensed[i] = true;
+          }
+        }
+        // Periwinkle bush
+        else if (i === periwinkleIndex && !this.periwinkleFound) {
+          const periwinkle = plantData.find(p => p.key === "periwinklePlant");
+          if (periwinkle) {
+            this.showPlantMinigame(periwinkle, "periwinkleFound");
             this.bushDispensed[i] = true;
           } else {
             this.showPlantMissing();

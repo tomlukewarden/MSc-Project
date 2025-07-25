@@ -1,14 +1,14 @@
 export const pigIntroDialogues = [
-    "Oink—ow! Careful! My back is *so* sunburnt I can’t even roll over properly.",
-    "I thought I was just getting a healthy glow… turns out pigs aren’t built for beach days.",
-    "Could you maybe help? I’m kinda sizzling over here."
+    "Oink—ow! Careful! \n My back is *so* sunburnt \n I can’t even roll over properly.",
+    "I thought I was just getting a healthy glow… \n turns out pigs aren’t built for beach days.",
+    "Could you maybe help? \n I’m kinda sizzling over here."
 ];
 
 
 export const pigThanksDialogues = [
-    "Oooooh... that cream is a *miracle*! My skin finally stopped screaming.",
-    "You really know your stuff. I feel way less crispy now.",
-    "Thanks, pal. Here—take this. I was saving it for a hot day, but you’ve earned it."
+    "Oooooh... that cream is a *miracle* \n My skin finally stopped screaming.",
+    "You really know your stuff. \n I feel way less crispy now.",
+    "Thanks, pal. Here—take this. \n I was saving it for a hot day, \n but you’ve earned it."
 ];
 
 export function createPig(scene, x, y) {

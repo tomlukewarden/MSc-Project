@@ -251,34 +251,15 @@ class WeeCairScene extends Phaser.Scene {
           options: [
             {
               label: "Yes",
-
               onSelect: () => {
                 this.hasMadeFoxgloveChoice = true;
                 destroyDialogueUI(this);
                 this.dialogueActive = true;
                 this.foxglovePlantReceived = false;
-                inventoryManager.removeItemByKey && inventoryManager.removeItemByKey("foxglovePlant");
+                // Set flag to await foxglove handover
+                this.awaitingFoxgloveGive = true;
 
-                showDialogue(this, "You hand her the plant...", {
-                  imageKey: "bee"
-                });
-
-                coinManager.add(200);
-                saveToLocal("coins", coinManager.coins);
-
-                this.time.delayedCall(800, () => {
-                  this.currentSet = this.dialogueSequence.findIndex(
-                    (set) => set.lines === beeThanksDialogues
-                  );
-                  this.activeDialogue = beeThanksDialogues;
-                  this.activeImageKey = "bee";
-                  this.currentDialogueIndex = 0;
-                  this.dialogueActive = true;
-                  this.updateHUDState();
-                  showDialogue(this, this.activeDialogue[this.currentDialogueIndex], {
-                    imageKey: this.activeImageKey
-                  });
-                });
+                this.scene.launch("OpenInventory");
               }
             },
             {
@@ -296,7 +277,6 @@ class WeeCairScene extends Phaser.Scene {
         return;
       }
 
-      // Only start bee dialogue if not already active and it's a bee set
       if (!this.dialogueActive && (currentImage === "bee" || currentImage === "beeHappy")) {
         this.currentNPC = bee;
         this.startDialogueSequence();
@@ -398,6 +378,36 @@ class WeeCairScene extends Phaser.Scene {
     // --- Responsive: Listen for resize events
     this.scale.on('resize', (gameSize) => {
       const char = createMainChar(this, width, height, collisionObjects, scaleFactor);      this.handleResize(gameSize);
+    });
+
+    this.events.on("foxgloveGiven", () => {
+      this.awaitingFoxgloveGive = false;
+      this.hasMadeFoxgloveChoice = true;
+      // Confirm foxglove is removed from inventory
+      if (!inventoryManager.hasItem || !inventoryManager.hasItem("foxglovePlant")) {
+        this.foxglovePlantReceived = false;
+        // Show handover dialogue
+        showDialogue(this, "You hand her the plant...", { imageKey: "bee" });
+        coinManager.add(200);
+        saveToLocal("coins", coinManager.coins);
+        // Move to thanks dialogue after short delay
+        this.time.delayedCall(800, () => {
+          this.currentSet = this.dialogueSequence.findIndex(
+            (set) => set.lines === beeThanksDialogues
+          );
+          this.activeDialogue = beeThanksDialogues;
+          this.activeImageKey = "bee";
+          this.currentDialogueIndex = 0;
+          this.dialogueActive = true;
+          this.updateHUDState();
+          showDialogue(this, this.activeDialogue[this.currentDialogueIndex], {
+            imageKey: this.activeImageKey
+          });
+        });
+      } else {
+        // If foxglove still present, do not continue
+        showDialogue(this, "You still have the foxglove.", { imageKey: "bee" });
+      }
     });
   }
 
