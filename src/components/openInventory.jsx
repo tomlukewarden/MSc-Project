@@ -95,7 +95,7 @@ class OpenInventory extends Phaser.Scene {
         rect.on("pointerdown", () => {
           const middleGardenScene = this.scene.get('MiddleGardenScene');
           // Periwinkle handover logic for wolf
-          if (middleGardenScene && middleGardenScene.wolfIntroDone && !middleGardenScene.wolfThanksDone && middleGardenScene.hasPeriwinkle && item.key === "periwinklePlant") {
+          if (middleGardenScene && middleGardenScene.awaitingPeriwinkleGive && item.key === "periwinklePlant") {
             inventoryManager.removeItemByKey && inventoryManager.removeItemByKey("periwinklePlant");
             this.scene.stop(); // Close inventory
             middleGardenScene.events.emit("periwinkleGiven");
@@ -104,7 +104,7 @@ class OpenInventory extends Phaser.Scene {
           }
           // Marigold handover logic for deer
           if (middleGardenScene && middleGardenScene.awaitingMarigoldGive && item.key === "marigoldPlant") {
-            inventoryManager.removeItem("marigoldPlant");
+            inventoryManager.removeItemByKey && inventoryManager.removeItemByKey("marigoldPlant");
             this.scene.stop(); // Close inventory
             middleGardenScene.events.emit("marigoldGiven");
             middleGardenScene.events.emit("inventoryClosed");
@@ -113,7 +113,11 @@ class OpenInventory extends Phaser.Scene {
           // Jasmine handover logic for elephant
           const wallGardenScene = this.scene.get('WallGardenScene');
           if (wallGardenScene && wallGardenScene.awaitingJasmineGive && item.key === "jasminePlant") {
-            inventoryManager.removeItem("jasminePlant");
+            // Remove ONLY jasmine by key
+            if (typeof inventoryManager.removeItemByKey === "function") {
+              inventoryManager.removeItemByKey("jasminePlant");
+            }
+            wallGardenScene.awaitingJasmineGive = false;
             this.scene.stop(); // Close inventory
             wallGardenScene.events.emit("jasmineGiven");
             wallGardenScene.events.emit("inventoryClosed");
@@ -122,13 +126,13 @@ class OpenInventory extends Phaser.Scene {
           // Foxglove handover logic for bee
           const mainScene = this.scene.get('WeeCairScene');
           if (mainScene && mainScene.awaitingFoxgloveGive && item.key === "foxglovePlant") {
-            inventoryManager.removeItem("foxglovePlant");
+            inventoryManager.removeItemByKey && inventoryManager.removeItemByKey("foxglovePlant");
             this.scene.stop(); // Close inventory
             mainScene.events.emit("foxgloveGiven");
             return;
           }
           // Default: remove item
-          inventoryManager.removeItem(item.name);
+          inventoryManager.removeItemByKey && inventoryManager.removeItemByKey(item.key);
         });
 
         this.itemRects.push(rect);

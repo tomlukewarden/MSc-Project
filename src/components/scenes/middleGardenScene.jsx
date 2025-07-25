@@ -160,11 +160,8 @@ class MiddleGardenScene extends Phaser.Scene {
     this.events.on("periwinkleGiven", () => {
       this.awaitingPeriwinkleGive = false;
       // Remove periwinkle by key as a failsafe
-      if (inventoryManager.hasItemByKey && inventoryManager.hasItemByKey("periwinklePlant")) {
-        inventoryManager.removeItemByKey("periwinklePlant");
-      }
-      // Now check if it's gone
-      if (!inventoryManager.hasItemByKey("periwinklePlant")) {
+      inventoryManager.removeItemByKey && inventoryManager.removeItemByKey("periwinklePlant");
+      if (!inventoryManager.hasItemByKey || !inventoryManager.hasItemByKey("periwinklePlant")) {
         showDialogue(this, "You hand the wolf the Periwinkle...", { imageKey: "wolf" });
         this.wolf.setTexture && this.wolf.setTexture("wolfHappy");
         this.time.delayedCall(800, () => {
@@ -181,8 +178,9 @@ class MiddleGardenScene extends Phaser.Scene {
     });
     this.events.on("marigoldGiven", () => {
       this.awaitingMarigoldGive = false;
-      // Always check by key for removal
-      if (!inventoryManager.hasItemByKey("marigoldPlant")) {
+      // Remove marigold by key as a failsafe
+      inventoryManager.removeItemByKey && inventoryManager.removeItemByKey("marigoldPlant");
+      if (!inventoryManager.hasItemByKey || !inventoryManager.hasItemByKey("marigoldPlant")) {
         showDialogue(this, "You hand the deer the Marigold...", { imageKey: "deer" });
         this.deer.setTexture && this.deer.setTexture("deerHappy");
         this.time.delayedCall(800, () => {
@@ -316,10 +314,8 @@ class MiddleGardenScene extends Phaser.Scene {
             this.wolfThanksDone = true;
             // Automatically give summer shard after thanks dialogue
             receivedItem(this, "summerShard", "Summer Shard");
-            // Remove periwinkle from inventory if still present (failsafe)
-            if (inventoryManager.hasItemByKey && inventoryManager.hasItemByKey("periwinklePlant")) {
-              inventoryManager.removeItemByKey("periwinklePlant");
-            }
+            // Always remove periwinkle as a failsafe
+            inventoryManager.removeItemByKey && inventoryManager.removeItemByKey("periwinklePlant");
           }
           this.wolfDialogueActive = false;
           this.updateHUDState && this.updateHUDState();
@@ -399,6 +395,7 @@ if (sceneState) {
     const bushCount = bushPositions.length;
     const jasmineIndex = 0;
     const marigoldIndex = 1;
+    const periwinkleIndex = 2;
     // Track dispensed state for each bush
     this.bushDispensed = this.bushDispensed || Array(bushCount).fill(false);
 
@@ -431,6 +428,17 @@ if (sceneState) {
           const jasmine = plantData.find(p => p.key === "jasminePlant");
           if (jasmine) {
             this.showPlantMinigame(jasmine, "jasmineFound");
+            this.bushDispensed[i] = true;
+          } else {
+            this.showPlantMissing();
+            this.bushDispensed[i] = true;
+          }
+        }
+        // Periwinkle bush
+        else if (i === periwinkleIndex && !this.periwinkleFound) {
+          const periwinkle = plantData.find(p => p.key === "periwinklePlant");
+          if (periwinkle) {
+            this.showPlantMinigame(periwinkle, "periwinkleFound");
             this.bushDispensed[i] = true;
           } else {
             this.showPlantMissing();
