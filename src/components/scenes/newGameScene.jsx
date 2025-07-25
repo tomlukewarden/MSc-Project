@@ -76,7 +76,7 @@ class NewGameScene extends Phaser.Scene {
         color: "#fff",
         backgroundColor: i === 0 ? "#3a5a40" : "#88ccff",
         padding: { left: 20, right: 20, top: 10, bottom: 10 }
-      }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+      }).setOrigin(0.5).setDepth(2).setInteractive({ useHandCursor: true });
 
       btn.on("pointerdown", () => {
         selectedGender = gender;
