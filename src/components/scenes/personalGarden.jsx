@@ -52,7 +52,6 @@ class PersonalGarden extends Phaser.Scene {
     // Add chest sprite (ensure only one image is created)
     const chestX = 120;
     const chestY = 440; // Move chest further down
-    alert(`DEBUG: Garden loaded. Chest contains: ${window.chestItems.map(i => i.name).join(', ')}`);
     if (!this.textures.exists("chest")) {
       this.load.image("chest", "/assets/misc/chest-closed.png");
       this.load.once('complete', () => {
@@ -71,8 +70,10 @@ class PersonalGarden extends Phaser.Scene {
       .setDepth(20)
       .setInteractive({ useHandCursor: true });
     chestSprite.on("pointerdown", () => {
-      alert(`DEBUG: Chest opened. Chest contains: ${window.chestItems.map(i => i.name).join(', ')}`);
       this.chestLogic.openChest(window.chestItems);
+      this.scene.launch("ChestUI", { items: window.chestItems });
+      this.scene.bringToTop("ChestUI");
+
     });
 
         const scaleFactor = 0.175;

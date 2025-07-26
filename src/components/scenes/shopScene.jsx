@@ -154,7 +154,6 @@ class ShopScene extends Phaser.Scene {
                     // Add purchased item to chestItems instead of inventory
                     if (!window.chestItems) window.chestItems = [];
                     window.chestItems.push({ ...item, color: 0xd2b48c });
-                    alert(`DEBUG: Added ${item.name} to chest.\nChest now contains: ${window.chestItems.map(i => i.name).join(', ')}`);
                     receivedItem(this, "seeds", item.name);
                     this.destroyDialogueUI();
                     showOption(this, `You bought ${item.name}!\nCheck your chest in the garden.`, {
