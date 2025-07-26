@@ -1,6 +1,8 @@
 import Phaser from 'phaser';
 import { createOptionBox } from '../../dialogue/createOptionBox';
 import { CoinManager } from '../coinManager';
+import plantData from '../../plantData';
+import recipieData from '../../recipieData';
 
 class ShopScene extends Phaser.Scene {
   constructor() {
@@ -37,18 +39,35 @@ class ShopScene extends Phaser.Scene {
 
     this.coinManager.onChange((coins) => coinText.setText(`${coins}c`));
 
-    // Shop items data
-    const items = [
-      { key: 'item1', name: 'Seeds', price: '20' },
-      { key: 'item2', name: 'Foxglove', price: '100' },
-    ];
+    // Seeds for all plants
+    const seedItems = plantData.map(plant => ({
+      key: plant.key,
+      name: plant.name + ' Seeds',
+      price: plant.shopPrice ? plant.shopPrice : 20,
+      imageKey: plant.key.includes('seeds') ? plant.key : 'seeds',
+      type: 'seed',
+      plantKey: plant.key
+    }));
+
+    // Extras from recipieData
+    const extraItems = recipieData
+      .filter(r => r.shopItem)
+      .map(r => ({
+        key: r.key,
+        name: r.name,
+        price: r.shopPrice ? r.shopPrice : 40,
+        imageKey: r.imageKey || r.key,
+        type: 'extra'
+      }));
+
+    const items = [...seedItems, ...extraItems];
 
     // Layout variables
-    const itemAreaX = width - 180; 
+    const itemAreaX = width - 180;
     const itemStartY = 150;
-    const itemSpacing = 160;
+    const itemSpacing = 120;
     const itemBgWidth = 160;
-    const itemBgHeight = 120;
+    const itemBgHeight = 100;
 
     items.forEach((item, idx) => {
       const y = itemStartY + idx * itemSpacing;
@@ -60,7 +79,7 @@ class ShopScene extends Phaser.Scene {
         .setDepth(1);
 
       // Item image
-      const img = this.add.image(itemAreaX, y - 20, item.key)
+      const img = this.add.image(itemAreaX, y - 20, item.imageKey)
         .setScale(0.09)
         .setDepth(2)
         .setInteractive({ useHandCursor: true });
@@ -81,6 +100,7 @@ class ShopScene extends Phaser.Scene {
                     this.showOption(`You bought ${item.name}!`, {
                       options: [{ label: "OK", onSelect: () => this.destroyDialogueUI() }]
                     });
+                    // TODO: Add item to inventoryManager here if needed
                   } else {
                     this.destroyDialogueUI();
                     this.showOption("Not enough coins!", {
@@ -93,7 +113,6 @@ class ShopScene extends Phaser.Scene {
                 label: 'Cancel',
                 onSelect: () => {
                   this.destroyDialogueUI();
-                  console.log('Purchase cancelled.');
                 }
               }
             ]
@@ -103,7 +122,7 @@ class ShopScene extends Phaser.Scene {
 
       this.add.text(itemAreaX, y + 35, `${item.name} (${item.price}c)`, {
         fontFamily: "Georgia",
-        fontSize: "20px",
+        fontSize: "18px",
         color: "#ffffff"
       })
         .setOrigin(0.5)
