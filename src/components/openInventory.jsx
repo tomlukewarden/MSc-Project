@@ -1,7 +1,6 @@
 import { CoinManager } from "../components/coinManager";
 import { loadFromLocal } from "../utils/localStorage";
 import InventoryManager from "./inventoryManager";
-import { showDialogue } from "../dialogue/dialogueUIHelpers";
 import { saveToLocal } from "../utils/localStorage";
 
 

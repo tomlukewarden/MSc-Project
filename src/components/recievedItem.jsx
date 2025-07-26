@@ -57,25 +57,11 @@ export function receivedItem(scene, itemKey, itemName, options = {}) {
 
   // --- Add to inventory ---
   if (inventoryManager) {
-    let saveKey = itemKey;
-    let saveName = itemName;
-    if (typeof itemKey === "string") {
-      if (/\.[Pp][Nn][Gg]$/.test(itemKey)) {
-        const baseName = itemKey.replace(/\.[Pp][Nn][Gg]$/, "");
-        // Lowercase plant name for key and name
-        saveKey = baseName.toLowerCase() + "Plant";
-        saveName = baseName.toLowerCase();
-      }
-      // Shards: If itemKey matches spring/summer/autumn/winter (case-insensitive), convert to seasonShard
-      else if (/^(spring|summer|autumn|winter)$/i.test(itemKey)) {
-        const season = itemKey.charAt(0).toUpperCase() + itemKey.slice(1).toLowerCase();
-        saveKey = season + "Shard";
-      }
-    }
+    // Always use the original itemKey and itemName for inventory
     inventoryManager.addItem({
-      name: saveName,
+      name: itemName,
       color: borderColor,
-      key: saveKey
+      key: itemKey
     });
   }
 

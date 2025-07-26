@@ -1,7 +1,6 @@
 import Phaser from 'phaser';
 
 import { CoinManager } from '../coinManager';
-import plantData from '../../plantData';
 import itemsData from '../../items';
 import { showOption } from '../../dialogue/dialogueUIHelpers';
 import { receivedItem } from '../recievedItem';
@@ -53,23 +52,23 @@ class ShopScene extends Phaser.Scene {
     this.coinManager.onChange((coins) => coinText.setText(`${coins}c`));
 
 
-    // Seeds for all plants
-    const seedItems = plantData.map(plant => ({
-      key: plant.key,
-      name: plant.name + ' Seeds',
-      price: plant.shopPrice ? plant.shopPrice : 20,
-      imageKey:'seeds',
+    // Seeds from itemsData
+    const seedItems = itemsData.filter(item => item.type === 'seed').map(item => ({
+      key: item.key,
+      name: item.name,
+      price: item.shopPrice ? item.shopPrice : 20,
+      imageKey: item.imageKey || 'seeds',
       type: 'seed',
-      plantKey: plant.key
+      plantKey: item.plantKey
     }));
 
     // Extras from itemsData
-    const extraItems = itemsData.map(item => ({
+    const extraItems = itemsData.filter(item => item.type !== 'seed').map(item => ({
       key: item.key,
       name: item.name,
       price: item.shopPrice ? item.shopPrice : 40,
       imageKey: item.imageKey || item.key,
-      type: 'extra'
+      type: item.type || 'extra'
     }));
 
     // --- Tab UI ---
@@ -151,15 +150,7 @@ class ShopScene extends Phaser.Scene {
                 label: 'Buy',
                 onSelect: () => {
                   if (this.coinManager.subtract(parseInt(item.price))) {
-                    // Add item to inventory
-                    this.inventoryManager.addItem({
-                      key: item.key,
-                      name: item.name,
-                      imageKey: item.imageKey,
-                      type: item.type,
-                      plantKey: item.plantKey
-                    });
-                    receivedItem(this, item.key, item.name);
+                    receivedItem(this, "seeds", item.name)
                     this.destroyDialogueUI();
                     showOption(this, `You bought ${item.name}!`, {
                       options: [{ label: "OK", onSelect: () => this.destroyDialogueUI() }]
