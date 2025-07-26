@@ -75,14 +75,26 @@ class PersonalGarden extends Phaser.Scene {
     // Plot interaction: use current tool
     this.plotRect.on('pointerdown', () => {
       let result;
-      if (this.currentTool === 'hoe') {
+      if (this.selectedTool === 'hoe') {
         result = this.plot.prepare();
-      } else if (this.currentTool === 'seeds') {
-        // Use selected seed type (default: 'seeds')
-        result = this.plot.plant('seeds');
-      } else if (this.currentTool === 'wateringCan') {
+      } else if (this.selectedTool === 'seeds') {
+        // Only plant if a seed type is selected
+        if (this.selectedSeedType) {
+          result = this.plot.plant(this.selectedSeedType);
+          if (result.success) {
+            this.selectedSeedType = null;
+            // Remove seed picker UI if open
+            if (this.seedPickerDom) {
+              this.seedPickerDom.destroy();
+              this.seedPickerDom = null;
+            }
+          }
+        } else {
+          result = { success: false, message: 'Select a seed from inventory first.' };
+        }
+      } else if (this.selectedTool === 'wateringCan') {
         result = this.plot.water();
-      } else if (this.currentTool === 'harvestGlove') {
+      } else if (this.selectedTool === 'harvestGlove') {
         result = this.plot.harvest();
         if (result.success && result.item) {
           const inventory = this.inventoryManager.getInventory ? this.inventoryManager.getInventory() : this.inventoryManager.inventory;
@@ -324,35 +336,94 @@ class PersonalGarden extends Phaser.Scene {
   }
 
   createToolButtons() {
-    const tools = ['hoe', 'seeds', 'wateringCan', 'harvestGlove'];
+    const tools = [
+      { key: 'hoe', x: 40, y: 40 },
+      { key: 'seeds', x: 100, y: 40 },
+      { key: 'wateringCan', x: 160, y: 40 },
+      { key: 'harvestGlove', x: 220, y: 40 }
+    ];
+    this.selectedTool = this.selectedTool || 'hoe';
+    this.toolIconSprites = [];
     tools.forEach((tool, i) => {
-      const btn = this.add.text(20, 20 + i * 30, tool.toUpperCase(), {
-        fontSize: '16px',
-        backgroundColor: '#333',
-        color: '#fff',
-        padding: { left: 8, right: 8, top: 4, bottom: 4 }
-      }).setInteractive({ useHandCursor: true });
-
-      btn.on('pointerdown', () => {
-        this.currentTool = tool;
-        this.highlightSelectedTool(tools, i);
+      // Draw square background
+      const bg = this.add.rectangle(tool.x, tool.y, 48, 48, 0x222233, 0.95)
+        .setStrokeStyle(2, 0x4caf50)
+        .setDepth(199);
+      // Draw tool image
+      const img = this.add.image(tool.x, tool.y, tool.key)
+        .setScale(0.05)
+        .setInteractive({ useHandCursor: true })
+        .setDepth(200);
+      img.on('pointerdown', () => {
+        this.selectedTool = tool.key;
+        // Highlight selected tool background
+        this.toolIconSprites.forEach((sprite, j) => {
+          sprite.bg.setFillStyle(j === i ? 0x4caf50 : 0x222233, 0.95);
+        });
+        // If seeds, open inventory picker
+        if (tool.key === 'seeds') {
+          this.openSeedPicker();
+        } else {
+          this.selectedSeedType = null;
+        }
       });
-
-      if (i === 0) btn.setStyle({ backgroundColor: '#4caf50' });
+      // Default highlight for hoe
+      if (i === 0) bg.setFillStyle(0x4caf50, 0.95);
+      this.toolIconSprites.push({ bg, img });
     });
   }
 
-  highlightSelectedTool(tools, selectedIndex) {
-    tools.forEach((tool, i) => {
-      const label = tool.toUpperCase();
-      this.children.list.forEach(child => {
-        if (child.text === label) {
-          child.setStyle({
-            backgroundColor: i === selectedIndex ? '#4caf50' : '#333'
-          });
-        }
-      });
+  // Inventory seed picker UI
+  openSeedPicker() {
+    // Remove previous picker if open
+    if (this.seedPickerDom) {
+      this.seedPickerDom.destroy();
+      this.seedPickerDom = null;
+    }
+    const { width } = this.sys.game.config;
+    const inventory = this.inventoryManager.getInventory ? this.inventoryManager.getInventory() : this.inventoryManager.inventory;
+    // Find all seeds in inventory.items
+    const seeds = Array.isArray(inventory.items) ? inventory.items.filter(item => item && (item.type === 'seed' || item === 'seeds')) : [];
+    if (seeds.length === 0) {
+      this.seedPickerDom = this.add.dom(width / 2, 80).createFromHTML(`
+        <div style='background:#222;padding:18px;border-radius:10px;'>
+          <h3 style='color:#fff;font-family:Georgia;'>No seeds in inventory</h3>
+          <button id='closeSeedPicker'>Close</button>
+        </div>
+      `);
+      this.seedPickerDom.setDepth(500);
+      this.seedPickerDom.node.querySelector('#closeSeedPicker').onclick = () => {
+        this.seedPickerDom.destroy();
+        this.seedPickerDom = null;
+      };
+      return;
+    }
+    // Show seed options
+    let seedOptionsHtml = seeds.map((seed, i) => {
+      const seedName = typeof seed === 'string' ? seed : (seed.name || seed.type);
+      return `<button class='seedOpt' data-seed='${seedName}' style='margin:6px 12px 6px 0;padding:8px 16px;border-radius:6px;background:#567d46;color:#fff;font-family:Georgia;'>${seedName}</button>`;
+    }).join('');
+    this.seedPickerDom = this.add.dom(width / 2, 80).createFromHTML(`
+      <div style='background:#222;padding:18px;border-radius:10px;'>
+        <h3 style='color:#fff;font-family:Georgia;'>Select a seed to plant</h3>
+        ${seedOptionsHtml}
+        <button id='closeSeedPicker' style='margin-left:12px;'>Close</button>
+      </div>
+    `);
+    this.seedPickerDom.setDepth(500);
+    // Add click listeners for seed buttons
+    Array.from(this.seedPickerDom.node.querySelectorAll('.seedOpt')).forEach(btn => {
+      btn.onclick = () => {
+        this.selectedSeedType = btn.getAttribute('data-seed');
+        // Highlight selected button
+        Array.from(this.seedPickerDom.node.querySelectorAll('.seedOpt')).forEach(b => b.style.background = '#567d46');
+        btn.style.background = '#ffe066';
+      };
     });
+    this.seedPickerDom.node.querySelector('#closeSeedPicker').onclick = () => {
+      this.seedPickerDom.destroy();
+      this.seedPickerDom = null;
+    };
   }
 }
 
