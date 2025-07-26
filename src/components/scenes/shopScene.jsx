@@ -1,9 +1,10 @@
 import Phaser from 'phaser';
-import { createOptionBox } from '../../dialogue/createOptionBox';
+
 import { CoinManager } from '../coinManager';
 import plantData from '../../plantData';
 import itemsData from '../../items';
-import InventoryManager from '../inventoryManager';
+import { showOption } from '../../dialogue/dialogueUIHelpers';
+import { receivedItem } from '../recievedItem';
 // Ensure global inventoryManager instance
 import { inventoryManager as globalInventoryManager } from "../inventoryManager";
 if (typeof window !== "undefined") {
@@ -33,7 +34,7 @@ class ShopScene extends Phaser.Scene {
   }
 
   create() {
-    this.scene.sleep("HUDScene");
+    this.scene.stop("HUDScene");
     this.sound.play('shopTheme', { loop: true, volume: 0.1 });
     const { width, height } = this.scale;
 
@@ -144,43 +145,41 @@ class ShopScene extends Phaser.Scene {
         img.on('pointerout', () => img.clearTint());
         img.on('pointerdown', () => {
           this.sound.play('click', { volume: 0.5 });
-          this.showOption(
-            `You clicked on ${item.name}.\nPrice: ${item.price} coins.`,
-            {
-              options: [
-                {
-                  label: 'Buy',
-                  onSelect: () => {
-                    if (this.coinManager.subtract(parseInt(item.price))) {
-                      // Add item to inventory
-                      this.inventoryManager.addItem({
-                        key: item.key,
-                        name: item.name,
-                        imageKey: item.imageKey,
-                        type: item.type,
-                        plantKey: item.plantKey
-                      });
-                      this.destroyDialogueUI();
-                      this.showOption(`You bought ${item.name}!`, {
-                        options: [{ label: "OK", onSelect: () => this.destroyDialogueUI() }]
-                      });
-                    } else {
-                      this.destroyDialogueUI();
-                      this.showOption("Not enough coins!", {
-                        options: [{ label: "OK", onSelect: () => this.destroyDialogueUI() }]
-                      });
-                    }
-                  }
-                },
-                {
-                  label: 'Cancel',
-                  onSelect: () => {
+          showOption(this, `You clicked on ${item.name}.\nPrice: ${item.price} coins.`, {
+            options: [
+              {
+                label: 'Buy',
+                onSelect: () => {
+                  if (this.coinManager.subtract(parseInt(item.price))) {
+                    // Add item to inventory
+                    this.inventoryManager.addItem({
+                      key: item.key,
+                      name: item.name,
+                      imageKey: item.imageKey,
+                      type: item.type,
+                      plantKey: item.plantKey
+                    });
+                    receivedItem(this, item.key, item.name);
                     this.destroyDialogueUI();
+                    showOption(this, `You bought ${item.name}!`, {
+                      options: [{ label: "OK", onSelect: () => this.destroyDialogueUI() }]
+                    });
+                  } else {
+                    this.destroyDialogueUI();
+                    showOption(this, "Not enough coins!", {
+                      options: [{ label: "OK", onSelect: () => this.destroyDialogueUI() }]
+                    });
                   }
                 }
-              ]
-            }
-          );
+              },
+              {
+                label: 'Cancel',
+                onSelect: () => {
+                  this.destroyDialogueUI();
+                }
+              }
+            ]
+          });
         });
       }, this);
     }
@@ -220,7 +219,7 @@ class ShopScene extends Phaser.Scene {
 
   showOption(text, config = {}) {
     this.destroyDialogueUI();
-    this.dialogueBox = createOptionBox(this, text, config);
+    showOption(this, text, config);
   }
 
   destroyDialogueUI() {
