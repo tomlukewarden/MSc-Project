@@ -4,6 +4,13 @@ import { CoinManager } from '../coinManager';
 import plantData from '../../plantData';
 import itemsData from '../../items';
 import InventoryManager from '../inventoryManager';
+// Ensure global inventoryManager instance
+import { inventoryManager as globalInventoryManager } from "../inventoryManager";
+if (typeof window !== "undefined") {
+  if (!window.inventoryManager) {
+    window.inventoryManager = globalInventoryManager;
+  }
+}
 
 class ShopScene extends Phaser.Scene {
   constructor() {

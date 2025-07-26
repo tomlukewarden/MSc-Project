@@ -9,6 +9,13 @@ import { inventoryManager } from "../inventoryManager";
 import { receivedItem } from "../recievedItem";
 import globalTimeManager from "../../day/timeManager";
 
+// Ensure global inventoryManager instance
+if (typeof window !== "undefined") {
+  if (!window.inventoryManager) {
+    window.inventoryManager = inventoryManager;
+  }
+}
+
 const coinManager = CoinManager.load();
 
 class GreenhouseScene extends Phaser.Scene {
@@ -73,14 +80,6 @@ class GreenhouseScene extends Phaser.Scene {
 
         this.add.image(width / 2, height / 2, "greenhouseBackground").setScale(scaleFactor);
 
-      
-        if (typeof window !== "undefined") {
-            if (!window.inventoryManager) {
-                window.inventoryManager = inventoryManager;
-            }
-        }
-
-
         // --- Talk icon ---
         const talkIcon = this.add
             .image(0, 0, "talk")
@@ -88,7 +87,6 @@ class GreenhouseScene extends Phaser.Scene {
             .setVisible(false)
             .setDepth(11)
             .setOrigin(0.5);
-
 
         // --- Collision objects (example: invisible wall at left edge) ---
         const collisionGroup = this.physics.add.staticGroup();

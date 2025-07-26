@@ -1,3 +1,9 @@
+// Ensure global inventoryManager instance
+if (typeof window !== "undefined") {
+  if (!window.inventoryManager) {
+    window.inventoryManager = inventoryManager;
+  }
+}
 import Phaser from "phaser";
 import { showDialogue, showOption, destroyDialogueUI } from "../../dialogue/dialogueUIHelpers";
 import {

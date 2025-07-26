@@ -2,7 +2,7 @@ import plantData from "../plantData";
 
 export class InventoryManager {
   constructor(initialItems = []) {
-    this.items = initialItems;
+    this.items = [];
     this.toolbarSlots = Array(6).fill(null);
     this.listeners = [];
     this.toolbarListeners = [];
@@ -10,6 +10,8 @@ export class InventoryManager {
       'marigold', 'thyme', 'garlic', 'foxglove',
       'aloe', 'jasmine', 'lavender', 'periwinkle', 'willow'
     ]);
+    // Add initial items if provided
+    initialItems.forEach(item => this.addItem(item));
   }
 
   // Utility method to notify listeners
@@ -54,6 +56,20 @@ export class InventoryManager {
     } else {
       this._normalizePlantKey(item);
     }
+
+    // Stacking logic
+    const stackable = item.stackable !== false; // default true unless explicitly false
+    if (stackable) {
+      const existing = this.items.find(i => i.key === item.key);
+      if (existing) {
+        existing.count = (existing.count || 1) + (item.count || 1);
+        this._notify();
+        this.addToToolbar(existing);
+        return;
+      } else {
+        item.count = item.count || 1;
+      }
+    }
     this.items.push(item);
     this._notify();
     this.addToToolbar(item);
@@ -73,19 +89,26 @@ export class InventoryManager {
     const idx = this.items.findIndex(i => i.name === identifier || i.key === identifier);
     if (idx === -1) return false;
 
-    const [removed] = this.items.splice(idx, 1);
-    this._notify();
+    const item = this.items[idx];
+    if (item.count && item.count > 1) {
+      item.count--;
+      this._notify();
+      this.addToToolbar(item);
+      return true;
+    } else {
+      const [removed] = this.items.splice(idx, 1);
+      this._notify();
 
-    const slotIdx = this.toolbarSlots.findIndex(slot =>
-      slot?.name === identifier || slot?.key === identifier
-    );
+      const slotIdx = this.toolbarSlots.findIndex(slot =>
+        slot?.name === identifier || slot?.key === identifier
+      );
 
-    if (slotIdx !== -1) {
-      this.toolbarSlots[slotIdx] = null;
-      this._notifyToolbar();
+      if (slotIdx !== -1) {
+        this.toolbarSlots[slotIdx] = null;
+        this._notifyToolbar();
+      }
+      return true;
     }
-
-    return true;
   }
 
   removeItemByKey(itemKey) {
@@ -101,7 +124,7 @@ export class InventoryManager {
   }
 
   getItems() {
-    return [...this.items];
+    return this.items.map(item => ({ ...item }));
   }
 
   getToolbarSlots() {
@@ -124,5 +147,8 @@ export class InventoryManager {
   }
 }
 
-export const inventoryManager = new InventoryManager();
+if (!window.inventoryManager) {
+  window.inventoryManager = new InventoryManager();
+}
+export const inventoryManager = window.inventoryManager;
 export default InventoryManager;

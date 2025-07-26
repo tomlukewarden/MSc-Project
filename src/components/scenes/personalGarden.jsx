@@ -1,5 +1,12 @@
 import { Plot } from "../farmingLogic";
 import { createMainChar } from "../../characters/mainChar";
+import { inventoryManager } from "../inventoryManager";
+// Ensure global inventoryManager instance
+if (typeof window !== "undefined") {
+  if (!window.inventoryManager) {
+    window.inventoryManager = inventoryManager;
+  }
+}
 import { showDialogue, showOption } from "../../dialogue/dialogueUIHelpers";
 import globalTimeManager from "../../day/timeManager";
 
@@ -11,8 +18,8 @@ class PersonalGarden extends Phaser.Scene {
     this.cols = 5;
     this.plots = [];
     this.currentTool = "hoe";
-      this.inventoryManager = window.inventoryManager;
-      this.inventory = this.inventoryManager.getInventory ? this.inventoryManager.getInventory() : this.inventoryManager.inventory;
+    this.inventoryManager = window.inventoryManager;
+    this.inventory = this.inventoryManager.getInventory ? this.inventoryManager.getInventory() : this.inventoryManager.inventory;
   }
 
   preload() {

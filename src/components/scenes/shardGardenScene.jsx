@@ -6,6 +6,13 @@ import plantData from "../../plantData";
 import { showDialogue, showOption } from "../../dialogue/dialogueUIHelpers";
 import {shardLogic} from "../shardLogic";
 import { inventoryManager } from "../openInventory";
+// Ensure global inventoryManager instance
+import { inventoryManager as globalInventoryManager } from "../inventoryManager";
+if (typeof window !== "undefined") {
+  if (!window.inventoryManager) {
+    window.inventoryManager = globalInventoryManager;
+  }
+}
 import { addPlantToJournal } from "../journalManager";
 import { receivedItem } from "../recievedItem";
 import globalTimeManager from "../../day/timeManager";

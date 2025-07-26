@@ -1,6 +1,12 @@
 import { createMainChar } from "../../characters/mainChar";
 import plantData from "../../plantData";
 import { inventoryManager } from "../inventoryManager";
+// Ensure global inventoryManager instance
+if (typeof window !== "undefined") {
+  if (!window.inventoryManager) {
+    window.inventoryManager = inventoryManager;
+  }
+}
 import { addPlantToJournal } from "../journalManager";
 import { receivedItem } from "../recievedItem";
 import { CoinManager } from "../coinManager";
