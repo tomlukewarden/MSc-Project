@@ -142,11 +142,18 @@ class ShopScene extends Phaser.Scene {
                   label: 'Buy',
                   onSelect: () => {
                     if (this.coinManager.subtract(parseInt(item.price))) {
+                      // Add item to inventory
+                      this.inventoryManager.addItem({
+                        key: item.key,
+                        name: item.name,
+                        imageKey: item.imageKey,
+                        type: item.type,
+                        plantKey: item.plantKey
+                      });
                       this.destroyDialogueUI();
                       this.showOption(`You bought ${item.name}!`, {
                         options: [{ label: "OK", onSelect: () => this.destroyDialogueUI() }]
                       });
-                      // TODO: Add item to inventoryManager here if needed
                     } else {
                       this.destroyDialogueUI();
                       this.showOption("Not enough coins!", {
