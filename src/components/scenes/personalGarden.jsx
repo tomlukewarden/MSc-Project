@@ -8,15 +8,11 @@ class PersonalGarden extends Phaser.Scene {
     super("PersonalGarden", { physics: { default: 'arcade', arcade: { debug: false } } });
     this.plotSize = 64;
     this.rows = 3;
-
     this.cols = 5;
     this.plots = [];
     this.currentTool = "hoe";
-    this.inventory = {
-      tools: ['hoe', 'wateringCan', 'harvestGlove'],
-      seeds: ['carrotSeed', 'thymeSeed', 'garlicSeed'],
-      items: []
-    };
+      this.inventoryManager = window.inventoryManager;
+      this.inventory = this.inventoryManager.getInventory ? this.inventoryManager.getInventory() : this.inventoryManager.inventory;
   }
 
   preload() {

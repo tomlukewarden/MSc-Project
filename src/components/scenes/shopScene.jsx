@@ -9,7 +9,10 @@ class ShopScene extends Phaser.Scene {
   constructor() {
     super({ key: 'ShopScene' });
     this.coinManager = new CoinManager(this.coinManager ? this.coinManager.coins : 200); // Default to 200 if no previous coins
-    this.inventoryManager = new InventoryManager();
+    if (!window.inventoryManager) {
+      window.inventoryManager = new InventoryManager();
+    }
+    this.inventoryManager = window.inventoryManager;
   }
 
   preload() {
@@ -192,7 +195,7 @@ class ShopScene extends Phaser.Scene {
     });
 
     // Back to Menu button
-    const backBtn = this.add.text(width / 2, height - 60, "Back to Menu", {
+    const backBtn = this.add.text(width / 2, height - 60, "Back to Garden", {
       fontFamily: "Georgia",
       fontSize: "24px",
       color: "#ffffff",
@@ -204,7 +207,7 @@ class ShopScene extends Phaser.Scene {
       .on("pointerover", () => backBtn.setStyle({ backgroundColor: "#444" }))
       .on("pointerout", () => backBtn.setStyle({ backgroundColor: "#222" }))
       .on("pointerdown", () => {
-        this.scene.start("Menu");
+        this.scene.start("PersonalGarden");
       });
   }
 
