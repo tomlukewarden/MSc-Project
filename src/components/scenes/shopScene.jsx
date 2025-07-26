@@ -34,6 +34,30 @@ class ShopScene extends Phaser.Scene {
   }
 
   create() {
+    // --- Tools Data ---
+    const toolItems = [
+      {
+        key: 'hoe',
+        name: 'Hoe',
+        price: 60,
+        imageKey: 'hoe',
+        type: 'tool'
+      },
+      {
+        key: 'wateringCan',
+        name: 'Watering Can',
+        price: 50,
+        imageKey: 'wateringCan',
+        type: 'tool'
+      },
+      {
+        key: 'harvestGlove',
+        name: 'Harvest Glove',
+        price: 40,
+        imageKey: 'harvestGlove',
+        type: 'tool'
+      }
+    ];
     this.scene.stop("HUDScene");
     this.sound.play('shopTheme', { loop: true, volume: 0.1 });
     const { width, height } = this.scale;
@@ -77,10 +101,11 @@ class ShopScene extends Phaser.Scene {
     let itemSprites = [];
 
     const tabY = 90;
-    const tabX1 = width - 320;
-    const tabX2 = width - 180;
     const tabW = 120;
     const tabH = 40;
+    const tabX1 = width - 400;
+    const tabX2 = width - 260;
+    const tabX3 = width - 120;
 
     const seedsTab = this.add.rectangle(tabX1, tabY, tabW, tabH, 0x567d46, 0.95)
       .setStrokeStyle(3, 0x88ccff)
@@ -98,6 +123,14 @@ class ShopScene extends Phaser.Scene {
       fontFamily: 'Georgia', fontSize: '22px', color: '#fff'
     }).setOrigin(0.5).setDepth(21);
 
+    const toolsTab = this.add.rectangle(tabX3, tabY, tabW, tabH, 0x3bb273, 0.95)
+      .setStrokeStyle(3, 0x88ccff)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(20);
+    const toolsText = this.add.text(tabX3, tabY, 'Tools', {
+      fontFamily: 'Georgia', fontSize: '22px', color: '#fff'
+    }).setOrigin(0.5).setDepth(21);
+
     const itemAreaX = width - 250;
     const itemStartY = 200; // Moved grid down from 150 to 200
     const itemSpacing = 110;
@@ -108,7 +141,10 @@ class ShopScene extends Phaser.Scene {
       // Remove previous sprites
       itemSprites.forEach(s => s.destroy());
       itemSprites = [];
-      const tabItems = tab === 'seeds' ? seedItems : extraItems;
+      let tabItems = [];
+      if (tab === 'seeds') tabItems = seedItems;
+      else if (tab === 'extras') tabItems = extraItems;
+      else if (tab === 'tools') tabItems = toolItems;
       // Grid settings
       const cols = 3;
       const cellW = 110;
@@ -175,7 +211,14 @@ class ShopScene extends Phaser.Scene {
               for (let i = 0; i < quantity; i++) {
                 window.chestItems.push({ ...item, color: 0xd2b48c });
               }
-              receivedItem(this, "seeds", `${item.name} x${quantity}`);
+              // Show receivedItem popup for seeds and tools
+              if (item.type === 'seed') {
+                receivedItem(this, "seeds", `${item.name} x${quantity}`);
+              } else if (item.type === 'tool') {
+                receivedItem(this, item.key, `${item.name} x${quantity}`);
+              } else {
+                receivedItem(this, item.key, `${item.name} x${quantity}`);
+              }
               quantityPrompt.destroy();
               this.destroyDialogueUI();
               showOption(this, `You bought ${item.name} x${quantity}!\nCheck your chest in the garden.`, {
@@ -200,12 +243,21 @@ class ShopScene extends Phaser.Scene {
       currentTab = 'seeds';
       seedsTab.setFillStyle(0x567d46, 0.95);
       extrasTab.setFillStyle(0x222233, 0.95);
+      toolsTab.setFillStyle(0x3bb273, 0.95);
       renderShopItems.call(this, currentTab);
     });
     extrasTab.on('pointerdown', () => {
       currentTab = 'extras';
       seedsTab.setFillStyle(0x222233, 0.95);
       extrasTab.setFillStyle(0x567d46, 0.95);
+      toolsTab.setFillStyle(0x3bb273, 0.95);
+      renderShopItems.call(this, currentTab);
+    });
+    toolsTab.on('pointerdown', () => {
+      currentTab = 'tools';
+      seedsTab.setFillStyle(0x222233, 0.95);
+      extrasTab.setFillStyle(0x222233, 0.95);
+      toolsTab.setFillStyle(0x567d46, 0.95);
       renderShopItems.call(this, currentTab);
     });
 
