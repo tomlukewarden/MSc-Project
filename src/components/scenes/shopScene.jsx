@@ -145,36 +145,50 @@ class ShopScene extends Phaser.Scene {
         img.on('pointerout', () => img.clearTint());
         img.on('pointerdown', () => {
           this.sound.play('click', { volume: 0.5 });
-          showOption(this, `You clicked on ${item.name}.\nPrice: ${item.price} coins.`, {
-            options: [
-              {
-                label: 'Buy',
-                onSelect: () => {
-                  if (this.coinManager.subtract(parseInt(item.price))) {
-                    // Add purchased item to chestItems instead of inventory
-                    if (!window.chestItems) window.chestItems = [];
-                    window.chestItems.push({ ...item, color: 0xd2b48c });
-                    receivedItem(this, "seeds", item.name);
-                    this.destroyDialogueUI();
-                    showOption(this, `You bought ${item.name}!\nCheck your chest in the garden.`, {
-                      options: [{ label: "OK", onSelect: () => this.destroyDialogueUI() }]
-                    });
-                  } else {
-                    this.destroyDialogueUI();
-                    showOption(this, "Not enough coins!", {
-                      options: [{ label: "OK", onSelect: () => this.destroyDialogueUI() }]
-                    });
-                  }
-                }
-              },
-              {
-                label: 'Cancel',
-                onSelect: () => {
-                  this.destroyDialogueUI();
-                }
+          // Prompt for quantity
+          let quantity = 1;
+          let quantityPrompt = this.add.dom(width / 2, height / 2).createFromHTML(`
+            <div style='background:#222;padding:24px;border-radius:12px;'>
+              <h2 style='color:#fff;font-family:Georgia;'>Buy ${item.name}</h2>
+              <label style='color:#fff;font-family:Georgia;'>How many?</label>
+              <input id='qtyInput' type='number' min='1' value='1' style='width:60px;margin:0 12px;' />
+              <button id='buyBtn' style='margin-right:12px;'>Buy</button>
+              <button id='cancelBtn'>Cancel</button>
+              <div id='errorMsg' style='color:#ffe066;margin-top:8px;'></div>
+            </div>
+          `);
+          quantityPrompt.setDepth(1000);
+          const qtyInput = quantityPrompt.node.querySelector('#qtyInput');
+          const buyBtn = quantityPrompt.node.querySelector('#buyBtn');
+          const cancelBtn = quantityPrompt.node.querySelector('#cancelBtn');
+          const errorMsg = quantityPrompt.node.querySelector('#errorMsg');
+
+          buyBtn.onclick = () => {
+            quantity = parseInt(qtyInput.value);
+            if (isNaN(quantity) || quantity < 1) {
+              errorMsg.textContent = 'Please enter a valid quantity.';
+              return;
+            }
+            const totalPrice = quantity * parseInt(item.price);
+            if (this.coinManager.subtract(totalPrice)) {
+              if (!window.chestItems) window.chestItems = [];
+              for (let i = 0; i < quantity; i++) {
+                window.chestItems.push({ ...item, color: 0xd2b48c });
               }
-            ]
-          });
+              receivedItem(this, "seeds", `${item.name} x${quantity}`);
+              quantityPrompt.destroy();
+              this.destroyDialogueUI();
+              showOption(this, `You bought ${item.name} x${quantity}!\nCheck your chest in the garden.`, {
+                options: [{ label: "OK", onSelect: () => this.destroyDialogueUI() }]
+              });
+            } else {
+              errorMsg.textContent = 'Not enough coins!';
+            }
+          };
+          cancelBtn.onclick = () => {
+            quantityPrompt.destroy();
+            this.destroyDialogueUI();
+          };
         });
       }, this);
     }
