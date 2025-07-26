@@ -45,6 +45,7 @@ class PersonalGarden extends Phaser.Scene {
     this.load.image("tent", "/assets/backgrounds/personal/tent.png");
     this.load.image("fence", "/assets/backgrounds/personal/fence.png");
     this.load.image("chest", "/assets/misc/chest-closed.png");
+    this.load.image("seeds", "/assets/plants/seeds.png");
 
   }
 

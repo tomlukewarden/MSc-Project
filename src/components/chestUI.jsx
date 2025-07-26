@@ -131,7 +131,12 @@ export class ChestUI extends Phaser.Scene {
 
       rect.on("pointerdown", () => {
         // Add one to inventory and remove one from chest stack
-        inventoryManager.addItem(item);
+        if (window.inventoryManager && window.inventoryManager.addItem) {
+          // Remove quantity property for inventory
+          const itemToAdd = { ...item };
+          delete itemToAdd.quantity;
+          window.inventoryManager.addItem(itemToAdd);
+        }
         // Remove one matching item from window.chestItems
         const stackKey = `${item.key || ''}|${item.name || ''}`;
         const idxToRemove = window.chestItems.findIndex(i => `${i.key || ''}|${i.name || ''}` === stackKey);
