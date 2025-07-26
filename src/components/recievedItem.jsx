@@ -57,11 +57,25 @@ export function receivedItem(scene, itemKey, itemName, options = {}) {
 
   // --- Add to inventory ---
   if (inventoryManager) {
-    // Always use the original itemKey and itemName for inventory
+    let saveKey = itemKey;
+    let saveName = itemName;
+    if (typeof itemKey === "string") {
+      if (/\.[Pp][Nn][Gg]$/.test(itemKey)) {
+        const baseName = itemKey.replace(/\.[Pp][Nn][Gg]$/, "");
+        // Lowercase plant name for key and name
+        saveKey = baseName.toLowerCase() + "Plant";
+        saveName = baseName.toLowerCase();
+      }
+      
+      else if (/^(spring|summer|autumn|winter)$/i.test(itemKey)) {
+        const season = itemKey.charAt(0).toUpperCase() + itemKey.slice(1).toLowerCase();
+        saveKey = season + "Shard";
+      }
+    }
     inventoryManager.addItem({
-      name: itemName,
+      name: saveName,
       color: borderColor,
-      key: itemKey
+      key: saveKey
     });
   }
 
