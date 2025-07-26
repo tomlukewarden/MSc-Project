@@ -10,12 +10,12 @@ class ChestLogic {
   }
 
   openChest(itemsArray) {
-    if (this.chest && this.scene) {
+    if (this.scene) {
       this.chestOpen = true;
       this.scene.scene.launch("ChestUI", { items: itemsArray });
-      console.log(`Chest opened: ${this.chest}`);
+      console.log(`Chest opened`);
     } else {
-      console.log("No chest to open.");
+      console.log("No scene to open chest.");
     }
   }
 

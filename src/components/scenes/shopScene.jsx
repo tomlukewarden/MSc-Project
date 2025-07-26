@@ -29,6 +29,7 @@ class ShopScene extends Phaser.Scene {
     this.load.audio("shopTheme", "/assets/music/shop-theme.mp3");
     this.load.image('dialogueBoxBg', '/assets/ui-items/dialogue.png');
     this.load.image("oilBaseImage", "/assets/shopItems/oil.png");
+    this.load.audio('sparkle', '/assets/sound-effects/sparkle.mp3');
 
   }
 
@@ -150,9 +151,13 @@ class ShopScene extends Phaser.Scene {
                 label: 'Buy',
                 onSelect: () => {
                   if (this.coinManager.subtract(parseInt(item.price))) {
-                    receivedItem(this, "seeds", item.name)
+                    // Add purchased item to chestItems instead of inventory
+                    if (!window.chestItems) window.chestItems = [];
+                    window.chestItems.push({ ...item, color: 0xd2b48c });
+                    alert(`DEBUG: Added ${item.name} to chest.\nChest now contains: ${window.chestItems.map(i => i.name).join(', ')}`);
+                    receivedItem(this, "seeds", item.name);
                     this.destroyDialogueUI();
-                    showOption(this, `You bought ${item.name}!`, {
+                    showOption(this, `You bought ${item.name}!\nCheck your chest in the garden.`, {
                       options: [{ label: "OK", onSelect: () => this.destroyDialogueUI() }]
                     });
                   } else {

@@ -10,8 +10,9 @@ export class ChestUI extends Phaser.Scene {
     this.itemImages = [];
   }
 
-  init(data) {
-    this.chestItems = data.items || [];
+  init() {
+    // Always use window.chestItems as the source of truth
+    this.chestItems = window.chestItems || [];
   }
 
   create() {
@@ -71,7 +72,8 @@ export class ChestUI extends Phaser.Scene {
     this.itemTexts = [];
     this.itemImages = [];
 
-    // Calculate item layout
+    // Always use window.chestItems for rendering
+    this.chestItems = window.chestItems || [];
     const itemCount = this.chestItems.length;
     const itemSize = Math.min(90, Math.max(60, panelWidth / Math.max(itemCount, 1) - 20));
     const totalWidth = itemCount * (itemSize + 20) - 20;
@@ -105,9 +107,9 @@ export class ChestUI extends Phaser.Scene {
       rect.on("pointerdown", () => {
         // Add to inventory and remove from chest
         inventoryManager.addItem(item);
-        this.chestItems.splice(idx, 1);
+        window.chestItems.splice(idx, 1);
         // Recalculate panel size and redraw
-        this.scene.restart({ items: this.chestItems });
+        this.scene.restart();
       });
 
       this.itemRects.push(rect);
