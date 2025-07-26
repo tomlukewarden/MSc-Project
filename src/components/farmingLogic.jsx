@@ -1,4 +1,4 @@
-// Farming logic for planting, preparing, watering, and harvesting
+
 
 export class Plot {
   constructor() {
@@ -17,12 +17,40 @@ export class Plot {
   }
 
   plant(seedType) {
+    // Accept seeds from inventoryManager
     if (this.state === 'prepared') {
-      this.state = 'planted';
-      this.seedType = seedType;
-      this.growthStage = 0;
-      this.watered = false;
-      return { success: true, message: `Planted ${seedType}.` };
+      // Check global inventoryManager for seeds
+      let inventoryManager = typeof window !== 'undefined' ? window.inventoryManager : null;
+      if (inventoryManager && inventoryManager.getInventory) {
+        const inventory = inventoryManager.getInventory();
+        // Seeds can be stored as items or tools, check both
+        let seedIndex = -1;
+        if (Array.isArray(inventory.items)) {
+          seedIndex = inventory.items.findIndex(item => item === seedType || (item?.type === seedType));
+        }
+        if (seedIndex === -1 && Array.isArray(inventory.tools)) {
+          seedIndex = inventory.tools.findIndex(tool => tool === seedType);
+        }
+        if (seedIndex !== -1) {
+          // Remove one seed from items or tools
+          if (Array.isArray(inventory.items) && inventory.items[seedIndex] === seedType) {
+            inventory.items.splice(seedIndex, 1);
+          } else if (Array.isArray(inventory.items) && inventory.items[seedIndex]?.type === seedType) {
+            inventory.items.splice(seedIndex, 1);
+          } else if (Array.isArray(inventory.tools) && inventory.tools[seedIndex] === seedType) {
+            inventory.tools.splice(seedIndex, 1);
+          }
+          this.state = 'planted';
+          this.seedType = seedType;
+          this.growthStage = 0;
+          this.watered = false;
+          return { success: true, message: `Planted ${seedType}.` };
+        } else {
+          return { success: false, message: `No ${seedType} seeds in inventory.` };
+        }
+      } else {
+        return { success: false, message: 'Inventory not available.' };
+      }
     }
     return { success: false, message: 'Ground not prepared.' };
   }
@@ -58,11 +86,3 @@ export class Plot {
     this.watered = false;
   }
 }
-
-// Example usage:
-// const plot = new Plot();
-// plot.prepare();
-// plot.plant('carrotSeed');
-// plot.water();
-// plot.water();
-// plot.harvest();

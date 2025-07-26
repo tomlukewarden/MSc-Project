@@ -124,6 +124,33 @@ const itemsData = [
     imageKey: "seeds",
     type: "seed",
     plantKey: "willow"
+  },
+  {
+    id:"hoe",
+    key: "hoe",
+    name: "Hoe",
+    price: 50,  
+    description: "A tool for preparing soil for planting.",
+    imageKey: "hoeImage",
+    type: "tool"  
+  },
+  {
+    id: "wateringCan",
+    key: "wateringCan",
+    name: "Watering Can",
+    price: 30,
+    description: "A can for watering plants.",
+    imageKey: "wateringCanImage",
+    type: "tool"
+  },
+  {
+    id: "shovel",
+    key: "shovel",
+    name: "Shovel",
+    price: 40,
+    description: "A tool for harvesting plants.",
+    imageKey: "shovelImage",
+    type: "tool"
   }
 ];
 

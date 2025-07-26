@@ -50,6 +50,64 @@ class PersonalGarden extends Phaser.Scene {
   }
 
   create() {
+    // Minimal plot system: one plot for testing seed planting from inventory
+    const { width, height } = this.sys.game.config;
+    this.plot = new Plot();
+    const plotX = width / 2;
+    const plotY = height / 2 + 100;
+    // Draw plot rectangle
+    this.plotRect = this.add.rectangle(plotX, plotY, 60, 60, 0x8bc34a, 0.85)
+      .setStrokeStyle(2, 0x4caf50)
+      .setOrigin(0.5)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(100);
+    this.plotText = this.add.text(plotX, plotY, '', {
+      fontSize: '14px',
+      color: '#fff',
+      fontFamily: 'Georgia',
+      align: 'center'
+    }).setOrigin(0.5).setDepth(101);
+
+    // Update plot display
+    this.updatePlotText(this.plotText, this.plot);
+    this.updatePlotColor(this.plotRect, this.plot);
+
+    // Plot interaction: use current tool
+    this.plotRect.on('pointerdown', () => {
+      let result;
+      if (this.currentTool === 'hoe') {
+        result = this.plot.prepare();
+      } else if (this.currentTool === 'seeds') {
+        // Use selected seed type (default: 'seeds')
+        result = this.plot.plant('seeds');
+      } else if (this.currentTool === 'wateringCan') {
+        result = this.plot.water();
+      } else if (this.currentTool === 'harvestGlove') {
+        result = this.plot.harvest();
+        if (result.success && result.item) {
+          const inventory = this.inventoryManager.getInventory ? this.inventoryManager.getInventory() : this.inventoryManager.inventory;
+          if (Array.isArray(inventory.items)) inventory.items.push(result.item);
+        }
+      } else {
+        result = { success: false, message: 'Unknown tool.' };
+      }
+      if (result && result.message) console.log(result.message);
+      this.updatePlotText(this.plotText, this.plot);
+      this.updatePlotColor(this.plotRect, this.plot);
+    });
+    // Ensure player always has basic tools in inventory
+    const defaultTools = ['hoe', 'wateringCan', 'harvestGlove', 'seeds'];
+    let inventory = this.inventoryManager.getInventory ? this.inventoryManager.getInventory() : this.inventoryManager.inventory;
+    if (!inventory || typeof inventory !== 'object') {
+      inventory = {};
+      this.inventoryManager.inventory = inventory;
+    }
+    if (!Array.isArray(inventory.tools)) inventory.tools = [];
+    defaultTools.forEach(tool => {
+      if (!inventory.tools.includes(tool)) {
+        inventory.tools.push(tool);
+      }
+    });
     // Add chest sprite (ensure only one image is created)
     const chestX = 120;
     const chestY = 440; // Move chest further down
@@ -157,102 +215,6 @@ class PersonalGarden extends Phaser.Scene {
 
     backButton.setDepth(10);
 
-    // Move plots down and to the right
-    const plotOffsetX = 60;
-    const plotOffsetY = 40;
-
-    if (this.physics && this.physics.add) {
-      this.plotGroup = this.physics.add.staticGroup();
-      this.charGroup = this.physics.add.group();
-
-      this.mainChar = createMainChar(this, width / 2, height / 2, 0.18, this.charGroup);
-      this.mainChar.setDepth(1).setOrigin(0.5);
-      this.charGroup.add(this.mainChar);
-
-      // Move plots down and to the right
-      const plotOffsetX = 60;
-      const plotOffsetY = 40;
-      const startX = width / 2 - (this.cols / 2) * this.plotSize + plotOffsetX;
-      const startY = height / 2 - (this.rows / 2) * this.plotSize + plotOffsetY;
-
-      for (let y = 0; y < this.rows; y++) {
-        for (let x = 0; x < this.cols; x++) {
-          const px = startX + x * this.plotSize;
-          const py = startY + y * this.plotSize;
-
-          const plot = new Plot();
-          if (loadedState?.plots?.[y * this.cols + x]) {
-            Object.assign(plot, loadedState.plots[y * this.cols + x]);
-          }
-
-          const rect = this.add.rectangle(px, py, this.plotSize - 4, this.plotSize - 4, 0x8bc34a, 0.85)
-            .setStrokeStyle(2, 0x4caf50)
-            .setOrigin(0.5)
-            .setInteractive({ useHandCursor: true });
-          const text = this.add.text(px, py, '', {
-            fontSize: '14px',
-            color: '#fff',
-            fontFamily: 'Georgia',
-            align: 'center'
-          }).setOrigin(0.5);
-
-          rect.on('pointerdown', () => {
-            const result = this.useToolOnPlot(plot);
-            if (result.message) console.log(result.message);
-            this.updatePlotText(text, plot);
-            this.updatePlotColor(rect, plot);
-            this.saveSceneState();
-          });
-
-          this.plots.push({ plot, rect, text });
-          this.updatePlotText(text, plot);
-        }
-      }
-
-      this.physics.add.collider(this.charGroup, this.plotGroup);
-    } else {
-      // fallback if physics isn't available
-      this.mainChar = createMainChar(this, width / 2, height / 2, 0.18);
-      this.mainChar.setDepth(1).setOrigin(0.5);
-
-      const startX = width / 2 - (this.cols / 2) * this.plotSize + plotOffsetX;
-      const startY = height / 2 - (this.rows / 2) * this.plotSize + plotOffsetY;
-
-      for (let y = 0; y < this.rows; y++) {
-        for (let x = 0; x < this.cols; x++) {
-          const px = startX + x * this.plotSize;
-          const py = startY + y * this.plotSize;
-
-          const plot = new Plot();
-          if (loadedState?.plots?.[y * this.cols + x]) {
-            Object.assign(plot, loadedState.plots[y * this.cols + x]);
-          }
-
-          const rect = this.add.rectangle(px, py, this.plotSize - 4, this.plotSize - 4, 0x8bc34a, 0.85)
-            .setStrokeStyle(2, 0x4caf50)
-            .setOrigin(0.5)
-            .setInteractive({ useHandCursor: true });
-
-          const text = this.add.text(px, py, '', {
-            fontSize: '14px',
-            color: '#fff',
-            fontFamily: 'Georgia',
-            align: 'center'
-          }).setOrigin(0.5);
-
-          rect.on('pointerdown', () => {
-            const result = this.useToolOnPlot(plot);
-            if (result.message) console.log(result.message);
-            this.updatePlotText(text, plot);
-            this.updatePlotColor(rect, plot);
-            this.saveSceneState();
-          });
-
-          this.plots.push({ plot, rect, text });
-          this.updatePlotText(text, plot);
-        }
-      }
-    }
 
     // Restore tool and time only
     if (loadedState?.currentTool) this.currentTool = loadedState.currentTool;
