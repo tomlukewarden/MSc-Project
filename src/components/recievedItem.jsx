@@ -66,7 +66,7 @@ export function receivedItem(scene, itemKey, itemName, options = {}) {
         saveKey = baseName.toLowerCase() + "Plant";
         saveName = baseName.toLowerCase();
       }
-      // Shards: If itemKey matches spring/summer/autumn/winter (case-insensitive), convert to seasonShard
+      
       else if (/^(spring|summer|autumn|winter)$/i.test(itemKey)) {
         const season = itemKey.charAt(0).toUpperCase() + itemKey.slice(1).toLowerCase();
         saveKey = season + "Shard";

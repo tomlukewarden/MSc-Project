@@ -10,8 +10,20 @@ export class ChestUI extends Phaser.Scene {
     this.itemImages = [];
   }
 
-  init(data) {
-    this.chestItems = data.items || [];
+  init() {
+    // Always use window.chestItems as the source of truth
+    // Group stackable items by key+name
+    const rawItems = window.chestItems || [];
+    const stackMap = {};
+    rawItems.forEach(item => {
+      const stackKey = `${item.key || ''}|${item.name || ''}`;
+      if (!stackMap[stackKey]) {
+        stackMap[stackKey] = { ...item, quantity: 1 };
+      } else {
+        stackMap[stackKey].quantity += 1;
+      }
+    });
+    this.chestItems = Object.values(stackMap);
   }
 
   create() {
@@ -71,7 +83,19 @@ export class ChestUI extends Phaser.Scene {
     this.itemTexts = [];
     this.itemImages = [];
 
-    // Calculate item layout
+    // Always use window.chestItems for rendering
+    // Group stackable items by key+name
+    const rawItems = window.chestItems || [];
+    const stackMap = {};
+    rawItems.forEach(item => {
+      const stackKey = `${item.key || ''}|${item.name || ''}`;
+      if (!stackMap[stackKey]) {
+        stackMap[stackKey] = { ...item, quantity: 1 };
+      } else {
+        stackMap[stackKey].quantity += 1;
+      }
+    });
+    this.chestItems = Object.values(stackMap);
     const itemCount = this.chestItems.length;
     const itemSize = Math.min(90, Math.max(60, panelWidth / Math.max(itemCount, 1) - 20));
     const totalWidth = itemCount * (itemSize + 20) - 20;
@@ -94,8 +118,11 @@ export class ChestUI extends Phaser.Scene {
         this.itemImages.push(img);
       }
 
+      // Show name and quantity
       const text = this.add.text(
-        x, y + itemSize / 2 - 10, item.name, {
+        x, y + itemSize / 2 - 10,
+        item.quantity > 1 ? `${item.name} x${item.quantity}` : item.name,
+        {
           fontFamily: "Georgia",
           fontSize: Math.max(14, Math.min(18, itemSize / 5)),
           color: "#222"
@@ -103,11 +130,19 @@ export class ChestUI extends Phaser.Scene {
       ).setOrigin(0.5).setDepth(108);
 
       rect.on("pointerdown", () => {
-        // Add to inventory and remove from chest
-        inventoryManager.addItem(item);
-        this.chestItems.splice(idx, 1);
+        // Add one to inventory and remove one from chest stack
+        if (window.inventoryManager && window.inventoryManager.addItem) {
+          // Remove quantity property for inventory
+          const itemToAdd = { ...item };
+          delete itemToAdd.quantity;
+          window.inventoryManager.addItem(itemToAdd);
+        }
+        // Remove one matching item from window.chestItems
+        const stackKey = `${item.key || ''}|${item.name || ''}`;
+        const idxToRemove = window.chestItems.findIndex(i => `${i.key || ''}|${i.name || ''}` === stackKey);
+        if (idxToRemove !== -1) window.chestItems.splice(idxToRemove, 1);
         // Recalculate panel size and redraw
-        this.scene.restart({ items: this.chestItems });
+        this.scene.restart();
       });
 
       this.itemRects.push(rect);

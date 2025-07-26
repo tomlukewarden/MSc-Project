@@ -1,6 +1,14 @@
 import { Plot } from "../farmingLogic";
 import { createMainChar } from "../../characters/mainChar";
+import { inventoryManager } from "../inventoryManager";
+// Ensure global inventoryManager instance
+if (typeof window !== "undefined") {
+  if (!window.inventoryManager) {
+    window.inventoryManager = inventoryManager;
+  }
+}
 import { showDialogue, showOption } from "../../dialogue/dialogueUIHelpers";
+import ChestLogic from "../chestLogic";
 import globalTimeManager from "../../day/timeManager";
 
 class PersonalGarden extends Phaser.Scene {
@@ -11,8 +19,10 @@ class PersonalGarden extends Phaser.Scene {
     this.cols = 5;
     this.plots = [];
     this.currentTool = "hoe";
-      this.inventoryManager = window.inventoryManager;
-      this.inventory = this.inventoryManager.getInventory ? this.inventoryManager.getInventory() : this.inventoryManager.inventory;
+    this.inventoryManager = window.inventoryManager;
+    if (!window.chestItems) window.chestItems = [];
+    this.chestLogic = new ChestLogic();
+    this.chestLogic.scene = this;
   }
 
   preload() {
@@ -34,16 +44,129 @@ class PersonalGarden extends Phaser.Scene {
     this.load.image("gardenBackground", "/assets/backgrounds/personal/personalBackground.png");
     this.load.image("tent", "/assets/backgrounds/personal/tent.png");
     this.load.image("fence", "/assets/backgrounds/personal/fence.png");
+    this.load.image("chest", "/assets/misc/chest-closed.png");
+    this.load.image("seeds", "/assets/plants/seeds.png");
+
   }
 
   create() {
+    // Minimal plot system: one plot for testing seed planting from inventory
+    const { width, height } = this.sys.game.config;
+    this.plot = new Plot();
+    const plotX = width / 2;
+    const plotY = height / 2 + 100;
+    // Draw plot rectangle
+    this.plotRect = this.add.rectangle(plotX, plotY, 60, 60, 0x8bc34a, 0.85)
+      .setStrokeStyle(2, 0x4caf50)
+      .setOrigin(0.5)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(100);
+    this.plotText = this.add.text(plotX, plotY, '', {
+      fontSize: '14px',
+      color: '#fff',
+      fontFamily: 'Georgia',
+      align: 'center'
+    }).setOrigin(0.5).setDepth(101);
+
+    // Update plot display
+    this.updatePlotText(this.plotText, this.plot);
+    this.updatePlotColor(this.plotRect, this.plot);
+
+    // Plot interaction: use current tool
+    this.plotRect.on('pointerdown', () => {
+      let result;
+      if (this.currentTool === 'hoe') {
+        result = this.plot.prepare();
+      } else if (this.currentTool === 'seeds') {
+        // Use selected seed type (default: 'seeds')
+        result = this.plot.plant('seeds');
+      } else if (this.currentTool === 'wateringCan') {
+        result = this.plot.water();
+      } else if (this.currentTool === 'harvestGlove') {
+        result = this.plot.harvest();
+        if (result.success && result.item) {
+          const inventory = this.inventoryManager.getInventory ? this.inventoryManager.getInventory() : this.inventoryManager.inventory;
+          if (Array.isArray(inventory.items)) inventory.items.push(result.item);
+        }
+      } else {
+        result = { success: false, message: 'Unknown tool.' };
+      }
+      if (result && result.message) console.log(result.message);
+      this.updatePlotText(this.plotText, this.plot);
+      this.updatePlotColor(this.plotRect, this.plot);
+    });
+    // Ensure player always has basic tools in inventory
+    const defaultTools = ['hoe', 'wateringCan', 'harvestGlove', 'seeds'];
+    let inventory = this.inventoryManager.getInventory ? this.inventoryManager.getInventory() : this.inventoryManager.inventory;
+    if (!inventory || typeof inventory !== 'object') {
+      inventory = {};
+      this.inventoryManager.inventory = inventory;
+    }
+    if (!Array.isArray(inventory.tools)) inventory.tools = [];
+    defaultTools.forEach(tool => {
+      if (!inventory.tools.includes(tool)) {
+        inventory.tools.push(tool);
+      }
+    });
+    // Add chest sprite (ensure only one image is created)
+    const chestX = 120;
+    const chestY = 440; // Move chest further down
+    if (!this.textures.exists("chest")) {
+      this.load.image("chest", "/assets/misc/chest-closed.png");
+      this.load.once('complete', () => {
+        this.createChestSprite(chestX, chestY);
+      });
+      this.load.start();
+    } else {
+      this.createChestSprite(chestX, chestY);
+    }
+
+  }
+
+  createChestSprite(x, y) {
+    const chestSprite = this.add.image(x, y, "chest")
+      .setScale(1.8)
+      .setDepth(20)
+      .setInteractive({ useHandCursor: true });
+    chestSprite.on("pointerdown", () => {
+      this.chestLogic.openChest(window.chestItems);
+      this.scene.launch("ChestUI", { items: window.chestItems });
+      this.scene.bringToTop("ChestUI");
+
+    });
 
         const scaleFactor = 0.175;
     this.add.image(0, 0, "gardenBackground").setOrigin(0).setScale(scaleFactor);
-   const tentImg =  this.add.image(0, 0, "tent").setOrigin(0).setScale(scaleFactor).setDepth(5);
-   tentImg.setInteractive({ useHandCursor: true });
-   tentImg.on("pointerdown", () => {
-     // Pause this scene and launch overlay with current day
+
+   // Tent image (not interactive)
+   const tentImg = this.add.image(0, 0, "tent").setOrigin(0).setScale(scaleFactor).setDepth(5);
+
+   // Triangle icon above tent for next day
+   const tentTriangleX = tentImg.x + tentImg.displayWidth / 2;
+   const tentTriangleY = tentImg.y + 60; 
+   const triangleSize = 32;
+   const triangle = this.add.triangle(
+     tentTriangleX,
+     tentTriangleY,
+     0, triangleSize,
+     triangleSize / 2, 0,
+     triangleSize, triangleSize,
+     0xffe066
+   ).setDepth(10)
+    .setInteractive({ useHandCursor: true });
+
+   // Tooltip text
+   const nextDayText = this.add.text(tentTriangleX, tentTriangleY - 24, "Next Day", {
+     fontFamily: "Georgia",
+     fontSize: "16px",
+     color: "#fff",
+     backgroundColor: "#222",
+     padding: { left: 8, right: 8, top: 4, bottom: 4 }
+   }).setOrigin(0.5).setDepth(11).setAlpha(0);
+
+   triangle.on("pointerover", () => nextDayText.setAlpha(1));
+   triangle.on("pointerout", () => nextDayText.setAlpha(0));
+   triangle.on("pointerdown", () => {
      this.scene.pause();
      this.scene.launch("DayEndScene", { day: globalTimeManager.getDayNumber() });
      this.scene.get("DayEndScene").events.once("dayEnded", () => {
@@ -92,105 +215,8 @@ class PersonalGarden extends Phaser.Scene {
 
     backButton.setDepth(10);
 
-    // Move plots down and to the right
-    const plotOffsetX = 60;
-    const plotOffsetY = 40;
 
-    if (this.physics && this.physics.add) {
-      this.plotGroup = this.physics.add.staticGroup();
-      this.charGroup = this.physics.add.group();
-
-      this.mainChar = createMainChar(this, width / 2, height / 2, 0.18, this.charGroup);
-      this.mainChar.setDepth(1).setOrigin(0.5);
-      this.charGroup.add(this.mainChar);
-
-      // Move plots down and to the right
-      const plotOffsetX = 60;
-      const plotOffsetY = 40;
-      const startX = width / 2 - (this.cols / 2) * this.plotSize + plotOffsetX;
-      const startY = height / 2 - (this.rows / 2) * this.plotSize + plotOffsetY;
-
-      for (let y = 0; y < this.rows; y++) {
-        for (let x = 0; x < this.cols; x++) {
-          const px = startX + x * this.plotSize;
-          const py = startY + y * this.plotSize;
-
-          const plot = new Plot();
-          if (loadedState?.plots?.[y * this.cols + x]) {
-            Object.assign(plot, loadedState.plots[y * this.cols + x]);
-          }
-
-          const rect = this.add.rectangle(px, py, this.plotSize - 4, this.plotSize - 4, 0x8bc34a, 0.85)
-            .setStrokeStyle(2, 0x4caf50)
-            .setOrigin(0.5)
-            .setInteractive({ useHandCursor: true });
-          const text = this.add.text(px, py, '', {
-            fontSize: '14px',
-            color: '#fff',
-            fontFamily: 'Georgia',
-            align: 'center'
-          }).setOrigin(0.5);
-
-          rect.on('pointerdown', () => {
-            const result = this.useToolOnPlot(plot);
-            if (result.message) console.log(result.message);
-            this.updatePlotText(text, plot);
-            this.updatePlotColor(rect, plot);
-            this.saveSceneState();
-          });
-
-          this.plots.push({ plot, rect, text });
-          this.updatePlotText(text, plot);
-        }
-      }
-
-      this.physics.add.collider(this.charGroup, this.plotGroup);
-    } else {
-      // fallback if physics isn't available
-      this.mainChar = createMainChar(this, width / 2, height / 2, 0.18);
-      this.mainChar.setDepth(1).setOrigin(0.5);
-
-      const startX = width / 2 - (this.cols / 2) * this.plotSize + plotOffsetX;
-      const startY = height / 2 - (this.rows / 2) * this.plotSize + plotOffsetY;
-
-      for (let y = 0; y < this.rows; y++) {
-        for (let x = 0; x < this.cols; x++) {
-          const px = startX + x * this.plotSize;
-          const py = startY + y * this.plotSize;
-
-          const plot = new Plot();
-          if (loadedState?.plots?.[y * this.cols + x]) {
-            Object.assign(plot, loadedState.plots[y * this.cols + x]);
-          }
-
-          const rect = this.add.rectangle(px, py, this.plotSize - 4, this.plotSize - 4, 0x8bc34a, 0.85)
-            .setStrokeStyle(2, 0x4caf50)
-            .setOrigin(0.5)
-            .setInteractive({ useHandCursor: true });
-
-          const text = this.add.text(px, py, '', {
-            fontSize: '14px',
-            color: '#fff',
-            fontFamily: 'Georgia',
-            align: 'center'
-          }).setOrigin(0.5);
-
-          rect.on('pointerdown', () => {
-            const result = this.useToolOnPlot(plot);
-            if (result.message) console.log(result.message);
-            this.updatePlotText(text, plot);
-            this.updatePlotColor(rect, plot);
-            this.saveSceneState();
-          });
-
-          this.plots.push({ plot, rect, text });
-          this.updatePlotText(text, plot);
-        }
-      }
-    }
-
-    // Restore inventory, tool, and time
-    if (loadedState?.inventory) this.inventory = loadedState.inventory;
+    // Restore tool and time only
     if (loadedState?.currentTool) this.currentTool = loadedState.currentTool;
     if (loadedState?.timeOfDay) {
       globalTimeManager.dayCycle.setTimeOfDay(loadedState.timeOfDay);
@@ -245,24 +271,26 @@ class PersonalGarden extends Phaser.Scene {
   saveSceneState() {
     const state = {
       plots: this.plots.map(({ plot }) => ({ ...plot })),
-      inventory: this.inventory,
+      inventory: this.inventoryManager.getInventory ? this.inventoryManager.getInventory() : this.inventoryManager.inventory,
       currentTool: this.currentTool,
-      timeOfDay: globalTimeManager.getCurrentTimeOfDay()
+      timeOfDay: globalTimeManager.getCurrentTimeOfDay(),
+      chestItems: window.chestItems
     };
     window.localStorage.setItem('personalGardenSceneState', JSON.stringify(state));
   }
 
   useToolOnPlot(plot) {
-    if (this.currentTool === 'hoe' && this.inventory.tools.includes('hoe')) {
+    const inventory = this.inventoryManager.getInventory ? this.inventoryManager.getInventory() : this.inventoryManager.inventory;
+    if (this.currentTool === 'hoe' && inventory.tools.includes('hoe')) {
       return plot.prepare();
     }
-    if (this.currentTool === 'wateringCan' && this.inventory.tools.includes('wateringCan')) {
+    if (this.currentTool === 'wateringCan' && inventory.tools.includes('wateringCan')) {
       return plot.water();
     }
-    if (this.currentTool === 'harvestGlove' && this.inventory.tools.includes('harvestGlove')) {
+    if (this.currentTool === 'harvestGlove' && inventory.tools.includes('harvestGlove')) {
       const result = plot.harvest();
       if (result.success && result.item) {
-        this.inventory.items.push(result.item);
+        inventory.items.push(result.item);
       }
       return result;
     }

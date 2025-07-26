@@ -1,9 +1,16 @@
 import Phaser from 'phaser';
-import { createOptionBox } from '../../dialogue/createOptionBox';
+
 import { CoinManager } from '../coinManager';
-import plantData from '../../plantData';
 import itemsData from '../../items';
-import InventoryManager from '../inventoryManager';
+import { showOption } from '../../dialogue/dialogueUIHelpers';
+import { receivedItem } from '../recievedItem';
+// Ensure global inventoryManager instance
+import { inventoryManager as globalInventoryManager } from "../inventoryManager";
+if (typeof window !== "undefined") {
+  if (!window.inventoryManager) {
+    window.inventoryManager = globalInventoryManager;
+  }
+}
 
 class ShopScene extends Phaser.Scene {
   constructor() {
@@ -22,11 +29,36 @@ class ShopScene extends Phaser.Scene {
     this.load.audio("shopTheme", "/assets/music/shop-theme.mp3");
     this.load.image('dialogueBoxBg', '/assets/ui-items/dialogue.png');
     this.load.image("oilBaseImage", "/assets/shopItems/oil.png");
+    this.load.audio('sparkle', '/assets/sound-effects/sparkle.mp3');
 
   }
 
   create() {
-    this.scene.sleep("HUDScene");
+    // --- Tools Data ---
+    const toolItems = [
+      {
+        key: 'hoe',
+        name: 'Hoe',
+        price: 60,
+        imageKey: 'hoe',
+        type: 'tool'
+      },
+      {
+        key: 'wateringCan',
+        name: 'Watering Can',
+        price: 50,
+        imageKey: 'wateringCan',
+        type: 'tool'
+      },
+      {
+        key: 'harvestGlove',
+        name: 'Harvest Glove',
+        price: 40,
+        imageKey: 'harvestGlove',
+        type: 'tool'
+      }
+    ];
+    this.scene.stop("HUDScene");
     this.sound.play('shopTheme', { loop: true, volume: 0.1 });
     const { width, height } = this.scale;
 
@@ -45,23 +77,23 @@ class ShopScene extends Phaser.Scene {
     this.coinManager.onChange((coins) => coinText.setText(`${coins}c`));
 
 
-    // Seeds for all plants
-    const seedItems = plantData.map(plant => ({
-      key: plant.key,
-      name: plant.name + ' Seeds',
-      price: plant.shopPrice ? plant.shopPrice : 20,
-      imageKey:'seeds',
+    // Seeds from itemsData
+    const seedItems = itemsData.filter(item => item.type === 'seed').map(item => ({
+      key: item.key,
+      name: item.name,
+      price: item.shopPrice ? item.shopPrice : 20,
+      imageKey: item.imageKey || 'seeds',
       type: 'seed',
-      plantKey: plant.key
+      plantKey: item.plantKey
     }));
 
     // Extras from itemsData
-    const extraItems = itemsData.map(item => ({
+    const extraItems = itemsData.filter(item => item.type !== 'seed').map(item => ({
       key: item.key,
       name: item.name,
       price: item.shopPrice ? item.shopPrice : 40,
       imageKey: item.imageKey || item.key,
-      type: 'extra'
+      type: item.type || 'extra'
     }));
 
     // --- Tab UI ---
@@ -69,10 +101,11 @@ class ShopScene extends Phaser.Scene {
     let itemSprites = [];
 
     const tabY = 90;
-    const tabX1 = width - 320;
-    const tabX2 = width - 180;
     const tabW = 120;
     const tabH = 40;
+    const tabX1 = width - 400;
+    const tabX2 = width - 260;
+    const tabX3 = width - 120;
 
     const seedsTab = this.add.rectangle(tabX1, tabY, tabW, tabH, 0x567d46, 0.95)
       .setStrokeStyle(3, 0x88ccff)
@@ -90,6 +123,14 @@ class ShopScene extends Phaser.Scene {
       fontFamily: 'Georgia', fontSize: '22px', color: '#fff'
     }).setOrigin(0.5).setDepth(21);
 
+    const toolsTab = this.add.rectangle(tabX3, tabY, tabW, tabH, 0x3bb273, 0.95)
+      .setStrokeStyle(3, 0x88ccff)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(20);
+    const toolsText = this.add.text(tabX3, tabY, 'Tools', {
+      fontFamily: 'Georgia', fontSize: '22px', color: '#fff'
+    }).setOrigin(0.5).setDepth(21);
+
     const itemAreaX = width - 250;
     const itemStartY = 200; // Moved grid down from 150 to 200
     const itemSpacing = 110;
@@ -100,7 +141,10 @@ class ShopScene extends Phaser.Scene {
       // Remove previous sprites
       itemSprites.forEach(s => s.destroy());
       itemSprites = [];
-      const tabItems = tab === 'seeds' ? seedItems : extraItems;
+      let tabItems = [];
+      if (tab === 'seeds') tabItems = seedItems;
+      else if (tab === 'extras') tabItems = extraItems;
+      else if (tab === 'tools') tabItems = toolItems;
       // Grid settings
       const cols = 3;
       const cellW = 110;
@@ -137,43 +181,57 @@ class ShopScene extends Phaser.Scene {
         img.on('pointerout', () => img.clearTint());
         img.on('pointerdown', () => {
           this.sound.play('click', { volume: 0.5 });
-          this.showOption(
-            `You clicked on ${item.name}.\nPrice: ${item.price} coins.`,
-            {
-              options: [
-                {
-                  label: 'Buy',
-                  onSelect: () => {
-                    if (this.coinManager.subtract(parseInt(item.price))) {
-                      // Add item to inventory
-                      this.inventoryManager.addItem({
-                        key: item.key,
-                        name: item.name,
-                        imageKey: item.imageKey,
-                        type: item.type,
-                        plantKey: item.plantKey
-                      });
-                      this.destroyDialogueUI();
-                      this.showOption(`You bought ${item.name}!`, {
-                        options: [{ label: "OK", onSelect: () => this.destroyDialogueUI() }]
-                      });
-                    } else {
-                      this.destroyDialogueUI();
-                      this.showOption("Not enough coins!", {
-                        options: [{ label: "OK", onSelect: () => this.destroyDialogueUI() }]
-                      });
-                    }
-                  }
-                },
-                {
-                  label: 'Cancel',
-                  onSelect: () => {
-                    this.destroyDialogueUI();
-                  }
-                }
-              ]
+          // Prompt for quantity
+          let quantity = 1;
+          let quantityPrompt = this.add.dom(width / 2, height / 2).createFromHTML(`
+            <div style='background:#222;padding:24px;border-radius:12px;'>
+              <h2 style='color:#fff;font-family:Georgia;'>Buy ${item.name}</h2>
+              <label style='color:#fff;font-family:Georgia;'>How many?</label>
+              <input id='qtyInput' type='number' min='1' value='1' style='width:60px;margin:0 12px;' />
+              <button id='buyBtn' style='margin-right:12px;'>Buy</button>
+              <button id='cancelBtn'>Cancel</button>
+              <div id='errorMsg' style='color:#ffe066;margin-top:8px;'></div>
+            </div>
+          `);
+          quantityPrompt.setDepth(1000);
+          const qtyInput = quantityPrompt.node.querySelector('#qtyInput');
+          const buyBtn = quantityPrompt.node.querySelector('#buyBtn');
+          const cancelBtn = quantityPrompt.node.querySelector('#cancelBtn');
+          const errorMsg = quantityPrompt.node.querySelector('#errorMsg');
+
+          buyBtn.onclick = () => {
+            quantity = parseInt(qtyInput.value);
+            if (isNaN(quantity) || quantity < 1) {
+              errorMsg.textContent = 'Please enter a valid quantity.';
+              return;
             }
-          );
+            const totalPrice = quantity * parseInt(item.price);
+            if (this.coinManager.subtract(totalPrice)) {
+              if (!window.chestItems) window.chestItems = [];
+              for (let i = 0; i < quantity; i++) {
+                window.chestItems.push({ ...item, color: 0xd2b48c });
+              }
+              // Show receivedItem popup for seeds and tools
+              if (item.type === 'seed') {
+                receivedItem(this, "seeds", `${item.name} x${quantity}`);
+              } else if (item.type === 'tool') {
+                receivedItem(this, item.key, `${item.name} x${quantity}`);
+              } else {
+                receivedItem(this, item.key, `${item.name} x${quantity}`);
+              }
+              quantityPrompt.destroy();
+              this.destroyDialogueUI();
+              showOption(this, `You bought ${item.name} x${quantity}!\nCheck your chest in the garden.`, {
+                options: [{ label: "OK", onSelect: () => this.destroyDialogueUI() }]
+              });
+            } else {
+              errorMsg.textContent = 'Not enough coins!';
+            }
+          };
+          cancelBtn.onclick = () => {
+            quantityPrompt.destroy();
+            this.destroyDialogueUI();
+          };
         });
       }, this);
     }
@@ -185,12 +243,21 @@ class ShopScene extends Phaser.Scene {
       currentTab = 'seeds';
       seedsTab.setFillStyle(0x567d46, 0.95);
       extrasTab.setFillStyle(0x222233, 0.95);
+      toolsTab.setFillStyle(0x3bb273, 0.95);
       renderShopItems.call(this, currentTab);
     });
     extrasTab.on('pointerdown', () => {
       currentTab = 'extras';
       seedsTab.setFillStyle(0x222233, 0.95);
       extrasTab.setFillStyle(0x567d46, 0.95);
+      toolsTab.setFillStyle(0x3bb273, 0.95);
+      renderShopItems.call(this, currentTab);
+    });
+    toolsTab.on('pointerdown', () => {
+      currentTab = 'tools';
+      seedsTab.setFillStyle(0x222233, 0.95);
+      extrasTab.setFillStyle(0x222233, 0.95);
+      toolsTab.setFillStyle(0x567d46, 0.95);
       renderShopItems.call(this, currentTab);
     });
 
@@ -213,7 +280,7 @@ class ShopScene extends Phaser.Scene {
 
   showOption(text, config = {}) {
     this.destroyDialogueUI();
-    this.dialogueBox = createOptionBox(this, text, config);
+    showOption(this, text, config);
   }
 
   destroyDialogueUI() {

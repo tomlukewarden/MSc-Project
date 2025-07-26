@@ -7,6 +7,12 @@ import ChestLogic from '../chestLogic';
 import { saveToLocal, loadFromLocal } from '../../utils/localStorage';
 import plantData from "../../plantData";
 import { inventoryManager } from "../inventoryManager";
+// Ensure global inventoryManager instance
+if (typeof window !== "undefined") {
+  if (!window.inventoryManager) {
+    window.inventoryManager = inventoryManager;
+  }
+}
 import { addPlantToJournal } from "../journalManager";
 import { receivedItem } from "../recievedItem";
 import { createElephant, elephantIntroDialogues, elephantThanksDialogues } from '../../characters/elephant';
