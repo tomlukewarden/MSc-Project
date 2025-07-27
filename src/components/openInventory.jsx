@@ -91,9 +91,39 @@ class OpenInventory extends Phaser.Scene {
           }
         ).setOrigin(0.5).setDepth(108);
 
+        // Enable drag for seeds in selectSeed mode
+        if (this.scene.settings.data && this.scene.settings.data.mode === 'selectSeed' && item.type === 'seed') {
+          rect.setInteractive({ draggable: true });
+          rect.on('dragstart', (pointer) => {
+            this.input.setDefaultCursor('grabbing');
+          });
+          rect.on('drag', (pointer, dragX, dragY) => {
+            rect.x = dragX;
+            rect.y = dragY;
+            if (img) { img.x = dragX; img.y = dragY - 10; }
+            nameText.x = dragX; nameText.y = dragY - 38;
+          });
+          rect.on('dragend', (pointer, dragX, dragY, dropped) => {
+            this.input.setDefaultCursor('default');
+            if (!dropped) {
+              // Snap back to grid
+              rect.x = x;
+              rect.y = y;
+              if (img) { img.x = x; img.y = y - 10; }
+              nameText.x = x; nameText.y = y - 38;
+            }
+          });
+        }
+
         rect.on("pointerdown", () => {
+          // Seed selection mode: call onSelect and close inventory
+          if (this.scene.settings.data && this.scene.settings.data.mode === 'selectSeed' && typeof this.scene.settings.data.onSelect === 'function') {
+            this.scene.settings.data.onSelect(item);
+            this.scene.stop();
+            return;
+          }
+          // ...existing code for NPC gifting and item removal...
           const middleGardenScene = this.scene.get('MiddleGardenScene');
-          // Periwinkle handover logic for wolf
           if (middleGardenScene && middleGardenScene.awaitingPeriwinkleGive && item.key === "periwinklePlant") {
             inventoryManager.removeItemByKey && inventoryManager.removeItemByKey("periwinklePlant");
             this.scene.stop(); // Close inventory
@@ -101,7 +131,6 @@ class OpenInventory extends Phaser.Scene {
             middleGardenScene.events.emit("inventoryClosed");
             return;
           }
-          // Marigold handover logic for deer
           if (middleGardenScene && middleGardenScene.awaitingMarigoldGive && item.key === "marigoldPlant") {
             inventoryManager.removeItemByKey && inventoryManager.removeItemByKey("marigoldPlant");
             this.scene.stop(); // Close inventory
@@ -109,10 +138,8 @@ class OpenInventory extends Phaser.Scene {
             middleGardenScene.events.emit("inventoryClosed");
             return;
           }
-          // Jasmine handover logic for elephant
           const wallGardenScene = this.scene.get('WallGardenScene');
           if (wallGardenScene && wallGardenScene.awaitingJasmineGive && item.key === "jasminePlant") {
-            // Remove ONLY jasmine by key
             if (typeof inventoryManager.removeItemByKey === "function") {
               inventoryManager.removeItemByKey("jasminePlant");
             }
@@ -122,7 +149,6 @@ class OpenInventory extends Phaser.Scene {
             wallGardenScene.events.emit("inventoryClosed");
             return;
           }
-          // Foxglove handover logic for bee
           const mainScene = this.scene.get('WeeCairScene');
           if (mainScene && mainScene.awaitingFoxgloveGive && item.key === "foxglovePlant") {
             inventoryManager.removeItemByKey && inventoryManager.removeItemByKey("foxglovePlant");
@@ -130,7 +156,6 @@ class OpenInventory extends Phaser.Scene {
             mainScene.events.emit("foxgloveGiven");
             return;
           }
-          // Default: remove item
           inventoryManager.removeItemByKey && inventoryManager.removeItemByKey(item.key);
         });
 

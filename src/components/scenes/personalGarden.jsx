@@ -26,31 +26,35 @@ class PersonalGarden extends Phaser.Scene {
   }
 
   preload() {
-        this.load.image("defaultFront", "/assets/char/default/front-default.png");
-        this.load.image("defaultBack", "/assets/char/default/back-default.png");
-        this.load.image("defaultLeft", "/assets/char/default/left-default.png");
-        this.load.image("defaultRight", "/assets/char/default/right-default.png");
-        this.load.image("defaultFrontWalk1", "/assets/char/default/front-step-1.PNG");
-        this.load.image("defaultFrontWalk2", "/assets/char/default/front-step-2.PNG");
-        this.load.image("defaultBackWalk1", "/assets/char/default/back-step-1.PNG");
-        this.load.image("defaultBackWalk2", "/assets/char/default/back-step-2.PNG");
-        this.load.image("defaultLeftWalk1", "/assets/char/default/left-step-1.PNG");
-        this.load.image("defaultLeftWalk2", "/assets/char/default/left-step-2.PNG");
-        this.load.image("defaultRightWalk1", "/assets/char/default/right-step-1.PNG");
-        this.load.image("defaultRightWalk2", "/assets/char/default/right-step-2.PNG");
-    this.load.image("hoe", "/assets/tools/hoe.png");
-    this.load.image("wateringCan", "/assets/tools/wateringCan.png");
-    this.load.image("sign", "/assets/misc/sign.png");
-    this.load.image("gardenBackground", "/assets/backgrounds/personal/personalBackground.png");
-    this.load.image("tent", "/assets/backgrounds/personal/tent.png");
-    this.load.image("fence", "/assets/backgrounds/personal/fence.png");
-    this.load.image("chest", "/assets/misc/chest-closed.png");
-    this.load.image("seeds", "/assets/plants/seeds.png");
-
+    // Load all required assets for the garden scene
+    const assets = [
+      ["defaultFront", "/assets/char/default/front-default.png"],
+      ["defaultBack", "/assets/char/default/back-default.png"],
+      ["defaultLeft", "/assets/char/default/left-default.png"],
+      ["defaultRight", "/assets/char/default/right-default.png"],
+      ["defaultFrontWalk1", "/assets/char/default/front-step-1.PNG"],
+      ["defaultFrontWalk2", "/assets/char/default/front-step-2.PNG"],
+      ["defaultBackWalk1", "/assets/char/default/back-step-1.PNG"],
+      ["defaultBackWalk2", "/assets/char/default/back-step-2.PNG"],
+      ["defaultLeftWalk1", "/assets/char/default/left-step-1.PNG"],
+      ["defaultLeftWalk2", "/assets/char/default/left-step-2.PNG"],
+      ["defaultRightWalk1", "/assets/char/default/right-step-1.PNG"],
+      ["defaultRightWalk2", "/assets/char/default/right-step-2.PNG"],
+      ["hoe", "/assets/tools/hoe.png"],
+      ["wateringCan", "/assets/tools/wateringCan.png"],
+      ["sign", "/assets/misc/sign.png"],
+      ["gardenBackground", "/assets/backgrounds/personal/personalBackground.png"],
+      ["tent", "/assets/backgrounds/personal/tent.png"],
+      ["fence", "/assets/backgrounds/personal/fence.png"],
+      ["chest", "/assets/misc/chest-closed.png"],
+      ["seeds", "/assets/plants/seeds.png"]
+    ];
+    assets.forEach(([key, path]) => this.load.image(key, path));
   }
 
   create() {
     // Minimal plot system: one plot for testing seed planting from inventory
+    // --- UI and gameplay setup ---
     const { width, height } = this.sys.game.config;
     this.plot = new Plot();
     const plotX = width / 2;
@@ -75,33 +79,32 @@ class PersonalGarden extends Phaser.Scene {
     // Plot interaction: use current tool
     this.plotRect.on('pointerdown', () => {
       let result;
-      if (this.selectedTool === 'hoe') {
-        result = this.plot.prepare();
-      } else if (this.selectedTool === 'seeds') {
-        // Only plant if a seed type is selected
-        if (this.selectedSeedType) {
-          result = this.plot.plant(this.selectedSeedType);
-          if (result.success) {
-            this.selectedSeedType = null;
-            // Remove seed picker UI if open
-            if (this.seedPickerDom) {
-              this.seedPickerDom.destroy();
-              this.seedPickerDom = null;
+      switch (this.selectedTool) {
+        case 'hoe':
+          result = this.plot.prepare();
+          break;
+        case 'seeds':
+          if (this.selectedSeedType) {
+            result = this.plot.plant(this.selectedSeedType);
+            if (result.success) {
+              this.selectedSeedType = null;
             }
+          } else {
+            result = { success: false, message: 'Select a seed from inventory first.' };
           }
-        } else {
-          result = { success: false, message: 'Select a seed from inventory first.' };
-        }
-      } else if (this.selectedTool === 'wateringCan') {
-        result = this.plot.water();
-      } else if (this.selectedTool === 'harvestGlove') {
-        result = this.plot.harvest();
-        if (result.success && result.item) {
-          const inventory = this.inventoryManager.getInventory ? this.inventoryManager.getInventory() : this.inventoryManager.inventory;
-          if (Array.isArray(inventory.items)) inventory.items.push(result.item);
-        }
-      } else {
-        result = { success: false, message: 'Unknown tool.' };
+          break;
+        case 'wateringCan':
+          result = this.plot.water();
+          break;
+        case 'harvestGlove':
+          result = this.plot.harvest();
+          if (result.success && result.item) {
+            const inventory = this.inventoryManager.getInventory ? this.inventoryManager.getInventory() : this.inventoryManager.inventory;
+            if (Array.isArray(inventory.items)) inventory.items.push(result.item);
+          }
+          break;
+        default:
+          result = { success: false, message: 'Unknown tool.' };
       }
       if (result && result.message) console.log(result.message);
       this.updatePlotText(this.plotText, this.plot);
@@ -296,6 +299,9 @@ class PersonalGarden extends Phaser.Scene {
     if (this.currentTool === 'hoe' && inventory.tools.includes('hoe')) {
       return plot.prepare();
     }
+    if (this.currentTool === 'seed' && inventory.tools.includes('seed')) {
+      return plot.plant(this.currentTool);
+    }
     if (this.currentTool === 'wateringCan' && inventory.tools.includes('wateringCan')) {
       return plot.water();
     }
@@ -360,9 +366,19 @@ class PersonalGarden extends Phaser.Scene {
         this.toolIconSprites.forEach((sprite, j) => {
           sprite.bg.setFillStyle(j === i ? 0x4caf50 : 0x222233, 0.95);
         });
-        // If seeds, open inventory picker
+
         if (tool.key === 'seeds') {
-          this.openSeedPicker();
+          // Store callback for when a seed is selected
+          window.onSeedSelected = (seedItem) => {
+            this.selectedSeedType = seedItem; // Store the full object!
+            alert('Selected seed: ' + (seedItem.name || seedItem.type));
+            window.onSeedSelected = null;
+          };
+          this.scene.launch('OpenInventory', {
+            mode: 'selectSeed',
+            filter: item => item.type === 'seed',
+            onSelect: window.onSeedSelected
+          });
         } else {
           this.selectedSeedType = null;
         }
@@ -371,59 +387,6 @@ class PersonalGarden extends Phaser.Scene {
       if (i === 0) bg.setFillStyle(0x4caf50, 0.95);
       this.toolIconSprites.push({ bg, img });
     });
-  }
-
-  // Inventory seed picker UI
-  openSeedPicker() {
-    // Remove previous picker if open
-    if (this.seedPickerDom) {
-      this.seedPickerDom.destroy();
-      this.seedPickerDom = null;
-    }
-    const { width } = this.sys.game.config;
-    const inventory = this.inventoryManager.getInventory ? this.inventoryManager.getInventory() : this.inventoryManager.inventory;
-    // Find all seeds in inventory.items
-    const seeds = Array.isArray(inventory.items) ? inventory.items.filter(item => item && (item.type === 'seed' || item === 'seeds')) : [];
-    if (seeds.length === 0) {
-      this.seedPickerDom = this.add.dom(width / 2, 80).createFromHTML(`
-        <div style='background:#222;padding:18px;border-radius:10px;'>
-          <h3 style='color:#fff;font-family:Georgia;'>No seeds in inventory</h3>
-          <button id='closeSeedPicker'>Close</button>
-        </div>
-      `);
-      this.seedPickerDom.setDepth(500);
-      this.seedPickerDom.node.querySelector('#closeSeedPicker').onclick = () => {
-        this.seedPickerDom.destroy();
-        this.seedPickerDom = null;
-      };
-      return;
-    }
-    // Show seed options
-    let seedOptionsHtml = seeds.map((seed, i) => {
-      const seedName = typeof seed === 'string' ? seed : (seed.name || seed.type);
-      return `<button class='seedOpt' data-seed='${seedName}' style='margin:6px 12px 6px 0;padding:8px 16px;border-radius:6px;background:#567d46;color:#fff;font-family:Georgia;'>${seedName}</button>`;
-    }).join('');
-    this.seedPickerDom = this.add.dom(width / 2, 80).createFromHTML(`
-      <div style='background:#222;padding:18px;border-radius:10px;'>
-        <h3 style='color:#fff;font-family:Georgia;'>Select a seed to plant</h3>
-        ${seedOptionsHtml}
-        <button id='closeSeedPicker' style='margin-left:12px;'>Close</button>
-      </div>
-    `);
-    this.seedPickerDom.setDepth(500);
-    // Add click listeners for seed buttons
-    Array.from(this.seedPickerDom.node.querySelectorAll('.seedOpt')).forEach(btn => {
-      btn.onclick = () => {
-        this.selectedSeedType = btn.getAttribute('data-seed');
-        // Highlight selected button
-        Array.from(this.seedPickerDom.node.querySelectorAll('.seedOpt')).forEach(b => b.style.background = '#567d46');
-        btn.style.background = '#ffe066';
-      };
-    });
-    this.seedPickerDom.node.querySelector('#closeSeedPicker').onclick = () => {
-      this.seedPickerDom.destroy();
-      this.seedPickerDom = null;
-    };
   }
 }
 
