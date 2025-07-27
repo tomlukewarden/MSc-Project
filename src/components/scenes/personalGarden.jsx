@@ -8,7 +8,6 @@ if (typeof window !== "undefined") {
   }
 }
 import { showDialogue, showOption } from "../../dialogue/dialogueUIHelpers";
-import ChestLogic from "../chestLogic";
 import globalTimeManager from "../../day/timeManager";
 
 class PersonalGarden extends Phaser.Scene {
@@ -19,10 +18,15 @@ class PersonalGarden extends Phaser.Scene {
     this.cols = 5;
     this.plots = [];
     this.currentTool = "hoe";
-    this.inventoryManager = window.inventoryManager;
-    if (!window.chestItems) window.chestItems = [];
-    this.chestLogic = new ChestLogic();
-    this.chestLogic.scene = this;
+    // Ensure global inventoryManager is always set and valid
+    if (typeof window !== "undefined") {
+      if (!window.inventoryManager) {
+        window.inventoryManager = inventoryManager;
+      }
+      this.inventoryManager = window.inventoryManager;
+    } else {
+      this.inventoryManager = inventoryManager;
+    }
   }
 
   preload() {
@@ -46,7 +50,6 @@ class PersonalGarden extends Phaser.Scene {
       ["gardenBackground", "/assets/backgrounds/personal/personalBackground.png"],
       ["tent", "/assets/backgrounds/personal/tent.png"],
       ["fence", "/assets/backgrounds/personal/fence.png"],
-      ["chest", "/assets/misc/chest-closed.png"],
       ["seeds", "/assets/plants/seeds.png"]
     ];
     assets.forEach(([key, path]) => this.load.image(key, path));
@@ -79,6 +82,11 @@ class PersonalGarden extends Phaser.Scene {
     // Plot interaction: use current tool
     this.plotRect.on('pointerdown', () => {
       let result;
+      // Debug info
+      alert('Plot state: ' + this.plot.state + '\nSelected tool: ' + this.selectedTool + '\nSelected seed: ' + (this.selectedSeedType ? JSON.stringify(this.selectedSeedType) : 'none'));
+      console.log('Plot state:', this.plot.state);
+      console.log('Selected tool:', this.selectedTool);
+      console.log('Selected seed:', this.selectedSeedType);
       switch (this.selectedTool) {
         case 'hoe':
           result = this.plot.prepare();
@@ -106,7 +114,10 @@ class PersonalGarden extends Phaser.Scene {
         default:
           result = { success: false, message: 'Unknown tool.' };
       }
-      if (result && result.message) console.log(result.message);
+      if (result && result.message) {
+        alert(result.message);
+        console.log(result.message);
+      }
       this.updatePlotText(this.plotText, this.plot);
       this.updatePlotColor(this.plotRect, this.plot);
     });
@@ -123,72 +134,46 @@ class PersonalGarden extends Phaser.Scene {
         inventory.tools.push(tool);
       }
     });
-    // Add chest sprite (ensure only one image is created)
-    const chestX = 120;
-    const chestY = 440; // Move chest further down
-    if (!this.textures.exists("chest")) {
-      this.load.image("chest", "/assets/misc/chest-closed.png");
-      this.load.once('complete', () => {
-        this.createChestSprite(chestX, chestY);
-      });
-      this.load.start();
-    } else {
-      this.createChestSprite(chestX, chestY);
-    }
 
-  }
-
-  createChestSprite(x, y) {
-    const chestSprite = this.add.image(x, y, "chest")
-      .setScale(1.8)
-      .setDepth(20)
-      .setInteractive({ useHandCursor: true });
-    chestSprite.on("pointerdown", () => {
-      this.chestLogic.openChest(window.chestItems);
-      this.scene.launch("ChestUI", { items: window.chestItems });
-      this.scene.bringToTop("ChestUI");
-
-    });
-
-        const scaleFactor = 0.175;
+    const scaleFactor = 0.175;
     this.add.image(0, 0, "gardenBackground").setOrigin(0).setScale(scaleFactor);
 
-   // Tent image (not interactive)
-   const tentImg = this.add.image(0, 0, "tent").setOrigin(0).setScale(scaleFactor).setDepth(5);
+    // Tent image (not interactive)
+    const tentImg = this.add.image(0, 0, "tent").setOrigin(0).setScale(scaleFactor).setDepth(5);
 
-   // Triangle icon above tent for next day
-   const tentTriangleX = tentImg.x + tentImg.displayWidth / 2;
-   const tentTriangleY = tentImg.y + 60; 
-   const triangleSize = 32;
-   const triangle = this.add.triangle(
-     tentTriangleX,
-     tentTriangleY,
-     0, triangleSize,
-     triangleSize / 2, 0,
-     triangleSize, triangleSize,
-     0xffe066
-   ).setDepth(10)
-    .setInteractive({ useHandCursor: true });
+    // Triangle icon above tent for next day
+    const tentTriangleX = tentImg.x + tentImg.displayWidth / 2;
+    const tentTriangleY = tentImg.y + 60; 
+    const triangleSize = 32;
+    const triangle = this.add.triangle(
+      tentTriangleX,
+      tentTriangleY,
+      0, triangleSize,
+      triangleSize / 2, 0,
+      triangleSize, triangleSize,
+      0xffe066
+    ).setDepth(10)
+     .setInteractive({ useHandCursor: true });
 
-   // Tooltip text
-   const nextDayText = this.add.text(tentTriangleX, tentTriangleY - 24, "Next Day", {
-     fontFamily: "Georgia",
-     fontSize: "16px",
-     color: "#fff",
-     backgroundColor: "#222",
-     padding: { left: 8, right: 8, top: 4, bottom: 4 }
-   }).setOrigin(0.5).setDepth(11).setAlpha(0);
+    // Tooltip text
+    const nextDayText = this.add.text(tentTriangleX, tentTriangleY - 24, "Next Day", {
+      fontFamily: "Georgia",
+      fontSize: "16px",
+      color: "#fff",
+      backgroundColor: "#222",
+      padding: { left: 8, right: 8, top: 4, bottom: 4 }
+    }).setOrigin(0.5).setDepth(11).setAlpha(0);
 
-   triangle.on("pointerover", () => nextDayText.setAlpha(1));
-   triangle.on("pointerout", () => nextDayText.setAlpha(0));
-   triangle.on("pointerdown", () => {
-     this.scene.pause();
-     this.scene.launch("DayEndScene", { day: globalTimeManager.getDayNumber() });
-     this.scene.get("DayEndScene").events.once("dayEnded", () => {
-       globalTimeManager.nextDay();
-       this.scene.resume();
-     });
-   });
+    triangle.on("pointerover", () => nextDayText.setAlpha(1));
+    triangle.on("pointerout", () => nextDayText.setAlpha(0));
+    triangle.on("pointerdown", () => {
+      this.scene.pause();
+      this.scene.launch("DayEndScene", { day: globalTimeManager.getDayNumber() });
+      this.scene.get("DayEndScene").events.once("dayEnded", () => {
+        globalTimeManager.nextDay();
+        this.scene.resume();
+      });
+    });
 
     this.add.image(0, 0, "fence").setOrigin(0).setScale(scaleFactor).setDepth(10);
 
@@ -197,7 +182,6 @@ class PersonalGarden extends Phaser.Scene {
       globalTimeManager.start();
     }
 
-    const { width, height } = this.sys.game.config;
     this.scene.launch("HUDScene");
     this.scene.bringToTop("HUDScene");
 
@@ -229,7 +213,6 @@ class PersonalGarden extends Phaser.Scene {
       });
 
     backButton.setDepth(10);
-
 
     // Restore tool and time only
     if (loadedState?.currentTool) this.currentTool = loadedState.currentTool;
@@ -289,7 +272,6 @@ class PersonalGarden extends Phaser.Scene {
       inventory: this.inventoryManager.getInventory ? this.inventoryManager.getInventory() : this.inventoryManager.inventory,
       currentTool: this.currentTool,
       timeOfDay: globalTimeManager.getCurrentTimeOfDay(),
-      chestItems: window.chestItems
     };
     window.localStorage.setItem('personalGardenSceneState', JSON.stringify(state));
   }

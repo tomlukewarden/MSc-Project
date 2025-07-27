@@ -207,9 +207,11 @@ class ShopScene extends Phaser.Scene {
             }
             const totalPrice = quantity * parseInt(item.price);
             if (this.coinManager.subtract(totalPrice)) {
-              if (!window.chestItems) window.chestItems = [];
+              // Add directly to inventory instead of chest
               for (let i = 0; i < quantity; i++) {
-                window.chestItems.push({ ...item, color: 0xd2b48c });
+                if (typeof this.inventoryManager.addItem === 'function') {
+                  this.inventoryManager.addItem({ ...item, color: 0xd2b48c });
+                }
               }
               // Show receivedItem popup for seeds and tools
               if (item.type === 'seed') {
@@ -221,7 +223,7 @@ class ShopScene extends Phaser.Scene {
               }
               quantityPrompt.destroy();
               this.destroyDialogueUI();
-              showOption(this, `You bought ${item.name} x${quantity}!\nCheck your chest in the garden.`, {
+              showOption(this, `You bought ${item.name} x${quantity}!\nCheck your inventory.`, {
                 options: [{ label: "OK", onSelect: () => this.destroyDialogueUI() }]
               });
             } else {
