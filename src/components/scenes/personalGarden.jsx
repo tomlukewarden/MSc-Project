@@ -47,6 +47,7 @@ class PersonalGarden extends Phaser.Scene {
       ["defaultRightWalk2", "/assets/char/default/right-step-2.PNG"],
       ["hoe", "/assets/tools/hoe.png"],
       ["wateringCan", "/assets/tools/wateringCan.png"],
+      ["shovel", "/assets/tools/shovel.png"],
       ["sign", "/assets/misc/sign.png"],
       ["gardenBackground", "/assets/backgrounds/personal/personalBackground.png"],
       ["tent", "/assets/backgrounds/personal/tent.png"],
@@ -372,11 +373,11 @@ class PersonalGarden extends Phaser.Scene {
       .setInteractive({ useHandCursor: true })
       .setDepth(203);
     // Harvest Glove
-    const gloveBg = this.add.rectangle(160, 40, 48, 48, 0x222233, 0.95)
+    const shovelBg = this.add.rectangle(160, 40, 48, 48, 0x222233, 0.95)
       .setStrokeStyle(2, 0x4caf50)
       .setDepth(199);
-    const gloveImg = this.add.image(160, 40, 'harvestGlove')
-      .setScale(0.05)
+    const shovelImg = this.add.image(160, 40, 'shovel')
+      .setScale(1.8)
       .setInteractive({ useHandCursor: true })
       .setDepth(203);
 
@@ -384,7 +385,7 @@ class PersonalGarden extends Phaser.Scene {
     this.toolIconSprites = [
       { bg: hoeBg, img: hoeImg, key: 'hoe' },
       { bg: canBg, img: canImg, key: 'wateringCan' },
-      { bg: gloveBg, img: gloveImg, key: 'harvestGlove' }
+      { bg: shovelBg, img: shovelImg, key: 'shovel' }
     ];
 
     // Set default selection to hoe
