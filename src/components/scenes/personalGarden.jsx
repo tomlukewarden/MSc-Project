@@ -10,6 +10,7 @@ if (typeof window !== "undefined") {
 }
 import { showDialogue, showOption } from "../../dialogue/dialogueUIHelpers";
 import globalTimeManager from "../../day/timeManager";
+import { receivedItem } from "../recievedItem";
 
 class PersonalGarden extends Phaser.Scene {
   constructor() {
@@ -129,20 +130,19 @@ class PersonalGarden extends Phaser.Scene {
           break;
         case 'grown':
           // Only allow harvest
-          if (this.currentTool === 'harvestGlove') {
+          if (this.currentTool === 'shovel') {
             result = this.plot.harvest();
             this.updatePlotText(this.plotText, this.plot);
             this.updatePlotColor(this.plotRect, this.plot);
             if (result.success && result.item) {
-              const inventory = this.inventoryManager.getInventory ? this.inventoryManager.getInventory() : this.inventoryManager.inventory;
-              if (Array.isArray(inventory.items)) inventory.items.push(result.item);
+              receivedItem(result.item, this.inventoryManager);
             }
             if (result && result.message) {
               alert(result.message);
               console.log(result.message);
             }
           } else {
-            alert('Use the harvest glove to harvest the plant.');
+            alert('Use the shovel to harvest the plant.');
           }
           break;
         case 'harvested':
@@ -153,7 +153,7 @@ class PersonalGarden extends Phaser.Scene {
       }
     });
     // Ensure player always has basic tools in inventory
-    const defaultTools = ['hoe', 'wateringCan', 'harvestGlove', 'seeds'];
+    const defaultTools = ['hoe', 'wateringCan', 'shovel', 'seeds'];
     let inventory = this.inventoryManager.getInventory ? this.inventoryManager.getInventory() : this.inventoryManager.inventory;
     if (!inventory || typeof inventory !== 'object') {
       inventory = {};
@@ -318,10 +318,10 @@ class PersonalGarden extends Phaser.Scene {
     if (this.currentTool === 'wateringCan' && inventory.tools.includes('wateringCan')) {
       return plot.water();
     }
-    if (this.currentTool === 'harvestGlove' && inventory.tools.includes('harvestGlove')) {
+    if (this.currentTool === 'shovel' && inventory.tools.includes('shovel')) {
       const result = plot.harvest();
       if (result.success && result.item) {
-        inventory.items.push(result.item);
+        receivedItem(result.item, this.inventoryManager);
       }
       return result;
     }
@@ -355,7 +355,6 @@ class PersonalGarden extends Phaser.Scene {
   }
 
   createToolButtons() {
-    // Manually create three tool buttons in the top left
     // Hoe
     const hoeBg = this.add.rectangle(40, 40, 48, 48, 0x222233, 0.95)
       .setStrokeStyle(2, 0x4caf50)
@@ -372,7 +371,7 @@ class PersonalGarden extends Phaser.Scene {
       .setScale(1.8)
       .setInteractive({ useHandCursor: true })
       .setDepth(203);
-    // Harvest Glove
+    // Shovel
     const shovelBg = this.add.rectangle(160, 40, 48, 48, 0x222233, 0.95)
       .setStrokeStyle(2, 0x4caf50)
       .setDepth(199);
@@ -381,18 +380,15 @@ class PersonalGarden extends Phaser.Scene {
       .setInteractive({ useHandCursor: true })
       .setDepth(203);
 
-    // Store for highlight logic
     this.toolIconSprites = [
       { bg: hoeBg, img: hoeImg, key: 'hoe' },
       { bg: canBg, img: canImg, key: 'wateringCan' },
       { bg: shovelBg, img: shovelImg, key: 'shovel' }
     ];
 
-    // Set default selection to hoe
     this.currentTool = 'hoe';
     hoeBg.setFillStyle(0x4caf50, 0.95);
 
-    // Add click handlers for switching tools and highlighting
     hoeImg.on('pointerdown', () => {
       this.currentTool = 'hoe';
       this.toolIconSprites.forEach((sprite) => {
@@ -405,10 +401,10 @@ class PersonalGarden extends Phaser.Scene {
         sprite.bg.setFillStyle(sprite.key === 'wateringCan' ? 0x4caf50 : 0x222233, 0.95);
       });
     });
-    gloveImg.on('pointerdown', () => {
-      this.currentTool = 'harvestGlove';
+    shovelImg.on('pointerdown', () => {
+      this.currentTool = 'shovel';
       this.toolIconSprites.forEach((sprite) => {
-        sprite.bg.setFillStyle(sprite.key === 'harvestGlove' ? 0x4caf50 : 0x222233, 0.95);
+        sprite.bg.setFillStyle(sprite.key === 'shovel' ? 0x4caf50 : 0x222233, 0.95);
       });
     });
   }

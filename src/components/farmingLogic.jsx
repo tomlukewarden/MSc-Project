@@ -1,4 +1,17 @@
 import SeedPouchLogic from './seedPouchLogic';
+import itemsData from '../items';
+
+
+// Build a map from seed key/name to plantKey using itemsData
+const seedToPlantMap = {};
+if (Array.isArray(itemsData)) {
+  itemsData.forEach(item => {
+    if (item.type === 'seed' && item.plantKey) {
+      seedToPlantMap[item.key] = item.plantKey;
+      seedToPlantMap[item.name] = item.plantKey;
+    }
+  });
+}
 
 export class Plot {
   constructor() {
@@ -6,6 +19,8 @@ export class Plot {
     this.seedType = null;
     this.growthStage = 0;
     this.watered = false;
+    this.waterCount = 0; // Number of days watered
+    this.lastWateredDay = null; // Track last day watered
   }
 
   prepare() {
@@ -42,6 +57,8 @@ export class Plot {
       this.seedType = seedObj.name || seedObj.type || seedObj.key;
       this.growthStage = 0;
       this.watered = false;
+      this.waterCount = 0;
+      this.lastWateredDay = null;
       return { success: true, message: `Planted ${this.seedType}.` };
     }
     // Remove non-stackable seed
@@ -51,19 +68,34 @@ export class Plot {
       this.seedType = seedObj.name || seedObj.type || seedObj.key;
       this.growthStage = 0;
       this.watered = false;
+      this.waterCount = 0;
+      this.lastWateredDay = null;
       return { success: true, message: `Planted ${this.seedType}.` };
     }
     return { success: false, message: `No ${normalizedSeedType.name || normalizedSeedType.type || normalizedSeedType.key} seeds in pouch.` };
   }
 
   water() {
-    if (this.state === 'planted' && !this.watered) {
+    // Accept a day parameter for daily watering, or use globalTimeManager if available
+    let currentDay = null;
+    if (typeof window !== 'undefined' && window.globalTimeManager && window.globalTimeManager.getDayNumber) {
+      currentDay = window.globalTimeManager.getDayNumber();
+    }
+    // If not available, fallback to incrementing
+    if (currentDay === null) {
+      currentDay = (this.lastWateredDay || 0) + 1;
+    }
+    if (this.state === 'planted') {
+      if (this.lastWateredDay === currentDay) {
+        return { success: false, message: 'Already watered today.' };
+      }
       this.watered = true;
-      this.growthStage++;
-      if (this.growthStage >= 2) {
+      this.waterCount = (this.waterCount || 0) + 1;
+      this.lastWateredDay = currentDay;
+      if (this.waterCount >= 3) {
         this.state = 'grown';
       }
-      return { success: true, message: 'Watered the plant.' };
+      return { success: true, message: `Watered the plant. (${this.waterCount}/3)` };
     }
     return { success: false, message: 'Cannot water now.' };
   }
@@ -71,11 +103,14 @@ export class Plot {
   harvest() {
     if (this.state === 'grown') {
       this.state = 'harvested';
-      const harvested = this.seedType;
+      // Use plantKey from itemsData for the harvested plant
+      let plant = seedToPlantMap[this.seedType] || this.seedType;
       this.seedType = null;
       this.growthStage = 0;
       this.watered = false;
-      return { success: true, item: harvested, message: `Harvested ${harvested}.` };
+      this.waterCount = 0;
+      this.lastWateredDay = null;
+      return { success: true, item: plant, message: `Harvested ${plant}.` };
     }
     return { success: false, message: 'Not ready to harvest.' };
   }
@@ -85,5 +120,7 @@ export class Plot {
     this.seedType = null;
     this.growthStage = 0;
     this.watered = false;
+    this.waterCount = 0;
+    this.lastWateredDay = null;
   }
 }
