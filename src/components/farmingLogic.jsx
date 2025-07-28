@@ -1,3 +1,5 @@
+import SeedPouchLogic from './seedPouchLogic';
+
 export class Plot {
   constructor() {
     this.state = 'empty'; 
@@ -15,40 +17,27 @@ export class Plot {
   }
 
   plant(seedType) {
-    // Accept seeds from inventoryManager
+    // Accept seeds from seed pouch
     if (this.state !== 'prepared') {
       return { success: false, message: 'Ground not prepared.' };
     }
-    // Check global inventoryManager for seeds
-    let inventoryManager = typeof window !== 'undefined' ? window.inventoryManager : null;
-    if (!inventoryManager || !inventoryManager.getInventory) {
-      return { success: false, message: 'Inventory not available.' };
-    }
-    const inventory = inventoryManager.getInventory();
-    // Always normalize seedType to object for robust matching
+    // Normalize seedType to object for robust matching
     let normalizedSeedType = typeof seedType === 'string'
-      ? (Array.isArray(inventory.items) ? inventory.items.find(item => item.name === seedType || item.type === seedType || item.key === seedType) : null)
+      ? SeedPouchLogic.getSeeds().find(item => item.name === seedType || item.type === seedType || item.key === seedType)
       : seedType;
     if (!normalizedSeedType) {
-      // Try tools array if not found in items
-      normalizedSeedType = typeof seedType === 'string'
-        ? (Array.isArray(inventory.tools) ? inventory.tools.find(item => item.name === seedType || item.type === seedType || item.key === seedType) : null)
-        : seedType;
+      return { success: false, message: `No ${typeof seedType === 'string' ? seedType : (seedType.name || seedType.type || seedType.key)} seeds in pouch.` };
     }
-    if (!normalizedSeedType) {
-      return { success: false, message: `No ${typeof seedType === 'string' ? seedType : (seedType.name || seedType.type || seedType.key)} seeds in inventory.` };
-    }
-    // Find seed in items array
+    // Find seed in pouch
     const isSeedMatch = (item) => {
       if (!item) return false;
       return item.name === normalizedSeedType.name || item.type === normalizedSeedType.type || item.key === normalizedSeedType.key;
     };
-    let seedIdx = Array.isArray(inventory.items) ? inventory.items.findIndex(isSeedMatch) : -1;
-    let seedObj = seedIdx !== -1 ? inventory.items[seedIdx] : null;
+    let seedIdx = SeedPouchLogic.getSeeds().findIndex(isSeedMatch);
+    let seedObj = seedIdx !== -1 ? SeedPouchLogic.getSeeds()[seedIdx] : null;
     // Support stackable seeds
     if (seedObj && seedObj.count && seedObj.count > 0) {
-      seedObj.count--;
-      if (seedObj.count === 0) inventory.items.splice(seedIdx, 1);
+      SeedPouchLogic.removeSeed(seedObj.key, 1);
       this.state = 'planted';
       this.seedType = seedObj.name || seedObj.type || seedObj.key;
       this.growthStage = 0;
@@ -57,24 +46,14 @@ export class Plot {
     }
     // Remove non-stackable seed
     if (seedObj) {
-      inventory.items.splice(seedIdx, 1);
+      SeedPouchLogic.removeSeed(seedObj.key, 1);
       this.state = 'planted';
       this.seedType = seedObj.name || seedObj.type || seedObj.key;
       this.growthStage = 0;
       this.watered = false;
       return { success: true, message: `Planted ${this.seedType}.` };
     }
-    // Check tools array for seeds
-    let toolIdx = Array.isArray(inventory.tools) ? inventory.tools.findIndex(isSeedMatch) : -1;
-    if (toolIdx !== -1) {
-      inventory.tools.splice(toolIdx, 1);
-      this.state = 'planted';
-      this.seedType = normalizedSeedType.name || normalizedSeedType.type || normalizedSeedType.key;
-      this.growthStage = 0;
-      this.watered = false;
-      return { success: true, message: `Planted ${this.seedType}.` };
-    }
-    return { success: false, message: `No ${normalizedSeedType.name || normalizedSeedType.type || normalizedSeedType.key} seeds in inventory.` };
+    return { success: false, message: `No ${normalizedSeedType.name || normalizedSeedType.type || normalizedSeedType.key} seeds in pouch.` };
   }
 
   water() {

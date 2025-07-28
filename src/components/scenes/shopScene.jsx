@@ -4,6 +4,7 @@ import { CoinManager } from '../coinManager';
 import itemsData from '../../items';
 import { showOption } from '../../dialogue/dialogueUIHelpers';
 import { receivedItem } from '../recievedItem';
+import SeedPouchLogic from '../seedPouchLogic';
 // Ensure global inventoryManager instance
 import { inventoryManager as globalInventoryManager } from "../inventoryManager";
 if (typeof window !== "undefined") {
@@ -207,25 +208,40 @@ class ShopScene extends Phaser.Scene {
             }
             const totalPrice = quantity * parseInt(item.price);
             if (this.coinManager.subtract(totalPrice)) {
-              // Add directly to inventory instead of chest
-              for (let i = 0; i < quantity; i++) {
-                if (typeof this.inventoryManager.addItem === 'function') {
-                  this.inventoryManager.addItem({ ...item, color: 0xd2b48c });
-                }
-              }
-              // Show receivedItem popup for seeds and tools
+              // Add seeds to seed pouch, tools to inventory
               if (item.type === 'seed') {
+                SeedPouchLogic.addSeed(item, quantity);
                 receivedItem(this, "seeds", `${item.name} x${quantity}`);
+                quantityPrompt.destroy();
+                this.destroyDialogueUI();
+                showOption(this, `You bought ${item.name} x${quantity}!\nCheck your seed pouch.`, {
+                  options: [{ label: "OK", onSelect: () => this.destroyDialogueUI() }]
+                });
               } else if (item.type === 'tool') {
+                for (let i = 0; i < quantity; i++) {
+                  if (typeof this.inventoryManager.addItem === 'function') {
+                    this.inventoryManager.addItem({ ...item, color: 0xd2b48c });
+                  }
+                }
                 receivedItem(this, item.key, `${item.name} x${quantity}`);
+                quantityPrompt.destroy();
+                this.destroyDialogueUI();
+                showOption(this, `You bought ${item.name} x${quantity}!\nCheck your inventory.`, {
+                  options: [{ label: "OK", onSelect: () => this.destroyDialogueUI() }]
+                });
               } else {
+                for (let i = 0; i < quantity; i++) {
+                  if (typeof this.inventoryManager.addItem === 'function') {
+                    this.inventoryManager.addItem({ ...item, color: 0xd2b48c });
+                  }
+                }
                 receivedItem(this, item.key, `${item.name} x${quantity}`);
+                quantityPrompt.destroy();
+                this.destroyDialogueUI();
+                showOption(this, `You bought ${item.name} x${quantity}!\nCheck your inventory.`, {
+                  options: [{ label: "OK", onSelect: () => this.destroyDialogueUI() }]
+                });
               }
-              quantityPrompt.destroy();
-              this.destroyDialogueUI();
-              showOption(this, `You bought ${item.name} x${quantity}!\nCheck your inventory.`, {
-                options: [{ label: "OK", onSelect: () => this.destroyDialogueUI() }]
-              });
             } else {
               errorMsg.textContent = 'Not enough coins!';
             }

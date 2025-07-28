@@ -1,6 +1,7 @@
 import { Plot } from "../farmingLogic";
 import { createMainChar } from "../../characters/mainChar";
 import { inventoryManager } from "../inventoryManager";
+import SeedPouchLogic from "../seedPouchLogic";
 // Ensure global inventoryManager instance
 if (typeof window !== "undefined") {
   if (!window.inventoryManager) {
@@ -79,47 +80,76 @@ class PersonalGarden extends Phaser.Scene {
     this.updatePlotText(this.plotText, this.plot);
     this.updatePlotColor(this.plotRect, this.plot);
 
-    // Plot interaction: use current tool
+    // Plot interaction: clean logic for hoe, seed pouch, water, harvest
     this.plotRect.on('pointerdown', () => {
       let result;
-      // Debug info
-      alert('Plot state: ' + this.plot.state + '\nSelected tool: ' + this.selectedTool + '\nSelected seed: ' + (this.selectedSeedType ? JSON.stringify(this.selectedSeedType) : 'none'));
-      console.log('Plot state:', this.plot.state);
-      console.log('Selected tool:', this.selectedTool);
-      console.log('Selected seed:', this.selectedSeedType);
-      switch (this.selectedTool) {
-        case 'hoe':
-          result = this.plot.prepare();
-          break;
-        case 'seeds':
-          if (this.selectedSeedType) {
-            result = this.plot.plant(this.selectedSeedType);
-            if (result.success) {
-              this.selectedSeedType = null;
+      switch (this.plot.state) {
+        case 'empty':
+          // Only hoe can be used
+          if (this.currentTool === 'hoe') {
+            result = this.plot.prepare();
+            this.updatePlotText(this.plotText, this.plot);
+            this.updatePlotColor(this.plotRect, this.plot);
+            if (result && result.message) {
+              alert(result.message);
+              console.log(result.message);
             }
           } else {
-            result = { success: false, message: 'Select a seed from inventory first.' };
+            alert('Use the hoe to prepare the ground first.');
           }
           break;
-        case 'wateringCan':
-          result = this.plot.water();
+        case 'prepared':
+          // Only allow seed pouch selection
+          this.scene.launch('OpenSeedPouch', {
+            onSelect: (seedItem) => {
+              result = this.plot.plant(seedItem);
+              this.updatePlotText(this.plotText, this.plot);
+              this.updatePlotColor(this.plotRect, this.plot);
+              if (result && result.message) {
+                alert(result.message);
+                console.log(result.message);
+              }
+            }
+          });
           break;
-        case 'harvestGlove':
-          result = this.plot.harvest();
-          if (result.success && result.item) {
-            const inventory = this.inventoryManager.getInventory ? this.inventoryManager.getInventory() : this.inventoryManager.inventory;
-            if (Array.isArray(inventory.items)) inventory.items.push(result.item);
+        case 'planted':
+          // Only allow watering
+          if (this.currentTool === 'wateringCan') {
+            result = this.plot.water();
+            this.updatePlotText(this.plotText, this.plot);
+            this.updatePlotColor(this.plotRect, this.plot);
+            if (result && result.message) {
+              alert(result.message);
+              console.log(result.message);
+            }
+          } else {
+            alert('Use the watering can to water the plant.');
           }
+          break;
+        case 'grown':
+          // Only allow harvest
+          if (this.currentTool === 'harvestGlove') {
+            result = this.plot.harvest();
+            this.updatePlotText(this.plotText, this.plot);
+            this.updatePlotColor(this.plotRect, this.plot);
+            if (result.success && result.item) {
+              const inventory = this.inventoryManager.getInventory ? this.inventoryManager.getInventory() : this.inventoryManager.inventory;
+              if (Array.isArray(inventory.items)) inventory.items.push(result.item);
+            }
+            if (result && result.message) {
+              alert(result.message);
+              console.log(result.message);
+            }
+          } else {
+            alert('Use the harvest glove to harvest the plant.');
+          }
+          break;
+        case 'harvested':
+          alert('This plot has already been harvested. Reset or wait for next cycle.');
           break;
         default:
-          result = { success: false, message: 'Unknown tool.' };
+          alert('Unknown plot state.');
       }
-      if (result && result.message) {
-        alert(result.message);
-        console.log(result.message);
-      }
-      this.updatePlotText(this.plotText, this.plot);
-      this.updatePlotColor(this.plotRect, this.plot);
     });
     // Ensure player always has basic tools in inventory
     const defaultTools = ['hoe', 'wateringCan', 'harvestGlove', 'seeds'];
@@ -324,50 +354,61 @@ class PersonalGarden extends Phaser.Scene {
   }
 
   createToolButtons() {
-    const tools = [
-      { key: 'hoe', x: 40, y: 40 },
-      { key: 'seeds', x: 100, y: 40 },
-      { key: 'wateringCan', x: 160, y: 40 },
-      { key: 'harvestGlove', x: 220, y: 40 }
-    ];
-    this.selectedTool = this.selectedTool || 'hoe';
-    this.toolIconSprites = [];
-    tools.forEach((tool, i) => {
-      // Draw square background
-      const bg = this.add.rectangle(tool.x, tool.y, 48, 48, 0x222233, 0.95)
-        .setStrokeStyle(2, 0x4caf50)
-        .setDepth(199);
-      // Draw tool image
-      const img = this.add.image(tool.x, tool.y, tool.key)
-        .setScale(0.05)
-        .setInteractive({ useHandCursor: true })
-        .setDepth(200);
-      img.on('pointerdown', () => {
-        this.selectedTool = tool.key;
-        // Highlight selected tool background
-        this.toolIconSprites.forEach((sprite, j) => {
-          sprite.bg.setFillStyle(j === i ? 0x4caf50 : 0x222233, 0.95);
-        });
+    // Manually create three tool buttons in the top left
+    // Hoe
+    const hoeBg = this.add.rectangle(40, 40, 48, 48, 0x222233, 0.95)
+      .setStrokeStyle(2, 0x4caf50)
+      .setDepth(199);
+    const hoeImg = this.add.image(40, 40, 'hoe')
+      .setScale(1.8)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(203);
+    // Watering Can
+    const canBg = this.add.rectangle(100, 40, 48, 48, 0x222233, 0.95)
+      .setStrokeStyle(2, 0x4caf50)
+      .setDepth(199);
+    const canImg = this.add.image(100, 40, 'wateringCan')
+      .setScale(1.8)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(203);
+    // Harvest Glove
+    const gloveBg = this.add.rectangle(160, 40, 48, 48, 0x222233, 0.95)
+      .setStrokeStyle(2, 0x4caf50)
+      .setDepth(199);
+    const gloveImg = this.add.image(160, 40, 'harvestGlove')
+      .setScale(0.05)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(203);
 
-        if (tool.key === 'seeds') {
-          // Store callback for when a seed is selected
-          window.onSeedSelected = (seedItem) => {
-            this.selectedSeedType = seedItem; // Store the full object!
-            alert('Selected seed: ' + (seedItem.name || seedItem.type));
-            window.onSeedSelected = null;
-          };
-          this.scene.launch('OpenInventory', {
-            mode: 'selectSeed',
-            filter: item => item.type === 'seed',
-            onSelect: window.onSeedSelected
-          });
-        } else {
-          this.selectedSeedType = null;
-        }
+    // Store for highlight logic
+    this.toolIconSprites = [
+      { bg: hoeBg, img: hoeImg, key: 'hoe' },
+      { bg: canBg, img: canImg, key: 'wateringCan' },
+      { bg: gloveBg, img: gloveImg, key: 'harvestGlove' }
+    ];
+
+    // Set default selection to hoe
+    this.currentTool = 'hoe';
+    hoeBg.setFillStyle(0x4caf50, 0.95);
+
+    // Add click handlers for switching tools and highlighting
+    hoeImg.on('pointerdown', () => {
+      this.currentTool = 'hoe';
+      this.toolIconSprites.forEach((sprite) => {
+        sprite.bg.setFillStyle(sprite.key === 'hoe' ? 0x4caf50 : 0x222233, 0.95);
       });
-      // Default highlight for hoe
-      if (i === 0) bg.setFillStyle(0x4caf50, 0.95);
-      this.toolIconSprites.push({ bg, img });
+    });
+    canImg.on('pointerdown', () => {
+      this.currentTool = 'wateringCan';
+      this.toolIconSprites.forEach((sprite) => {
+        sprite.bg.setFillStyle(sprite.key === 'wateringCan' ? 0x4caf50 : 0x222233, 0.95);
+      });
+    });
+    gloveImg.on('pointerdown', () => {
+      this.currentTool = 'harvestGlove';
+      this.toolIconSprites.forEach((sprite) => {
+        sprite.bg.setFillStyle(sprite.key === 'harvestGlove' ? 0x4caf50 : 0x222233, 0.95);
+      });
     });
   }
 }
