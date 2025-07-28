@@ -11,6 +11,7 @@ if (typeof window !== "undefined") {
 import { showDialogue, showOption } from "../../dialogue/dialogueUIHelpers";
 import globalTimeManager from "../../day/timeManager";
 import { receivedItem } from "../recievedItem";
+import itemsData from "../../items";
 
 class PersonalGarden extends Phaser.Scene {
   constructor() {
@@ -59,99 +60,114 @@ class PersonalGarden extends Phaser.Scene {
   }
 
   create() {
-    // Minimal plot system: one plot for testing seed planting from inventory
     // --- UI and gameplay setup ---
     const { width, height } = this.sys.game.config;
-    this.plot = new Plot();
-    const plotX = width / 2;
-    const plotY = height / 2 + 100;
-    // Draw plot rectangle
-    this.plotRect = this.add.rectangle(plotX, plotY, 60, 60, 0x8bc34a, 0.85)
-      .setStrokeStyle(2, 0x4caf50)
-      .setOrigin(0.5)
-      .setInteractive({ useHandCursor: true })
-      .setDepth(100);
-    this.plotText = this.add.text(plotX, plotY, '', {
-      fontSize: '14px',
-      color: '#fff',
-      fontFamily: 'Georgia',
-      align: 'center'
-    }).setOrigin(0.5).setDepth(101);
+    // Create a grid of plots
+    this.rows = 3;
+    this.cols = 5;
+    this.plots = [];
+    const plotSpacing = 80;
+    const plotSize = 60;
+    const gridWidth = this.cols * plotSpacing;
+    const gridHeight = this.rows * plotSpacing;
+    const startX = width / 2 - gridWidth / 2 + plotSpacing / 2;
+    const startY = height / 2 - gridHeight / 2 + 100;
 
-    // Update plot display
-    this.updatePlotText(this.plotText, this.plot);
-    this.updatePlotColor(this.plotRect, this.plot);
+    for (let row = 0; row < this.rows; row++) {
+      for (let col = 0; col < this.cols; col++) {
+        const plot = new Plot();
+        const plotX = startX + col * plotSpacing;
+        const plotY = startY + row * plotSpacing;
+        const plotRect = this.add.rectangle(plotX, plotY, plotSize, plotSize, 0x8bc34a, 0.85)
+          .setStrokeStyle(2, 0x4caf50)
+          .setOrigin(0.5)
+          .setInteractive({ useHandCursor: true })
+          .setDepth(100);
+        const plotText = this.add.text(plotX, plotY, '', {
+          fontSize: '14px',
+          color: '#fff',
+          fontFamily: 'Georgia',
+          align: 'center'
+        }).setOrigin(0.5).setDepth(101);
 
-    // Plot interaction: clean logic for hoe, seed pouch, water, harvest
-    this.plotRect.on('pointerdown', () => {
-      let result;
-      switch (this.plot.state) {
-        case 'empty':
-          // Only hoe can be used
-          if (this.currentTool === 'hoe') {
-            result = this.plot.prepare();
-            this.updatePlotText(this.plotText, this.plot);
-            this.updatePlotColor(this.plotRect, this.plot);
-            if (result && result.message) {
-              alert(result.message);
-              console.log(result.message);
-            }
-          } else {
-            alert('Use the hoe to prepare the ground first.');
-          }
-          break;
-        case 'prepared':
-          // Only allow seed pouch selection
-          this.scene.launch('OpenSeedPouch', {
-            onSelect: (seedItem) => {
-              result = this.plot.plant(seedItem);
-              this.updatePlotText(this.plotText, this.plot);
-              this.updatePlotColor(this.plotRect, this.plot);
-              if (result && result.message) {
-                alert(result.message);
-                console.log(result.message);
+        // Store plot, rect, and text for later reference
+        this.plots.push({ plot, plotRect, plotText });
+
+        // Initial update
+        this.updatePlotText(plotText, plot);
+        this.updatePlotColor(plotRect, plot);
+
+        // Plot interaction: clean logic for hoe, seed pouch, water, harvest
+        plotRect.on('pointerdown', () => {
+          let result;
+          switch (plot.state) {
+            case 'empty':
+              if (this.currentTool === 'hoe') {
+                result = plot.prepare();
+                this.updatePlotText(plotText, plot);
+                this.updatePlotColor(plotRect, plot);
+                if (result && result.message) {
+                  alert(result.message);
+                  console.log(result.message);
+                }
+              } else {
+                alert('Use the hoe to prepare the ground first.');
               }
-            }
-          });
-          break;
-        case 'planted':
-          // Only allow watering
-          if (this.currentTool === 'wateringCan') {
-            result = this.plot.water();
-            this.updatePlotText(this.plotText, this.plot);
-            this.updatePlotColor(this.plotRect, this.plot);
-            if (result && result.message) {
-              alert(result.message);
-              console.log(result.message);
-            }
-          } else {
-            alert('Use the watering can to water the plant.');
+              break;
+            case 'prepared':
+              this.scene.launch('OpenSeedPouch', {
+                onSelect: (seedItem) => {
+                  result = plot.plant(seedItem);
+                  this.updatePlotText(plotText, plot);
+                  this.updatePlotColor(plotRect, plot);
+                  if (result && result.message) {
+                    alert(result.message);
+                    console.log(result.message);
+                  }
+                }
+              });
+              break;
+            case 'planted':
+              if (this.currentTool === 'wateringCan') {
+                result = plot.water();
+                this.updatePlotText(plotText, plot);
+                this.updatePlotColor(plotRect, plot);
+                if (result && result.message) {
+                  alert(result.message);
+                  console.log(result.message);
+                }
+              } else {
+                alert('Use the watering can to water the plant.');
+              }
+              break;
+            case 'grown':
+              if (this.currentTool === 'shovel') {
+                result = plot.harvest();
+                this.updatePlotText(plotText, plot);
+                this.updatePlotColor(plotRect, plot);
+                if (result.success && result.item) {
+                  const plantItem = itemsData.find(i => i.key === result.item);
+                  if (plantItem) {
+                    receivedItem(plantItem, this.inventoryManager);
+                  }
+                }
+                if (result && result.message) {
+                  alert(result.message);
+                  console.log(result.message);
+                }
+              } else {
+                alert('Use the shovel to harvest the plant.');
+              }
+              break;
+            case 'harvested':
+              alert('This plot has already been harvested. Reset or wait for next cycle.');
+              break;
+            default:
+              alert('Unknown plot state.');
           }
-          break;
-        case 'grown':
-          // Only allow harvest
-          if (this.currentTool === 'shovel') {
-            result = this.plot.harvest();
-            this.updatePlotText(this.plotText, this.plot);
-            this.updatePlotColor(this.plotRect, this.plot);
-            if (result.success && result.item) {
-              receivedItem(result.item, this.inventoryManager);
-            }
-            if (result && result.message) {
-              alert(result.message);
-              console.log(result.message);
-            }
-          } else {
-            alert('Use the shovel to harvest the plant.');
-          }
-          break;
-        case 'harvested':
-          alert('This plot has already been harvested. Reset or wait for next cycle.');
-          break;
-        default:
-          alert('Unknown plot state.');
+        });
       }
-    });
+    }
     // Ensure player always has basic tools in inventory
     const defaultTools = ['hoe', 'wateringCan', 'shovel', 'seeds'];
     let inventory = this.inventoryManager.getInventory ? this.inventoryManager.getInventory() : this.inventoryManager.inventory;
@@ -166,7 +182,7 @@ class PersonalGarden extends Phaser.Scene {
       }
     });
 
-    const scaleFactor = 0.175;
+    const scaleFactor = 0.14;
     this.add.image(0, 0, "gardenBackground").setOrigin(0).setScale(scaleFactor);
 
     // Tent image (not interactive)

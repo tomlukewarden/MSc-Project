@@ -219,7 +219,7 @@ class ShopScene extends Phaser.Scene {
               // Add seeds to seed pouch, tools to inventory
               if (item.type === 'seed') {
                 SeedPouchLogic.addSeed(item, quantity);
-                receivedItem(this, "seeds", `${item.name} x${quantity}`);
+                receivedItem(this, item.key, `${item.name} x${quantity}`);
                 quantityPrompt.destroy();
                 this.destroyDialogueUI();
                 showOption(this, `You bought ${item.name} x${quantity}!\nCheck your seed pouch.`, {
