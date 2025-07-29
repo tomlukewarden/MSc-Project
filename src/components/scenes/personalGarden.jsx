@@ -61,6 +61,26 @@ class PersonalGarden extends Phaser.Scene {
   }
 
   create() {
+    // Ensure globalTimeManager is initialized and started
+    globalTimeManager.init(this);
+    if (!globalTimeManager.startTimestamp) {
+      globalTimeManager.start();
+    }
+
+    // Show current day number for debugging
+    this.dayText = this.add.text(40, 100, `Day: ${globalTimeManager.getDayNumber()}`, {
+      fontSize: '20px',
+      color: '#ffe066',
+      fontFamily: 'Georgia',
+      backgroundColor: '#222',
+      padding: { left: 8, right: 8, top: 4, bottom: 4 }
+    }).setOrigin(0, 0).setDepth(99999);
+    alert('Garden loaded! Current day: ' + globalTimeManager.getDayNumber());
+
+
+    // Tent image (not interactive)
+    const tent = this.add.image(700, 100, 'tent');
+    // Only the triangle above the tent advances the day
     // --- UI and gameplay setup ---
     const { width, height } = this.sys.game.config;
     // Create a grid of plots
@@ -231,10 +251,16 @@ class PersonalGarden extends Phaser.Scene {
     triangle.on("pointerover", () => nextDayText.setAlpha(1));
     triangle.on("pointerout", () => nextDayText.setAlpha(0));
     triangle.on("pointerdown", () => {
+      alert('Advancing to next day! Previous day: ' + globalTimeManager.getDayNumber());
       this.scene.pause();
       this.scene.launch("DayEndScene", { day: globalTimeManager.getDayNumber() });
       this.scene.get("DayEndScene").events.once("dayEnded", () => {
         globalTimeManager.nextDay();
+        alert('New day: ' + globalTimeManager.getDayNumber());
+        // Update day number display
+        if (this.dayText) {
+          this.dayText.setText(`Day: ${globalTimeManager.getDayNumber()}`);
+        }
         this.scene.resume();
       });
     });

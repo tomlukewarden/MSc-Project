@@ -88,8 +88,11 @@ export class Plot {
     console.log('[Plot.water] currentDay:', currentDay, 'lastWateredDay:', this.lastWateredDay);
     if (this.state === 'planted') {
       if (this.lastWateredDay === currentDay) {
-        console.log('[Plot.water] Already watered today.');
-        return { success: false, message: 'Already watered today.' };
+        // Already watered today, allow watering but don't increment growth
+        console.log('[Plot.water] Already watered today. No growth increment.');
+        // Show a clear message to the user
+        alert('You have already watered today! Only one watering per day counts towards growth. Use the tent to advance to the next day.');
+        return { success: true, message: 'Watered again, but only one watering per day counts towards growth.' };
       }
       this.watered = true;
       this.waterCount = (this.waterCount || 0) + 1;
@@ -101,6 +104,7 @@ export class Plot {
       return { success: true, message: `Watered the plant. (${this.waterCount}/3)` };
     }
     console.log('[Plot.water] Cannot water now. State:', this.state);
+    alert('Cannot water now. Make sure the plot is planted.');
     return { success: false, message: 'Cannot water now.' };
   }
 
