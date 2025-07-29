@@ -144,7 +144,11 @@ class PersonalGarden extends Phaser.Scene {
                 this.updatePlotColor(plotRect, plot);
                 preparedPlotImg.setVisible(false);
                 if (result && result.message) {
-                  alert(result.message);
+                  if (result.message === 'Already watered today.') {
+                    alert('Already watered! Water again tomorrow.');
+                  } else {
+                    alert(result.message);
+                  }
                   console.log(result.message);
                 }
               } else {

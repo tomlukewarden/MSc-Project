@@ -85,8 +85,10 @@ export class Plot {
     if (currentDay === null) {
       currentDay = (this.lastWateredDay || 0) + 1;
     }
+    console.log('[Plot.water] currentDay:', currentDay, 'lastWateredDay:', this.lastWateredDay);
     if (this.state === 'planted') {
       if (this.lastWateredDay === currentDay) {
+        console.log('[Plot.water] Already watered today.');
         return { success: false, message: 'Already watered today.' };
       }
       this.watered = true;
@@ -95,8 +97,10 @@ export class Plot {
       if (this.waterCount >= 3) {
         this.state = 'grown';
       }
+      console.log('[Plot.water] Watered. New lastWateredDay:', this.lastWateredDay);
       return { success: true, message: `Watered the plant. (${this.waterCount}/3)` };
     }
+    console.log('[Plot.water] Cannot water now. State:', this.state);
     return { success: false, message: 'Cannot water now.' };
   }
 
