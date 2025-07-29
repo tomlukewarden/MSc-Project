@@ -23,6 +23,7 @@ import NewGameScene from "./scenes/newGameScene";
 import DayEndScene from "./scenes/dayOverlay";
 import XOGameScene from "../minigames/x-and-o";
 import OpenSeedPouch from "./openSeedPouch";
+import FishGameScene from "../minigames/fish";
 
 function GameCanvas() {
     const canvasRef = useRef(null);
@@ -77,7 +78,8 @@ function GameCanvas() {
     NewGameScene,
     DayEndScene,
     XOGameScene,
-    OpenSeedPouch
+    OpenSeedPouch,
+    FishGameScene
   ]
 };
 
