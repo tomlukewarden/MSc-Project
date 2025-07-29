@@ -1,7 +1,6 @@
 import { Plot } from "../farmingLogic";
 import { createMainChar } from "../../characters/mainChar";
 import { inventoryManager } from "../inventoryManager";
-import SeedPouchLogic from "../seedPouchLogic";
 import { saveToLocal, loadFromLocal } from "../../utils/localStorage";
 // Ensure global inventoryManager instance
 if (typeof window !== "undefined") {
@@ -13,6 +12,8 @@ import { showDialogue, showOption } from "../../dialogue/dialogueUIHelpers";
 import globalTimeManager from "../../day/timeManager";
 import { receivedItem } from "../recievedItem";
 import itemsData from "../../items";
+import SeedPouchLogic from "../seedPouchLogic"; // Importing SeedPouchLogic for seed management
+import plantData from "../../plantData";
 
 class PersonalGarden extends Phaser.Scene {
   constructor() {
@@ -392,7 +393,15 @@ class PersonalGarden extends Phaser.Scene {
     if (this.currentTool === 'shovel' && inventory.tools.includes('shovel')) {
       const result = plot.harvest();
       if (result.success && result.item) {
-        receivedItem(result.item, this.inventoryManager);
+        // Use plantData and compare seedKey for robust lookup
+        let plantItem = plantData.find(i => i.seedKey === result.item);
+        // Fallback to itemsData if not found in plantData
+        if (!plantItem) {
+          plantItem = itemsData.find(i => i.key === result.item);
+        }
+        if (plantItem) {
+          receivedItem(plantItem, this.inventoryManager);
+        }
       }
       return result;
     }

@@ -1,6 +1,7 @@
 import SeedPouchLogic from './seedPouchLogic';
 import itemsData from '../items';
 import globalTimeManager from '../day/timeManager';
+import { receivedItem } from './recievedItem';
 
 
 // Build a map from seed key/name to plantKey using itemsData
@@ -80,7 +81,6 @@ export class Plot {
     // Accept a day parameter for daily watering, or use globalTimeManager if available
     // Always use the global day number for watering logic
     let currentDay = globalTimeManager.getDayNumber();
-    alert('[DEBUG] Watering plot!\nCurrent day: ' + currentDay + '\nLast watered day: ' + this.lastWateredDay + '\nWater count: ' + this.waterCount);
     console.log('[Plot.water] currentDay:', currentDay, 'lastWateredDay:', this.lastWateredDay, 'waterCount:', this.waterCount);
     if (this.state === 'planted') {
       // Always allow watering, but only increment growth if it's a new day
@@ -96,12 +96,10 @@ export class Plot {
       } else {
         // Already watered today, allow watering but don't increment growth
         console.log('[Plot.water] Already watered today. No growth increment.');
-        alert('You have already watered today! Only one watering per day counts towards growth. Use the tent to advance to the next day.');
         return { success: true, message: 'Watered again, but only one watering per day counts towards growth.' };
       }
     }
     console.log('[Plot.water] Cannot water now. State:', this.state);
-    alert('Cannot water now. Make sure the plot is planted.');
     return { success: false, message: 'Cannot water now.' };
   }
 
