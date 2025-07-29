@@ -2,6 +2,7 @@ import { Plot } from "../farmingLogic";
 import { createMainChar } from "../../characters/mainChar";
 import { inventoryManager } from "../inventoryManager";
 import SeedPouchLogic from "../seedPouchLogic";
+import { saveToLocal, loadFromLocal } from "../../utils/localStorage";
 // Ensure global inventoryManager instance
 if (typeof window !== "undefined") {
   if (!window.inventoryManager) {
@@ -279,15 +280,8 @@ class PersonalGarden extends Phaser.Scene {
     this.scene.launch("HUDScene");
     this.scene.bringToTop("HUDScene");
 
-    const sceneState = window.localStorage.getItem('personalGardenSceneState');
-    let loadedState = null;
-    if (sceneState) {
-      try {
-        loadedState = JSON.parse(sceneState);
-      } catch (e) {
-        loadedState = null;
-      }
-    }
+    // Load state using loadFromLocal
+    const loadedState = loadFromLocal('personalGardenSceneState');
 
     const backBtnX = width - 40;
     const backBtnY = height / 2;
@@ -312,6 +306,12 @@ class PersonalGarden extends Phaser.Scene {
     if (loadedState?.currentTool) this.currentTool = loadedState.currentTool;
     if (loadedState?.timeOfDay) {
       globalTimeManager.dayCycle.setTimeOfDay(loadedState.timeOfDay);
+    }
+    if (loadedState?.currentDay !== undefined) {
+      globalTimeManager.currentDay = loadedState.currentDay;
+      if (this.dayText) {
+        this.dayText.setText(`Day: ${globalTimeManager.getDayNumber()}`);
+      }
     }
 
     // Sign to enter shop
@@ -362,12 +362,20 @@ class PersonalGarden extends Phaser.Scene {
 
   saveSceneState() {
     const state = {
-      plots: this.plots.map(({ plot }) => ({ ...plot })),
+      plots: this.plots.map(({ plot }) => ({
+        watered: plot.watered,
+        waterCount: plot.waterCount,
+        lastWateredDay: plot.lastWateredDay,
+        seedType: plot.seedType,
+        state: plot.state,
+        growthStage: plot.growthStage
+      })),
       inventory: this.inventoryManager.getInventory ? this.inventoryManager.getInventory() : this.inventoryManager.inventory,
       currentTool: this.currentTool,
       timeOfDay: globalTimeManager.getCurrentTimeOfDay(),
+      currentDay: globalTimeManager.getDayNumber(),
     };
-    window.localStorage.setItem('personalGardenSceneState', JSON.stringify(state));
+    saveToLocal('personalGardenSceneState', state);
   }
 
   useToolOnPlot(plot) {
