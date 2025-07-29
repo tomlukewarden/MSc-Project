@@ -256,6 +256,10 @@ class PersonalGarden extends Phaser.Scene {
       this.scene.launch("DayEndScene", { day: globalTimeManager.getDayNumber() });
       this.scene.get("DayEndScene").events.once("dayEnded", () => {
         globalTimeManager.nextDay();
+        // Reset watered state for all plots so watering is allowed again
+        this.plots.forEach(({ plot }) => {
+          plot.watered = false;
+        });
         alert('New day: ' + globalTimeManager.getDayNumber());
         // Update day number display
         if (this.dayText) {

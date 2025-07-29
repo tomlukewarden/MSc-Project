@@ -1,5 +1,6 @@
 import SeedPouchLogic from './seedPouchLogic';
 import itemsData from '../items';
+import globalTimeManager from '../day/timeManager';
 
 
 // Build a map from seed key/name to plantKey using itemsData
@@ -77,31 +78,27 @@ export class Plot {
 
   water() {
     // Accept a day parameter for daily watering, or use globalTimeManager if available
-    let currentDay = null;
-    if (typeof window !== 'undefined' && window.globalTimeManager && window.globalTimeManager.getDayNumber) {
-      currentDay = window.globalTimeManager.getDayNumber();
-    }
-    // If not available, fallback to incrementing
-    if (currentDay === null) {
-      currentDay = (this.lastWateredDay || 0) + 1;
-    }
-    console.log('[Plot.water] currentDay:', currentDay, 'lastWateredDay:', this.lastWateredDay);
+    // Always use the global day number for watering logic
+    let currentDay = globalTimeManager.getDayNumber();
+    alert('[DEBUG] Watering plot!\nCurrent day: ' + currentDay + '\nLast watered day: ' + this.lastWateredDay + '\nWater count: ' + this.waterCount);
+    console.log('[Plot.water] currentDay:', currentDay, 'lastWateredDay:', this.lastWateredDay, 'waterCount:', this.waterCount);
     if (this.state === 'planted') {
-      if (this.lastWateredDay === currentDay) {
+      // Always allow watering, but only increment growth if it's a new day
+      if (this.lastWateredDay === null || currentDay > this.lastWateredDay) {
+        this.watered = true;
+        this.waterCount = (this.waterCount || 0) + 1;
+        this.lastWateredDay = currentDay;
+        if (this.waterCount >= 3) {
+          this.state = 'grown';
+        }
+        console.log('[Plot.water] Watered. New lastWateredDay:', this.lastWateredDay);
+        return { success: true, message: `Watered the plant. (${this.waterCount}/3)` };
+      } else {
         // Already watered today, allow watering but don't increment growth
         console.log('[Plot.water] Already watered today. No growth increment.');
-        // Show a clear message to the user
         alert('You have already watered today! Only one watering per day counts towards growth. Use the tent to advance to the next day.');
         return { success: true, message: 'Watered again, but only one watering per day counts towards growth.' };
       }
-      this.watered = true;
-      this.waterCount = (this.waterCount || 0) + 1;
-      this.lastWateredDay = currentDay;
-      if (this.waterCount >= 3) {
-        this.state = 'grown';
-      }
-      console.log('[Plot.water] Watered. New lastWateredDay:', this.lastWateredDay);
-      return { success: true, message: `Watered the plant. (${this.waterCount}/3)` };
     }
     console.log('[Plot.water] Cannot water now. State:', this.state);
     alert('Cannot water now. Make sure the plot is planted.');
