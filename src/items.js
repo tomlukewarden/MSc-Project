@@ -1,4 +1,77 @@
 const itemsData = [
+  // Plant items for harvesting
+  {
+    id: "foxglovePlant",
+    key: "foxglovePlant",
+    name: "Foxglove Plant",
+    description: "A harvested foxglove plant.",
+    imageKey: "foxglovePlant",
+    type: "plant"
+  },
+  {
+    id: "aloeVeraPlant",
+    key: "aloeVeraPlant",
+    name: "Aloe Vera Plant",
+    description: "A harvested aloe vera plant.",
+    imageKey: "aloeVeraPlant",
+    type: "plant"
+  },
+  {
+    id: "lavenderPlant",
+    key: "lavenderPlant",
+    name: "Lavender Plant",
+    description: "A harvested lavender plant.",
+    imageKey: "lavenderPlant",
+    type: "plant"
+  },
+  {
+    id: "marigoldPlant",
+    key: "marigoldPlant",
+    name: "Marigold Plant",
+    description: "A harvested marigold plant.",
+    imageKey: "marigoldPlant",
+    type: "plant"
+  },
+  {
+    id: "garlicPlant",
+    key: "garlicPlant",
+    name: "Garlic Plant",
+    description: "A harvested garlic plant.",
+    imageKey: "garlicPlant",
+    type: "plant"
+  },
+  {
+    id: "jasminePlant",
+    key: "jasminePlant",
+    name: "Jasmine Plant",
+    description: "A harvested jasmine plant.",
+    imageKey: "jasminePlant",
+    type: "plant"
+  },
+  {
+    id: "periwinklePlant",
+    key: "periwinklePlant",
+    name: "Periwinkle Plant",
+    description: "A harvested periwinkle plant.",
+    imageKey: "periwinklePlant",
+    type: "plant"
+  },
+  {
+    id: "thymePlant",
+    key: "thymePlant",
+    name: "Thyme Plant",
+    description: "A harvested thyme plant.",
+    imageKey: "thymePlant",
+    type: "plant"
+  },
+  {
+    id: "willowPlant",
+    key: "willowPlant",
+    name: "Willow Plant",
+    description: "A harvested willow plant.",
+    imageKey: "willowPlant",
+    type: "plant"
+  },
   {
     id: "teaBag",
     key: "teaBag",

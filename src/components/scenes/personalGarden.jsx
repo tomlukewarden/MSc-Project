@@ -57,7 +57,25 @@ class PersonalGarden extends Phaser.Scene {
       ["tent", "/assets/backgrounds/personal/tent.png"],
       ["fence", "/assets/backgrounds/personal/fence.png"],
       ["seeds", "/assets/plants/seeds.png"],
-      ["preoparedPlot", "/assets/farming/prepared.PNG"]
+      ["preoparedPlot", "/assets/farming/prepared.PNG"],
+      ["foxgloveSeeds", "/assets/shopItems/seeds/foxgloveSeeds.png"],
+      ["marigoldSeeds", "/assets/shopItems/seeds/marigoldSeeds.png"],
+      ["jasmineSeeds", "/assets/shopItems/seeds/jasmineSeeds.png"],
+      ["aloeSeeds", "/assets/shopItems/seeds/aloeSeeds.png"],
+      ["lavenderSeeds", "/assets/shopItems/seeds/lavenderSeeds.png"],
+      ["periwinkleSeeds", "/assets/shopItems/seeds/periwinkleSeeds.png"],
+      ["garlicSeeds", "/assets/shopItems/seeds/garlicSeeds.png"],
+      ["thymeSeeds", "/assets/shopItems/seeds/thymeSeeds.png"],
+      ["willowSeeds", "/assets/shopItems/seeds/willowSeeds.png"],
+      ["foxglovePlant", "/assets/plants/foxglove.png"],
+      ["marigoldPlant", "/assets/plants/marigold.PNG"],
+      ["jasminePlant", "/assets/plants/jasmine.PNG"],
+      ["aloePlant", "/assets/plants/aloe.PNG"],
+      ["lavenderPlant", "/assets/plants/lavender.PNG"],
+      ["periwinklePlant", "/assets/plants/periwinkle.png"],
+      ["garlicPlant", "/assets/plants/garlic.PNG"],
+      ["thymePlant", "/assets/plants/thyme.PNG"],
+      ["willowPlant", "/assets/plants/willow.PNG"],
     ];
     assets.forEach(([key, path]) => this.load.image(key, path));
   }
@@ -77,7 +95,7 @@ class PersonalGarden extends Phaser.Scene {
       backgroundColor: '#222',
       padding: { left: 8, right: 8, top: 4, bottom: 4 }
     }).setOrigin(0, 0).setDepth(99999);
-    alert('Garden loaded! Current day: ' + globalTimeManager.getDayNumber());
+    // ...removed alert...
 
 
     // Tent image (not interactive)
@@ -137,12 +155,7 @@ class PersonalGarden extends Phaser.Scene {
                 this.updatePlotText(plotText, plot);
                 this.updatePlotColor(plotRect, plot);
                 preparedPlotImg.setVisible(true);
-                if (result && result.message) {
-                  alert(result.message);
-                  console.log(result.message);
-                }
-              } else {
-                alert('Use the hoe to prepare the ground first.');
+                // ...removed alert...
               }
               break;
             case 'prepared':
@@ -152,10 +165,7 @@ class PersonalGarden extends Phaser.Scene {
                   this.updatePlotText(plotText, plot);
                   this.updatePlotColor(plotRect, plot);
                   preparedPlotImg.setVisible(true);
-                  if (result && result.message) {
-                    alert(result.message);
-                    console.log(result.message);
-                  }
+                  // ...removed alert...
                 }
               });
               break;
@@ -165,16 +175,7 @@ class PersonalGarden extends Phaser.Scene {
                 this.updatePlotText(plotText, plot);
                 this.updatePlotColor(plotRect, plot);
                 preparedPlotImg.setVisible(false);
-                if (result && result.message) {
-                  if (result.message === 'Already watered today.') {
-                    alert('Already watered! Water again tomorrow.');
-                  } else {
-                    alert(result.message);
-                  }
-                  console.log(result.message);
-                }
-              } else {
-                alert('Use the watering can to water the plant.');
+                // ...removed alert...
               }
               break;
             case 'grown':
@@ -184,25 +185,27 @@ class PersonalGarden extends Phaser.Scene {
                 this.updatePlotColor(plotRect, plot);
                 preparedPlotImg.setVisible(false);
                 if (result.success && result.item) {
-                  const plantItem = itemsData.find(i => i.key === result.item);
+                  let plantKey = result.item;
+                  const plantEntry = plantData.find(p => p.seedKey === result.item);
+                  alert('[Harvest] plantEntry: ' + JSON.stringify(plantEntry));
+                  if (plantEntry && plantEntry.key) {
+                    plantKey = plantEntry.key;
+                  }
+                  alert('[Harvest] plantKey: ' + plantKey);
+                  const plantItem = itemsData.find(i => i.key === plantKey);
+                  alert('[Harvest] plantItem: ' + JSON.stringify(plantItem));
+                  alert('[Harvest] receivedItem args: ' + JSON.stringify(plantItem) + ', ' + this.inventoryManager);
                   if (plantItem) {
-                    receivedItem(plantItem, this.inventoryManager);
+                    receivedItem(this, plantItem.key, plantItem.name);
                   }
                 }
-                if (result && result.message) {
-                  alert(result.message);
-                  console.log(result.message);
-                }
-              } else {
-                alert('Use the shovel to harvest the plant.');
               }
               break;
             case 'harvested':
               preparedPlotImg.setVisible(false);
-              alert('This plot has already been harvested. Reset or wait for next cycle.');
               break;
             default:
-              alert('Unknown plot state.');
+              break;
           }
         });
       }
@@ -380,6 +383,8 @@ class PersonalGarden extends Phaser.Scene {
   }
 
   useToolOnPlot(plot) {
+    alert('useToolOnPlot called: state=' + plot.state + ', tool=' + this.currentTool);
+          alert('pointerdown event: state=' + plot.state + ', tool=' + this.currentTool);
     const inventory = this.inventoryManager.getInventory ? this.inventoryManager.getInventory() : this.inventoryManager.inventory;
     if (this.currentTool === 'hoe' && inventory.tools.includes('hoe')) {
       return plot.prepare();
@@ -391,19 +396,44 @@ class PersonalGarden extends Phaser.Scene {
       return plot.water();
     }
     if (this.currentTool === 'shovel' && inventory.tools.includes('shovel')) {
-      const result = plot.harvest();
-      if (result.success && result.item) {
-        // Use plantData and compare seedKey for robust lookup
-        let plantItem = plantData.find(i => i.seedKey === result.item);
-        // Fallback to itemsData if not found in plantData
-        if (!plantItem) {
-          plantItem = itemsData.find(i => i.key === result.item);
+      // If plot is grown, harvest as normal
+      if (plot.state === 'grown') {
+        const result = plot.harvest();
+        if (result.success && result.item) {
+          let plantKey = result.item;
+          const plantEntry = plantData.find(p => p.seedKey === result.item);
+          if (plantEntry && plantEntry.key) {
+            plantKey = plantEntry.key;
+          }
+          const plantItem = itemsData.find(i => i.key === plantKey);
+          alert('[Harvest] plantKey: ' + plantKey);
+          alert('[Harvest] plantItem: ' + JSON.stringify(plantItem));
+          alert('[Harvest] receivedItem args: ' + JSON.stringify(plantItem) + ', ' + this.inventoryManager);
+          if (plantItem) {
+            receivedItem(plantItem, this.inventoryManager);
+          }
         }
-        if (plantItem) {
+        return result;
+      }
+      // If plot is already harvested, allow collecting again if not already in inventory
+      if (plot.state === 'harvested' && plot.seedType) {
+        let plantKey = plot.seedType;
+        const plantEntry = plantData.find(p => p.seedKey === plot.seedType);
+        if (plantEntry && plantEntry.key) {
+          plantKey = plantEntry.key;
+        }
+        const plantItem = itemsData.find(i => i.key === plantKey);
+        alert('[Harvested] plantKey: ' + plantKey);
+        alert('[Harvested] plantItem: ' + JSON.stringify(plantItem));
+        alert('[Harvested] receivedItem args: ' + JSON.stringify(plantItem) + ', ' + this.inventoryManager);
+        const invPlants = inventory.plants || [];
+        const alreadyCollected = invPlants.includes(plantKey);
+        if (plantItem && !alreadyCollected) {
           receivedItem(plantItem, this.inventoryManager);
+          return { success: true, item: plantKey };
         }
       }
-      return result;
+      return { success: false };
     }
     return { success: false, message: 'Unknown tool or missing from inventory.' };
   }

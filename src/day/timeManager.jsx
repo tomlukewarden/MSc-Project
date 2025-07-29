@@ -47,7 +47,6 @@ class GlobalTimeManager {
 
   nextDay() {
     this.currentDay += 1;
-    alert('[DEBUG] Day advanced! New dayNum: ' + this.currentDay);
     this.startTimestamp = Date.now();
     
     this.lastStage = null;
@@ -57,7 +56,6 @@ class GlobalTimeManager {
   }
 
   getDayNumber() {
-    alert('[DEBUG] getDayNumber called. Current dayNum: ' + this.currentDay);
     return this.currentDay;
   }
 
