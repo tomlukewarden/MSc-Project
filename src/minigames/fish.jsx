@@ -217,6 +217,19 @@ class FishGameScene extends Phaser.Scene {
         this.spawnFishTimer.remove(false);
         let msg = win ? "You win! Final score: " + this.score : "Game Over! You caught a bad fish.";
         this.add.text(400, 300, msg, { fontSize: "32px", color: "#ffe066", backgroundColor: "#222" }).setOrigin(0.5);
+        if (!win) {
+            // Add restart button if lost
+            const restartBtn = this.add.text(400, 380, "Restart", {
+                fontSize: "28px",
+                color: "#fff",
+                backgroundColor: "#0077b6",
+                padding: { left: 16, right: 16, top: 8, bottom: 8 },
+                borderRadius: 8
+            }).setOrigin(0.5).setInteractive();
+            restartBtn.on('pointerdown', () => {
+                this.scene.restart();
+            });
+        }
     }
 }
 
