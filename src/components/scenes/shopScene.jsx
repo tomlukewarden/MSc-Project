@@ -43,30 +43,7 @@ class ShopScene extends Phaser.Scene {
   }
 
   create() {
-    // --- Tools Data ---
-    const toolItems = [
-      {
-        key: 'hoe',
-        name: 'Hoe',
-        price: 60,
-        imageKey: 'hoe',
-        type: 'tool'
-      },
-      {
-        key: 'wateringCan',
-        name: 'Watering Can',
-        price: 50,
-        imageKey: 'wateringCan',
-        type: 'tool'
-      },
-      {
-        key: 'harvestGlove',
-        name: 'Harvest Glove',
-        price: 40,
-        imageKey: 'harvestGlove',
-        type: 'tool'
-      }
-    ];
+
     this.scene.stop("HUDScene");
     this.sound.play('shopTheme', { loop: true, volume: 0.1 });
     const { width, height } = this.scale;
@@ -216,9 +193,10 @@ class ShopScene extends Phaser.Scene {
             }
             const totalPrice = quantity * parseInt(item.price);
             if (this.coinManager.subtract(totalPrice)) {
-              // Add seeds to seed pouch, tools to inventory
+              // Seeds ONLY go to seed pouch, not inventory
               if (item.type === 'seed') {
                 SeedPouchLogic.addSeed(item, quantity);
+                // Do NOT call inventoryManager.addItem for seeds
                 receivedItem(this, item.key, `${item.name} x${quantity}`);
                 quantityPrompt.destroy();
                 this.destroyDialogueUI();
