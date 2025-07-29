@@ -54,7 +54,8 @@ class PersonalGarden extends Phaser.Scene {
       ["gardenBackground", "/assets/backgrounds/personal/personalBackground.png"],
       ["tent", "/assets/backgrounds/personal/tent.png"],
       ["fence", "/assets/backgrounds/personal/fence.png"],
-      ["seeds", "/assets/plants/seeds.png"]
+      ["seeds", "/assets/plants/seeds.png"],
+      ["preoparedPlot", "/assets/farming/prepared.PNG"]
     ];
     assets.forEach(([key, path]) => this.load.image(key, path));
   }
@@ -90,8 +91,15 @@ class PersonalGarden extends Phaser.Scene {
           align: 'center'
         }).setOrigin(0.5).setDepth(101);
 
+        // Prepared plot image (hidden by default)
+        const preparedPlotImg = this.add.image(plotX, plotY, 'preoparedPlot')
+          .setOrigin(0.5)
+          .setDepth(102)
+          .setVisible(false)
+          .setDisplaySize(plotSize, plotSize);
+
         // Store plot, rect, and text for later reference
-        this.plots.push({ plot, plotRect, plotText });
+        this.plots.push({ plot, plotRect, plotText, preparedPlotImg });
 
         // Initial update
         this.updatePlotText(plotText, plot);
@@ -106,6 +114,7 @@ class PersonalGarden extends Phaser.Scene {
                 result = plot.prepare();
                 this.updatePlotText(plotText, plot);
                 this.updatePlotColor(plotRect, plot);
+                preparedPlotImg.setVisible(true);
                 if (result && result.message) {
                   alert(result.message);
                   console.log(result.message);
@@ -120,6 +129,7 @@ class PersonalGarden extends Phaser.Scene {
                   result = plot.plant(seedItem);
                   this.updatePlotText(plotText, plot);
                   this.updatePlotColor(plotRect, plot);
+                  preparedPlotImg.setVisible(true);
                   if (result && result.message) {
                     alert(result.message);
                     console.log(result.message);
@@ -132,6 +142,7 @@ class PersonalGarden extends Phaser.Scene {
                 result = plot.water();
                 this.updatePlotText(plotText, plot);
                 this.updatePlotColor(plotRect, plot);
+                preparedPlotImg.setVisible(false);
                 if (result && result.message) {
                   alert(result.message);
                   console.log(result.message);
@@ -145,6 +156,7 @@ class PersonalGarden extends Phaser.Scene {
                 result = plot.harvest();
                 this.updatePlotText(plotText, plot);
                 this.updatePlotColor(plotRect, plot);
+                preparedPlotImg.setVisible(false);
                 if (result.success && result.item) {
                   const plantItem = itemsData.find(i => i.key === result.item);
                   if (plantItem) {
@@ -160,6 +172,7 @@ class PersonalGarden extends Phaser.Scene {
               }
               break;
             case 'harvested':
+              preparedPlotImg.setVisible(false);
               alert('This plot has already been harvested. Reset or wait for next cycle.');
               break;
             default:
