@@ -1,11 +1,9 @@
 import plantData from "../plantData";
 
-export class InventoryManager {
+class InventoryManager {
   constructor(initialItems = []) {
     this.items = [];
-    this.toolbarSlots = Array(6).fill(null);
     this.listeners = [];
-    this.toolbarListeners = [];
     this.plantNames = new Set([
       'marigold', 'thyme', 'garlic', 'foxglove',
       'aloe', 'jasmine', 'lavender', 'periwinkle', 'willow'
@@ -17,10 +15,6 @@ export class InventoryManager {
   // Utility method to notify listeners
   _notify() {
     this.listeners.forEach(cb => cb([...this.items]));
-  }
-
-  _notifyToolbar() {
-    this.toolbarListeners.forEach(cb => cb([...this.toolbarSlots]));
   }
 
   _isCoin(item) {
@@ -64,7 +58,6 @@ export class InventoryManager {
       if (existing) {
         existing.count = (existing.count || 1) + (item.count || 1);
         this._notify();
-        this.addToToolbar(existing);
         return;
       } else {
         item.count = item.count || 1;
@@ -72,17 +65,6 @@ export class InventoryManager {
     }
     this.items.push(item);
     this._notify();
-    this.addToToolbar(item);
-  }
-
-  addToToolbar(item) {
-    const index = this.toolbarSlots.indexOf(null);
-    if (index !== -1) {
-      this.toolbarSlots[index] = item;
-      this._notifyToolbar();
-      return true;
-    }
-    return false;
   }
 
   removeItem(identifier) {
@@ -93,20 +75,10 @@ export class InventoryManager {
     if (item.count && item.count > 1) {
       item.count--;
       this._notify();
-      this.addToToolbar(item);
       return true;
     } else {
       const [removed] = this.items.splice(idx, 1);
       this._notify();
-
-      const slotIdx = this.toolbarSlots.findIndex(slot =>
-        slot?.name === identifier || slot?.key === identifier
-      );
-
-      if (slotIdx !== -1) {
-        this.toolbarSlots[slotIdx] = null;
-        this._notifyToolbar();
-      }
       return true;
     }
   }
@@ -127,28 +99,19 @@ export class InventoryManager {
     return this.items.map(item => ({ ...item }));
   }
 
-  getToolbarSlots() {
-    return [...this.toolbarSlots];
-  }
-
   clear() {
     this.items = [];
-    this.toolbarSlots.fill(null);
     this._notify();
-    this._notifyToolbar();
   }
 
   onChange(callback) {
     this.listeners.push(callback);
-  }
-
-  onToolbarChange(callback) {
-    this.toolbarListeners.push(callback);
   }
 }
 
 if (!window.inventoryManager) {
   window.inventoryManager = new InventoryManager();
 }
-export const inventoryManager = window.inventoryManager;
+const inventoryManager = window.inventoryManager;
 export default InventoryManager;
+export { inventoryManager };

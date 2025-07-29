@@ -4,6 +4,7 @@ import { CoinManager } from '../coinManager';
 import itemsData from '../../items';
 import { showOption } from '../../dialogue/dialogueUIHelpers';
 import { receivedItem } from '../recievedItem';
+import SeedPouchLogic from '../seedPouchLogic';
 // Ensure global inventoryManager instance
 import { inventoryManager as globalInventoryManager } from "../inventoryManager";
 if (typeof window !== "undefined") {
@@ -24,7 +25,15 @@ class ShopScene extends Phaser.Scene {
 
   preload() {
     this.load.image('shopBackground', '/assets/backgrounds/shop/shop.jpg');
-    this.load.image('seeds', '/assets/plants/seeds.png');
+    this.load.image("foxgloveSeeds", "/assets/shopItems/seeds/foxgloveSeeds.png");
+    this.load.image("marigoldSeeds", "/assets/shopItems/seeds/marigoldSeeds.png");
+    this.load.image("jasmineSeeds", "/assets/shopItems/seeds/jasmineSeeds.png");
+    this.load.image("aloeSeeds", "/assets/shopItems/seeds/aloeSeeds.png");
+    this.load.image("lavenderSeeds", "/assets/shopItems/seeds/lavenderSeeds.png");
+    this.load.image("periwinkleSeeds", "/assets/shopItems/seeds/periwinkleSeeds.png");
+    this.load.image("garlicSeeds", "/assets/shopItems/seeds/garlicSeeds.png");
+    this.load.image("thymeSeeds", "/assets/shopItems/seeds/thymeSeeds.png");
+    this.load.image("willowSeeds", "/assets/shopItems/seeds/willowSeeds.png");
     this.load.audio('click', '/assets/sound-effects/click.mp3');
     this.load.audio("shopTheme", "/assets/music/shop-theme.mp3");
     this.load.image('dialogueBoxBg', '/assets/ui-items/dialogue.png');
@@ -34,30 +43,7 @@ class ShopScene extends Phaser.Scene {
   }
 
   create() {
-    // --- Tools Data ---
-    const toolItems = [
-      {
-        key: 'hoe',
-        name: 'Hoe',
-        price: 60,
-        imageKey: 'hoe',
-        type: 'tool'
-      },
-      {
-        key: 'wateringCan',
-        name: 'Watering Can',
-        price: 50,
-        imageKey: 'wateringCan',
-        type: 'tool'
-      },
-      {
-        key: 'harvestGlove',
-        name: 'Harvest Glove',
-        price: 40,
-        imageKey: 'harvestGlove',
-        type: 'tool'
-      }
-    ];
+
     this.scene.stop("HUDScene");
     this.sound.play('shopTheme', { loop: true, volume: 0.1 });
     const { width, height } = this.scale;
@@ -207,23 +193,41 @@ class ShopScene extends Phaser.Scene {
             }
             const totalPrice = quantity * parseInt(item.price);
             if (this.coinManager.subtract(totalPrice)) {
-              if (!window.chestItems) window.chestItems = [];
-              for (let i = 0; i < quantity; i++) {
-                window.chestItems.push({ ...item, color: 0xd2b48c });
-              }
-              // Show receivedItem popup for seeds and tools
+              // Seeds ONLY go to seed pouch, not inventory
               if (item.type === 'seed') {
-                receivedItem(this, "seeds", `${item.name} x${quantity}`);
+                SeedPouchLogic.addSeed(item, quantity);
+                // Do NOT call inventoryManager.addItem for seeds
+                receivedItem(this, item.key, `${item.name} x${quantity}`);
+                quantityPrompt.destroy();
+                this.destroyDialogueUI();
+                showOption(this, `You bought ${item.name} x${quantity}!\nCheck your seed pouch.`, {
+                  options: [{ label: "OK", onSelect: () => this.destroyDialogueUI() }]
+                });
               } else if (item.type === 'tool') {
+                for (let i = 0; i < quantity; i++) {
+                  if (typeof this.inventoryManager.addItem === 'function') {
+                    this.inventoryManager.addItem({ ...item, color: 0xd2b48c });
+                  }
+                }
                 receivedItem(this, item.key, `${item.name} x${quantity}`);
+                quantityPrompt.destroy();
+                this.destroyDialogueUI();
+                showOption(this, `You bought ${item.name} x${quantity}!\nCheck your inventory.`, {
+                  options: [{ label: "OK", onSelect: () => this.destroyDialogueUI() }]
+                });
               } else {
+                for (let i = 0; i < quantity; i++) {
+                  if (typeof this.inventoryManager.addItem === 'function') {
+                    this.inventoryManager.addItem({ ...item, color: 0xd2b48c });
+                  }
+                }
                 receivedItem(this, item.key, `${item.name} x${quantity}`);
+                quantityPrompt.destroy();
+                this.destroyDialogueUI();
+                showOption(this, `You bought ${item.name} x${quantity}!\nCheck your inventory.`, {
+                  options: [{ label: "OK", onSelect: () => this.destroyDialogueUI() }]
+                });
               }
-              quantityPrompt.destroy();
-              this.destroyDialogueUI();
-              showOption(this, `You bought ${item.name} x${quantity}!\nCheck your chest in the garden.`, {
-                options: [{ label: "OK", onSelect: () => this.destroyDialogueUI() }]
-              });
             } else {
               errorMsg.textContent = 'Not enough coins!';
             }

@@ -1,4 +1,77 @@
 const itemsData = [
+  // Plant items for harvesting
+  {
+    id: "foxglovePlant",
+    key: "foxglovePlant",
+    name: "Foxglove Plant",
+    description: "A harvested foxglove plant.",
+    imageKey: "foxglovePlant",
+    type: "plant"
+  },
+  {
+    id: "aloeVeraPlant",
+    key: "aloeVeraPlant",
+    name: "Aloe Vera Plant",
+    description: "A harvested aloe vera plant.",
+    imageKey: "aloeVeraPlant",
+    type: "plant"
+  },
+  {
+    id: "lavenderPlant",
+    key: "lavenderPlant",
+    name: "Lavender Plant",
+    description: "A harvested lavender plant.",
+    imageKey: "lavenderPlant",
+    type: "plant"
+  },
+  {
+    id: "marigoldPlant",
+    key: "marigoldPlant",
+    name: "Marigold Plant",
+    description: "A harvested marigold plant.",
+    imageKey: "marigoldPlant",
+    type: "plant"
+  },
+  {
+    id: "garlicPlant",
+    key: "garlicPlant",
+    name: "Garlic Plant",
+    description: "A harvested garlic plant.",
+    imageKey: "garlicPlant",
+    type: "plant"
+  },
+  {
+    id: "jasminePlant",
+    key: "jasminePlant",
+    name: "Jasmine Plant",
+    description: "A harvested jasmine plant.",
+    imageKey: "jasminePlant",
+    type: "plant"
+  },
+  {
+    id: "periwinklePlant",
+    key: "periwinklePlant",
+    name: "Periwinkle Plant",
+    description: "A harvested periwinkle plant.",
+    imageKey: "periwinklePlant",
+    type: "plant"
+  },
+  {
+    id: "thymePlant",
+    key: "thymePlant",
+    name: "Thyme Plant",
+    description: "A harvested thyme plant.",
+    imageKey: "thymePlant",
+    type: "plant"
+  },
+  {
+    id: "willowPlant",
+    key: "willowPlant",
+    name: "Willow Plant",
+    description: "A harvested willow plant.",
+    imageKey: "willowPlant",
+    type: "plant"
+  },
   {
     id: "teaBag",
     key: "teaBag",
@@ -41,9 +114,9 @@ const itemsData = [
     name: "Foxglove Seeds",
     price: 20,
     description: "Seeds for growing foxglove plants.",
-    imageKey: "seeds",
+    imageKey: "foxgloveSeeds",
     type: "seed",
-    plantKey: "foxglove"
+    plantKey: "foxglovePlant"
   },
   {
     id: "jasmineSeeds",
@@ -51,9 +124,9 @@ const itemsData = [
     name: "Jasmine Seeds",
     price: 20,
     description: "Seeds for growing jasmine plants.",
-    imageKey: "seeds",
+    imageKey: "jasmineSeeds",
     type: "seed",
-    plantKey: "jasmine"
+    plantKey: "jasminePlant"
   },
   {
     id: "lavenderSeeds",
@@ -61,9 +134,9 @@ const itemsData = [
     name: "Lavender Seeds",
     price: 20,
     description: "Seeds for growing lavender plants.",
-    imageKey: "seeds",
+    imageKey: "lavenderSeeds",
     type: "seed",
-    plantKey: "lavender"
+    plantKey: "lavenderPlant"
   },
   {
     id: "marigoldSeeds",
@@ -71,9 +144,9 @@ const itemsData = [
     name: "Marigold Seeds",
     price: 20,
     description: "Seeds for growing marigold plants.",
-    imageKey: "seeds",
+    imageKey: "marigoldSeeds",
     type: "seed",
-    plantKey: "marigold"
+    plantKey: "marigoldPlant"
   },
   {
     id: "aloeVeraSeeds",
@@ -81,9 +154,9 @@ const itemsData = [
     name: "Aloe Vera Seeds",
     price: 20,
     description: "Seeds for growing aloe vera plants.",
-    imageKey: "seeds",
+    imageKey: "aloeSeeds",
     type: "seed",
-    plantKey: "aloeVera"
+    plantKey: "aloeVeraPlant"
   },
   {
     id: "garlicSeeds",
@@ -91,9 +164,9 @@ const itemsData = [
     name: "Garlic Seeds",
     price: 20,
     description: "Seeds for growing garlic plants.",
-    imageKey: "seeds",
+    imageKey: "garlicSeeds",
     type: "seed",
-    plantKey: "garlic"
+    plantKey: "garlicPlant"
   },
   {
     id: "periwinkleSeeds",
@@ -101,9 +174,9 @@ const itemsData = [
     name: "Periwinkle Seeds",
     price: 20,
     description: "Seeds for growing periwinkle plants.",
-    imageKey: "seeds",
+    imageKey: "periwinkleSeeds",
     type: "seed",
-    plantKey: "periwinkle"
+    plantKey: "periwinklePlant"
   },
   {
     id: "thymeSeeds",
@@ -111,9 +184,9 @@ const itemsData = [
     name: "Thyme Seeds",
     price: 20,
     description: "Seeds for growing thyme plants.",
-    imageKey: "seeds",
+    imageKey: "thymeSeeds",
     type: "seed",
-    plantKey: "thyme"
+    plantKey: "thymePlant"
   },
   {
     id: "willowSeeds",
@@ -121,9 +194,9 @@ const itemsData = [
     name: "Willow Seeds",
     price: 20,
     description: "Seeds for growing willow plants.",
-    imageKey: "seeds",
+    imageKey: "willowSeeds",
     type: "seed",
-    plantKey: "willow"
+    plantKey: "willowPlant"
   },
   {
     id:"hoe",

@@ -1,6 +1,7 @@
 import { Plot } from "../farmingLogic";
 import { createMainChar } from "../../characters/mainChar";
 import { inventoryManager } from "../inventoryManager";
+import { saveToLocal, loadFromLocal } from "../../utils/localStorage";
 // Ensure global inventoryManager instance
 if (typeof window !== "undefined") {
   if (!window.inventoryManager) {
@@ -8,8 +9,11 @@ if (typeof window !== "undefined") {
   }
 }
 import { showDialogue, showOption } from "../../dialogue/dialogueUIHelpers";
-import ChestLogic from "../chestLogic";
 import globalTimeManager from "../../day/timeManager";
+import { receivedItem } from "../recievedItem";
+import itemsData from "../../items";
+import SeedPouchLogic from "../seedPouchLogic"; // Importing SeedPouchLogic for seed management
+import plantData from "../../plantData";
 
 class PersonalGarden extends Phaser.Scene {
   constructor() {
@@ -19,84 +23,195 @@ class PersonalGarden extends Phaser.Scene {
     this.cols = 5;
     this.plots = [];
     this.currentTool = "hoe";
-    this.inventoryManager = window.inventoryManager;
-    if (!window.chestItems) window.chestItems = [];
-    this.chestLogic = new ChestLogic();
-    this.chestLogic.scene = this;
+    // Ensure global inventoryManager is always set and valid
+    if (typeof window !== "undefined") {
+      if (!window.inventoryManager) {
+        window.inventoryManager = inventoryManager;
+      }
+      this.inventoryManager = window.inventoryManager;
+    } else {
+      this.inventoryManager = inventoryManager;
+    }
   }
 
   preload() {
-        this.load.image("defaultFront", "/assets/char/default/front-default.png");
-        this.load.image("defaultBack", "/assets/char/default/back-default.png");
-        this.load.image("defaultLeft", "/assets/char/default/left-default.png");
-        this.load.image("defaultRight", "/assets/char/default/right-default.png");
-        this.load.image("defaultFrontWalk1", "/assets/char/default/front-step-1.PNG");
-        this.load.image("defaultFrontWalk2", "/assets/char/default/front-step-2.PNG");
-        this.load.image("defaultBackWalk1", "/assets/char/default/back-step-1.PNG");
-        this.load.image("defaultBackWalk2", "/assets/char/default/back-step-2.PNG");
-        this.load.image("defaultLeftWalk1", "/assets/char/default/left-step-1.PNG");
-        this.load.image("defaultLeftWalk2", "/assets/char/default/left-step-2.PNG");
-        this.load.image("defaultRightWalk1", "/assets/char/default/right-step-1.PNG");
-        this.load.image("defaultRightWalk2", "/assets/char/default/right-step-2.PNG");
-    this.load.image("hoe", "/assets/tools/hoe.png");
-    this.load.image("wateringCan", "/assets/tools/wateringCan.png");
-    this.load.image("sign", "/assets/misc/sign.png");
-    this.load.image("gardenBackground", "/assets/backgrounds/personal/personalBackground.png");
-    this.load.image("tent", "/assets/backgrounds/personal/tent.png");
-    this.load.image("fence", "/assets/backgrounds/personal/fence.png");
-    this.load.image("chest", "/assets/misc/chest-closed.png");
-    this.load.image("seeds", "/assets/plants/seeds.png");
-
+    // Load all required assets for the garden scene
+    const assets = [
+      ["defaultFront", "/assets/char/default/front-default.png"],
+      ["defaultBack", "/assets/char/default/back-default.png"],
+      ["defaultLeft", "/assets/char/default/left-default.png"],
+      ["defaultRight", "/assets/char/default/right-default.png"],
+      ["defaultFrontWalk1", "/assets/char/default/front-step-1.PNG"],
+      ["defaultFrontWalk2", "/assets/char/default/front-step-2.PNG"],
+      ["defaultBackWalk1", "/assets/char/default/back-step-1.PNG"],
+      ["defaultBackWalk2", "/assets/char/default/back-step-2.PNG"],
+      ["defaultLeftWalk1", "/assets/char/default/left-step-1.PNG"],
+      ["defaultLeftWalk2", "/assets/char/default/left-step-2.PNG"],
+      ["defaultRightWalk1", "/assets/char/default/right-step-1.PNG"],
+      ["defaultRightWalk2", "/assets/char/default/right-step-2.PNG"],
+      ["hoe", "/assets/tools/hoe.png"],
+      ["wateringCan", "/assets/tools/wateringCan.png"],
+      ["shovel", "/assets/tools/shovel.png"],
+      ["sign", "/assets/misc/sign.png"],
+      ["gardenBackground", "/assets/backgrounds/personal/personalBackground.png"],
+      ["tent", "/assets/backgrounds/personal/tent.png"],
+      ["fence", "/assets/backgrounds/personal/fence.png"],
+      ["seeds", "/assets/plants/seeds.png"],
+      ["preoparedPlot", "/assets/farming/prepared.PNG"],
+      ["foxgloveSeeds", "/assets/shopItems/seeds/foxgloveSeeds.png"],
+      ["marigoldSeeds", "/assets/shopItems/seeds/marigoldSeeds.png"],
+      ["jasmineSeeds", "/assets/shopItems/seeds/jasmineSeeds.png"],
+      ["aloeSeeds", "/assets/shopItems/seeds/aloeSeeds.png"],
+      ["lavenderSeeds", "/assets/shopItems/seeds/lavenderSeeds.png"],
+      ["periwinkleSeeds", "/assets/shopItems/seeds/periwinkleSeeds.png"],
+      ["garlicSeeds", "/assets/shopItems/seeds/garlicSeeds.png"],
+      ["thymeSeeds", "/assets/shopItems/seeds/thymeSeeds.png"],
+      ["willowSeeds", "/assets/shopItems/seeds/willowSeeds.png"],
+      ["foxglovePlant", "/assets/plants/foxglove.png"],
+      ["marigoldPlant", "/assets/plants/marigold.PNG"],
+      ["jasminePlant", "/assets/plants/jasmine.PNG"],
+      ["aloePlant", "/assets/plants/aloe.PNG"],
+      ["lavenderPlant", "/assets/plants/lavender.PNG"],
+      ["periwinklePlant", "/assets/plants/periwinkle.png"],
+      ["garlicPlant", "/assets/plants/garlic.PNG"],
+      ["thymePlant", "/assets/plants/thyme.PNG"],
+      ["willowPlant", "/assets/plants/willow.PNG"],
+    ];
+    assets.forEach(([key, path]) => this.load.image(key, path));
   }
 
   create() {
-    // Minimal plot system: one plot for testing seed planting from inventory
-    const { width, height } = this.sys.game.config;
-    this.plot = new Plot();
-    const plotX = width / 2;
-    const plotY = height / 2 + 100;
-    // Draw plot rectangle
-    this.plotRect = this.add.rectangle(plotX, plotY, 60, 60, 0x8bc34a, 0.85)
-      .setStrokeStyle(2, 0x4caf50)
-      .setOrigin(0.5)
-      .setInteractive({ useHandCursor: true })
-      .setDepth(100);
-    this.plotText = this.add.text(plotX, plotY, '', {
-      fontSize: '14px',
-      color: '#fff',
+    // Ensure globalTimeManager is initialized and started
+    globalTimeManager.init(this);
+    if (!globalTimeManager.startTimestamp) {
+      globalTimeManager.start();
+    }
+
+    // Show current day number for debugging
+    this.dayText = this.add.text(40, 100, `Day: ${globalTimeManager.getDayNumber()}`, {
+      fontSize: '20px',
+      color: '#ffe066',
       fontFamily: 'Georgia',
-      align: 'center'
-    }).setOrigin(0.5).setDepth(101);
+      backgroundColor: '#222',
+      padding: { left: 8, right: 8, top: 4, bottom: 4 }
+    }).setOrigin(0, 0).setDepth(99999);
+    // ...removed alert...
 
-    // Update plot display
-    this.updatePlotText(this.plotText, this.plot);
-    this.updatePlotColor(this.plotRect, this.plot);
 
-    // Plot interaction: use current tool
-    this.plotRect.on('pointerdown', () => {
-      let result;
-      if (this.currentTool === 'hoe') {
-        result = this.plot.prepare();
-      } else if (this.currentTool === 'seeds') {
-        // Use selected seed type (default: 'seeds')
-        result = this.plot.plant('seeds');
-      } else if (this.currentTool === 'wateringCan') {
-        result = this.plot.water();
-      } else if (this.currentTool === 'harvestGlove') {
-        result = this.plot.harvest();
-        if (result.success && result.item) {
-          const inventory = this.inventoryManager.getInventory ? this.inventoryManager.getInventory() : this.inventoryManager.inventory;
-          if (Array.isArray(inventory.items)) inventory.items.push(result.item);
-        }
-      } else {
-        result = { success: false, message: 'Unknown tool.' };
+    // Tent image (not interactive)
+    const tent = this.add.image(700, 100, 'tent');
+    // Only the triangle above the tent advances the day
+    // --- UI and gameplay setup ---
+    const { width, height } = this.sys.game.config;
+    // Create a grid of plots
+    this.rows = 3;
+    this.cols = 5;
+    this.plots = [];
+    const plotSpacing = 80;
+    const plotSize = 60;
+    const gridWidth = this.cols * plotSpacing;
+    const gridHeight = this.rows * plotSpacing;
+    const startX = width / 2 - gridWidth / 2 + plotSpacing / 2;
+    const startY = height / 2 - gridHeight / 2 + 100;
+
+    for (let row = 0; row < this.rows; row++) {
+      for (let col = 0; col < this.cols; col++) {
+        const plot = new Plot();
+        const plotX = startX + col * plotSpacing;
+        const plotY = startY + row * plotSpacing;
+        const plotRect = this.add.rectangle(plotX, plotY, plotSize, plotSize, 0x8bc34a, 0.85)
+          .setStrokeStyle(2, 0x4caf50)
+          .setOrigin(0.5)
+          .setInteractive({ useHandCursor: true })
+          .setDepth(100);
+        const plotText = this.add.text(plotX, plotY, '', {
+          fontSize: '14px',
+          color: '#fff',
+          fontFamily: 'Georgia',
+          align: 'center'
+        }).setOrigin(0.5).setDepth(101);
+
+        // Prepared plot image (hidden by default)
+        const preparedPlotImg = this.add.image(plotX, plotY, 'preoparedPlot')
+          .setOrigin(0.5)
+          .setDepth(102)
+          .setVisible(false)
+          .setDisplaySize(plotSize, plotSize);
+
+        // Store plot, rect, and text for later reference
+        this.plots.push({ plot, plotRect, plotText, preparedPlotImg });
+
+        // Initial update
+        this.updatePlotText(plotText, plot);
+        this.updatePlotColor(plotRect, plot);
+
+        // Plot interaction: clean logic for hoe, seed pouch, water, harvest
+        plotRect.on('pointerdown', () => {
+          let result;
+          switch (plot.state) {
+            case 'empty':
+              if (this.currentTool === 'hoe') {
+                result = plot.prepare();
+                this.updatePlotText(plotText, plot);
+                this.updatePlotColor(plotRect, plot);
+                preparedPlotImg.setVisible(true);
+                // ...removed alert...
+              }
+              break;
+            case 'prepared':
+              this.scene.launch('OpenSeedPouch', {
+                onSelect: (seedItem) => {
+                  result = plot.plant(seedItem);
+                  this.updatePlotText(plotText, plot);
+                  this.updatePlotColor(plotRect, plot);
+                  preparedPlotImg.setVisible(true);
+                  // ...removed alert...
+                }
+              });
+              break;
+            case 'planted':
+              if (this.currentTool === 'wateringCan') {
+                result = plot.water();
+                this.updatePlotText(plotText, plot);
+                this.updatePlotColor(plotRect, plot);
+                preparedPlotImg.setVisible(false);
+                // ...removed alert...
+              }
+              break;
+            case 'grown':
+              if (this.currentTool === 'shovel') {
+                result = plot.harvest();
+                this.updatePlotText(plotText, plot);
+                this.updatePlotColor(plotRect, plot);
+                preparedPlotImg.setVisible(false);
+                if (result.success && result.item) {
+                  let plantKey = result.item;
+                  const plantEntry = plantData.find(p => p.seedKey === result.item);
+                  alert('[Harvest] plantEntry: ' + JSON.stringify(plantEntry));
+                  if (plantEntry && plantEntry.key) {
+                    plantKey = plantEntry.key;
+                  }
+                  alert('[Harvest] plantKey: ' + plantKey);
+                  const plantItem = itemsData.find(i => i.key === plantKey);
+                  alert('[Harvest] plantItem: ' + JSON.stringify(plantItem));
+                  alert('[Harvest] receivedItem args: ' + JSON.stringify(plantItem) + ', ' + this.inventoryManager);
+                  if (plantItem) {
+                    receivedItem(this, plantItem.key, plantItem.name);
+                  }
+                }
+              }
+              break;
+            case 'harvested':
+              preparedPlotImg.setVisible(false);
+              break;
+            default:
+              break;
+          }
+        });
       }
-      if (result && result.message) console.log(result.message);
-      this.updatePlotText(this.plotText, this.plot);
-      this.updatePlotColor(this.plotRect, this.plot);
-    });
+    }
     // Ensure player always has basic tools in inventory
-    const defaultTools = ['hoe', 'wateringCan', 'harvestGlove', 'seeds'];
+    const defaultTools = ['hoe', 'wateringCan', 'shovel', 'seeds'];
     let inventory = this.inventoryManager.getInventory ? this.inventoryManager.getInventory() : this.inventoryManager.inventory;
     if (!inventory || typeof inventory !== 'object') {
       inventory = {};
@@ -108,72 +223,56 @@ class PersonalGarden extends Phaser.Scene {
         inventory.tools.push(tool);
       }
     });
-    // Add chest sprite (ensure only one image is created)
-    const chestX = 120;
-    const chestY = 440; // Move chest further down
-    if (!this.textures.exists("chest")) {
-      this.load.image("chest", "/assets/misc/chest-closed.png");
-      this.load.once('complete', () => {
-        this.createChestSprite(chestX, chestY);
-      });
-      this.load.start();
-    } else {
-      this.createChestSprite(chestX, chestY);
-    }
 
-  }
-
-  createChestSprite(x, y) {
-    const chestSprite = this.add.image(x, y, "chest")
-      .setScale(1.8)
-      .setDepth(20)
-      .setInteractive({ useHandCursor: true });
-    chestSprite.on("pointerdown", () => {
-      this.chestLogic.openChest(window.chestItems);
-      this.scene.launch("ChestUI", { items: window.chestItems });
-      this.scene.bringToTop("ChestUI");
-
-    });
-
-        const scaleFactor = 0.175;
+    const scaleFactor = 0.14;
     this.add.image(0, 0, "gardenBackground").setOrigin(0).setScale(scaleFactor);
 
-   // Tent image (not interactive)
-   const tentImg = this.add.image(0, 0, "tent").setOrigin(0).setScale(scaleFactor).setDepth(5);
+    // Tent image (not interactive)
+    const tentImg = this.add.image(0, 0, "tent").setOrigin(0).setScale(scaleFactor).setDepth(5);
 
-   // Triangle icon above tent for next day
-   const tentTriangleX = tentImg.x + tentImg.displayWidth / 2;
-   const tentTriangleY = tentImg.y + 60; 
-   const triangleSize = 32;
-   const triangle = this.add.triangle(
-     tentTriangleX,
-     tentTriangleY,
-     0, triangleSize,
-     triangleSize / 2, 0,
-     triangleSize, triangleSize,
-     0xffe066
-   ).setDepth(10)
-    .setInteractive({ useHandCursor: true });
+    // Triangle icon above tent for next day
+    const tentTriangleX = tentImg.x + tentImg.displayWidth / 2;
+    const tentTriangleY = tentImg.y + 60; 
+    const triangleSize = 32;
+    const triangle = this.add.triangle(
+      tentTriangleX,
+      tentTriangleY,
+      0, triangleSize,
+      triangleSize / 2, 0,
+      triangleSize, triangleSize,
+      0xffe066
+    ).setDepth(10)
+     .setInteractive({ useHandCursor: true });
 
-   // Tooltip text
-   const nextDayText = this.add.text(tentTriangleX, tentTriangleY - 24, "Next Day", {
-     fontFamily: "Georgia",
-     fontSize: "16px",
-     color: "#fff",
-     backgroundColor: "#222",
-     padding: { left: 8, right: 8, top: 4, bottom: 4 }
-   }).setOrigin(0.5).setDepth(11).setAlpha(0);
+    // Tooltip text
+    const nextDayText = this.add.text(tentTriangleX, tentTriangleY - 24, "Next Day", {
+      fontFamily: "Georgia",
+      fontSize: "16px",
+      color: "#fff",
+      backgroundColor: "#222",
+      padding: { left: 8, right: 8, top: 4, bottom: 4 }
+    }).setOrigin(0.5).setDepth(11).setAlpha(0);
 
-   triangle.on("pointerover", () => nextDayText.setAlpha(1));
-   triangle.on("pointerout", () => nextDayText.setAlpha(0));
-   triangle.on("pointerdown", () => {
-     this.scene.pause();
-     this.scene.launch("DayEndScene", { day: globalTimeManager.getDayNumber() });
-     this.scene.get("DayEndScene").events.once("dayEnded", () => {
-       globalTimeManager.nextDay();
-       this.scene.resume();
-     });
-   });
+    triangle.on("pointerover", () => nextDayText.setAlpha(1));
+    triangle.on("pointerout", () => nextDayText.setAlpha(0));
+    triangle.on("pointerdown", () => {
+      alert('Advancing to next day! Previous day: ' + globalTimeManager.getDayNumber());
+      this.scene.pause();
+      this.scene.launch("DayEndScene", { day: globalTimeManager.getDayNumber() });
+      this.scene.get("DayEndScene").events.once("dayEnded", () => {
+        globalTimeManager.nextDay();
+        // Reset watered state for all plots so watering is allowed again
+        this.plots.forEach(({ plot }) => {
+          plot.watered = false;
+        });
+        alert('New day: ' + globalTimeManager.getDayNumber());
+        // Update day number display
+        if (this.dayText) {
+          this.dayText.setText(`Day: ${globalTimeManager.getDayNumber()}`);
+        }
+        this.scene.resume();
+      });
+    });
 
     this.add.image(0, 0, "fence").setOrigin(0).setScale(scaleFactor).setDepth(10);
 
@@ -182,19 +281,11 @@ class PersonalGarden extends Phaser.Scene {
       globalTimeManager.start();
     }
 
-    const { width, height } = this.sys.game.config;
     this.scene.launch("HUDScene");
     this.scene.bringToTop("HUDScene");
 
-    const sceneState = window.localStorage.getItem('personalGardenSceneState');
-    let loadedState = null;
-    if (sceneState) {
-      try {
-        loadedState = JSON.parse(sceneState);
-      } catch (e) {
-        loadedState = null;
-      }
-    }
+    // Load state using loadFromLocal
+    const loadedState = loadFromLocal('personalGardenSceneState');
 
     const backBtnX = width - 40;
     const backBtnY = height / 2;
@@ -215,11 +306,16 @@ class PersonalGarden extends Phaser.Scene {
 
     backButton.setDepth(10);
 
-
     // Restore tool and time only
     if (loadedState?.currentTool) this.currentTool = loadedState.currentTool;
     if (loadedState?.timeOfDay) {
       globalTimeManager.dayCycle.setTimeOfDay(loadedState.timeOfDay);
+    }
+    if (loadedState?.currentDay !== undefined) {
+      globalTimeManager.currentDay = loadedState.currentDay;
+      if (this.dayText) {
+        this.dayText.setText(`Day: ${globalTimeManager.getDayNumber()}`);
+      }
     }
 
     // Sign to enter shop
@@ -270,29 +366,74 @@ class PersonalGarden extends Phaser.Scene {
 
   saveSceneState() {
     const state = {
-      plots: this.plots.map(({ plot }) => ({ ...plot })),
+      plots: this.plots.map(({ plot }) => ({
+        watered: plot.watered,
+        waterCount: plot.waterCount,
+        lastWateredDay: plot.lastWateredDay,
+        seedType: plot.seedType,
+        state: plot.state,
+        growthStage: plot.growthStage
+      })),
       inventory: this.inventoryManager.getInventory ? this.inventoryManager.getInventory() : this.inventoryManager.inventory,
       currentTool: this.currentTool,
       timeOfDay: globalTimeManager.getCurrentTimeOfDay(),
-      chestItems: window.chestItems
+      currentDay: globalTimeManager.getDayNumber(),
     };
-    window.localStorage.setItem('personalGardenSceneState', JSON.stringify(state));
+    saveToLocal('personalGardenSceneState', state);
   }
 
   useToolOnPlot(plot) {
+    alert('useToolOnPlot called: state=' + plot.state + ', tool=' + this.currentTool);
+          alert('pointerdown event: state=' + plot.state + ', tool=' + this.currentTool);
     const inventory = this.inventoryManager.getInventory ? this.inventoryManager.getInventory() : this.inventoryManager.inventory;
     if (this.currentTool === 'hoe' && inventory.tools.includes('hoe')) {
       return plot.prepare();
     }
+    if (this.currentTool === 'seed' && inventory.tools.includes('seed')) {
+      return plot.plant(this.currentTool);
+    }
     if (this.currentTool === 'wateringCan' && inventory.tools.includes('wateringCan')) {
       return plot.water();
     }
-    if (this.currentTool === 'harvestGlove' && inventory.tools.includes('harvestGlove')) {
-      const result = plot.harvest();
-      if (result.success && result.item) {
-        inventory.items.push(result.item);
+    if (this.currentTool === 'shovel' && inventory.tools.includes('shovel')) {
+      // If plot is grown, harvest as normal
+      if (plot.state === 'grown') {
+        const result = plot.harvest();
+        if (result.success && result.item) {
+          let plantKey = result.item;
+          const plantEntry = plantData.find(p => p.seedKey === result.item);
+          if (plantEntry && plantEntry.key) {
+            plantKey = plantEntry.key;
+          }
+          const plantItem = itemsData.find(i => i.key === plantKey);
+          alert('[Harvest] plantKey: ' + plantKey);
+          alert('[Harvest] plantItem: ' + JSON.stringify(plantItem));
+          alert('[Harvest] receivedItem args: ' + JSON.stringify(plantItem) + ', ' + this.inventoryManager);
+          if (plantItem) {
+            receivedItem(plantItem, this.inventoryManager);
+          }
+        }
+        return result;
       }
-      return result;
+      // If plot is already harvested, allow collecting again if not already in inventory
+      if (plot.state === 'harvested' && plot.seedType) {
+        let plantKey = plot.seedType;
+        const plantEntry = plantData.find(p => p.seedKey === plot.seedType);
+        if (plantEntry && plantEntry.key) {
+          plantKey = plantEntry.key;
+        }
+        const plantItem = itemsData.find(i => i.key === plantKey);
+        alert('[Harvested] plantKey: ' + plantKey);
+        alert('[Harvested] plantItem: ' + JSON.stringify(plantItem));
+        alert('[Harvested] receivedItem args: ' + JSON.stringify(plantItem) + ', ' + this.inventoryManager);
+        const invPlants = inventory.plants || [];
+        const alreadyCollected = invPlants.includes(plantKey);
+        if (plantItem && !alreadyCollected) {
+          receivedItem(plantItem, this.inventoryManager);
+          return { success: true, item: plantKey };
+        }
+      }
+      return { success: false };
     }
     return { success: false, message: 'Unknown tool or missing from inventory.' };
   }
@@ -324,33 +465,56 @@ class PersonalGarden extends Phaser.Scene {
   }
 
   createToolButtons() {
-    const tools = ['hoe', 'seeds', 'wateringCan', 'harvestGlove'];
-    tools.forEach((tool, i) => {
-      const btn = this.add.text(20, 20 + i * 30, tool.toUpperCase(), {
-        fontSize: '16px',
-        backgroundColor: '#333',
-        color: '#fff',
-        padding: { left: 8, right: 8, top: 4, bottom: 4 }
-      }).setInteractive({ useHandCursor: true });
+    // Hoe
+    const hoeBg = this.add.rectangle(40, 40, 48, 48, 0x222233, 0.95)
+      .setStrokeStyle(2, 0x4caf50)
+      .setDepth(199);
+    const hoeImg = this.add.image(40, 40, 'hoe')
+      .setScale(1.8)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(203);
+    // Watering Can
+    const canBg = this.add.rectangle(100, 40, 48, 48, 0x222233, 0.95)
+      .setStrokeStyle(2, 0x4caf50)
+      .setDepth(199);
+    const canImg = this.add.image(100, 40, 'wateringCan')
+      .setScale(1.8)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(203);
+    // Shovel
+    const shovelBg = this.add.rectangle(160, 40, 48, 48, 0x222233, 0.95)
+      .setStrokeStyle(2, 0x4caf50)
+      .setDepth(199);
+    const shovelImg = this.add.image(160, 40, 'shovel')
+      .setScale(1.8)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(203);
 
-      btn.on('pointerdown', () => {
-        this.currentTool = tool;
-        this.highlightSelectedTool(tools, i);
+    this.toolIconSprites = [
+      { bg: hoeBg, img: hoeImg, key: 'hoe' },
+      { bg: canBg, img: canImg, key: 'wateringCan' },
+      { bg: shovelBg, img: shovelImg, key: 'shovel' }
+    ];
+
+    this.currentTool = 'hoe';
+    hoeBg.setFillStyle(0x4caf50, 0.95);
+
+    hoeImg.on('pointerdown', () => {
+      this.currentTool = 'hoe';
+      this.toolIconSprites.forEach((sprite) => {
+        sprite.bg.setFillStyle(sprite.key === 'hoe' ? 0x4caf50 : 0x222233, 0.95);
       });
-
-      if (i === 0) btn.setStyle({ backgroundColor: '#4caf50' });
     });
-  }
-
-  highlightSelectedTool(tools, selectedIndex) {
-    tools.forEach((tool, i) => {
-      const label = tool.toUpperCase();
-      this.children.list.forEach(child => {
-        if (child.text === label) {
-          child.setStyle({
-            backgroundColor: i === selectedIndex ? '#4caf50' : '#333'
-          });
-        }
+    canImg.on('pointerdown', () => {
+      this.currentTool = 'wateringCan';
+      this.toolIconSprites.forEach((sprite) => {
+        sprite.bg.setFillStyle(sprite.key === 'wateringCan' ? 0x4caf50 : 0x222233, 0.95);
+      });
+    });
+    shovelImg.on('pointerdown', () => {
+      this.currentTool = 'shovel';
+      this.toolIconSprites.forEach((sprite) => {
+        sprite.bg.setFillStyle(sprite.key === 'shovel' ? 0x4caf50 : 0x222233, 0.95);
       });
     });
   }

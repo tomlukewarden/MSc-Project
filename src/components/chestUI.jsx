@@ -133,8 +133,16 @@ export class ChestUI extends Phaser.Scene {
         // Add one to inventory and remove one from chest stack
         if (window.inventoryManager && window.inventoryManager.addItem) {
           // Remove quantity property for inventory
-          const itemToAdd = { ...item };
+          let itemToAdd = { ...item };
           delete itemToAdd.quantity;
+          // Normalize seeds for inventory and toolbar
+          if (
+            itemToAdd.name && itemToAdd.name.toLowerCase().includes('seed') ||
+            itemToAdd.type === 'seed' || itemToAdd.type === 'seeds'
+          ) {
+            itemToAdd.type = 'seed';
+            itemToAdd.key = (itemToAdd.name || 'seed').replace(/\s+/g, '').toLowerCase();
+          }
           window.inventoryManager.addItem(itemToAdd);
         }
         // Remove one matching item from window.chestItems

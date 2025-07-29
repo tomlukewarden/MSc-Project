@@ -1,4 +1,19 @@
+import SeedPouchLogic from './seedPouchLogic';
+import itemsData from '../items';
+import globalTimeManager from '../day/timeManager';
+import { receivedItem } from './recievedItem';
 
+
+// Build a map from seed key/name to plantKey using itemsData
+const seedToPlantMap = {};
+if (Array.isArray(itemsData)) {
+  itemsData.forEach(item => {
+    if (item.type === 'seed' && item.plantKey) {
+      seedToPlantMap[item.key] = item.plantKey;
+      seedToPlantMap[item.name] = item.plantKey;
+    }
+  });
+}
 
 export class Plot {
   constructor() {
@@ -6,6 +21,8 @@ export class Plot {
     this.seedType = null;
     this.growthStage = 0;
     this.watered = false;
+    this.waterCount = 0; // Number of days watered
+    this.lastWateredDay = null; // Track last day watered
   }
 
   prepare() {
@@ -17,64 +34,86 @@ export class Plot {
   }
 
   plant(seedType) {
-    // Accept seeds from inventoryManager
-    if (this.state === 'prepared') {
-      // Check global inventoryManager for seeds
-      let inventoryManager = typeof window !== 'undefined' ? window.inventoryManager : null;
-      if (inventoryManager && inventoryManager.getInventory) {
-        const inventory = inventoryManager.getInventory();
-        // Seeds can be stored as items or tools, check both
-        let seedIndex = -1;
-        if (Array.isArray(inventory.items)) {
-          seedIndex = inventory.items.findIndex(item => item === seedType || (item?.type === seedType));
-        }
-        if (seedIndex === -1 && Array.isArray(inventory.tools)) {
-          seedIndex = inventory.tools.findIndex(tool => tool === seedType);
-        }
-        if (seedIndex !== -1) {
-          // Remove one seed from items or tools
-          if (Array.isArray(inventory.items) && inventory.items[seedIndex] === seedType) {
-            inventory.items.splice(seedIndex, 1);
-          } else if (Array.isArray(inventory.items) && inventory.items[seedIndex]?.type === seedType) {
-            inventory.items.splice(seedIndex, 1);
-          } else if (Array.isArray(inventory.tools) && inventory.tools[seedIndex] === seedType) {
-            inventory.tools.splice(seedIndex, 1);
-          }
-          this.state = 'planted';
-          this.seedType = seedType;
-          this.growthStage = 0;
-          this.watered = false;
-          return { success: true, message: `Planted ${seedType}.` };
-        } else {
-          return { success: false, message: `No ${seedType} seeds in inventory.` };
-        }
-      } else {
-        return { success: false, message: 'Inventory not available.' };
-      }
+    // Accept seeds from seed pouch
+    if (this.state !== 'prepared') {
+      return { success: false, message: 'Ground not prepared.' };
     }
-    return { success: false, message: 'Ground not prepared.' };
+    // Normalize seedType to object for robust matching
+    let normalizedSeedType = typeof seedType === 'string'
+      ? SeedPouchLogic.getSeeds().find(item => item.name === seedType || item.type === seedType || item.key === seedType)
+      : seedType;
+    if (!normalizedSeedType) {
+      return { success: false, message: `No ${typeof seedType === 'string' ? seedType : (seedType.name || seedType.type || seedType.key)} seeds in pouch.` };
+    }
+    // Find seed in pouch
+    const isSeedMatch = (item) => {
+      if (!item) return false;
+      return item.name === normalizedSeedType.name || item.type === normalizedSeedType.type || item.key === normalizedSeedType.key;
+    };
+    let seedIdx = SeedPouchLogic.getSeeds().findIndex(isSeedMatch);
+    let seedObj = seedIdx !== -1 ? SeedPouchLogic.getSeeds()[seedIdx] : null;
+    // Support stackable seeds
+    if (seedObj && seedObj.count && seedObj.count > 0) {
+      SeedPouchLogic.removeSeed(seedObj.key, 1);
+      this.state = 'planted';
+      this.seedType = seedObj.name || seedObj.type || seedObj.key;
+      this.growthStage = 0;
+      this.watered = false;
+      this.waterCount = 0;
+      this.lastWateredDay = null;
+      return { success: true, message: `Planted ${this.seedType}.` };
+    }
+    // Remove non-stackable seed
+    if (seedObj) {
+      SeedPouchLogic.removeSeed(seedObj.key, 1);
+      this.state = 'planted';
+      this.seedType = seedObj.name || seedObj.type || seedObj.key;
+      this.growthStage = 0;
+      this.watered = false;
+      this.waterCount = 0;
+      this.lastWateredDay = null;
+      return { success: true, message: `Planted ${this.seedType}.` };
+    }
+    return { success: false, message: `No ${normalizedSeedType.name || normalizedSeedType.type || normalizedSeedType.key} seeds in pouch.` };
   }
 
   water() {
-    if (this.state === 'planted' && !this.watered) {
-      this.watered = true;
-      this.growthStage++;
-      if (this.growthStage >= 2) {
-        this.state = 'grown';
+    // Accept a day parameter for daily watering, or use globalTimeManager if available
+    // Always use the global day number for watering logic
+    let currentDay = globalTimeManager.getDayNumber();
+    console.log('[Plot.water] currentDay:', currentDay, 'lastWateredDay:', this.lastWateredDay, 'waterCount:', this.waterCount);
+    if (this.state === 'planted') {
+      // Always allow watering, but only increment growth if it's a new day
+      if (this.lastWateredDay === null || currentDay > this.lastWateredDay) {
+        this.watered = true;
+        this.waterCount = (this.waterCount || 0) + 1;
+        this.lastWateredDay = currentDay;
+        if (this.waterCount >= 3) {
+          this.state = 'grown';
+        }
+        console.log('[Plot.water] Watered. New lastWateredDay:', this.lastWateredDay);
+        return { success: true, message: `Watered the plant. (${this.waterCount}/3)` };
+      } else {
+        // Already watered today, allow watering but don't increment growth
+        console.log('[Plot.water] Already watered today. No growth increment.');
+        return { success: true, message: 'Watered again, but only one watering per day counts towards growth.' };
       }
-      return { success: true, message: 'Watered the plant.' };
     }
+    console.log('[Plot.water] Cannot water now. State:', this.state);
     return { success: false, message: 'Cannot water now.' };
   }
 
   harvest() {
     if (this.state === 'grown') {
       this.state = 'harvested';
-      const harvested = this.seedType;
+      // Use plantKey from itemsData for the harvested plant
+      let plant = seedToPlantMap[this.seedType] || this.seedType;
       this.seedType = null;
       this.growthStage = 0;
       this.watered = false;
-      return { success: true, item: harvested, message: `Harvested ${harvested}.` };
+      this.waterCount = 0;
+      this.lastWateredDay = null;
+      return { success: true, item: plant, message: `Harvested ${plant}.` };
     }
     return { success: false, message: 'Not ready to harvest.' };
   }
@@ -84,5 +123,7 @@ export class Plot {
     this.seedType = null;
     this.growthStage = 0;
     this.watered = false;
+    this.waterCount = 0;
+    this.lastWateredDay = null;
   }
 }

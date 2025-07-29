@@ -12,7 +12,7 @@ class GlobalTimeManager {
     this.startTimestamp = null;
     this.onStageChange = null;
     this.lastStage = null;
-    this.dayNum = 1;
+    this.currentDay = 1;
   }
 
   init(scene, options = {}) {
@@ -46,8 +46,9 @@ class GlobalTimeManager {
   }
 
   nextDay() {
-    this.dayNum += 1;
+    this.currentDay += 1;
     this.startTimestamp = Date.now();
+    
     this.lastStage = null;
     if (this.dayCycle) {
       this.dayCycle.setTimeOfDay(this.stages[0]);
@@ -55,7 +56,7 @@ class GlobalTimeManager {
   }
 
   getDayNumber() {
-    return this.dayNum;
+    return this.currentDay;
   }
 
   stop() {

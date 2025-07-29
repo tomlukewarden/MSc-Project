@@ -22,6 +22,7 @@ import PersonalGarden from "./scenes/personalGarden";
 import NewGameScene from "./scenes/newGameScene";
 import DayEndScene from "./scenes/dayOverlay";
 import XOGameScene from "../minigames/x-and-o";
+import OpenSeedPouch from "./openSeedPouch";
 
 function GameCanvas() {
     const canvasRef = useRef(null);
@@ -75,7 +76,8 @@ function GameCanvas() {
     PersonalGarden,
     NewGameScene,
     DayEndScene,
-    XOGameScene
+    XOGameScene,
+    OpenSeedPouch
   ]
 };
 
