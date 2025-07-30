@@ -23,7 +23,17 @@ class FishGameScene extends Phaser.Scene {
 
     create() {
         const { width, height } = this.sys.game.config;
+        // Reset all game state variables
+        this.score = 0;
+        this.catches = 0;
+        this.gameOver = false;
+        this.lineDropping = false;
         this.gameStarted = true;
+        // Remove any lingering groups or objects
+        if (this.fishGroup && this.fishGroup.children) this.fishGroup.clear(true, true);
+        if (this.graphics) this.graphics.clear();
+        if (this.hookPhysics) this.hookPhysics.destroy();
+        if (this.restartGroup && this.restartGroup.children) this.restartGroup.clear(true, true);
         this.startFishingGame();
     }
 
@@ -238,17 +248,10 @@ class FishGameScene extends Phaser.Scene {
 
         this.restartGroup.addMultiple([button, buttonText]);
         button.on("pointerdown", () => {
-            alert('Restart button clicked');
-            this.restartGroup.clear(true, true);
-            // Remove all game objects
-            this.children.removeAll();
-            this.time.removeAllEvents();
-            this.gameStarted = false;
-            alert('gameStarted set to ' + this.gameStarted);
-            this.scene.restart();
+            this.scene.stop("FishGameScene");
+            this.scene.start("FishTutorialScene");
         });
     }
-
     endGame(win) {
         this.gameOver = true;
         this.spawnFishTimer.remove(false);
