@@ -25,7 +25,7 @@ import {addPlantToJournal} from "../journalManager";
 import {inventoryManager} from "../inventoryManager";
 
 
-const coinManager = CoinManager.load();
+const coinManager = typeof window !== "undefined" && window.coinManager ? window.coinManager : CoinManager.load();
 
 class WeeCairScene extends Phaser.Scene {
   constructor() {
