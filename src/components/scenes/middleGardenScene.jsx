@@ -485,28 +485,33 @@ if (sceneState) {
               this.dialogueOnComplete = null;
               this.scene.launch("MiniGameScene", {
                 onWin: () => {
-  this.scene.stop("MiniGameScene");
-  this.scene.resume();
+                  this.scene.stop("MiniGameScene");
+                  this.scene.resume();
 
-  receivedItem(this, plant.key, plant.name);
-  inventoryManager.addItem(plant);
-  addPlantToJournal(plant.key);
+                  // Award 50 coins for winning minigame
+                  const coinsWon = 50;
+                  coinManager.add(coinsWon);
+                  saveToLocal("coins", coinManager.coins);
+                  receivedItem(this, plant.key, plant.name);
+                  receivedItem(this, "coin", `${coinsWon} Coins`, { scale: 0.15 });
+                  inventoryManager.addItem(plant);
+                  addPlantToJournal(plant.key);
 
-  showDialogue(this,
-    `You won the game! The animal reluctantly gives you the ${plant.name} plant.`,
-    { imageKey: plant.imageKey }
-  );
+                  showDialogue(this,
+                    `You won the game! The animal reluctantly gives you the ${plant.name} plant.`,
+                    { imageKey: plant.imageKey }
+                  );
 
-  this[foundFlag] = true;
-  this.dialogueActive = true;
+                  this[foundFlag] = true;
+                  this.dialogueActive = true;
 
-  this.dialogueOnComplete = () => {
-    this.destroyDialogueUI();
-    this.dialogueActive = false;
-    this.updateHUDState && this.updateHUDState();
-    this.dialogueOnComplete = null;
-  };
-}
+                  this.dialogueOnComplete = () => {
+                    this.destroyDialogueUI();
+                    this.dialogueActive = false;
+                    this.updateHUDState && this.updateHUDState();
+                    this.dialogueOnComplete = null;
+                  };
+                }
               });
               this.scene.pause();
             }
