@@ -16,7 +16,7 @@ if (typeof window !== "undefined") {
   }
 }
 
-const coinManager = CoinManager.load();
+const coinManager = typeof window !== "undefined" && window.coinManager ? window.coinManager : CoinManager.load();
 
 class GreenhouseScene extends Phaser.Scene {
     constructor() {

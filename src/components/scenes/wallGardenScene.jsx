@@ -19,7 +19,7 @@ import { createElephant, elephantIntroDialogues, elephantThanksDialogues } from 
 import globalTimeManager from "../../day/timeManager";
 
 
-const coinManager = CoinManager.load();
+const coinManager = typeof window !== "undefined" && window.coinManager ? window.coinManager : CoinManager.load();
 
 class WallGardenScene extends Phaser.Scene {
   constructor() {

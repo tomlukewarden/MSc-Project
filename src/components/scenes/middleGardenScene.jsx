@@ -18,7 +18,7 @@ import globalTimeManager from "../../day/timeManager";
 
 
 
-const coinManager = CoinManager.load();
+const coinManager = typeof window !== "undefined" && window.coinManager ? window.coinManager : CoinManager.load();
 
 class MiddleGardenScene extends Phaser.Scene {
   constructor() {

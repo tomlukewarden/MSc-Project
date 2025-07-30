@@ -4,8 +4,7 @@ import InventoryManager from "./inventoryManager";
 import { saveToLocal } from "../utils/localStorage";
 
 
-const startingCoins = loadFromLocal("coins") || 0;
-const coinManager = new CoinManager(startingCoins);
+const coinManager = typeof window !== "undefined" && window.coinManager ? window.coinManager : new CoinManager(loadFromLocal("coins") || 0);
 
 export const inventoryManager = new InventoryManager();
 
