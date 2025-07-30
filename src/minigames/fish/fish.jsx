@@ -34,6 +34,13 @@ class FishGameScene extends Phaser.Scene {
         if (this.graphics) this.graphics.clear();
         if (this.hookPhysics) this.hookPhysics.destroy();
         if (this.restartGroup && this.restartGroup.children) this.restartGroup.clear(true, true);
+        // Get onWin callback from scene data if provided
+        if (this.scene.settings && this.scene.settings.data && typeof this.scene.settings.data.onWin === "function") {
+            this.onWin = this.scene.settings.data.onWin;
+            console.log("[FishGameScene] onWin callback received from scene data.");
+        } else {
+            console.log("[FishGameScene] No onWin callback found in scene data.");
+        }
         this.startFishingGame();
     }
 
@@ -211,6 +218,7 @@ class FishGameScene extends Phaser.Scene {
         if (this.lineDropping && !this.gameOver) {
             const type = fish.getData("type");
             let points = 0;
+            console.log(`[FishGameScene] catchFish called. Type: ${type}, catches: ${this.catches}, score: ${this.score}`);
             if (type === "badFish") {
                 this.endGame(false);
                 fish.destroy();
@@ -257,7 +265,18 @@ class FishGameScene extends Phaser.Scene {
         this.spawnFishTimer.remove(false);
         let msg = win ? "You win! Final score: " + this.score : "Game Over! You caught a bad fish.";
         this.add.text(400, 300, msg, { fontSize: "32px", color: "#ffe066", backgroundColor: "#222" }).setOrigin(0.5);
-        if (!win) {
+        if (win) {
+            console.log("[FishGameScene] WIN detected.");
+            if (this.onWin) {
+                console.log("[FishGameScene] Calling onWin callback...");
+                this.onWin();
+            } else {
+                console.warn("[FishGameScene] onWin callback is missing!");
+            }
+            // Stop FishGameScene and MiniGameScene after win
+            this.scene.stop("FishGameScene");
+            this.scene.stop("MiniGameScene");
+        } else {
             this.showRestartButton();
         }
     }
