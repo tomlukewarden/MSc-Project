@@ -23,8 +23,7 @@ class MenuScene extends Phaser.Scene {
     ];
     const extraScenes = [
       { key: "EndGameScene", label: "End Game" },
-      { key: "XOGameScene", label: "X and O Game" },
-      { key: "FishGameScene", label: "Fish Game" },
+      { key: "XOTutorialScene", label: "X and O tutorial" },
       { key: "FishTutorialScene", label: "Fish Tutorial" }
     ];
 

@@ -125,9 +125,8 @@ class XOGameScene extends Phaser.Scene {
     this.restartGroup.addMultiple([button, buttonText]);
     button.on("pointerdown", () => {
       this.restartGroup.clear(true, true);
-      this.board = Array(9).fill(null);
-      this.currentPlayer = "X";
-      this.scene.restart();
+      this.scene.stop("XOGameScene");
+      this.scene.start("XOTutorialScene");
     });
   }
 

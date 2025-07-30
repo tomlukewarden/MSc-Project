@@ -25,6 +25,7 @@ import XOGameScene from "../minigames/x-and-o/x-and-o";
 import OpenSeedPouch from "./openSeedPouch";
 import FishGameScene from "../minigames/fish/fish";
 import FishTutorialScene from "../minigames/fish/fishTutorialScene";
+import XOTutorialScene from "../minigames/x-and-o/x-oTutorial";
 
 function GameCanvas() {
     const canvasRef = useRef(null);
@@ -81,7 +82,8 @@ function GameCanvas() {
     XOGameScene,
     OpenSeedPouch,
     FishGameScene,
-    FishTutorialScene
+    FishTutorialScene,
+    XOTutorialScene
   ]
 };
 
