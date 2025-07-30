@@ -416,10 +416,16 @@ class ShardGardenScene extends Phaser.Scene {
                   this.scene.stop("MiniGameScene");
                   this.scene.resume();
 
+                  // Award 50 coins for winning minigame
+                  const coinsWon = 50;
+                  coinManager.add(coinsWon);
+                  saveToLocal("coins", coinManager.coins);
+
                   const alreadyHas = inventoryManager.hasItemByKey && inventoryManager.hasItemByKey(plant.key);
                   if (!alreadyHas) {
                     addPlantToJournal(plant.key);
                     receivedItem(this, plant.key, plant.name);
+                    receivedItem(this, "coin", `${coinsWon} Coins`, { scale: 0.15 });
                   }
 
                   showDialogue(this,

@@ -23,6 +23,9 @@ class XOGameScene extends Phaser.Scene {
     // Get onWin callback from scene data if provided
     if (this.scene.settings && this.scene.settings.data && typeof this.scene.settings.data.onWin === "function") {
       this.onWin = this.scene.settings.data.onWin;
+      console.log("[XOGameScene] onWin callback received from scene data.");
+    } else {
+      console.log("[XOGameScene] No onWin callback found in scene data.");
     }
     const boardSize = this.cellSize * 3;
     const boardX = (width - boardSize) / 2;
@@ -65,6 +68,7 @@ class XOGameScene extends Phaser.Scene {
 
   handleMove(index, cell) {
     if (this.board[index] || this.checkWinner()) return;
+    console.log(`[XOGameScene] handleMove called for index ${index}, currentPlayer: ${this.currentPlayer}`);
 
     this.board[index] = this.currentPlayer;
     const iconKey = this.currentPlayer === "X" ? "xIcon" : "oIcon";
@@ -75,15 +79,25 @@ class XOGameScene extends Phaser.Scene {
       this.statusText.setText(`Player ${this.currentPlayer} wins!`);
       this.disableBoard();
       this.showRestartButton();
+      console.log(`[XOGameScene] WIN detected for player ${this.currentPlayer}`);
       // If X wins, call onWin callback to push back to MiniGameScene
-      if (this.currentPlayer === "X" && this.onWin) {
-        this.onWin();
+      if (this.currentPlayer === "X") {
+        if (this.onWin) {
+          console.log("[XOGameScene] Calling onWin callback...");
+          this.onWin();
+        } else {
+          console.warn("[XOGameScene] onWin callback is missing!");
+        }
+        // Stop XOGameScene and MiniGameScene after win
+        this.scene.stop("XOGameScene");
+        this.scene.stop("MiniGameScene");
       }
       return;
     } else if (this.board.every(cell => cell)) {
       this.statusText.setText("It's a draw!");
       this.disableBoard();
       this.showRestartButton();
+      console.log("[XOGameScene] Game ended in a draw.");
       return;
     }
 

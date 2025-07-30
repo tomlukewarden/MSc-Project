@@ -634,7 +634,12 @@ class WallGardenScene extends Phaser.Scene {
                         onWin: () => {
                           this.scene.stop("MiniGameScene");
                           this.scene.resume();
+                          // Award 50 coins for winning minigame
+                          const coinsWon = 50;
+                          coinManager.add(coinsWon);
+                          saveToLocal("coins", coinManager.coins);
                           receivedItem(this, jasmine.key, jasmine.name);
+                          receivedItem(this, "coin", `${coinsWon} Coins`, { scale: 0.15 });
                           inventoryManager.addItem(jasmine);
                           addPlantToJournal(jasmine.key);
                           showDialogue(this,
@@ -703,7 +708,12 @@ class WallGardenScene extends Phaser.Scene {
                         onWin: () => {
                           this.scene.stop("MiniGameScene");
                           this.scene.resume();
+                          // Award 50 coins for winning minigame
+                          const coinsWon = 50;
+                          coinManager.add(coinsWon);
+                          saveToLocal("coins", coinManager.coins);
                           receivedItem(this, periwinkle.key, periwinkle.name);
+                          receivedItem(this, "coin", `${coinsWon} Coins`, { scale: 0.15 });
                           inventoryManager.addItem(periwinkle);
                           addPlantToJournal(periwinkle.key);
                           showDialogue(this,
