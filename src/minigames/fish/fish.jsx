@@ -23,74 +23,82 @@ class FishGameScene extends Phaser.Scene {
 
     create() {
         const { width, height } = this.sys.game.config;
+        this.gameStarted = true;
+        this.startFishingGame();
+    }
 
-        this.add.image(width / 2, height / 2, "waterBackground")
+    startFishingGame() {
+        const { width, height } = this.sys.game.config;
+         this.add.image(width / 2, height / 2, "waterBackground")
             .setDisplaySize(width, height)
             .setDepth(0);
-
+            
         this.scoreText = this.add.text(40, 40, "Score: 0", { fontSize: "32px", color: "#fff", fontFamily: "Georgia" });
         this.catchesText = this.add.text(40, 80, "Catches: 0/10", { fontSize: "24px", color: "#fff", fontFamily: "Georgia" });
-
         this.lineY = 120;
         this.lineX = width / 2;
         this.lineDropping = false;
         this.graphics = this.add.graphics();
         this.hookRadius = 32;
         this.hookY = this.lineY;
-
-        this.cursors = this.input.keyboard.createCursorKeys();
-        this.input.on('pointerdown', () => this.dropLine());
-
-        this.fishGroup = this.physics.add.group();
-        this.spawnFishTimer = this.time.addEvent({ delay: 1200, callback: this.spawnFish, callbackScope: this, loop: true });
-
-        this.anims.create({
-            key: "roundFishAnim",
-            frames: [
-                { key: "roundFish1" },
-                { key: "roundFish2" }
-            ],
-            frameRate: 4,
-            repeat: -1
-        });
-
-        this.anims.create({
-            key: "pointyFishAnim",
-            frames: [
-                { key: "pointyFish1" },
-                { key: "pointyFish2" }
-            ],
-            frameRate: 4,
-            repeat: -1
-        });
-
-        this.anims.create({
-            key: "badFishAnim",
-            frames: [
-                { key: "badFish1" },
-                { key: "badFish2" }
-            ],
-            frameRate: 4,
-            repeat: -1
-        });
-
+        // Recreate hookPhysics on restart
+        if (this.hookPhysics) {
+            this.hookPhysics.destroy();
+        }
         this.hookPhysics = this.physics.add.sprite(this.lineX, this.lineY, null);
         this.hookPhysics.body.setCircle(this.hookRadius);
         this.hookPhysics.body.setAllowGravity(false);
         this.hookPhysics.body.setImmovable(true);
         this.hookPhysics.setVisible(false);
-
+        this.cursors = this.input.keyboard.createCursorKeys();
+        this.input.on('pointerdown', () => this.dropLine());
+        this.fishGroup = this.physics.add.group();
+        this.spawnFishTimer = this.time.addEvent({ delay: 1200, callback: this.spawnFish, callbackScope: this, loop: true });
+        // Only create animations if they don't already exist
+        if (!this.anims.exists("roundFishAnim")) {
+            this.anims.create({
+                key: "roundFishAnim",
+                frames: [
+                    { key: "roundFish1" },
+                    { key: "roundFish2" }
+                ],
+                frameRate: 4,
+                repeat: -1
+            });
+        }
+        if (!this.anims.exists("pointyFishAnim")) {
+            this.anims.create({
+                key: "pointyFishAnim",
+                frames: [
+                    { key: "pointyFish1" },
+                    { key: "pointyFish2" }
+                ],
+                frameRate: 4,
+                repeat: -1
+            });
+        }
+        if (!this.anims.exists("badFishAnim")) {
+            this.anims.create({
+                key: "badFishAnim",
+                frames: [
+                    { key: "badFish1" },
+                    { key: "badFish2" }
+                ],
+                frameRate: 4,
+                repeat: -1
+            });
+        }
         this.physics.add.overlap(this.hookPhysics, this.fishGroup, this.catchFish, null, this);
     }
 
     update() {
         const { width, height } = this.sys.game.config;
-        if (this.gameOver) return;
+        if (this.gameOver || !this.cursors) return;
 
         if (!this.lineDropping) {
-            if (this.cursors.left.isDown) {
+            if (this.cursors.left && this.cursors.left.isDown) {
                 this.lineX -= 10;
-            } else if (this.cursors.right.isDown) {
+            } else if (this.cursors.right && this.cursors.right.isDown) {
                 this.lineX += 10;
             }
             this.lineX = Phaser.Math.Clamp(this.lineX, 80, width - 80);
@@ -160,7 +168,7 @@ class FishGameScene extends Phaser.Scene {
         }
 
         const fish = this.physics.add.sprite(startX, y, texKey);
-        fish.setScale(0.15);
+        fish.setScale(0.09); // Smaller fish
         fish.setData("type", type);
         fish.setData("direction", direction);
         fish.setData("speed", speed);
@@ -212,23 +220,42 @@ class FishGameScene extends Phaser.Scene {
         }
     }
 
+    showRestartButton() {
+        const { width, height } = this.sys.game.config;
+        // Remove previous restart button if it exists
+        if (this.restartGroup) {
+            this.restartGroup.clear(true, true);
+        }
+        this.restartGroup = this.add.group();
+        const button = this.add.rectangle(width / 2, height - 80, 220, 60, 0x1976d2, 1)
+            .setStrokeStyle(2, 0x333)
+            .setInteractive({ useHandCursor: true });
+        const buttonText = this.add.text(width / 2, height - 80, "Restart Minigame", {
+            fontSize: "26px",
+            color: "#fff",
+            fontFamily: "Georgia"
+        }).setOrigin(0.5);
+
+        this.restartGroup.addMultiple([button, buttonText]);
+        button.on("pointerdown", () => {
+            alert('Restart button clicked');
+            this.restartGroup.clear(true, true);
+            // Remove all game objects
+            this.children.removeAll();
+            this.time.removeAllEvents();
+            this.gameStarted = false;
+            alert('gameStarted set to ' + this.gameStarted);
+            this.scene.restart();
+        });
+    }
+
     endGame(win) {
         this.gameOver = true;
         this.spawnFishTimer.remove(false);
         let msg = win ? "You win! Final score: " + this.score : "Game Over! You caught a bad fish.";
         this.add.text(400, 300, msg, { fontSize: "32px", color: "#ffe066", backgroundColor: "#222" }).setOrigin(0.5);
         if (!win) {
-            // Add restart button if lost
-            const restartBtn = this.add.text(400, 380, "Restart", {
-                fontSize: "28px",
-                color: "#fff",
-                backgroundColor: "#0077b6",
-                padding: { left: 16, right: 16, top: 8, bottom: 8 },
-                borderRadius: 8
-            }).setOrigin(0.5).setInteractive();
-            restartBtn.on('pointerdown', () => {
-                this.scene.restart();
-            });
+            this.showRestartButton();
         }
     }
 }

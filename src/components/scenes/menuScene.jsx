@@ -25,6 +25,7 @@ class MenuScene extends Phaser.Scene {
       { key: "EndGameScene", label: "End Game" },
       { key: "XOGameScene", label: "X and O Game" },
       { key: "FishGameScene", label: "Fish Game" },
+      { key: "FishTutorial", label: "Fish Tutorial" }
     ];
 
     // Draw panel background
