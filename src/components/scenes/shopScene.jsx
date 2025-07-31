@@ -278,7 +278,10 @@ class ShopScene extends Phaser.Scene {
       .on("pointerover", () => backBtn.setStyle({ backgroundColor: "#444" }))
       .on("pointerout", () => backBtn.setStyle({ backgroundColor: "#222" }))
       .on("pointerdown", () => {
-        this.scene.start("PersonalGarden");
+        this.scene.start("LoaderScene", {
+          nextSceneKey: "PersonalGarden",
+          nextSceneData: {}
+        });
       });
   }
 

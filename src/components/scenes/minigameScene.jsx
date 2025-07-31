@@ -20,15 +20,20 @@ class MiniGameScene extends Phaser.Scene {
     // Pass parentOnWin to the tutorial scene, and forward it to the game scene
     this.scene.launch(chosenMinigame, {
       onWin: () => {
-        // When minigame signals win, call parent onWin and resume previous scene
+        // Call parent win callback if provided
         if (typeof parentOnWin === "function") parentOnWin();
+        // Stop minigame and this scene
         this.scene.stop(chosenMinigame);
         this.scene.stop();
-        // Find the most recent scene that is not XOGameScene or MiniGameScene
+        // Resume previous scene (if any)
         const allScenes = this.scene.manager.getScenes(true);
         const lastNonMinigame = allScenes.reverse().find(s => s.scene.key !== chosenMinigame && s.scene.key !== this.scene.key);
         if (lastNonMinigame) {
-          this.scene.resume(lastNonMinigame.scene.key);
+          // Transition via LoaderScene before resuming
+          this.scene.start("LoaderScene", {
+            nextSceneKey: lastNonMinigame.scene.key,
+            nextSceneData: {}
+          });
         }
       }
     });

@@ -138,7 +138,10 @@ class GreenhouseScene extends Phaser.Scene {
       // Only right edge transition (with buffer)
       if (charRight >= sceneWidth - 5 && !this.transitioning) {
         this.transitioning = true;
-        this.scene.start("WallGardenScene");
+        this.scene.start("LoaderScene", {
+          nextSceneKey: "WallGardenScene",
+          nextSceneData: {}
+        });
       }
     }
   }

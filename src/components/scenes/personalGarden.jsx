@@ -334,7 +334,9 @@ class PersonalGarden extends Phaser.Scene {
             text: "Yes",
             callback: () => {
               if (this.destroyDialogueUI) this.destroyDialogueUI();
-              this.scene.start("ShopScene");
+              this.scene.start("LoaderScene").then(() => {
+                this.scene.start("ShopScene");
+              });
             }
           },
           {

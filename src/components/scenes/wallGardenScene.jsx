@@ -74,6 +74,18 @@ class WallGardenScene extends Phaser.Scene {
   }
 
   create() {
+    // DEBUG: Show all loaded texture keys and highlight missing ones
+    const debugY = 30;
+    const loadedKeys = this.textures.getTextureKeys();
+    const expectedKeys = [
+      'wallGardenBackground', 'wall1', 'wall2', 'trees', 'butterfly', 'defaultFront', 'defaultBack', 'defaultLeft', 'defaultRight',
+      'defaultFrontWalk1', 'defaultFrontWalk2', 'defaultBackWalk1', 'defaultBackWalk2', 'defaultLeftWalk1', 'defaultLeftWalk2',
+      'defaultRightWalk1', 'defaultRightWalk2', 'talk', 'chestClosed', 'chestOpen', 'foxglovePlant', 'springShard', 'butterflyHappy',
+      'periwinklePlant', 'coin', 'dialogueBoxBg', 'bush', 'elephant', 'elephantHappy', 'jasminePlant', 'autumnShard'
+    ];
+    let missingKeys = expectedKeys.filter(k => !loadedKeys.includes(k));
+   let debugText = `Loaded textures: ${loadedKeys.join(', ')}\nMissing: ${missingKeys.join(', ')}`;
+    this.add.text(20, debugY, debugText, { fontSize: '14px', color: missingKeys.length ? '#f00' : '#080', backgroundColor: '#fff', wordWrap: { width: 800 } }).setDepth(-1);
     // Reset transitioning flag on scene creation
     this.transitioning = false;
     // --- Personal Garden Button (above bushes) ---
@@ -114,7 +126,10 @@ class WallGardenScene extends Phaser.Scene {
     personalBtnBg.on('pointerdown', () => {
       if (!this.transitioning) {
         this.transitioning = true;
-        this.scene.start("PersonalGarden");
+        this.scene.start("LoaderScene", {
+          nextSceneKey: "PersonalGarden",
+          nextSceneData: {}
+        });
       }
     });
   globalTimeManager.init(this);
@@ -401,10 +416,20 @@ class WallGardenScene extends Phaser.Scene {
 
     // --- Map and background ---
     const map = this.make.tilemap({ key: "wallGardenMap" });
-    this.add.image(width / 2, height / 2, "wallGardenBackground").setScale(scaleFactor).setDepth(0);
-    this.add.image(width / 2, height / 2, "wall1").setScale(scaleFactor).setDepth(9);
-    this.add.image(width / 2, height / 2, "wall2").setScale(scaleFactor).setDepth(103);
-    this.add.image(width / 2, height / 2, "trees").setScale(scaleFactor).setDepth(10);
+    // Asset existence check helper
+    const safeAddImage = (scene, x, y, key, ...args) => {
+      if (!scene.textures.exists(key)) {
+        // Show warning in console and on screen
+        console.warn(`Image asset missing: ${key}`);
+        scene.add.text(x, y, `Missing: ${key}`, { fontSize: '16px', color: '#f00', backgroundColor: '#fff' }).setOrigin(0.5).setDepth(999);
+        return null;
+      }
+      return scene.add.image(x, y, key, ...args);
+    };
+    safeAddImage(this, width / 2, height / 2, "wallGardenBackground").setScale(scaleFactor).setDepth(0);
+    safeAddImage(this, width / 2, height / 2, "wall1").setScale(scaleFactor).setDepth(9);
+    safeAddImage(this, width / 2, height / 2, "wall2").setScale(scaleFactor).setDepth(103);
+    safeAddImage(this, width / 2, height / 2, "trees").setScale(scaleFactor).setDepth(10);
 
     // --- Collision objects from the object layer ---
     const collisionGroup = this.physics.add.staticGroup();
@@ -485,7 +510,10 @@ class WallGardenScene extends Phaser.Scene {
                 callback: () => {
                   this.destroyDialogueUI();
                   this.butterflyDialogueActive = false;
-                  this.scene.start("ShardGardenScene");
+                  this.scene.start("LoaderScene", {
+                    nextSceneKey: "ShardGardenScene",
+                    nextSceneData: {}
+                  });
                 }
               },
               {
@@ -557,10 +585,10 @@ class WallGardenScene extends Phaser.Scene {
       {name: "Autumn Shard", color: 0x88cc88, key: "autumnShard"},
       {name: "Winter Shard", color: 0x88cc88, key: "winterShard"},
     ];
-    const chest = this.add.image(width / 2 + 200, height / 2 - 40, 'chestClosed')
-      .setScale(2)
-      .setDepth(15)
-      .setInteractive();
+    // Asset existence check for chest
+    const chest = this.textures.exists('chestClosed')
+      ? this.add.image(width / 2 + 200, height / 2 - 40, 'chestClosed').setScale(2).setDepth(15).setInteractive()
+      : this.add.text(width / 2 + 200, height / 2 - 40, 'Missing: chestClosed', { fontSize: '16px', color: '#f00', backgroundColor: '#fff' }).setOrigin(0.5).setDepth(999);
 
     this.chestLogic.scene = this;
     this.chestLogic.setChest(chest);
@@ -591,10 +619,10 @@ class WallGardenScene extends Phaser.Scene {
 
     for (let i = 0; i < bushCount; i++) {
       const { x, y } = bushPositions[i];
-      const bush = this.add.image(x, y, 'bush')
-        .setScale(1.8)
-        .setDepth(1)
-        .setInteractive({ useHandCursor: true });
+      // Asset existence check for bush
+      const bush = this.textures.exists('bush')
+        ? this.add.image(x, y, 'bush').setScale(1.8).setDepth(1).setInteractive({ useHandCursor: true })
+        : this.add.text(x, y, 'Missing: bush', { fontSize: '16px', color: '#f00', backgroundColor: '#fff' }).setOrigin(0.5).setDepth(999);
 
       bush.on("pointerdown", () => {
         this.sound.play("click");
@@ -786,12 +814,18 @@ class WallGardenScene extends Phaser.Scene {
       // Right edge
       if (this.mainChar.x >= rightEdge && !this.transitioning) {
         this.transitioning = true;
-        this.scene.start("MiddleGardenScene");
+        this.scene.start("LoaderScene", {
+          nextSceneKey: "MiddleGardenScene",
+          nextSceneData: {}
+        });
       }
       // Left edge
       if (this.mainChar.x <= leftEdge && !this.transitioning) {
         this.transitioning = true;
-        this.scene.start("GreenhouseScene");
+        this.scene.start("LoaderScene", {
+          nextSceneKey: "GreenhouseScene",
+          nextSceneData: {}
+        });
       }
     }
   }
