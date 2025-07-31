@@ -1,9 +1,9 @@
 import Phaser from 'phaser';
 
-import { CoinManager } from '../coinManager';
 import itemsData from '../../items';
 import { showOption } from '../../dialogue/dialogueUIHelpers';
 import { receivedItem } from '../recievedItem';
+import { CoinManager } from '../coinManager';
 import SeedPouchLogic from '../seedPouchLogic';
 // Ensure global inventoryManager instance
 import { inventoryManager as globalInventoryManager } from "../inventoryManager";
@@ -16,7 +16,15 @@ if (typeof window !== "undefined") {
 class ShopScene extends Phaser.Scene {
   constructor() {
     super({ key: 'ShopScene' });
-    this.coinManager = new CoinManager(this.coinManager ? this.coinManager.coins : 200); // Default to 200 if no previous coins
+    // Use global CoinManager
+    if (typeof window !== "undefined") {
+      if (!window.coinManager) {
+        window.coinManager = CoinManager.load ? CoinManager.load() : new CoinManager();
+      }
+      this.coinManager = window.coinManager;
+    } else {
+      this.coinManager = CoinManager.load ? CoinManager.load() : new CoinManager();
+    }
     if (!window.inventoryManager) {
       window.inventoryManager = new InventoryManager();
     }
