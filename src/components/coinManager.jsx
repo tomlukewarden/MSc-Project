@@ -60,3 +60,10 @@ export class CoinManager {
     return new CoinManager(coins, saveKey);
   }
 }
+
+// Ensure global CoinManager instance (after class definition)
+if (typeof window !== "undefined") {
+  if (!window.coinManager) {
+    window.coinManager = CoinManager.load();
+  }
+}

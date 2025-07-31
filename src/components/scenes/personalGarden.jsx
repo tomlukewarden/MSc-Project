@@ -1,6 +1,6 @@
 import { Plot } from "../farmingLogic";
 import { createMainChar } from "../../characters/mainChar";
-import { inventoryManager } from "../inventoryManager";
+import { inventoryManager } from "../inventoryManager";   
 import { saveToLocal, loadFromLocal } from "../../utils/localStorage";
 // Ensure global inventoryManager instance
 if (typeof window !== "undefined") {
@@ -14,6 +14,7 @@ import { receivedItem } from "../recievedItem";
 import itemsData from "../../items";
 import SeedPouchLogic from "../seedPouchLogic"; // Importing SeedPouchLogic for seed management
 import plantData from "../../plantData";
+import { CoinManager } from "../coinManager";
 
 class PersonalGarden extends Phaser.Scene {
   constructor() {
@@ -23,14 +24,19 @@ class PersonalGarden extends Phaser.Scene {
     this.cols = 5;
     this.plots = [];
     this.currentTool = "hoe";
-    // Ensure global inventoryManager is always set and valid
+    // Ensure global inventoryManager and coinManager are always set and valid
     if (typeof window !== "undefined") {
       if (!window.inventoryManager) {
         window.inventoryManager = inventoryManager;
       }
       this.inventoryManager = window.inventoryManager;
+      if (!window.coinManager) {
+        window.coinManager = CoinManager.load ? CoinManager.load() : new CoinManager();
+      }
+      this.coinManager = window.coinManager;
     } else {
       this.inventoryManager = inventoryManager;
+      this.coinManager = CoinManager.load ? CoinManager.load() : new CoinManager();
     }
   }
 
@@ -81,6 +87,18 @@ class PersonalGarden extends Phaser.Scene {
   }
 
   create() {
+    // Show current coin count
+    const coinText = this.add.text(40, 70, `${this.coinManager.get ? this.coinManager.get() : this.coinManager.coins || 0}c`, {
+      fontFamily: 'Georgia',
+      fontSize: '20px',
+      color: '#ffe066',
+      backgroundColor: '#222',
+      padding: { left: 8, right: 8, top: 4, bottom: 4 }
+    }).setOrigin(0, 0).setDepth(99999);
+    // Update coin display when coins change
+    if (this.coinManager.onChange) {
+      this.coinManager.onChange((coins) => coinText.setText(`${coins}c`));
+    }
     // Ensure globalTimeManager is initialized and started
     globalTimeManager.init(this);
     if (!globalTimeManager.startTimestamp) {
@@ -334,7 +352,10 @@ class PersonalGarden extends Phaser.Scene {
             text: "Yes",
             callback: () => {
               if (this.destroyDialogueUI) this.destroyDialogueUI();
-              this.scene.start("ShopScene");
+              this.scene.start("LoaderScene", {
+                nextSceneKey: "ShopScene",
+                nextSceneData: {}
+              });
             }
           },
           {

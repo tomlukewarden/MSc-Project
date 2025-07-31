@@ -17,7 +17,7 @@ import { addPlantToJournal } from "../journalManager";
 import { receivedItem } from "../recievedItem";
 import globalTimeManager from "../../day/timeManager";
 
-const coinManager = CoinManager.load();
+const coinManager = typeof window !== "undefined" && window.coinManager ? window.coinManager : CoinManager.load();
 
 class ShardGardenScene extends Phaser.Scene {
   constructor() {
@@ -81,6 +81,19 @@ class ShardGardenScene extends Phaser.Scene {
   }
 
   create() {
+    // DEBUG: Show all loaded texture keys and highlight missing ones
+    const debugY = 30;
+    const loadedKeys = this.textures.getTextureKeys();
+    const expectedKeys = [
+      'shardBackground', 'folliage', 'butterfly', 'defaultFront', 'defaultBack', 'defaultLeft', 'defaultRight',
+      'defaultFrontWalk1', 'defaultFrontWalk2', 'defaultBackWalk1', 'defaultBackWalk2', 'defaultLeftWalk1', 'defaultLeftWalk2',
+      'defaultRightWalk1', 'defaultRightWalk2', 'elephant', 'spring', 'springHappy', 'summer', 'summerHappy',
+      'autumnHappy', 'winterHappy', 'autumn', 'winter', 'butterflyHappy', 'butterflySad', 'periwinklePlant',
+      'marigoldPlant', 'coin', 'dialogueBoxBg', 'talk', 'jasminePlant', 'bush'
+    ];
+    let missingKeys = expectedKeys.filter(k => !loadedKeys.includes(k));
+    let debugText = `Loaded textures: ${loadedKeys.join(', ')}\nMissing: ${missingKeys.join(', ')}`;
+    this.add.text(20, debugY, debugText, { fontSize: '14px', color: missingKeys.length ? '#f00' : '#080', backgroundColor: '#fff', wordWrap: { width: 800 } }).setDepth(-1);
     globalTimeManager.init(this);
     if (!globalTimeManager.startTimestamp) {
       globalTimeManager.start();
@@ -115,8 +128,15 @@ class ShardGardenScene extends Phaser.Scene {
       globalTimeManager.dayCycle.setTimeOfDay(sceneState.timeOfDay);
     }
 
-    this.add.image(width / 2, height / 2, "shardBackground").setScale(scaleFactor);
-    const foliageImg = this.add.image(width / 2, height / 2, "folliage").setScale(scaleFactor);
+    // Asset existence check helper
+    const safeAddImage = (scene, x, y, key, ...args) => {
+      if (!scene.textures.exists(key)) {
+        console.warn(`Image asset missing: ${key}`);
+      }
+      return scene.add.image(x, y, key, ...args);
+    };
+    safeAddImage(this, width / 2, height / 2, "shardBackground").setScale(scaleFactor);
+    const foliageImg = safeAddImage(this, width / 2, height / 2, "folliage").setScale(scaleFactor);
 
     const collisionGroup = this.physics.add.staticGroup();
 
@@ -138,31 +158,39 @@ class ShardGardenScene extends Phaser.Scene {
     const y = height * scaleFactor + 100;
 
     seasons.forEach((season, i) => {
-      const seasonImg = this.add.image(startX + i * spacing, y, season)
-        .setScale(seasonScale)
-        .setDepth(10)
-        .setInteractive({ useHandCursor: true });
+      let seasonImg;
+      if (this.textures.exists(season)) {
+        seasonImg = this.add.image(startX + i * spacing, y, season)
+          .setScale(seasonScale)
+          .setDepth(10)
+          .setInteractive({ useHandCursor: true });
+      } else {
+        console.warn(`Image asset missing: ${season}`);
+        seasonImg = this.add.text(startX + i * spacing, y, `Missing: ${season}`, { fontSize: '16px', color: '#f00', backgroundColor: '#fff' }).setOrigin(0.5).setDepth(999);
+      }
       this[season + 'ShardSprite'] = seasonImg;
 
-      seasonImg.on("pointerover", () => seasonImg.setTint(0x88ccff));
-      seasonImg.on("pointerout", () => seasonImg.clearTint());
-      seasonImg.on("pointerup", () => {
-        const shardKey = season + "Shard";
-        const hasShard = inventoryManager.hasItemByKey && inventoryManager.hasItemByKey(shardKey);
-        if (hasShard) {
-          if (this.shardCounts[season] > 0) {
-            this.shardCounts[season]--;
-            inventoryManager.removeItemByKey && inventoryManager.removeItemByKey(shardKey);
-            showDialogue(this, `You returned a ${season} shard! (${this.shardCounts[season]} left)`);
-            shardLogic(this);
+      if (seasonImg.setInteractive) {
+        seasonImg.on("pointerover", () => seasonImg.setTint && seasonImg.setTint(0x88ccff));
+        seasonImg.on("pointerout", () => seasonImg.clearTint && seasonImg.clearTint());
+        seasonImg.on("pointerup", () => {
+          const shardKey = season + "Shard";
+          const hasShard = inventoryManager.hasItemByKey && inventoryManager.hasItemByKey(shardKey);
+          if (hasShard) {
+            if (this.shardCounts[season] > 0) {
+              this.shardCounts[season]--;
+              inventoryManager.removeItemByKey && inventoryManager.removeItemByKey(shardKey);
+              showDialogue(this, `You returned a ${season} shard! (${this.shardCounts[season]} left)`);
+              shardLogic(this);
+            } else {
+              showDialogue(this, `No ${season} shards left to return!`);
+            }
           } else {
-            showDialogue(this, `No ${season} shards left to return!`);
+            showDialogue(this, `You don't have a ${season} shard in your inventory.`,  { imageKey: {shardKey} });
           }
-        } else {
-          showDialogue(this, `You don't have a ${season} shard in your inventory.`,  { imageKey: {shardKey} });
-        }
-        this.updateHUDState();
-      });
+          this.updateHUDState();
+        });
+      }
     });
 
     this.mainChar = createMainChar(this, width / 2, height / 2, scaleFactor, collisionGroup);
@@ -336,11 +364,10 @@ class ShardGardenScene extends Phaser.Scene {
 
     for (let i = 0; i < bushCount; i++) {
       const { x, y } = bushPositions[i];
-      // Use bush sprite instead of rectangle
-      const bush = this.add.image(x, y, 'bush')
-       .setScale(1.8)
-        .setDepth(1)
-        .setInteractive({ useHandCursor: true });
+      // Asset existence check for bush
+      const bush = this.textures.exists('bush')
+        ? this.add.image(x, y, 'bush').setScale(1.8).setDepth(1).setInteractive({ useHandCursor: true })
+        : this.add.text(x, y, 'Missing: bush', { fontSize: '16px', color: '#f00', backgroundColor: '#fff' }).setOrigin(0.5).setDepth(999);
 
       bush.on("pointerdown", () => {
         this.sound.play("click");

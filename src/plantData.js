@@ -8,10 +8,10 @@ const plantData = [
     },
     {
         name:"Aloe Vera",
-        key: "aloeVeraPlant",
-        imageKey: "aloeVeraPlant",
+        key: "aloePlant",
+        imageKey: "aloePlant",
         medicinal: "Soothes burns and skin irritations, also used in cosmetics.",
-        seedKey: "aloeVeraSeeds"
+        seedKey: "aloeSeeds"
     },
     {
         name: "Lavender",

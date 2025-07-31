@@ -18,7 +18,7 @@ import globalTimeManager from "../../day/timeManager";
 
 
 
-const coinManager = CoinManager.load();
+const coinManager = typeof window !== "undefined" && window.coinManager ? window.coinManager : CoinManager.load();
 
 class MiddleGardenScene extends Phaser.Scene {
   constructor() {
@@ -81,11 +81,19 @@ class MiddleGardenScene extends Phaser.Scene {
     const { width, height } = this.sys.game.config;
     const scaleFactor = 0.175;
 
+    // Asset existence check helper
+    const safeAddImage = (scene, x, y, key, ...args) => {
+      if (!scene.textures.exists(key)) {
+        console.warn(`Image asset missing: ${key}`);
+        return scene.add.text(x, y, `Missing: ${key}`, { fontSize: '16px', color: '#f00', backgroundColor: '#fff' }).setOrigin(0.5).setDepth(999);
+      }
+      return scene.add.image(x, y, key, ...args);
+    };
     // Background
-    this.add.image(width / 2, height / 2, 'finalGardenBackground').setScale(scaleFactor).setDepth(0);
+    safeAddImage(this, width / 2, height / 2, 'finalGardenBackground').setScale(scaleFactor).setDepth(0);
     // Folliage
-    this.add.image(width / 2, height / 2, 'folliage1').setScale(scaleFactor).setDepth(1);
-    const folliage2Img = this.add.image(width / 2, height / 2, 'folliage2').setScale(scaleFactor).setDepth(2);
+    safeAddImage(this, width / 2, height / 2, 'folliage1').setScale(scaleFactor).setDepth(1);
+    const folliage2Img = safeAddImage(this, width / 2, height / 2, 'folliage2').setScale(scaleFactor).setDepth(2);
 
     // --- Collision for folliage2 ---
     const collisionGroup = this.physics.add.staticGroup();
@@ -407,10 +415,10 @@ if (sceneState) {
 
     for (let i = 0; i < bushCount; i++) {
       const { x, y } = bushPositions[i];
-      const bush = this.add.image(x, y, 'bush')
-        .setScale(1.8)
-        .setDepth(1)
-        .setInteractive({ useHandCursor: true });
+      // Asset existence check for bush
+      const bush = this.textures.exists('bush')
+        ? this.add.image(x, y, 'bush').setScale(1.8).setDepth(1).setInteractive({ useHandCursor: true })
+        : this.add.text(x, y, 'Missing: bush', { fontSize: '16px', color: '#f00', backgroundColor: '#fff' }).setOrigin(0.5).setDepth(999);
 
       bush.on("pointerdown", () => {
         this.sound.play("click");
@@ -553,14 +561,23 @@ if (sceneState) {
       if (this.mainChar.x >= rightEdge) {
         if (!this.transitioning) {
           this.transitioning = true;
-          this.scene.start("ShardGardenScene");
+          this.scene.start("LoaderScene", {
+            nextSceneKey: "ShardGardenScene",
+            nextSceneData: {}
+          });
         }
       }
       // Left edge
       if (this.mainChar.x <= leftEdge) {
         if (!this.transitioning) {
           this.transitioning = true;
-          this.scene.start("WallGardenScene");
+          // Transition via LoaderScene, passing nextSceneKey and any relevant data
+          this.scene.start("LoaderScene", {
+            nextSceneKey: "WallGardenScene",
+            nextSceneData: {
+              // Add any data you want to pass to WallGardenScene here
+            }
+          });
         }
       }
     }
