@@ -128,7 +128,7 @@ class NewGameScene extends Phaser.Scene {
         // Go to game
         nameInput.destroy();
         farmInput.destroy();
-        this.scene.start("WeeCairScene");
+        this.scene.start("IntroScene");
       });
   }
 }
