@@ -264,6 +264,7 @@ class OpenJournal extends Phaser.Scene {
     if (this.recipeImage && !this.recipeImage.destroyed) this.recipeImage.destroy();
     if (this.recipeName && !this.recipeName.destroyed) this.recipeName.destroy();
     if (this.recipeIngredients && !this.recipeIngredients.destroyed) this.recipeIngredients.destroy();
+    if (this.recipeDescription && !this.recipeDescription.destroyed) this.recipeDescription.destroy();
     if (this.pageNumText && !this.pageNumText.destroyed) this.pageNumText.destroy();
 
     const { width, height } = this.sys.game.config;
@@ -292,12 +293,44 @@ class OpenJournal extends Phaser.Scene {
       color: "#2d4739"
     });
 
-    // Ingredients
-    const ingredientsText = recipe.ingredients.map(i => `${i.name} x${i.amount}`).join('\n');
-    this.recipeIngredients = this.add.text(width / 2 + 40, height / 2 + 10, ingredientsText || "No ingredients.", {
+
+
+    // Helper to get readable name from key
+    const getDisplayName = (key) => {
+      const plant = plantData.find(p => p.key === key);
+      if (plant && plant.name) return plant.name;
+      // Fallback: prettify key (only strip 'Plant' at the end)
+      let name = key
+        .replace(/([A-Z])/g, ' $1')
+        .replace(/^(.)/, (m) => m.toUpperCase())
+        .replace(/ Plant$/i, '')
+        .replace(/_/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+      // If name is empty, fallback to key
+      if (!name) name = key;
+      return name;
+    };
+
+    // Render all ingredients, one per line
+    let ingredientsText = "";
+    if (Array.isArray(recipe.ingredients) && recipe.ingredients.length > 0) {
+      ingredientsText = recipe.ingredients.map(i => `${getDisplayName(i.key)} x${i.amount}`).join('\n');
+    } else {
+      ingredientsText = "No ingredients.";
+    }
+    this.recipeIngredients = this.add.text(width / 2 + 40, height / 2 + 10, ingredientsText, {
       fontFamily: "Georgia",
       fontSize: "20px",
       color: "#444",
+      wordWrap: { width: 260 }
+    });
+
+    // Description
+    this.recipeDescription = this.add.text(width / 2 + 40, height / 2 + 80, recipe.description || "", {
+      fontFamily: "Georgia",
+      fontSize: "18px",
+      color: "#567d46",
       wordWrap: { width: 260 }
     });
 
@@ -319,8 +352,9 @@ class OpenJournal extends Phaser.Scene {
       this.nextBtn.setAlpha(this.currentPage < recipieData.length - 1 ? 1 : 0.4);
       this.prevBtn.setAlpha(this.currentPage > 0 ? 1 : 0.4);
     }
-   
   }
+   
+
 }
 
 export default OpenJournal;
