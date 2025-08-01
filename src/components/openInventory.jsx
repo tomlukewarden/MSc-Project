@@ -39,8 +39,18 @@ class OpenInventory extends Phaser.Scene {
       padding: { left: 12, right: 12, top: 6, bottom: 6 }
     }).setOrigin(1, 0).setDepth(106);
 
-    coinManager.onChange((coins) => {
-      if (this.coinText) this.coinText.setText(`${coins}c`);
+    // Subscribe to coin changes, store unsubscribe
+    this._coinUnsub = coinManager.onChange((coins) => {
+      if (this.coinText && !this.coinText.destroyed) {
+        this.coinText.setText(`${coins}c`);
+      }
+    });
+    // Unsubscribe on shutdown/destroy to prevent memory leaks and errors
+    this.events.on('shutdown', () => {
+      if (this._coinUnsub) this._coinUnsub();
+    });
+    this.events.on('destroy', () => {
+      if (this._coinUnsub) this._coinUnsub();
     });
 
     // Render inventory items in a grid

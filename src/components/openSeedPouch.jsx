@@ -71,6 +71,17 @@ class OpenSeedPouch extends Phaser.Scene {
 
       this.seedRects.push(rect);
       this.seedTexts.push(nameText);
+    // Clean up on shutdown/destroy
+    this.events.on('shutdown', () => {
+      this.seedRects.forEach(r => r && !r.destroyed && r.destroy());
+      this.seedTexts.forEach(t => t && !t.destroyed && t.destroy());
+      this.seedImages.forEach(img => img && !img.destroyed && img.destroy());
+    });
+    this.events.on('destroy', () => {
+      this.seedRects.forEach(r => r && !r.destroyed && r.destroy());
+      this.seedTexts.forEach(t => t && !t.destroyed && t.destroy());
+      this.seedImages.forEach(img => img && !img.destroyed && img.destroy());
+    });
     });
 
     // Click anywhere else to exit pouch
