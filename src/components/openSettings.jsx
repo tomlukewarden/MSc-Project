@@ -78,7 +78,16 @@ class OpenSettings extends Phaser.Scene {
         backgroundColor: "#ffe066",
         padding: { left: 18, right: 18, top: 8, bottom: 8 }
       }).setOrigin(0.5).setDepth(20);
-      this.time.delayedCall(2000, () => textObj.destroy());
+      this.time.delayedCall(2000, () => {
+        if (textObj && !textObj.destroyed) textObj.destroy();
+      });
+    // Clean up on shutdown/destroy
+    this.events.on('shutdown', () => {
+      // Add any additional cleanup if needed
+    });
+    this.events.on('destroy', () => {
+      // Add any additional cleanup if needed
+    });
     };
 
     // Save button

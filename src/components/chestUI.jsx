@@ -76,9 +76,20 @@ export class ChestUI extends Phaser.Scene {
   renderItems(panelWidth = 420, panelHeight = 320) {
     const { width, height } = this.sys.game.config;
     // Remove old
-    this.itemRects.forEach(r => r.destroy());
-    this.itemTexts.forEach(t => t.destroy());
-    this.itemImages.forEach(img => img.destroy());
+    this.itemRects.forEach(r => r && !r.destroyed && r.destroy());
+    this.itemTexts.forEach(t => t && !t.destroyed && t.destroy());
+    this.itemImages.forEach(img => img && !img.destroyed && img.destroy());
+  // Clean up listeners and objects on shutdown/destroy
+  this.events.on('shutdown', () => {
+    this.itemRects.forEach(r => r && !r.destroyed && r.destroy());
+    this.itemTexts.forEach(t => t && !t.destroyed && t.destroy());
+    this.itemImages.forEach(img => img && !img.destroyed && img.destroy());
+  });
+  this.events.on('destroy', () => {
+    this.itemRects.forEach(r => r && !r.destroyed && r.destroy());
+    this.itemTexts.forEach(t => t && !t.destroyed && t.destroy());
+    this.itemImages.forEach(img => img && !img.destroyed && img.destroy());
+  });
     this.itemRects = [];
     this.itemTexts = [];
     this.itemImages = [];

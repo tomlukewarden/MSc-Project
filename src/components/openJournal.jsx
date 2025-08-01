@@ -123,10 +123,23 @@ class OpenJournal extends Phaser.Scene {
 
   renderPlantPage() {
     // Remove previous plant display if any
-    if (this.plantImage) this.plantImage.destroy();
-    if (this.plantName) this.plantName.destroy();
-    if (this.plantMedicinal) this.plantMedicinal.destroy();
-    if (this.pageNumText) this.pageNumText.destroy();
+    if (this.plantImage && !this.plantImage.destroyed) this.plantImage.destroy();
+    if (this.plantName && !this.plantName.destroyed) this.plantName.destroy();
+    if (this.plantMedicinal && !this.plantMedicinal.destroyed) this.plantMedicinal.destroy();
+    if (this.pageNumText && !this.pageNumText.destroyed) this.pageNumText.destroy();
+  // Clean up on shutdown/destroy
+  this.events.on('shutdown', () => {
+    if (this.plantImage && !this.plantImage.destroyed) this.plantImage.destroy();
+    if (this.plantName && !this.plantName.destroyed) this.plantName.destroy();
+    if (this.plantMedicinal && !this.plantMedicinal.destroyed) this.plantMedicinal.destroy();
+    if (this.pageNumText && !this.pageNumText.destroyed) this.pageNumText.destroy();
+  });
+  this.events.on('destroy', () => {
+    if (this.plantImage && !this.plantImage.destroyed) this.plantImage.destroy();
+    if (this.plantName && !this.plantName.destroyed) this.plantName.destroy();
+    if (this.plantMedicinal && !this.plantMedicinal.destroyed) this.plantMedicinal.destroy();
+    if (this.pageNumText && !this.pageNumText.destroyed) this.pageNumText.destroy();
+  });
 
     const { width, height } = this.sys.game.config;
     const plant = this.collectedPlants[this.currentPage];
