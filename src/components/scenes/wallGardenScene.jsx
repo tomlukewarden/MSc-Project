@@ -581,9 +581,12 @@ class WallGardenScene extends Phaser.Scene {
   setupChest(width, height) {
     const chestItemsArray = [
       { name: "Spring Shard", color: 0x88cc88, key: "springShard" },
-      {name: "Summer Shard", color: 0x88cc88, key: "summerShard"},
-      {name: "Autumn Shard", color: 0x88cc88, key: "autumnShard"},
-      {name: "Winter Shard", color: 0x88cc88, key: "winterShard"},
+      { name: "Summer Shard", color: 0x88cc88, key: "summerShard" },
+      { name: "Autumn Shard", color: 0x88cc88, key: "autumnShard" },
+      { name: "Winter Shard", color: 0x88cc88, key: "winterShard" },
+      { name: "Foxglove Plant", color: 0x8bc34a, key: "foxglovePlant" },
+      { name: "Foxglove Plant", color: 0x8bc34a, key: "foxglovePlant" },
+      { name: "Tea Bag", color: 0xf5e6b3, key: "teaBag" },
     ];
     // Asset existence check for chest
     const chest = this.textures.exists('chestClosed')

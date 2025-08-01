@@ -1,4 +1,5 @@
 import { recipeData } from '../recipieData';
+import { receivedItem } from './recievedItem';
 
 export function tryCraft(selectedItems, inventoryManager) {
   const selectedKeys = selectedItems.map(item => item?.key).filter(Boolean);
@@ -25,5 +26,6 @@ export function tryCraft(selectedItems, inventoryManager) {
   });
   // Add result to inventory
   inventoryManager.addItem && inventoryManager.addItem(match.result);
+  receivedItem(this.scene, match.result);
   return { success: true, result: match.result };
 }

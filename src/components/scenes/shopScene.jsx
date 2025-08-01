@@ -46,7 +46,18 @@ class ShopScene extends Phaser.Scene {
     this.load.audio("shopTheme", "/assets/music/shop-theme.mp3");
     this.load.image('dialogueBoxBg', '/assets/ui-items/dialogue.png');
     this.load.image("oilBaseImage", "/assets/shopItems/oil.png");
+    this.load.image("creamBaseImage", "/assets/shopItems/cream.png");
+    this.load.image("alchoholBaseImage", "/assets/shopItems/alcohol.png");
     this.load.audio('sparkle', '/assets/sound-effects/sparkle.mp3');
+       this.load.image('foxglovePlant', '/assets/plants/foxglove.png');
+    this.load.image('marigoldPlant', '/assets/plants/marigold.PNG');
+    this.load.image('jasminePlant', '/assets/plants/jasmine.PNG');
+    this.load.image('aloePlant', '/assets/plants/aloe.PNG');
+    this.load.image('lavenderPlant', '/assets/plants/lavender.PNG');
+    this.load.image('periwinklePlant', '/assets/plants/periwinkle.png');
+    this.load.image('garlicPlant', '/assets/plants/garlic.PNG');
+    this.load.image('thymePlant', '/assets/plants/thyme.PNG');
+    this.load.image('willowPlant', '/assets/plants/willow.PNG');
 
   }
 

@@ -90,35 +90,6 @@ const recipieData = [
         result: { key: 'willowBarkTea', amount: 1 },
     },
   {
-    id: 10,
-    name: 'Herbal Tincture',
-    ingredients: [
-      { key: 'foxglovePlant', amount: 1 },
-      { key: 'aloeVeraPlant', amount: 1 },
-      { key: 'jasminePlant', amount: 1 },
-      { key: 'lavenderPlant', amount: 1 },
-      { key: 'marigoldPlant', amount: 1 },
-      { key: 'garlicPlant', amount: 1 },
-      { key: 'periwinklePlant', amount: 1 },
-      { key: 'thymePlant', amount: 1 },
-      { key: 'willowPlant', amount: 1 },
-    ],
-    description: 'A concentrated herbal extract made from a variety of plants, used for various medicinal purposes.',
-    result: { key: 'herbalTincture', amount: 1 },
-  },
-  {
-    id: 11,
-    name: 'Healing Balm',
-    ingredients: [
-      { key: 'marigoldPlant', amount: 2 },
-      { key: 'lavenderPlant', amount: 1 },
-      { key: 'aloeVeraPlant', amount: 1 },
-      { key: 'baseCream', amount: 1 },
-    ],
-    description: 'A soothing balm made from marigold and lavender, perfect for healing minor cuts and burns.',
-    result: { key: 'healingBalm', amount: 1 },
-  },
-  {
     id: 12,
     name: 'Calming Tea',
     ingredients: [

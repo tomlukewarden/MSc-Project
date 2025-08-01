@@ -21,16 +21,39 @@ class CraftUI extends Phaser.GameObjects.Container {
     }).setOrigin(0.5);
     this.add(this.title);
 
-    // Ingredient slots as drop zones
+    // Ingredient slots as drop zones or click-to-select
     this.ingredientSlots = [];
     const slotSpacing = 50;
     for (let i = 0; i < 3; i++) {
       const slot = scene.add.rectangle(-slotSpacing + i * slotSpacing, -30, 40, 40, 0xeeeeee)
         .setStrokeStyle(1, 0x999999)
         .setOrigin(0.5)
-        .setInteractive({ dropZone: true });
+        .setInteractive({ useHandCursor: true });
       slot.item = null;
       slot.text = null;
+      // On click, open inventory in select mode
+      slot.on('pointerdown', () => {
+        // Launch inventory in select mode, pass callback
+        scene.scene.launch('OpenInventory', {
+          mode: 'selectItemForCraft',
+          onSelect: (item) => {
+            slot.item = item;
+            // Remove previous text if any
+            if (slot.text) slot.text.destroy();
+            slot.text = scene.add.text(
+              slot.x + this.x,
+              slot.y + this.y + 22,
+              item.name || item.key,
+              {
+                fontSize: '12px',
+                color: '#222',
+                backgroundColor: '#fff8',
+                padding: { left: 2, right: 2, top: 1, bottom: 1 }
+              }
+            ).setOrigin(0.5);
+          }
+        });
+      });
       this.ingredientSlots.push(slot);
       this.add(slot);
     }
