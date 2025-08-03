@@ -24,14 +24,15 @@ class CraftUI extends Phaser.GameObjects.Container {
 
     // Ingredient slots as drop zones or click-to-select
     this.ingredientSlots = [];
-    const slotSpacing = 50;
+    const slotSpacing = 70;
     for (let i = 0; i < 3; i++) {
-      const slot = scene.add.rectangle(-slotSpacing + i * slotSpacing, -30, 40, 40, 0xeeeeee)
-        .setStrokeStyle(1, 0x999999)
+      const slot = scene.add.rectangle(-slotSpacing + i * slotSpacing, -30, 64, 64, 0xeeeeee)
+        .setStrokeStyle(2, 0x999999)
         .setOrigin(0.5)
         .setInteractive({ useHandCursor: true });
       slot.item = null;
       slot.text = null;
+      slot.image = null;
       // On click, open inventory in select mode
       slot.on('pointerdown', () => {
         // Launch inventory in select mode, pass callback
@@ -39,20 +40,32 @@ class CraftUI extends Phaser.GameObjects.Container {
           mode: 'selectItemForCraft',
           onSelect: (item) => {
             slot.item = item;
-            // Remove previous text if any
+            // Remove previous text/image if any
             if (slot.text) slot.text.destroy();
-            slot.text = scene.add.text(
-              slot.x,
-              slot.y + 22,
-              item.name || item.key,
-              {
-                fontSize: '12px',
-                color: '#222',
-                backgroundColor: '#fff8',
-                padding: { left: 2, right: 2, top: 1, bottom: 1 }
-              }
-            ).setOrigin(0.5);
-            this.add(slot.text);
+            if (slot.image) slot.image.destroy();
+            if (item.imageKey) {
+              slot.image = scene.add.image(
+                slot.x,
+                slot.y,
+                item.imageKey
+              ).setScale(0.22).setOrigin(0.5);
+              this.add(slot.image);
+              slot.text = null;
+            } else {
+              slot.text = scene.add.text(
+                slot.x,
+                slot.y + 22,
+                item.name || item.key,
+                {
+                  fontSize: '12px',
+                  color: '#222',
+                  backgroundColor: '#fff8',
+                  padding: { left: 2, right: 2, top: 1, bottom: 1 }
+                }
+              ).setOrigin(0.5);
+              this.add(slot.text);
+              slot.image = null;
+            }
           }
         });
       });
@@ -61,13 +74,13 @@ class CraftUI extends Phaser.GameObjects.Container {
     }
 
     // Output slot
-    this.outputSlot = scene.add.rectangle(0, 30, 40, 40, 0xfff5cc)
-      .setStrokeStyle(1, 0xccaa66)
+    this.outputSlot = scene.add.rectangle(0, 30, 64, 64, 0xfff5cc)
+      .setStrokeStyle(2, 0xccaa66)
       .setOrigin(0.5);
     this.add(this.outputSlot);
 
     // Craft button
-    this.craftButton = scene.add.text(0, 90, 'Craft!', {
+    this.craftButton = scene.add.text(-50, 90, 'Craft!', {
       fontFamily: 'sans-serif',
       fontSize: '16px',
       backgroundColor: '#88cc88',
@@ -88,6 +101,37 @@ class CraftUI extends Phaser.GameObjects.Container {
     });
 
     this.add(this.craftButton);
+
+    // Add Take Item button beside Craft button
+    this.takeItemBtnMain = scene.add.text(50, 90, 'Take Item', {
+      fontFamily: 'sans-serif',
+      fontSize: '16px',
+      backgroundColor: '#aaa',
+      color: '#444',
+      padding: { left: 10, right: 10, top: 4, bottom: 4 }
+    }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+    this.add(this.takeItemBtnMain);
+    this.takeItemBtnMain.setAlpha(0.5);
+    this.takeItemBtnMain.disableInteractive();
+    this._takeItemBtnMainTaken = false;
+    this.takeItemBtnMain.on('pointerdown', () => {
+      if (this._takeItemBtnMainTaken) return;
+      if (this.outputImage && this.lastCraftedResult) {
+        this._takeItemBtnMainTaken = true;
+        if (this.scene.inventoryManager && this.scene.inventoryManager.addItem) {
+          this.scene.inventoryManager.addItem(this.lastCraftedResult);
+        }
+        if (typeof this.scene.recievedItem === 'function') {
+          this.scene.recievedItem(this.scene, this.lastCraftedResult.key, this.lastCraftedResult.name);
+        } else if (this.scene.scene && typeof this.scene.scene.launch === 'function') {
+          this.scene.scene.launch('RecievedItem', { item: this.lastCraftedResult });
+        }
+        this.takeItemBtnMain.setText('Taken!');
+        this.takeItemBtnMain.setStyle({ backgroundColor: '#aaa', color: '#444' });
+        this.takeItemBtnMain.setAlpha(0.5);
+        this.takeItemBtnMain.disableInteractive();
+      }
+    });
 
     // Inventory (set externally or use fallback)
     this.inventory = scene.inventory || [];
@@ -136,25 +180,19 @@ class CraftUI extends Phaser.GameObjects.Container {
   }
 
   setIngredients(items) {
-    // For drag-and-drop, just update slot.item and show imageKey as text
+    // For drag-and-drop, just update slot.item and show image in box if available
     this.ingredientSlots.forEach((slot, index) => {
       slot.item = items[index] || null;
       if (slot.text) slot.text.destroy();
       if (slot.image) slot.image.destroy();
       if (slot.item && slot.item.imageKey) {
-        slot.text = this.scene.add.text(
+        slot.image = this.scene.add.image(
           slot.x + this.x,
-          slot.y + this.y + 10,
-          slot.item.imageKey,
-          {
-            fontSize: '12px',
-            color: '#222',
-            backgroundColor: '#fff8',
-            padding: { left: 2, right: 2, top: 1, bottom: 1 }
-          }
-        ).setOrigin(0.5);
-        this.add(slot.text);
-        slot.image = null;
+          slot.y + this.y,
+          slot.item.imageKey
+        ).setScale(0.22).setOrigin(0.5);
+        this.add(slot.image);
+        slot.text = null;
       } else {
         slot.text = null;
         slot.image = null;
@@ -176,41 +214,40 @@ class CraftUI extends Phaser.GameObjects.Container {
         return orderMatch;
       });
       if (match) {
+        // Remove used ingredients from inventory
+        if (this.scene.inventoryManager && typeof this.scene.inventoryManager.removeItemByKey === 'function') {
+          selectedOrder.forEach(key => {
+            this.scene.inventoryManager.removeItemByKey(key);
+          });
+        }
+        // Clear ingredient slots
+        this.ingredientSlots.forEach(slot => {
+          slot.item = null;
+          if (slot.text) slot.text.destroy();
+          if (slot.image) slot.image.destroy();
+          slot.text = null;
+          slot.image = null;
+        });
         this.outputSlot.setFillStyle(0xccffcc);
         if (this.outputText) this.outputText.destroy();
         if (this.outputImage) this.outputImage.destroy();
         if (match.result.imageKey) {
-          this.outputText = this.scene.add.text(
+          if (this.outputText) this.outputText.destroy();
+          if (this.outputImage) this.outputImage.destroy();
+          this.outputImage = this.scene.add.image(
             this.outputSlot.x,
-            this.outputSlot.y + 10,
-            match.result.imageKey,
-            { fontSize: '14px', color: '#228B22', backgroundColor: '#fff8', padding: { left: 4, right: 4, top: 2, bottom: 2 } }
-          ).setOrigin(0.5);
-          this.outputText.setInteractive({ useHandCursor: true, pixelPerfect: true, pointerEvents: true });
-          this.outputText.input.alwaysEnabled = true;
-          this.add(this.outputText);
-          // Add click handler to add to inventory and call recievedItem, only once per craft
-          let added = false;
-          this.outputText.on('pointerdown', (pointer, localX, localY, event) => {
-            alert('Crafted item clicked!');
-            if (added) {
-              alert('Already added to inventory.');
-              return;
-            }
-            added = true;
-            if (this.scene.inventoryManager && this.scene.inventoryManager.addItem) {
-              alert('Adding to inventory: ' + JSON.stringify(match.result));
-              this.scene.inventoryManager.addItem(match.result);
-            }
-            if (typeof this.scene.recievedItem === 'function') {
-              alert('Calling recievedItem function.');
-              this.scene.recievedItem(match.result);
-            } else if (this.scene.scene && typeof this.scene.scene.launch === 'function') {
-              alert('Launching RecievedItem overlay.');
-              this.scene.scene.launch('RecievedItem', { item: match.result });
-            }
-            if (event && event.stopPropagation) event.stopPropagation();
-          });
+            this.outputSlot.y,
+            match.result.imageKey
+          ).setScale(0.1).setOrigin(0.5);
+          this.add(this.outputImage);
+          // Store last crafted result for main Take Item button
+          this.lastCraftedResult = match.result;
+          // Enable and reset Take Item button
+          this._takeItemBtnMainTaken = false;
+          this.takeItemBtnMain.setText('Take Item');
+          this.takeItemBtnMain.setStyle({ backgroundColor: '#228B22', color: '#fff' });
+          this.takeItemBtnMain.setAlpha(1);
+          this.takeItemBtnMain.setInteractive({ useHandCursor: true });
         }
       } else {
         alert('No matching recipe found for order: ' + JSON.stringify(selectedOrder));

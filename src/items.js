@@ -87,7 +87,7 @@ const itemsData = [
     name: "Base Cream",
     price: 10,
     description: "A versatile base cream for making salves.",
-    imageKey: "baseCreamImage",
+    imageKey: "baseCream",
     type: "extra", 
   },
   {
@@ -96,7 +96,7 @@ const itemsData = [
     name: "Oil Base",
     price: 15,
     description: "A base oil for making oils.",
-    imageKey: "oilBaseImage",
+    imageKey: "oilBase",
     type: "extra",
   },
   {
@@ -105,7 +105,7 @@ const itemsData = [
     name: "Alcohol Base",
     price: 20,
     description: "A base alcohol for making salves.",
-    imageKey: "alcoholBaseImage",
+    imageKey: "alcoholBase",
     type: "extra",
   },
   {
