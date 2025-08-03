@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import recipieData from '../recipieData';
 
 class CraftUI extends Phaser.GameObjects.Container {
   constructor(scene, x, y) {
@@ -41,8 +42,8 @@ class CraftUI extends Phaser.GameObjects.Container {
             // Remove previous text if any
             if (slot.text) slot.text.destroy();
             slot.text = scene.add.text(
-              slot.x + this.x,
-              slot.y + this.y + 22,
+              slot.x,
+              slot.y + 22,
               item.name || item.key,
               {
                 fontSize: '12px',
@@ -51,6 +52,7 @@ class CraftUI extends Phaser.GameObjects.Container {
                 padding: { left: 2, right: 2, top: 1, bottom: 1 }
               }
             ).setOrigin(0.5);
+            this.add(slot.text);
           }
         });
       });
@@ -110,11 +112,12 @@ class CraftUI extends Phaser.GameObjects.Container {
       // Remove previous text if any
       if (dropZone.text) dropZone.text.destroy();
       dropZone.text = scene.add.text(
-        dropZone.x + this.x,
-        dropZone.y + this.y + 22,
+        dropZone.x,
+        dropZone.y + 22,
         gameObject.itemData.name || gameObject.itemData.key,
         { fontSize: '12px', color: '#222', backgroundColor: '#fff8', padding: { left: 2, right: 2, top: 1, bottom: 1 } }
       ).setOrigin(0.5);
+      this.add(dropZone.text);
     });
   }
 
@@ -133,15 +136,16 @@ class CraftUI extends Phaser.GameObjects.Container {
   }
 
   setIngredients(items) {
-    // For drag-and-drop, just update slot.item and slot.text
+    // For drag-and-drop, just update slot.item and show imageKey as text
     this.ingredientSlots.forEach((slot, index) => {
       slot.item = items[index] || null;
       if (slot.text) slot.text.destroy();
-      if (slot.item) {
+      if (slot.image) slot.image.destroy();
+      if (slot.item && slot.item.imageKey) {
         slot.text = this.scene.add.text(
           slot.x + this.x,
-          slot.y + this.y + 22,
-          slot.item.name || slot.item.key,
+          slot.y + this.y + 10,
+          slot.item.imageKey,
           {
             fontSize: '12px',
             color: '#222',
@@ -149,48 +153,90 @@ class CraftUI extends Phaser.GameObjects.Container {
             padding: { left: 2, right: 2, top: 1, bottom: 1 }
           }
         ).setOrigin(0.5);
+        this.add(slot.text);
+        slot.image = null;
       } else {
         slot.text = null;
+        slot.image = null;
       }
     });
   }
 
   craftSomething() {
     const ingredients = this.ingredientSlots.map(s => s.item);
+    alert('Crafting triggered! Ingredients: ' + JSON.stringify(ingredients.map(i => i && i.key)));
     if (ingredients.every(item => item)) {
-      // Call your crafting logic
-      if (this.scene.tryCraft) {
-        const result = this.scene.tryCraft(ingredients, this.scene.inventoryManager);
-        if (result.success) {
-          this.outputSlot.setFillStyle(0xccffcc);
-          if (this.outputText) this.outputText.destroy();
+      alert('All ingredient slots filled.');
+      const selectedOrder = ingredients.map(item => item && item.key);
+      alert('Selected order: ' + JSON.stringify(selectedOrder));
+      const match = recipieData.find(recipe => {
+        if (!recipe.order) return false;
+        const orderMatch = recipe.order.length === selectedOrder.length && recipe.order.every((key, idx) => key === selectedOrder[idx]);
+        if (orderMatch) alert('Found matching recipe: ' + JSON.stringify(recipe));
+        return orderMatch;
+      });
+      if (match) {
+        this.outputSlot.setFillStyle(0xccffcc);
+        if (this.outputText) this.outputText.destroy();
+        if (this.outputImage) this.outputImage.destroy();
+        if (match.result.imageKey) {
           this.outputText = this.scene.add.text(
-            this.x,
-            this.y + 30,
-            `Crafted: ${result.result.name || result.result.key}`,
+            this.outputSlot.x,
+            this.outputSlot.y + 10,
+            match.result.imageKey,
             { fontSize: '14px', color: '#228B22', backgroundColor: '#fff8', padding: { left: 4, right: 4, top: 2, bottom: 2 } }
           ).setOrigin(0.5);
-        } else {
-          this.outputSlot.setFillStyle(0xffcccc);
-          if (this.outputText) this.outputText.destroy();
-          this.outputText = this.scene.add.text(
-            this.x,
-            this.y + 30,
-            result.message,
-            { fontSize: '14px', color: '#a33', backgroundColor: '#fff8', padding: { left: 4, right: 4, top: 2, bottom: 2 } }
-          ).setOrigin(0.5);
+          this.outputText.setInteractive({ useHandCursor: true, pixelPerfect: true, pointerEvents: true });
+          this.outputText.input.alwaysEnabled = true;
+          this.add(this.outputText);
+          // Add click handler to add to inventory and call recievedItem, only once per craft
+          let added = false;
+          this.outputText.on('pointerdown', (pointer, localX, localY, event) => {
+            alert('Crafted item clicked!');
+            if (added) {
+              alert('Already added to inventory.');
+              return;
+            }
+            added = true;
+            if (this.scene.inventoryManager && this.scene.inventoryManager.addItem) {
+              alert('Adding to inventory: ' + JSON.stringify(match.result));
+              this.scene.inventoryManager.addItem(match.result);
+            }
+            if (typeof this.scene.recievedItem === 'function') {
+              alert('Calling recievedItem function.');
+              this.scene.recievedItem(match.result);
+            } else if (this.scene.scene && typeof this.scene.scene.launch === 'function') {
+              alert('Launching RecievedItem overlay.');
+              this.scene.scene.launch('RecievedItem', { item: match.result });
+            }
+            if (event && event.stopPropagation) event.stopPropagation();
+          });
         }
       } else {
-        console.log('Crafting with:', ingredients.map(i => i.name || i.key).join(', '));
+        alert('No matching recipe found for order: ' + JSON.stringify(selectedOrder));
+        this.outputSlot.setFillStyle(0xffcccc);
+        if (this.outputText) this.outputText.destroy();
+        if (this.outputImage) this.outputImage.destroy();
+        this.outputText = this.scene.add.text(
+          this.outputSlot.x,
+          this.outputSlot.y + 30,
+          'No matching recipe.',
+          { fontSize: '14px', color: '#a33', backgroundColor: '#fff8', padding: { left: 4, right: 4, top: 2, bottom: 2 } }
+        ).setOrigin(0.5);
+        this.add(this.outputText);
       }
     } else {
+      alert('Not all ingredient slots are filled!');
       if (this.outputText) this.outputText.destroy();
+      if (this.outputImage) this.outputImage.destroy();
       this.outputSlot.setFillStyle(0xffcccc);
       this.outputText = this.scene.add.text(
-        this.x,
-        this.y + 30,
+        this.outputSlot.x,
+        this.outputSlot.y + 30,
+        'Select all ingredients!',
         { fontSize: '14px', color: '#a33', backgroundColor: '#fff8', padding: { left: 4, right: 4, top: 2, bottom: 2 } }
       ).setOrigin(0.5);
+      this.add(this.outputText);
     }
   }
 }
