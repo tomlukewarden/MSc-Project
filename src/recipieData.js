@@ -20,7 +20,7 @@ const recipieData = [
     order: ['aloePlant', 'baseCream', 'aloePlant'],
     description: 'A soothing cream made from aloe vera, perfect for after sun exposure.',
     result: { key: 'aloeAfterSunCream', amount: 1 },
-    imageKey: 'creamRemedy',
+    imageKey: 'aloeAfterSunCream',
   },
   {
     id: 3,

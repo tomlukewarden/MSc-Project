@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import recipieData from '../recipieData';
+import { receivedItem } from './recievedItem';
 
 class CraftUI extends Phaser.GameObjects.Container {
   constructor(scene, x, y) {
@@ -115,22 +116,37 @@ class CraftUI extends Phaser.GameObjects.Container {
     this.takeItemBtnMain.disableInteractive();
     this._takeItemBtnMainTaken = false;
     this.takeItemBtnMain.on('pointerdown', () => {
-      if (this._takeItemBtnMainTaken) return;
-      if (this.outputImage && this.lastCraftedResult) {
-        this._takeItemBtnMainTaken = true;
-        if (this.scene.inventoryManager && this.scene.inventoryManager.addItem) {
-          this.scene.inventoryManager.addItem(this.lastCraftedResult);
-        }
-        if (typeof this.scene.recievedItem === 'function') {
-          this.scene.recievedItem(this.scene, this.lastCraftedResult.key, this.lastCraftedResult.name);
-        } else if (this.scene.scene && typeof this.scene.scene.launch === 'function') {
-          this.scene.scene.launch('RecievedItem', { item: this.lastCraftedResult });
-        }
-        this.takeItemBtnMain.setText('Taken!');
-        this.takeItemBtnMain.setStyle({ backgroundColor: '#aaa', color: '#444' });
-        this.takeItemBtnMain.setAlpha(0.5);
-        this.takeItemBtnMain.disableInteractive();
+      alert('[DEBUG] Take Item button pressed');
+      if (this._takeItemBtnMainTaken) {
+        alert('[DEBUG] Already taken, ignoring.');
+        return;
       }
+      if (!this.lastCraftedResult) {
+        alert('[DEBUG] No crafted result available.');
+        return;
+      }
+      this._takeItemBtnMainTaken = true;
+      alert('[DEBUG] Adding item to inventory: ' + JSON.stringify(this.lastCraftedResult));
+      if (this.scene.inventoryManager && this.scene.inventoryManager.addItem) {
+        this.scene.inventoryManager.addItem(this.lastCraftedResult);
+        alert('[DEBUG] Added to inventoryManager.');
+      } else {
+        alert('[DEBUG] inventoryManager or addItem missing.');
+      }
+      if (typeof receivedItem === 'function') {
+        let itemKey = this.lastCraftedResult.key || this.lastCraftedResult.itemKey;
+        let itemName = this.lastCraftedResult.name || this.lastCraftedResult.itemName;
+        // Fallback: if itemName is missing, use itemKey
+        if (!itemName) itemName = itemKey;
+        alert('[DEBUG] Calling imported receivedItem with: ' + itemKey + ', ' + itemName);
+        receivedItem(this.scene, itemKey, itemName);
+      } else {
+        alert('[DEBUG] No receivedItem or scene.launch available.');
+      }
+      this.takeItemBtnMain.setText('Taken!');
+      this.takeItemBtnMain.setStyle({ backgroundColor: '#aaa', color: '#444' });
+      this.takeItemBtnMain.setAlpha(0.5);
+      this.takeItemBtnMain.disableInteractive();
     });
 
     // Inventory (set externally or use fallback)
@@ -231,24 +247,26 @@ class CraftUI extends Phaser.GameObjects.Container {
         this.outputSlot.setFillStyle(0xccffcc);
         if (this.outputText) this.outputText.destroy();
         if (this.outputImage) this.outputImage.destroy();
-        if (match.result.imageKey) {
-          if (this.outputText) this.outputText.destroy();
-          if (this.outputImage) this.outputImage.destroy();
-          this.outputImage = this.scene.add.image(
-            this.outputSlot.x,
-            this.outputSlot.y,
-            match.result.imageKey
-          ).setScale(0.1).setOrigin(0.5);
-          this.add(this.outputImage);
-          // Store last crafted result for main Take Item button
-          this.lastCraftedResult = match.result;
-          // Enable and reset Take Item button
-          this._takeItemBtnMainTaken = false;
-          this.takeItemBtnMain.setText('Take Item');
-          this.takeItemBtnMain.setStyle({ backgroundColor: '#228B22', color: '#fff' });
-          this.takeItemBtnMain.setAlpha(1);
-          this.takeItemBtnMain.setInteractive({ useHandCursor: true });
-        }
+        // Show crafted item name as text in output slot
+        this.outputText = this.scene.add.text(
+          this.outputSlot.x,
+          this.outputSlot.y + 30,
+          match.result.name || match.result.key,
+          { fontSize: '16px', color: '#228B22', backgroundColor: '#fff8', padding: { left: 6, right: 6, top: 3, bottom: 3 } }
+        ).setOrigin(0.5);
+        this.add(this.outputText);
+        // Store last crafted result for main Take Item button, ensure key and name are present
+        this.lastCraftedResult = {
+          ...match.result,
+          key: match.result.key || selectedOrder[0],
+          name: match.result.name || match.result.itemName || ''
+        };
+        // Enable and reset Take Item button
+        this._takeItemBtnMainTaken = false;
+        this.takeItemBtnMain.setText('Take Item');
+        this.takeItemBtnMain.setStyle({ backgroundColor: '#228B22', color: '#fff' });
+        this.takeItemBtnMain.setAlpha(1);
+        this.takeItemBtnMain.setInteractive({ useHandCursor: true });
       } else {
         alert('No matching recipe found for order: ' + JSON.stringify(selectedOrder));
         this.outputSlot.setFillStyle(0xffcccc);
