@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import recipieData from '../recipieData';
 import { receivedItem } from './recievedItem';
+import inventoryManager from './inventoryManager';
 
 class CraftUI extends Phaser.GameObjects.Container {
   constructor(scene, x, y) {
@@ -127,6 +128,13 @@ class CraftUI extends Phaser.GameObjects.Container {
       }
       this._takeItemBtnMainTaken = true;
       alert('[DEBUG] Adding item to inventory: ' + JSON.stringify(this.lastCraftedResult));
+      // Remove used ingredients from inventory when item is taken
+      if (this.scene.inventoryManager && typeof this.scene.inventoryManager.removeItemByKey === 'function' && this.lastCraftedResult.usedIngredients) {
+        this.lastCraftedResult.usedIngredients.forEach(key => {
+          this.scene.inventoryManager.removeItemByKey(key);
+        });
+        alert('[DEBUG] Removed used ingredients from inventory.');
+      }
       if (this.scene.inventoryManager && this.scene.inventoryManager.addItem) {
         this.scene.inventoryManager.addItem(this.lastCraftedResult);
         alert('[DEBUG] Added to inventoryManager.');
@@ -230,12 +238,6 @@ class CraftUI extends Phaser.GameObjects.Container {
         return orderMatch;
       });
       if (match) {
-        // Remove used ingredients from inventory
-        if (this.scene.inventoryManager && typeof this.scene.inventoryManager.removeItemByKey === 'function') {
-          selectedOrder.forEach(key => {
-            this.scene.inventoryManager.removeItemByKey(key);
-          });
-        }
         // Clear ingredient slots
         this.ingredientSlots.forEach(slot => {
           slot.item = null;
@@ -259,7 +261,8 @@ class CraftUI extends Phaser.GameObjects.Container {
         this.lastCraftedResult = {
           ...match.result,
           key: match.result.key || selectedOrder[0],
-          name: match.result.name || match.result.itemName || ''
+          name: match.result.name || match.result.itemName || '',
+          usedIngredients: [...selectedOrder]
         };
         // Enable and reset Take Item button
         this._takeItemBtnMainTaken = false;
