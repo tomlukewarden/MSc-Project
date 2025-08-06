@@ -394,35 +394,9 @@ class PersonalGarden extends Phaser.Scene {
       .setDepth(20);
 
     craftingBenchImg.on("pointerdown", () => {
-      // Remove any existing CraftUI overlay
-      if (this.craftUIOverlay) {
-        this.craftUIOverlay.destroy(true);
-        this.craftUIOverlay = null;
-      }
-      // Dynamically import the CraftUI class
-      import('../craftUI').then(({ default: CraftUI }) => {
-        const { width, height } = this.sys.game.config;
-        this.craftUIOverlay = new CraftUI(this, width / 2, height / 2);
-        this.craftUIOverlay.setDepth && this.craftUIOverlay.setDepth(200);
-
-        // Add a close button for the overlay
-        const closeBtn = this.add.text(width / 2 + 140, height / 2 - 90, '✕', {
-          fontFamily: 'Georgia',
-          fontSize: '28px',
-          color: '#a33',
-          backgroundColor: '#fff5',
-          padding: { left: 10, right: 10, top: 2, bottom: 2 }
-        })
-          .setOrigin(0.5)
-          .setInteractive({ useHandCursor: true })
-          .setDepth(201);
-
-        closeBtn.on('pointerdown', () => {
-          this.craftUIOverlay.destroy(true);
-          closeBtn.destroy();
-          this.craftUIOverlay = null;
-        });
-      });
+      // Launch the CraftUI as a scene overlay
+      this.scene.launch('CraftUI');
+      this.scene.bringToTop('CraftUI');
     });
   }
 

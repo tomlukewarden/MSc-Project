@@ -5,14 +5,18 @@ class OpenSettings extends Phaser.Scene {
   constructor() {
     super({ key: "OpenSettings" });
   }
+  preload() {
+  this.load.image("settingsBackground", "/assets/ui-items/overlayBg.png");
+}
 
   create() {
     const { width, height } = this.sys.game.config;
 
-    // Background panel
-    this.add.rectangle(width / 2, height / 2, 520, 420, 0xf5f5dc, 0.98)
-      .setStrokeStyle(6, 0x88ccff)
-      .setDepth(1);
+    // Use settingsBackground image instead of rectangle
+    this.add.image(width / 2, height / 2, "settingsBackground")
+      .setDisplaySize(520, 420)
+      .setDepth(1)
+      .setAlpha(0.98);
 
     // Title
     this.add.text(width / 2, height / 2 - 160, "Settings", {

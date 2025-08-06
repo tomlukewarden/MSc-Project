@@ -28,6 +28,7 @@ import FishTutorialScene from "../minigames/fish/fishTutorialScene";
 import XOTutorialScene from "../minigames/x-and-o/x-oTutorial";
 import LoaderScene from "./scenes/loaderScene";
 import IntroScene from "./scenes/introScene";
+import CraftUI from "./craftUI";
 
 function GameCanvas() {
     const canvasRef = useRef(null);
@@ -87,7 +88,8 @@ function GameCanvas() {
     FishTutorialScene,
     XOTutorialScene,
     LoaderScene,
-    IntroScene
+    IntroScene,
+    CraftUI
   ]
 };
 

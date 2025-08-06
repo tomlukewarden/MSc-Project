@@ -3,29 +3,41 @@ import recipieData from '../recipieData';
 import { receivedItem } from './recievedItem';
 import { inventoryManager } from './inventoryManager';
 
-class CraftUI extends Phaser.GameObjects.Container {
-  constructor(scene, x, y) {
-    super(scene, x, y);
-    scene.add.existing(this);
+class CraftUI extends Phaser.Scene {
+  constructor() {
+    super({ key: 'CraftUI' });
+    this.ingredientSlots = [];
+    this.inventorySprites = [];
+    this._takeItemBtnMainTaken = false;
+    this.lastCraftedResult = null;
+  }
 
-    this.scene = scene;
+  preload() {
+    this.load.image('craftUIBg', '/assets/ui-items/overlayBg.png');
+  }
 
-    // Background
-    this.bg = scene.add.rectangle(0, 0, 300, 200, 0xffffff, 0.9)
-      .setStrokeStyle(2, 0xaaaaaa)
-      .setOrigin(0.5);
-    this.add(this.bg);
+  create() {
+    const { width, height } = this.sys.game.config;
+
+    if (this.textures.exists('craftUIBg')) {
+      this.add.image(width / 2, height / 2, 'craftUIBg')
+        .setDisplaySize(300, 200)
+        .setOrigin(0.5);
+    } else {
+      this.add.rectangle(width / 2, height / 2, 300, 200, 0xffffff, 0.9)
+        .setStrokeStyle(2, 0xaaaaaa)
+        .setOrigin(0.5);
+    }
 
     // Title
-    this.title = scene.add.text(0, -80, 'Potion Crafting', {
+    this.add.text(width / 2, height / 2 - 80, 'Potion Crafting', {
       fontFamily: 'serif',
       fontSize: '18px',
       color: '#333',
     }).setOrigin(0.5);
-    this.add(this.title);
 
     // X (close) button
-    this.closeBtn = scene.add.text(135, -90, '✖', {
+    const closeBtn = this.add.text(width / 2 + 135, height / 2 - 90, '✖', {
       fontFamily: 'sans-serif',
       fontSize: '22px',
       color: '#a33',
@@ -36,22 +48,23 @@ class CraftUI extends Phaser.GameObjects.Container {
       .setInteractive({ useHandCursor: true })
       .setDepth(1001);
 
-    this.closeBtn.on('pointerover', () => {
-      this.closeBtn.setStyle({ color: '#fff', backgroundColor: '#a33' });
+    closeBtn.on('pointerover', () => {
+      closeBtn.setStyle({ color: '#fff', backgroundColor: '#a33' });
     });
-    this.closeBtn.on('pointerout', () => {
-      this.closeBtn.setStyle({ color: '#a33', backgroundColor: '#fff' });
+    closeBtn.on('pointerout', () => {
+      closeBtn.setStyle({ color: '#a33', backgroundColor: '#fff' });
     });
-    this.closeBtn.on('pointerdown', () => {
-      this.destroy(); // Remove the CraftUI container and all children
+    closeBtn.on('pointerdown', () => {
+      this.scene.stop(); // Close the CraftUI overlay
     });
-    this.add(this.closeBtn);
 
     // Ingredient slots
     this.ingredientSlots = [];
     const slotSpacing = 70;
     for (let i = 0; i < 3; i++) {
-      const slot = scene.add.rectangle(-slotSpacing + i * slotSpacing, -30, 64, 64, 0xeeeeee)
+      const slotX = width / 2 - slotSpacing + i * slotSpacing;
+      const slotY = height / 2 - 30;
+      const slot = this.add.rectangle(slotX, slotY, 64, 64, 0xeeeeee)
         .setStrokeStyle(2, 0x999999)
         .setOrigin(0.5)
         .setInteractive({ useHandCursor: true });
@@ -59,46 +72,42 @@ class CraftUI extends Phaser.GameObjects.Container {
       slot.text = null;
       slot.image = null;
       slot.on('pointerdown', () => {
-        scene.scene.launch('OpenInventory', {
+        this.scene.launch('OpenInventory', {
           mode: 'selectItemForCraft',
           onSelect: (item) => {
             // Remove from inventory immediately
             if (typeof inventoryManager.removeItemByKey === 'function') {
               inventoryManager.removeItemByKey(item.key);
-              this.showInventoryDraggables(); // Refresh inventory UI
+              this.showInventoryDraggables();
             }
             slot.item = item;
             if (slot.text) slot.text.destroy();
             if (slot.image) slot.image.destroy();
             if (item.imageKey) {
-              slot.image = scene.add.image(slot.x, slot.y, item.imageKey)
-                .setScale(0.06).setOrigin(0.5);
-              this.add(slot.image);
+              slot.image = this.add.image(slotX, slotY, item.imageKey)
+                .setScale(0.18).setOrigin(0.5);
               slot.text = null;
             } else {
-              slot.text = scene.add.text(
-                slot.x, slot.y + 22,
+              slot.text = this.add.text(
+                slotX, slotY + 22,
                 item.name || item.key,
                 { fontSize: '12px', color: '#222', backgroundColor: '#fff8', padding: { left: 2, right: 2, top: 1, bottom: 1 } }
               ).setOrigin(0.5);
-              this.add(slot.text);
               slot.image = null;
             }
           }
         });
       });
       this.ingredientSlots.push(slot);
-      this.add(slot);
     }
 
     // Output slot
-    this.outputSlot = scene.add.rectangle(0, 30, 64, 64, 0xfff5cc)
+    this.outputSlot = this.add.rectangle(width / 2, height / 2 + 30, 64, 64, 0xfff5cc)
       .setStrokeStyle(2, 0xccaa66)
       .setOrigin(0.5);
-    this.add(this.outputSlot);
 
     // Craft button
-    this.craftButton = scene.add.text(-50, 90, 'Craft!', {
+    this.craftButton = this.add.text(width / 2 - 50, height / 2 + 90, 'Craft!', {
       fontFamily: 'sans-serif',
       fontSize: '16px',
       backgroundColor: '#88cc88',
@@ -115,17 +124,15 @@ class CraftUI extends Phaser.GameObjects.Container {
     this.craftButton.on('pointerdown', () => {
       this.craftSomething();
     });
-    this.add(this.craftButton);
 
     // Take Item button
-    this.takeItemBtnMain = scene.add.text(50, 90, 'Take Item', {
+    this.takeItemBtnMain = this.add.text(width / 2 + 50, height / 2 + 90, 'Take Item', {
       fontFamily: 'sans-serif',
       fontSize: '16px',
       backgroundColor: '#aaa',
       color: '#444',
       padding: { left: 10, right: 10, top: 4, bottom: 4 }
     }).setOrigin(0.5).setInteractive({ useHandCursor: true });
-    this.add(this.takeItemBtnMain);
     this.takeItemBtnMain.setAlpha(0.5);
     this.takeItemBtnMain.disableInteractive();
     this._takeItemBtnMainTaken = false;
@@ -140,7 +147,7 @@ class CraftUI extends Phaser.GameObjects.Container {
         let itemKey = this.lastCraftedResult.key || this.lastCraftedResult.itemKey;
         let itemName = this.lastCraftedResult.name || this.lastCraftedResult.itemName;
         if (!itemName) itemName = itemKey;
-        receivedItem(this.scene, itemKey, itemName);
+        receivedItem(this, itemKey, itemName);
       }
       this.takeItemBtnMain.setText('Taken!');
       this.takeItemBtnMain.setStyle({ backgroundColor: '#aaa', color: '#444' });
@@ -152,37 +159,35 @@ class CraftUI extends Phaser.GameObjects.Container {
     this.inventorySprites = [];
     this.showInventoryDraggables();
 
-    // Drag events
-    scene.input.on('dragstart', (pointer, gameObject) => {
+    // Drag events (optional, if you want to support drag-and-drop)
+    this.input.on('dragstart', (pointer, gameObject) => {
       gameObject.setAlpha(0.5);
     });
-    scene.input.on('dragend', (pointer, gameObject) => {
+    this.input.on('dragend', (pointer, gameObject) => {
       gameObject.setAlpha(1);
     });
-    scene.input.on('drop', (pointer, gameObject, dropZone) => {
+    this.input.on('drop', (pointer, gameObject, dropZone) => {
       dropZone.item = gameObject.itemData;
-      gameObject.x = dropZone.x + this.x;
-      gameObject.y = dropZone.y + this.y;
+      gameObject.x = dropZone.x;
+      gameObject.y = dropZone.y;
       if (dropZone.text) dropZone.text.destroy();
-      dropZone.text = scene.add.text(
+      dropZone.text = this.add.text(
         dropZone.x,
         dropZone.y + 22,
         gameObject.itemData.name || gameObject.itemData.key,
         { fontSize: '12px', color: '#222', backgroundColor: '#fff8', padding: { left: 2, right: 2, top: 1, bottom: 1 } }
       ).setOrigin(0.5);
-      this.add(dropZone.text);
     });
   }
 
   showInventoryDraggables() {
     if (this.inventorySprites) this.inventorySprites.forEach(spr => spr.destroy());
     this.inventorySprites = [];
-    // Always use inventoryManager.items directly
+    const { width, height } = this.sys.game.config;
     inventoryManager.items.forEach((item, i) => {
-      const spr = this.scene.add.image(this.x - 120 + i * 48, this.y + 80, item.imageKey || 'coin')
+      const spr = this.add.image(width / 2 - 120 + i * 48, height / 2 + 80, item.imageKey || 'coin')
         .setScale(0.18)
         .setInteractive({ draggable: true, useHandCursor: true });
-      this.add(spr); 
       spr.itemData = item;
       this.inventorySprites.push(spr);
     });
@@ -207,7 +212,7 @@ class CraftUI extends Phaser.GameObjects.Container {
         this.showInventoryDraggables(); // Refresh inventory UI
 
         // Clear ingredient slots
-        this.ingredientSlots.forEach(slot => {
+        this.ingredientSlots.forEach((slot, i) => {
           slot.item = null;
           if (slot.text) slot.text.destroy();
           if (slot.image) slot.image.destroy();
@@ -217,13 +222,13 @@ class CraftUI extends Phaser.GameObjects.Container {
         this.outputSlot.setFillStyle(0xccffcc);
         if (this.outputText) this.outputText.destroy();
         if (this.outputImage) this.outputImage.destroy();
-        this.outputText = this.scene.add.text(
-          this.outputSlot.x,
-          this.outputSlot.y + 30,
+        const { width, height } = this.sys.game.config;
+        this.outputText = this.add.text(
+          width / 2,
+          height / 2 + 60,
           match.result.name || match.result.key,
           { fontSize: '16px', color: '#228B22', backgroundColor: '#fff8', padding: { left: 6, right: 6, top: 3, bottom: 3 } }
         ).setOrigin(0.5);
-        this.add(this.outputText);
         // Store last crafted result for Take Item button
         this.lastCraftedResult = {
           ...match.result,
@@ -240,25 +245,25 @@ class CraftUI extends Phaser.GameObjects.Container {
         this.outputSlot.setFillStyle(0xffcccc);
         if (this.outputText) this.outputText.destroy();
         if (this.outputImage) this.outputImage.destroy();
-        this.outputText = this.scene.add.text(
-          this.outputSlot.x,
-          this.outputSlot.y + 30,
+        const { width, height } = this.sys.game.config;
+        this.outputText = this.add.text(
+          width / 2,
+          height / 2 + 60,
           'No matching recipe.',
           { fontSize: '14px', color: '#a33', backgroundColor: '#fff8', padding: { left: 4, right: 4, top: 2, bottom: 2 } }
         ).setOrigin(0.5);
-        this.add(this.outputText);
       }
     } else {
       if (this.outputText) this.outputText.destroy();
       if (this.outputImage) this.outputImage.destroy();
+      const { width, height } = this.sys.game.config;
       this.outputSlot.setFillStyle(0xffcccc);
-      this.outputText = this.scene.add.text(
-        this.outputSlot.x,
-        this.outputSlot.y + 30,
+      this.outputText = this.add.text(
+        width / 2,
+        height / 2 + 60,
         'Select all ingredients!',
         { fontSize: '14px', color: '#a33', backgroundColor: '#fff8', padding: { left: 4, right: 4, top: 2, bottom: 2 } }
       ).setOrigin(0.5);
-      this.add(this.outputText);
     }
   }
 }

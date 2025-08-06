@@ -8,13 +8,18 @@ class OpenSeedPouch extends Phaser.Scene {
     this.seedTexts = [];
     this.seedImages = [];
   }
+  preload() {
+  this.load.image("pouchBackground", "/assets/ui-items/overlayBg.png");
+}
 
   create(data) {
     const { width, height } = this.sys.game.config;
-    this.add.rectangle(width / 2, height / 2, 420, 320, 0x567d46)
-      .setStrokeStyle(4, 0x3e2f1c)
-      .setAlpha(0.95)
-      .setDepth(105);
+
+    // Use pouchBackground image instead of rectangle
+    this.add.image(width / 2, height / 2, "pouchBackground")
+      .setDisplaySize(420, 320)
+      .setDepth(105)
+      .setAlpha(0.95);
 
     this.add.text(width / 2, height / 2 - 120, 'Seed Pouch', {
       fontFamily: 'Georgia',

@@ -16,13 +16,17 @@ class OpenInventory extends Phaser.Scene {
     this.itemTexts = [];
     this.itemImages = [];
   }
-
+preload() {
+  this.load.image("inventoryBackground", "/assets/ui-items/overlayBg.png");
+}
   create() {
     const { width, height } = this.sys.game.config;
-    this.add.rectangle(width / 2, height / 2, 420, 320, 0x567d46)
-      .setStrokeStyle(4, 0x3e2f1c)
-      .setAlpha(0.95)
-      .setDepth(105);
+
+    // Use inventoryBackground image instead of rectangle
+    this.add.image(width / 2, height / 2, "inventoryBackground")
+      .setDisplaySize(420, 320)
+      .setDepth(105)
+      .setAlpha(0.95);
 
     this.add.text(width / 2, height / 2 - 120, "Inventory", {
       fontFamily: "Georgia",
