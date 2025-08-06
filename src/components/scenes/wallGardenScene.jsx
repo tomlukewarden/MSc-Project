@@ -72,12 +72,9 @@ class WallGardenScene extends Phaser.Scene {
     this.load.image("baseCream", "/assets/shopItems/cream.png");
     this.load.image("aloePlant", "/assets/plants/aloe.PNG");
     this.load.image('aloeAfterSunCream', '/assets/crafting/creamRemedy.png');
-    
-
   }
 
   create() {
-    // DEBUG: Show all loaded texture keys and highlight missing ones
     const debugY = 30;
     const loadedKeys = this.textures.getTextureKeys();
     const expectedKeys = [

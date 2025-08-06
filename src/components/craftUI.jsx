@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import recipieData from '../recipieData';
 import { receivedItem } from './recievedItem';
-import inventoryManager from './inventoryManager';
+import { inventoryManager } from './inventoryManager';
 
 class CraftUI extends Phaser.GameObjects.Container {
   constructor(scene, x, y) {
@@ -24,7 +24,30 @@ class CraftUI extends Phaser.GameObjects.Container {
     }).setOrigin(0.5);
     this.add(this.title);
 
-    // Ingredient slots as drop zones or click-to-select
+    // X (close) button
+    this.closeBtn = scene.add.text(135, -90, '✖', {
+      fontFamily: 'sans-serif',
+      fontSize: '22px',
+      color: '#a33',
+      backgroundColor: '#fff',
+      padding: { left: 6, right: 6, top: 2, bottom: 2 }
+    })
+      .setOrigin(0.5)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(1001);
+
+    this.closeBtn.on('pointerover', () => {
+      this.closeBtn.setStyle({ color: '#fff', backgroundColor: '#a33' });
+    });
+    this.closeBtn.on('pointerout', () => {
+      this.closeBtn.setStyle({ color: '#a33', backgroundColor: '#fff' });
+    });
+    this.closeBtn.on('pointerdown', () => {
+      this.destroy(); // Remove the CraftUI container and all children
+    });
+    this.add(this.closeBtn);
+
+    // Ingredient slots
     this.ingredientSlots = [];
     const slotSpacing = 70;
     for (let i = 0; i < 3; i++) {
@@ -35,35 +58,28 @@ class CraftUI extends Phaser.GameObjects.Container {
       slot.item = null;
       slot.text = null;
       slot.image = null;
-      // On click, open inventory in select mode
       slot.on('pointerdown', () => {
-        // Launch inventory in select mode, pass callback
         scene.scene.launch('OpenInventory', {
           mode: 'selectItemForCraft',
           onSelect: (item) => {
+            // Remove from inventory immediately
+            if (typeof inventoryManager.removeItemByKey === 'function') {
+              inventoryManager.removeItemByKey(item.key);
+              this.showInventoryDraggables(); // Refresh inventory UI
+            }
             slot.item = item;
-            // Remove previous text/image if any
             if (slot.text) slot.text.destroy();
             if (slot.image) slot.image.destroy();
             if (item.imageKey) {
-              slot.image = scene.add.image(
-                slot.x,
-                slot.y,
-                item.imageKey
-              ).setScale(0.22).setOrigin(0.5);
+              slot.image = scene.add.image(slot.x, slot.y, item.imageKey)
+                .setScale(0.06).setOrigin(0.5);
               this.add(slot.image);
               slot.text = null;
             } else {
               slot.text = scene.add.text(
-                slot.x,
-                slot.y + 22,
+                slot.x, slot.y + 22,
                 item.name || item.key,
-                {
-                  fontSize: '12px',
-                  color: '#222',
-                  backgroundColor: '#fff8',
-                  padding: { left: 2, right: 2, top: 1, bottom: 1 }
-                }
+                { fontSize: '12px', color: '#222', backgroundColor: '#fff8', padding: { left: 2, right: 2, top: 1, bottom: 1 } }
               ).setOrigin(0.5);
               this.add(slot.text);
               slot.image = null;
@@ -93,18 +109,15 @@ class CraftUI extends Phaser.GameObjects.Container {
     this.craftButton.on('pointerover', () => {
       this.craftButton.setStyle({ backgroundColor: '#66bb66' });
     });
-
     this.craftButton.on('pointerout', () => {
       this.craftButton.setStyle({ backgroundColor: '#88cc88' });
     });
-
     this.craftButton.on('pointerdown', () => {
       this.craftSomething();
     });
-
     this.add(this.craftButton);
 
-    // Add Take Item button beside Craft button
+    // Take Item button
     this.takeItemBtnMain = scene.add.text(50, 90, 'Take Item', {
       fontFamily: 'sans-serif',
       fontSize: '16px',
@@ -117,39 +130,17 @@ class CraftUI extends Phaser.GameObjects.Container {
     this.takeItemBtnMain.disableInteractive();
     this._takeItemBtnMainTaken = false;
     this.takeItemBtnMain.on('pointerdown', () => {
-      alert('[DEBUG] Take Item button pressed');
-      if (this._takeItemBtnMainTaken) {
-        alert('[DEBUG] Already taken, ignoring.');
-        return;
-      }
-      if (!this.lastCraftedResult) {
-        alert('[DEBUG] No crafted result available.');
-        return;
-      }
+      if (this._takeItemBtnMainTaken) return;
+      if (!this.lastCraftedResult) return;
       this._takeItemBtnMainTaken = true;
-      alert('[DEBUG] Adding item to inventory: ' + JSON.stringify(this.lastCraftedResult));
-      // Remove used ingredients from inventory when item is taken
-      if (this.scene.inventoryManager && typeof this.scene.inventoryManager.removeItemByKey === 'function' && this.lastCraftedResult.usedIngredients) {
-        this.lastCraftedResult.usedIngredients.forEach(key => {
-          this.scene.inventoryManager.removeItemByKey(key);
-        });
-        alert('[DEBUG] Removed used ingredients from inventory.');
-      }
-      if (this.scene.inventoryManager && this.scene.inventoryManager.addItem) {
-        this.scene.inventoryManager.addItem(this.lastCraftedResult);
-        alert('[DEBUG] Added to inventoryManager.');
-      } else {
-        alert('[DEBUG] inventoryManager or addItem missing.');
+      if (inventoryManager && inventoryManager.addItem) {
+        inventoryManager.addItem(this.lastCraftedResult);
       }
       if (typeof receivedItem === 'function') {
         let itemKey = this.lastCraftedResult.key || this.lastCraftedResult.itemKey;
         let itemName = this.lastCraftedResult.name || this.lastCraftedResult.itemName;
-        // Fallback: if itemName is missing, use itemKey
         if (!itemName) itemName = itemKey;
-        alert('[DEBUG] Calling imported receivedItem with: ' + itemKey + ', ' + itemName);
         receivedItem(this.scene, itemKey, itemName);
-      } else {
-        alert('[DEBUG] No receivedItem or scene.launch available.');
       }
       this.takeItemBtnMain.setText('Taken!');
       this.takeItemBtnMain.setStyle({ backgroundColor: '#aaa', color: '#444' });
@@ -157,11 +148,8 @@ class CraftUI extends Phaser.GameObjects.Container {
       this.takeItemBtnMain.disableInteractive();
     });
 
-    // Inventory (set externally or use fallback)
-    this.inventory = scene.inventory || [];
+    // Inventory sprites
     this.inventorySprites = [];
-
-    // Show inventory items as draggable images
     this.showInventoryDraggables();
 
     // Drag events
@@ -172,12 +160,9 @@ class CraftUI extends Phaser.GameObjects.Container {
       gameObject.setAlpha(1);
     });
     scene.input.on('drop', (pointer, gameObject, dropZone) => {
-      // Assign item to slot
       dropZone.item = gameObject.itemData;
-      // Move sprite to slot
       gameObject.x = dropZone.x + this.x;
       gameObject.y = dropZone.y + this.y;
-      // Remove previous text if any
       if (dropZone.text) dropZone.text.destroy();
       dropZone.text = scene.add.text(
         dropZone.x,
@@ -190,54 +175,37 @@ class CraftUI extends Phaser.GameObjects.Container {
   }
 
   showInventoryDraggables() {
-    // Remove previous sprites
     if (this.inventorySprites) this.inventorySprites.forEach(spr => spr.destroy());
     this.inventorySprites = [];
-    // Show each inventory item as a draggable image
-    this.inventory.forEach((item, i) => {
+    // Always use inventoryManager.items directly
+    inventoryManager.items.forEach((item, i) => {
       const spr = this.scene.add.image(this.x - 120 + i * 48, this.y + 80, item.imageKey || 'coin')
         .setScale(0.18)
         .setInteractive({ draggable: true, useHandCursor: true });
+      this.add(spr); 
       spr.itemData = item;
       this.inventorySprites.push(spr);
     });
   }
 
-  setIngredients(items) {
-    // For drag-and-drop, just update slot.item and show image in box if available
-    this.ingredientSlots.forEach((slot, index) => {
-      slot.item = items[index] || null;
-      if (slot.text) slot.text.destroy();
-      if (slot.image) slot.image.destroy();
-      if (slot.item && slot.item.imageKey) {
-        slot.image = this.scene.add.image(
-          slot.x + this.x,
-          slot.y + this.y,
-          slot.item.imageKey
-        ).setScale(0.22).setOrigin(0.5);
-        this.add(slot.image);
-        slot.text = null;
-      } else {
-        slot.text = null;
-        slot.image = null;
-      }
-    });
-  }
-
   craftSomething() {
     const ingredients = this.ingredientSlots.map(s => s.item);
-    alert('Crafting triggered! Ingredients: ' + JSON.stringify(ingredients.map(i => i && i.key)));
     if (ingredients.every(item => item)) {
-      alert('All ingredient slots filled.');
       const selectedOrder = ingredients.map(item => item && item.key);
-      alert('Selected order: ' + JSON.stringify(selectedOrder));
       const match = recipieData.find(recipe => {
         if (!recipe.order) return false;
-        const orderMatch = recipe.order.length === selectedOrder.length && recipe.order.every((key, idx) => key === selectedOrder[idx]);
-        if (orderMatch) alert('Found matching recipe: ' + JSON.stringify(recipe));
-        return orderMatch;
+        return recipe.order.length === selectedOrder.length &&
+          recipe.order.every((key, idx) => key === selectedOrder[idx]);
       });
       if (match) {
+        // Remove used ingredients from inventory immediately after crafting
+        if (typeof inventoryManager.removeItemByKey === 'function') {
+          selectedOrder.forEach(key => {
+            inventoryManager.removeItemByKey(key);
+          });
+        }
+        this.showInventoryDraggables(); // Refresh inventory UI
+
         // Clear ingredient slots
         this.ingredientSlots.forEach(slot => {
           slot.item = null;
@@ -249,7 +217,6 @@ class CraftUI extends Phaser.GameObjects.Container {
         this.outputSlot.setFillStyle(0xccffcc);
         if (this.outputText) this.outputText.destroy();
         if (this.outputImage) this.outputImage.destroy();
-        // Show crafted item name as text in output slot
         this.outputText = this.scene.add.text(
           this.outputSlot.x,
           this.outputSlot.y + 30,
@@ -257,12 +224,11 @@ class CraftUI extends Phaser.GameObjects.Container {
           { fontSize: '16px', color: '#228B22', backgroundColor: '#fff8', padding: { left: 6, right: 6, top: 3, bottom: 3 } }
         ).setOrigin(0.5);
         this.add(this.outputText);
-        // Store last crafted result for main Take Item button, ensure key and name are present
+        // Store last crafted result for Take Item button
         this.lastCraftedResult = {
           ...match.result,
           key: match.result.key || selectedOrder[0],
-          name: match.result.name || match.result.itemName || '',
-          usedIngredients: [...selectedOrder]
+          name: match.result.name || match.result.itemName || ''
         };
         // Enable and reset Take Item button
         this._takeItemBtnMainTaken = false;
@@ -271,7 +237,6 @@ class CraftUI extends Phaser.GameObjects.Container {
         this.takeItemBtnMain.setAlpha(1);
         this.takeItemBtnMain.setInteractive({ useHandCursor: true });
       } else {
-        alert('No matching recipe found for order: ' + JSON.stringify(selectedOrder));
         this.outputSlot.setFillStyle(0xffcccc);
         if (this.outputText) this.outputText.destroy();
         if (this.outputImage) this.outputImage.destroy();
@@ -284,7 +249,6 @@ class CraftUI extends Phaser.GameObjects.Container {
         this.add(this.outputText);
       }
     } else {
-      alert('Not all ingredient slots are filled!');
       if (this.outputText) this.outputText.destroy();
       if (this.outputImage) this.outputImage.destroy();
       this.outputSlot.setFillStyle(0xffcccc);
