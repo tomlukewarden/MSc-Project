@@ -3,7 +3,6 @@ import Phaser from 'phaser';
 import itemsData from '../../items';
 import { showOption } from '../../dialogue/dialogueUIHelpers';
 import { receivedItem } from '../recievedItem';
-import { CoinManager } from '../coinManager';
 import SeedPouchLogic from '../seedPouchLogic';
 // Ensure global inventoryManager instance
 import { inventoryManager as globalInventoryManager } from "../inventoryManager";
@@ -16,19 +15,8 @@ if (typeof window !== "undefined") {
 class ShopScene extends Phaser.Scene {
   constructor() {
     super({ key: 'ShopScene' });
-    // Use global CoinManager
-    if (typeof window !== "undefined") {
-      if (!window.coinManager) {
-        window.coinManager = CoinManager.load ? CoinManager.load() : new CoinManager();
-      }
-      this.coinManager = window.coinManager;
-    } else {
-      this.coinManager = CoinManager.load ? CoinManager.load() : new CoinManager();
-    }
-    if (!window.inventoryManager) {
-      window.inventoryManager = new InventoryManager();
-    }
-    this.inventoryManager = window.inventoryManager;
+    // Remove all CoinManager logic
+    this.coins = 999; // Set demo coins here
   }
 
   preload() {
@@ -70,8 +58,8 @@ class ShopScene extends Phaser.Scene {
     // Main shop background
     this.add.image(width / 2, height / 2, 'shopBackground').setDepth(0).setScale(0.225);
 
-    // Coins text
-    const coinText = this.add.text(width - 40, 30, `${this.coinManager.coins}c`, {
+    // Coins text (use this.coins instead of coinManager)
+    const coinText = this.add.text(width - 40, 30, `${this.coins}c`, {
       fontFamily: "Georgia",
       fontSize: "24px",
       color: "#ffe066",
@@ -79,7 +67,8 @@ class ShopScene extends Phaser.Scene {
       padding: { left: 12, right: 12, top: 6, bottom: 6 }
     }).setOrigin(1, 0).setDepth(10);
 
-    this.coinManager.onChange((coins) => coinText.setText(`${coins}c`));
+    // Helper to update coins display
+    const updateCoins = () => coinText.setText(`${this.coins}c`);
 
 
     // Seeds from itemsData
@@ -92,13 +81,17 @@ class ShopScene extends Phaser.Scene {
       plantKey: item.plantKey
     }));
 
-    // Extras from itemsData
-    const extraItems = itemsData.filter(item => item.type !== 'seed').map(item => ({
+    // Only show crafting materials as extras
+    // If you have a type or flag, use that. Otherwise, filter by key:
+    const craftingMaterialKeys = ["baseCream", "oilBase", "alchoholBase", "creamBase", "oilBaseImage", "creamBaseImage", "alchoholBaseImage"];
+    const extraItems = itemsData.filter(item =>
+      craftingMaterialKeys.includes(item.key)
+    ).map(item => ({
       key: item.key,
       name: item.name,
       price: item.shopPrice ? item.shopPrice : 40,
       imageKey: item.imageKey || item.key,
-      type: item.type || 'extra'
+      type: 'extra'
     }));
 
     // --- Tab UI ---
@@ -110,7 +103,6 @@ class ShopScene extends Phaser.Scene {
     const tabH = 40;
     const tabX1 = width - 400;
     const tabX2 = width - 260;
-    const tabX3 = width - 120;
 
     const seedsTab = this.add.rectangle(tabX1, tabY, tabW, tabH, 0x567d46, 0.95)
       .setStrokeStyle(3, 0x88ccff)
@@ -128,13 +120,6 @@ class ShopScene extends Phaser.Scene {
       fontFamily: 'Georgia', fontSize: '22px', color: '#fff'
     }).setOrigin(0.5).setDepth(21);
 
-    const toolsTab = this.add.rectangle(tabX3, tabY, tabW, tabH, 0x3bb273, 0.95)
-      .setStrokeStyle(3, 0x88ccff)
-      .setInteractive({ useHandCursor: true })
-      .setDepth(20);
-    const toolsText = this.add.text(tabX3, tabY, 'Tools', {
-      fontFamily: 'Georgia', fontSize: '22px', color: '#fff'
-    }).setOrigin(0.5).setDepth(21);
 
     const itemAreaX = width - 250;
     const itemStartY = 200; // Moved grid down from 150 to 200
@@ -149,7 +134,6 @@ class ShopScene extends Phaser.Scene {
       let tabItems = [];
       if (tab === 'seeds') tabItems = seedItems;
       else if (tab === 'extras') tabItems = extraItems;
-      else if (tab === 'tools') tabItems = toolItems;
       // Grid settings
       const cols = 3;
       const cellW = 110;
@@ -211,11 +195,12 @@ class ShopScene extends Phaser.Scene {
               return;
             }
             const totalPrice = quantity * parseInt(item.price);
-            if (this.coinManager.subtract(totalPrice)) {
+            if (this.coins >= totalPrice) {
+              this.coins -= totalPrice;
+              updateCoins();
               // Seeds ONLY go to seed pouch, not inventory
               if (item.type === 'seed') {
                 SeedPouchLogic.addSeed(item, quantity);
-                // Do NOT call inventoryManager.addItem for seeds
                 receivedItem(this, item.key, `${item.name} x${quantity}`);
                 quantityPrompt.destroy();
                 this.destroyDialogueUI();
@@ -266,21 +251,12 @@ class ShopScene extends Phaser.Scene {
       currentTab = 'seeds';
       seedsTab.setFillStyle(0x567d46, 0.95);
       extrasTab.setFillStyle(0x222233, 0.95);
-      toolsTab.setFillStyle(0x3bb273, 0.95);
       renderShopItems.call(this, currentTab);
     });
     extrasTab.on('pointerdown', () => {
       currentTab = 'extras';
       seedsTab.setFillStyle(0x222233, 0.95);
       extrasTab.setFillStyle(0x567d46, 0.95);
-      toolsTab.setFillStyle(0x3bb273, 0.95);
-      renderShopItems.call(this, currentTab);
-    });
-    toolsTab.on('pointerdown', () => {
-      currentTab = 'tools';
-      seedsTab.setFillStyle(0x222233, 0.95);
-      extrasTab.setFillStyle(0x222233, 0.95);
-      toolsTab.setFillStyle(0x567d46, 0.95);
       renderShopItems.call(this, currentTab);
     });
 
