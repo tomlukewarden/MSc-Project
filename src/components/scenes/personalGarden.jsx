@@ -82,6 +82,7 @@ class PersonalGarden extends Phaser.Scene {
       ["garlicPlant", "/assets/plants/garlic.PNG"],
       ["thymePlant", "/assets/plants/thyme.PNG"],
       ["willowPlant", "/assets/plants/willow.PNG"],
+      ["craftingBench", "/assets/crafting/bench.png"]
     ];
     assets.forEach(([key, path]) => this.load.image(key, path));
   }
@@ -173,7 +174,7 @@ class PersonalGarden extends Phaser.Scene {
                 this.updatePlotText(plotText, plot);
                 this.updatePlotColor(plotRect, plot);
                 preparedPlotImg.setVisible(true);
-                // ...removed alert...
+          
               }
               break;
             case 'prepared':
@@ -183,7 +184,7 @@ class PersonalGarden extends Phaser.Scene {
                   this.updatePlotText(plotText, plot);
                   this.updatePlotColor(plotRect, plot);
                   preparedPlotImg.setVisible(true);
-                  // ...removed alert...
+      
                 }
               });
               break;
@@ -243,7 +244,7 @@ class PersonalGarden extends Phaser.Scene {
     });
 
     const scaleFactor = 0.14;
-    this.add.image(0, 0, "gardenBackground").setOrigin(0).setScale(scaleFactor);
+    this.add.image(0, 0, "gardenBackground").setOrigin(0).setScale(0.22);
 
     // Tent image (not interactive)
     const tentImg = this.add.image(0, 0, "tent").setOrigin(0).setScale(scaleFactor).setDepth(5);
@@ -383,6 +384,46 @@ class PersonalGarden extends Phaser.Scene {
       this.saveSceneState();
       clearInterval(this._saveInterval);
     });
+
+    // Add the crafting bench image to the garden
+    const benchX = 450;
+    const benchY = 200;
+    const craftingBenchImg = this.add.image(benchX, benchY, "craftingBench")
+      .setScale(0.05)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(20);
+
+    craftingBenchImg.on("pointerdown", () => {
+      // Remove any existing CraftUI overlay
+      if (this.craftUIOverlay) {
+        this.craftUIOverlay.destroy(true);
+        this.craftUIOverlay = null;
+      }
+      // Dynamically import the CraftUI class
+      import('../craftUI').then(({ default: CraftUI }) => {
+        const { width, height } = this.sys.game.config;
+        this.craftUIOverlay = new CraftUI(this, width / 2, height / 2);
+        this.craftUIOverlay.setDepth && this.craftUIOverlay.setDepth(200);
+
+        // Add a close button for the overlay
+        const closeBtn = this.add.text(width / 2 + 140, height / 2 - 90, '✕', {
+          fontFamily: 'Georgia',
+          fontSize: '28px',
+          color: '#a33',
+          backgroundColor: '#fff5',
+          padding: { left: 10, right: 10, top: 2, bottom: 2 }
+        })
+          .setOrigin(0.5)
+          .setInteractive({ useHandCursor: true })
+          .setDepth(201);
+
+        closeBtn.on('pointerdown', () => {
+          this.craftUIOverlay.destroy(true);
+          closeBtn.destroy();
+          this.craftUIOverlay = null;
+        });
+      });
+    });
   }
 
   saveSceneState() {
@@ -491,7 +532,7 @@ class PersonalGarden extends Phaser.Scene {
       .setStrokeStyle(2, 0x4caf50)
       .setDepth(199);
     const hoeImg = this.add.image(40, 40, 'hoe')
-      .setScale(1.8)
+      .setScale(0.03)
       .setInteractive({ useHandCursor: true })
       .setDepth(203);
     // Watering Can
@@ -499,7 +540,7 @@ class PersonalGarden extends Phaser.Scene {
       .setStrokeStyle(2, 0x4caf50)
       .setDepth(199);
     const canImg = this.add.image(100, 40, 'wateringCan')
-      .setScale(1.8)
+      .setScale(0.03)
       .setInteractive({ useHandCursor: true })
       .setDepth(203);
     // Shovel
@@ -507,7 +548,7 @@ class PersonalGarden extends Phaser.Scene {
       .setStrokeStyle(2, 0x4caf50)
       .setDepth(199);
     const shovelImg = this.add.image(160, 40, 'shovel')
-      .setScale(1.8)
+      .setScale(0.03)
       .setInteractive({ useHandCursor: true })
       .setDepth(203);
 
