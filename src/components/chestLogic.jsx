@@ -12,6 +12,8 @@ class ChestLogic {
   openChest(itemsArray) {
     if (this.scene) {
       this.chestOpen = true;
+      // Pass itemsArray to ChestUI and also set window.chestItems for legacy code
+      window.chestItems = Array.isArray(itemsArray) ? [...itemsArray] : [];
       this.scene.scene.launch("ChestUI", { items: itemsArray });
       console.log(`Chest opened`);
     } else {

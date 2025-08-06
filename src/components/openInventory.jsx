@@ -131,6 +131,12 @@ class OpenInventory extends Phaser.Scene {
             this.scene.stop();
             return;
           }
+          // Crafting slot selection mode
+          if (this.scene.settings.data && this.scene.settings.data.mode === 'selectItemForCraft' && typeof this.scene.settings.data.onSelect === 'function') {
+            this.scene.settings.data.onSelect(item);
+            this.scene.stop();
+            return;
+          }
           // ...existing code for NPC gifting and item removal...
           const middleGardenScene = this.scene.get('MiddleGardenScene');
           if (middleGardenScene && middleGardenScene.awaitingPeriwinkleGive && item.key === "periwinklePlant") {

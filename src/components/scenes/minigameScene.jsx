@@ -29,11 +29,7 @@ class MiniGameScene extends Phaser.Scene {
         const allScenes = this.scene.manager.getScenes(true);
         const lastNonMinigame = allScenes.reverse().find(s => s.scene.key !== chosenMinigame && s.scene.key !== this.scene.key);
         if (lastNonMinigame) {
-          // Transition via LoaderScene before resuming
-          this.scene.start("LoaderScene", {
-            nextSceneKey: lastNonMinigame.scene.key,
-            nextSceneData: {}
-          });
+          this.scene.resume(lastNonMinigame.scene.key);
         }
       }
     });

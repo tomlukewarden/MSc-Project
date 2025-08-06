@@ -69,12 +69,12 @@ class WallGardenScene extends Phaser.Scene {
     this.load.image('elephantHappy', '/assets/npc/elephant/happy.png');
     this.load.image('jasminePlant', '/assets/plants/jasmine.PNG');
     this.load.image('autumnShard', '/assets/items/autumn.png');
-    
-
+    this.load.image("baseCream", "/assets/shopItems/cream.png");
+    this.load.image("aloePlant", "/assets/plants/aloe.PNG");
+    this.load.image('aloeAfterSunCream', '/assets/crafting/creamRemedy.png');
   }
 
   create() {
-    // DEBUG: Show all loaded texture keys and highlight missing ones
     const debugY = 30;
     const loadedKeys = this.textures.getTextureKeys();
     const expectedKeys = [
@@ -581,9 +581,12 @@ class WallGardenScene extends Phaser.Scene {
   setupChest(width, height) {
     const chestItemsArray = [
       { name: "Spring Shard", color: 0x88cc88, key: "springShard" },
-      {name: "Summer Shard", color: 0x88cc88, key: "summerShard"},
-      {name: "Autumn Shard", color: 0x88cc88, key: "autumnShard"},
-      {name: "Winter Shard", color: 0x88cc88, key: "winterShard"},
+      { name: "Summer Shard", color: 0x88cc88, key: "summerShard" },
+      { name: "Autumn Shard", color: 0x88cc88, key: "autumnShard" },
+      { name: "Winter Shard", color: 0x88cc88, key: "winterShard" },
+      { name: "Foxglove Plant", color: 0x8bc34a, key: "foxglovePlant" },
+      { name: "Foxglove Plant", color: 0x8bc34a, key: "foxglovePlant" },
+      { name: "Tea Bag", color: 0xf5e6b3, key: "teaBag" },
     ];
     // Asset existence check for chest
     const chest = this.textures.exists('chestClosed')
@@ -611,10 +614,13 @@ class WallGardenScene extends Phaser.Scene {
       { x: 420, y: 350 }
     ];
     const bushCount = bushPositions.length;
-    // Randomly pick which bush will have the periwinkle and jasmine
-    const periwinkleBushIndex = Phaser.Math.Between(0, bushCount - 1);
-    const jasmineBushIndex = Phaser.Math.Between(0, bushCount - 1);
-    // Track dispensed state for each bush
+    // Set up rewards: 2 aloe plants, 1 base cream, 1 coins
+    const bushRewards = [
+      { type: "item", key: "aloePlant", name: "Aloe Plant", color: 0x8bc34a },
+      { type: "item", key: "aloePlant", name: "Aloe Plant", color: 0x8bc34a },
+      { type: "item", key: "baseCream", name: "Base Cream", color: 0xf5e6b3 },
+      { type: "coins" }
+    ];
     this.bushDispensed = this.bushDispensed || Array(bushCount).fill(false);
 
     for (let i = 0; i < bushCount; i++) {
@@ -642,159 +648,19 @@ class WallGardenScene extends Phaser.Scene {
           return;
         }
 
-        // Jasmine bush logic
-        if (i === jasmineBushIndex && !this.jasmineFound) {
-          const jasmine = plantData.find(p => p.key === "jasminePlant");
-          if (jasmine) {
-            showOption(
-              this,
-              "You found a Jasmine plant hidden in the bush... But a cheeky little animal is trying to steal it!",
-              {
-                options: [
-                  {
-                    label: "Play a game to win it!",
-                    callback: () => {
-                      this.destroyDialogueUI();
-                      this.dialogueActive = false;
-                      this.updateHUDState();
-                      this.dialogueOnComplete = null;
-                      this.scene.launch("MiniGameScene", {
-                        onWin: () => {
-                          this.scene.stop("MiniGameScene");
-                          this.scene.resume();
-                          // Award 50 coins for winning minigame
-                          const coinsWon = 50;
-                          coinManager.add(coinsWon);
-                          saveToLocal("coins", coinManager.coins);
-                          receivedItem(this, jasmine.key, jasmine.name);
-                          receivedItem(this, "coin", `${coinsWon} Coins`, { scale: 0.15 });
-                          inventoryManager.addItem(jasmine);
-                          addPlantToJournal(jasmine.key);
-                          showDialogue(this,
-                            "You won the game! The animal reluctantly gives you the Jasmine plant.",
-                            { imageKey: jasmine.imageKey }
-                          );
-                          this.jasmineFound = true;
-                          this.dialogueActive = true;
-                          this.dialogueOnComplete = () => {
-                            this.destroyDialogueUI();
-                            this.dialogueActive = false;
-                            this.updateHUDState();
-                            this.dialogueOnComplete = null;
-                          };
-                          this.bushDispensed[i] = true;
-                        }
-                      });
-                      this.scene.pause();
-                    }
-                  },
-                  {
-                    label: "Try again later",
-                    callback: () => {
-                      this.destroyDialogueUI();
-                      this.dialogueActive = false;
-                      this.updateHUDState();
-                      this.dialogueOnComplete = null;
-                    }
-                  }
-                ],
-                imageKey: jasmine.imageKey
-              }
-            );
-          } else {
-            showDialogue(this, "You found a rare plant, but its data is missing!", {});
-            this.dialogueOnComplete = () => {
-              this.destroyDialogueUI();
-              this.dialogueActive = false;
-              this.updateHUDState();
-              this.dialogueOnComplete = null;
-            };
-            this.bushDispensed[i] = true;
-          }
-          // jasmineFound is set only after winning the minigame!
-          return;
+        // Give aloePlant or baseCream
+        const reward = bushRewards[i];
+        if (reward.type === "item") {
+          inventoryManager.addItem({ name: reward.name, key: reward.key, color: reward.color });
+          receivedItem(this, reward.key, reward.name);
+          showDialogue(this, `You found a ${reward.name} hidden in the bush!`);
+        } else if (reward.type === "coins") {
+          const coins = Phaser.Math.Between(10, 30);
+          coinManager.add(coins);
+          saveToLocal("coins", coinManager.coins);
+          receivedItem(this, "coin", `${coins} Coins`, { scale: 0.15 });
+          showDialogue(this, `You found ${coins} coins hidden in the bush!`);
         }
-
-        // Periwinkle bush logic
-        if (i === periwinkleBushIndex && !periwinkleFound) {
-          // Give periwinkle plant (after minigame)
-          const periwinkle = plantData.find(p => p.key === "periwinklePlant");
-          if (periwinkle) {
-            showOption(
-              this,
-              "You found a Periwinkle plant hidden in the bush... But a cheeky little animal is trying to steal it!",
-              {
-                options: [
-                  {
-                    label: "Play a game to win it!",
-                    callback: () => {
-                      this.destroyDialogueUI();
-                      this.dialogueActive = false;
-                      this.updateHUDState();
-                      this.dialogueOnComplete = null;
-                      this.scene.launch("MiniGameScene", {
-                        onWin: () => {
-                          this.scene.stop("MiniGameScene");
-                          this.scene.resume();
-                          // Award 50 coins for winning minigame
-                          const coinsWon = 50;
-                          coinManager.add(coinsWon);
-                          saveToLocal("coins", coinManager.coins);
-                          receivedItem(this, periwinkle.key, periwinkle.name);
-                          receivedItem(this, "coin", `${coinsWon} Coins`, { scale: 0.15 });
-                          inventoryManager.addItem(periwinkle);
-                          addPlantToJournal(periwinkle.key);
-                          showDialogue(this,
-                            "You won the game! The animal reluctantly gives you the Periwinkle plant.",
-                            { imageKey: periwinkle.imageKey }
-                          );
-                          periwinkleFound = true;
-                          this.dialogueActive = true;
-                          this.dialogueOnComplete = () => {
-                            this.destroyDialogueUI();
-                            this.dialogueActive = false;
-                            this.updateHUDState();
-                            this.dialogueOnComplete = null;
-                          };
-                          this.bushDispensed[i] = true;
-                        }
-                      });
-                      this.scene.pause();
-                    }
-                  },
-                  {
-                    label: "Try again later",
-                    callback: () => {
-                      this.destroyDialogueUI();
-                      this.dialogueActive = false;
-                      this.updateHUDState();
-                      this.dialogueOnComplete = null;
-                    }
-                  }
-                ],
-                imageKey: periwinkle.imageKey
-              }
-            );
-          } else {
-            showDialogue(this, "You found a rare plant, but its data is missing!", {});
-            this.dialogueOnComplete = () => {
-              this.destroyDialogueUI();
-              this.dialogueActive = false;
-              this.updateHUDState();
-              this.dialogueOnComplete = null;
-            };
-            this.bushDispensed[i] = true;
-          }
-          // periwinkleFound is set only after winning the minigame!
-          return;
-        }
-
-        // Give coins
-        const coins = Phaser.Math.Between(10, 30);
-        coinManager.add(coins);
-        saveToLocal("coins", coinManager.coins);
-        receivedItem(this, "coin", `${coins} Coins`, { scale: 0.15 });
-        showDialogue(this, `You found ${coins} coins hidden in the bush!`);
         this.dialogueOnComplete = () => {
           this.destroyDialogueUI();
           this.dialogueActive = false;

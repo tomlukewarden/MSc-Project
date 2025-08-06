@@ -39,7 +39,21 @@ class FishGameScene extends Phaser.Scene {
             this.onWin = this.scene.settings.data.onWin;
             console.log("[FishGameScene] onWin callback received from scene data.");
         } else {
-            console.log("[FishGameScene] No onWin callback found in scene data.");
+      
+            this.onWin = () => {
+                // Example: award coins and close minigame
+                if (this.registry) {
+                    let coins = this.registry.get('coins') || 0;
+                    this.registry.set('coins', coins + 10);
+                }
+                if (this.scene && typeof this.scene.stop === 'function') {
+                    this.scene.stop('FishGameScene');
+                    this.scene.stop('MiniGameScene');
+                }
+                // Optionally show a message or transition
+                console.log('[FishGameScene] Default onWin: awarded coins and closed minigame.');
+            };
+            console.log("[FishGameScene] No onWin callback found in scene data. Using default.");
         }
         this.startFishingGame();
     }

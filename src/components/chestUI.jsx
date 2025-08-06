@@ -10,10 +10,9 @@ export class ChestUI extends Phaser.Scene {
     this.itemImages = [];
   }
 
-  init() {
-    // Always use window.chestItems as the source of truth
-    // Group stackable items by key+name
-    const rawItems = window.chestItems || [];
+  init(data) {
+    // Prefer items passed in data, fallback to window.chestItems
+    const rawItems = (data && Array.isArray(data.items)) ? data.items : (window.chestItems || []);
     const stackMap = {};
     rawItems.forEach(item => {
       const stackKey = `${item.key || ''}|${item.name || ''}`;
@@ -94,19 +93,15 @@ export class ChestUI extends Phaser.Scene {
     this.itemTexts = [];
     this.itemImages = [];
 
-    // Always use window.chestItems for rendering
-    // Group stackable items by key+name
-    const rawItems = window.chestItems || [];
-    const stackMap = {};
-    rawItems.forEach(item => {
-      const stackKey = `${item.key || ''}|${item.name || ''}`;
-      if (!stackMap[stackKey]) {
-        stackMap[stackKey] = { ...item, quantity: 1 };
-      } else {
-        stackMap[stackKey].quantity += 1;
+    // Use this.chestItems for rendering (already stacked in init)
+    // Always keep window.chestItems in sync for legacy code
+    window.chestItems = [];
+    this.chestItems.forEach(item => {
+      for (let i = 0; i < (item.quantity || 1); i++) {
+        window.chestItems.push({ ...item, quantity: 1 });
       }
     });
-    this.chestItems = Object.values(stackMap);
+
     const itemCount = this.chestItems.length;
     const itemSize = Math.min(90, Math.max(60, panelWidth / Math.max(itemCount, 1) - 20));
     const totalWidth = itemCount * (itemSize + 20) - 20;
@@ -156,8 +151,18 @@ export class ChestUI extends Phaser.Scene {
           }
           window.inventoryManager.addItem(itemToAdd);
         }
-        // Remove one matching item from window.chestItems
+        // Remove one matching item from this.chestItems and window.chestItems
         const stackKey = `${item.key || ''}|${item.name || ''}`;
+        // Remove from this.chestItems
+        const idxInChest = this.chestItems.findIndex(i => `${i.key || ''}|${i.name || ''}` === stackKey);
+        if (idxInChest !== -1) {
+          if (this.chestItems[idxInChest].quantity > 1) {
+            this.chestItems[idxInChest].quantity -= 1;
+          } else {
+            this.chestItems.splice(idxInChest, 1);
+          }
+        }
+        // Remove from window.chestItems
         const idxToRemove = window.chestItems.findIndex(i => `${i.key || ''}|${i.name || ''}` === stackKey);
         if (idxToRemove !== -1) window.chestItems.splice(idxToRemove, 1);
         // Recalculate panel size and redraw
