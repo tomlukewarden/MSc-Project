@@ -1,4 +1,5 @@
 import plantData from "../plantData";
+import { saveToLocal, loadFromLocal } from "../utils/localStorage";
 
 class InventoryManager {
   constructor(initialItems = []) {
@@ -8,12 +9,18 @@ class InventoryManager {
       'marigold', 'thyme', 'garlic', 'foxglove',
       'aloe', 'jasmine', 'lavender', 'periwinkle', 'willow'
     ]);
-    // Add initial items if provided
-    initialItems.forEach(item => this.addItem(item));
+    // Load from local storage if available, otherwise use initialItems
+    const saved = loadFromLocal("inventoryItems");
+    if (saved && Array.isArray(saved)) {
+      saved.forEach(item => this.addItem(item));
+    } else {
+      initialItems.forEach(item => this.addItem(item));
+    }
   }
 
-  // Utility method to notify listeners
+  // Utility method to notify listeners and save to local storage
   _notify() {
+    saveToLocal("inventoryItems", this.items);
     this.listeners.forEach(cb => cb([...this.items]));
   }
 
