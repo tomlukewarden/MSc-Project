@@ -1,12 +1,15 @@
 import Phaser from 'phaser';
+import { showDialogue } from '../dialogue/dialogueUIHelpers';
 
 class ForagingTutorial extends Phaser.Scene {
   constructor() {
     super({ key: 'ForagingTutorial' });
-    this.bushStates = [false, false, false, false]; // Track if each bush has been clicked
+    this.bushStates = [false, false, false, false];
     this.coinsFound = 0;
     this.plantsFound = [];
     this.minigameActive = false;
+    this.dialogueStep = 0;
+    this.dialogueActive = false;
   }
 
   preload() {
@@ -17,6 +20,7 @@ class ForagingTutorial extends Phaser.Scene {
     this.load.image('periwinklePlant', '/assets/plants/periwinkle.png');
     this.load.image('coin', '/assets/misc/coin.png');
     this.load.image('arrow', '/assets/ui-items/arrow.png');
+    this.load.image("butterflyHappy", "/assets/npc/butterfly/happy-butterfly-dio.png");
   }
 
   create() {
@@ -40,8 +44,8 @@ class ForagingTutorial extends Phaser.Scene {
       fontStyle: 'bold'
     }).setOrigin(0.5).setDepth(2);
 
-    // Instructions
-    this.instructionText = this.add.text(width / 2, 140, 'Click on bushes to forage for plants or coins!', {
+    // Instructions (will be updated by dialogue)
+    this.instructionText = this.add.text(width / 2, 140, '', {
       fontFamily: 'Georgia',
       fontSize: '24px',
       color: '#333'
@@ -68,7 +72,7 @@ class ForagingTutorial extends Phaser.Scene {
         .setInteractive({ useHandCursor: true });
 
       bush.on('pointerdown', () => {
-        if (this.minigameActive || this.bushStates[i]) return;
+        if (this.minigameActive || this.bushStates[i] || this.dialogueActive) return;
         this.bushStates[i] = true;
         bush.setTint(0x88cc88);
 
@@ -91,6 +95,18 @@ class ForagingTutorial extends Phaser.Scene {
     this.resultImage = null;
     this.resultLabel = null;
 
+    // Dialogue tutorial steps
+    this.dialogueStep = 0;
+    this.dialogueActive = true;
+    this.showForagingDialogue();
+
+    // Advance dialogue on pointerdown
+    this.input.on('pointerdown', () => {
+      if (this.dialogueActive) {
+        this.advanceDialogue();
+      }
+    });
+
     // Back button
     const backBtn = this.add.text(width / 2, height - 60, "Back", {
       fontFamily: "Georgia",
@@ -108,9 +124,48 @@ class ForagingTutorial extends Phaser.Scene {
       });
   }
 
+  showForagingDialogue() {
+    const steps = [
+      {
+        text: "Hello again! I can see you now know how to move!\nNow let me show you how to forage in the garden.",
+      },
+      {
+        text: "See those bushes? Click on them to search for plants or coins.",
+      },
+      {
+        text: "You can grow all of the plants, but foraging is a quick way to get started.",
+      },
+      {
+        text: "If a plant appears, you might have to beat out an \n animal that's trying to steal it!",
+      },
+      {text:"Beat the animal in a minigame to win the plant!"},
+      {
+        text: "That's all there is to foraging. Have fun exploring! \n Next to learn is farming!",
+      }
+    ];
+
+    if (this.dialogueStep < steps.length) {
+      showDialogue(this, steps[this.dialogueStep].text, {
+        imageKey: "butterflyHappy",
+        imageSide: "left",
+        options: []
+      });
+      this.instructionText.setText(steps[this.dialogueStep].text.split('\n')[1] || steps[this.dialogueStep].text);
+    } else {
+      this.dialogueActive = false;
+      this.destroyDialogueUI();
+      this.instructionText.setText('Click bushes to try foraging yourself!');
+    }
+  }
+
+  advanceDialogue() {
+    if (!this.dialogueActive) return;
+    this.dialogueStep += 1;
+    this.showForagingDialogue();
+  }
+
   showMinigame(plantKey, x, y) {
     this.minigameActive = true;
-    // Simple minigame: click the plant before it disappears
     const popup = this.add.rectangle(x, y - 80, 220, 120, 0xffffff, 0.98)
       .setStrokeStyle(2, 0x228B22)
       .setDepth(10);
@@ -136,7 +191,6 @@ class ForagingTutorial extends Phaser.Scene {
       this.minigameActive = false;
     });
 
-    // If not clicked in 2 seconds, fail
     this.time.delayedCall(2000, () => {
       if (!won) {
         this.instructionText.setText('Too slow! Try again by clicking another bush.');
@@ -160,13 +214,24 @@ class ForagingTutorial extends Phaser.Scene {
       color: '#228B22'
     }).setOrigin(0.5).setDepth(12);
 
-    // Hide result after 2 seconds
     this.time.delayedCall(2000, () => {
       if (this.resultImage) this.resultImage.destroy();
       if (this.resultLabel) this.resultLabel.destroy();
       this.resultImage = null;
       this.resultLabel = null;
     });
+  }
+
+  destroyDialogueUI() {
+    if (this.dialogueBox) {
+      this.dialogueBox.box?.destroy();
+      this.dialogueBox.textObj?.destroy();
+      this.dialogueBox.image?.destroy();
+      if (this.dialogueBox.optionButtons) {
+        this.dialogueBox.optionButtons.forEach((btn) => btn.destroy());
+      }
+      this.dialogueBox = null;
+    }
   }
 }
 
