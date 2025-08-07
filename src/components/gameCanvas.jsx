@@ -29,6 +29,7 @@ import XOTutorialScene from "../minigames/x-and-o/x-oTutorial";
 import LoaderScene from "./scenes/loaderScene";
 import IntroScene from "./scenes/introScene";
 import CraftUI from "./craftUI";
+import CraftingTutorial from "../tutorials/craftingTutorial";
 
 function GameCanvas() {
     const canvasRef = useRef(null);
@@ -89,7 +90,8 @@ function GameCanvas() {
     XOTutorialScene,
     LoaderScene,
     IntroScene,
-    CraftUI
+    CraftUI,
+    CraftingTutorial
   ]
 };
 
