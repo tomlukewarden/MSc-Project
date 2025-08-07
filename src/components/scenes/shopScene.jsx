@@ -12,11 +12,19 @@ if (typeof window !== "undefined") {
   }
 }
 
+// --- Ensure global coinManager instance ---
+import { CoinManager } from "../coinManager";
+import { saveToLocal, loadFromLocal } from "../../utils/localStorage";
+if (typeof window !== "undefined") {
+  if (!window.coinManager) {
+    window.coinManager = CoinManager.load ? CoinManager.load() : new CoinManager(loadFromLocal("coins") || 0);
+  }
+}
+const coinManager = window.coinManager;
+
 class ShopScene extends Phaser.Scene {
   constructor() {
     super({ key: 'ShopScene' });
-    // Remove all CoinManager logic
-    this.coins = 999; // Set demo coins here
   }
 
   preload() {
@@ -37,7 +45,7 @@ class ShopScene extends Phaser.Scene {
     this.load.image("creamBaseImage", "/assets/shopItems/cream.png");
     this.load.image("alchoholBaseImage", "/assets/shopItems/alcohol.png");
     this.load.audio('sparkle', '/assets/sound-effects/sparkle.mp3');
-       this.load.image('foxglovePlant', '/assets/plants/foxglove.png');
+    this.load.image('foxglovePlant', '/assets/plants/foxglove.png');
     this.load.image('marigoldPlant', '/assets/plants/marigold.PNG');
     this.load.image('jasminePlant', '/assets/plants/jasmine.PNG');
     this.load.image('aloePlant', '/assets/plants/aloe.PNG');
@@ -46,7 +54,6 @@ class ShopScene extends Phaser.Scene {
     this.load.image('garlicPlant', '/assets/plants/garlic.PNG');
     this.load.image('thymePlant', '/assets/plants/thyme.PNG');
     this.load.image('willowPlant', '/assets/plants/willow.PNG');
-
   }
 
   create() {
@@ -58,8 +65,8 @@ class ShopScene extends Phaser.Scene {
     // Main shop background
     this.add.image(width / 2, height / 2, 'shopBackground').setDepth(0).setScale(0.225);
 
-    // Coins text (use this.coins instead of coinManager)
-    const coinText = this.add.text(width - 40, 30, `${this.coins}c`, {
+    // Coins text (use global coinManager)
+    const coinText = this.add.text(width - 40, 30, `${coinManager.coins}c`, {
       fontFamily: "Georgia",
       fontSize: "24px",
       color: "#ffe066",
@@ -67,9 +74,10 @@ class ShopScene extends Phaser.Scene {
       padding: { left: 12, right: 12, top: 6, bottom: 6 }
     }).setOrigin(1, 0).setDepth(10);
 
-    // Helper to update coins display
-    const updateCoins = () => coinText.setText(`${this.coins}c`);
-
+    // Update coin display when coins change
+    if (coinManager.onChange) {
+      coinManager.onChange((coins) => coinText.setText(`${coins}c`));
+    }
 
     // Seeds from itemsData
     const seedItems = itemsData.filter(item => item.type === 'seed').map(item => ({
@@ -82,7 +90,6 @@ class ShopScene extends Phaser.Scene {
     }));
 
     // Only show crafting materials as extras
-    // If you have a type or flag, use that. Otherwise, filter by key:
     const craftingMaterialKeys = ["baseCream", "oilBase", "alchoholBase", "creamBase", "oilBaseImage", "creamBaseImage", "alchoholBaseImage"];
     const extraItems = itemsData.filter(item =>
       craftingMaterialKeys.includes(item.key)
@@ -120,21 +127,18 @@ class ShopScene extends Phaser.Scene {
       fontFamily: 'Georgia', fontSize: '22px', color: '#fff'
     }).setOrigin(0.5).setDepth(21);
 
-
     const itemAreaX = width - 250;
-    const itemStartY = 200; // Moved grid down from 150 to 200
+    const itemStartY = 200;
     const itemSpacing = 110;
     const itemBgWidth = 180;
     const itemBgHeight = 100;
 
     function renderShopItems(tab) {
-      // Remove previous sprites
       itemSprites.forEach(s => s.destroy());
       itemSprites = [];
       let tabItems = [];
       if (tab === 'seeds') tabItems = seedItems;
       else if (tab === 'extras') tabItems = extraItems;
-      // Grid settings
       const cols = 3;
       const cellW = 110;
       const cellH = 110;
@@ -145,18 +149,15 @@ class ShopScene extends Phaser.Scene {
         const row = Math.floor(idx / cols);
         const x = gridStartX + col * cellW;
         const y = gridStartY + row * cellH;
-        // Background
         const bg = this.add.rectangle(
           x, y, 90, 90, tab === 'seeds' ? 0x567d46 : 0x222233, 1
         ).setStrokeStyle(2, 0x88ccff).setDepth(1);
         itemSprites.push(bg);
-        // Image
         const img = this.add.image(x, y - 18, item.imageKey)
           .setScale(0.07)
           .setDepth(2)
           .setInteractive({ useHandCursor: true });
         itemSprites.push(img);
-        // Name & price
         const txt = this.add.text(x, y + 22, item.name, {
           fontFamily: "Georgia", fontSize: "14px", color: "#fff"
         }).setOrigin(0.5, 0.5).setDepth(2);
@@ -170,7 +171,6 @@ class ShopScene extends Phaser.Scene {
         img.on('pointerout', () => img.clearTint());
         img.on('pointerdown', () => {
           this.sound.play('click', { volume: 0.5 });
-          // Prompt for quantity
           let quantity = 1;
           let quantityPrompt = this.add.dom(width / 2, height / 2).createFromHTML(`
             <div style='background:#222;padding:24px;border-radius:12px;'>
@@ -195,9 +195,8 @@ class ShopScene extends Phaser.Scene {
               return;
             }
             const totalPrice = quantity * parseInt(item.price);
-            if (this.coins >= totalPrice) {
-              this.coins -= totalPrice;
-              updateCoins();
+            if (coinManager.coins >= totalPrice) {
+              coinManager.subtract(totalPrice);
               // Seeds ONLY go to seed pouch, not inventory
               if (item.type === 'seed') {
                 SeedPouchLogic.addSeed(item, quantity);
@@ -209,8 +208,8 @@ class ShopScene extends Phaser.Scene {
                 });
               } else if (item.type === 'tool') {
                 for (let i = 0; i < quantity; i++) {
-                  if (typeof this.inventoryManager.addItem === 'function') {
-                    this.inventoryManager.addItem({ ...item, color: 0xd2b48c });
+                  if (typeof globalInventoryManager.addItem === 'function') {
+                    globalInventoryManager.addItem({ ...item, color: 0xd2b48c });
                   }
                 }
                 receivedItem(this, item.key, `${item.name} x${quantity}`);
@@ -221,8 +220,8 @@ class ShopScene extends Phaser.Scene {
                 });
               } else {
                 for (let i = 0; i < quantity; i++) {
-                  if (typeof this.inventoryManager.addItem === 'function') {
-                    this.inventoryManager.addItem({ ...item, color: 0xd2b48c });
+                  if (typeof globalInventoryManager.addItem === 'function') {
+                    globalInventoryManager.addItem({ ...item, color: 0xd2b48c });
                   }
                 }
                 receivedItem(this, item.key, `${item.name} x${quantity}`);
