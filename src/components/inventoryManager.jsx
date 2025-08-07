@@ -68,17 +68,28 @@ class InventoryManager {
   }
 
   removeItem(identifier) {
-    const idx = this.items.findIndex(i => i.name === identifier || i.key === identifier);
-    if (idx === -1) return false;
+    // Case-insensitive matching for key and name
+    const idLower = identifier?.toLowerCase();
+    const idx = this.items.findIndex(i =>
+      (i.name && i.name.toLowerCase() === idLower) ||
+      (i.key && i.key.toLowerCase() === idLower)
+    );
+    if (idx === -1) {
+      alert(`Item "${identifier}" not found in inventory!`);
+      return false;
+    }
 
     const item = this.items[idx];
+    alert(`Removing item: ${JSON.stringify(item)}`);
     if (item.count && item.count > 1) {
       item.count--;
       this._notify();
+      alert(`Decremented count. New count: ${item.count}`);
       return true;
     } else {
       const [removed] = this.items.splice(idx, 1);
       this._notify();
+      alert(`Removed item completely: ${JSON.stringify(removed)}`);
       return true;
     }
   }
@@ -88,11 +99,23 @@ class InventoryManager {
   }
 
   hasItem(identifier) {
-    return this.items.some(i => i.name === identifier || i.key === identifier);
+    const idLower = identifier?.toLowerCase();
+    return this.items.some(i =>
+      (i.name && i.name.toLowerCase() === idLower) ||
+      (i.key && i.key.toLowerCase() === idLower)
+    );
   }
 
   hasItemByKey(itemKey) {
     return this.hasItem(itemKey);
+  }
+
+  getItem(identifier) {
+    const idLower = identifier?.toLowerCase();
+    return this.items.find(i =>
+      (i.name && i.name.toLowerCase() === idLower) ||
+      (i.key && i.key.toLowerCase() === idLower)
+    );
   }
 
   getItems() {
@@ -106,6 +129,14 @@ class InventoryManager {
 
   onChange(callback) {
     this.listeners.push(callback);
+  }
+
+  removeListener(callback) {
+    this.listeners = this.listeners.filter(cb => cb !== callback);
+  }
+
+  clearListeners() {
+    this.listeners = [];
   }
 }
 

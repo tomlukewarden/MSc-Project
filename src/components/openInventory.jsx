@@ -15,10 +15,13 @@ class OpenInventory extends Phaser.Scene {
     this.itemRects = [];
     this.itemTexts = [];
     this.itemImages = [];
+    this.renderItems = null;
   }
-preload() {
-  this.load.image("inventoryBackground", "/assets/ui-items/overlayBg.png");
-}
+
+  preload() {
+    this.load.image("inventoryBackground", "/assets/ui-items/overlayBg.png");
+  }
+
   create() {
     const { width, height } = this.sys.game.config;
 
@@ -193,6 +196,13 @@ preload() {
         this.scene.stop("OpenInventory");
       }
     });
+  }
+
+  // --- Add this method for external UI refresh ---
+  refreshInventoryUI() {
+    if (typeof this.renderItems === 'function') {
+      this.renderItems(inventoryManager.getItems());
+    }
   }
 }
 

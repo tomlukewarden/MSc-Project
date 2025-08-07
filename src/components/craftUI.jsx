@@ -92,11 +92,8 @@ class CraftUI extends Phaser.Scene {
         this.scene.launch('OpenInventory', {
           mode: 'selectItemForCraft',
           onSelect: (item) => {
-            // Remove from inventory immediately
-            if (typeof inventoryManager.removeItemByKey === 'function') {
-              inventoryManager.removeItemByKey(item.key);
-            }
-            // Place item in the correct slot
+            // DO NOT REMOVE FROM INVENTORY HERE!
+            // Just place item in the correct slot
             const targetSlot = this.selectedIngredientSlot;
             targetSlot.item = item;
             if (targetSlot.text) targetSlot.text.destroy();
@@ -185,7 +182,29 @@ class CraftUI extends Phaser.Scene {
           recipe.order.every((key, idx) => key === selectedOrder[idx]);
       });
       if (match) {
-        // No inventory dragables, just clear ingredient slots and show result
+        alert('Removing these keys from inventory: ' + JSON.stringify(match.order));
+
+        // Remove items from inventory ONLY AFTER CRAFTING
+        if (inventoryManager && typeof inventoryManager.removeItemByKey === 'function') {
+          match.order.forEach(key => {
+            const before = JSON.stringify(inventoryManager.items);
+            inventoryManager.removeItemByKey(key);
+            const after = JSON.stringify(inventoryManager.items);
+            alert(`Tried to remove "${key}".\nBefore: ${before}\nAfter: ${after}`);
+          });
+        } else {
+          alert('inventoryManager or removeItemByKey is not available!');
+        }
+
+        // Fetch inventory again and update UI (if you have a method for this)
+        if (typeof this.refreshInventoryUI === 'function') {
+          this.refreshInventoryUI();
+        }
+        if (this.scene.isActive('OpenInventory') && this.scene.get('OpenInventory').refreshInventoryUI) {
+          this.scene.get('OpenInventory').refreshInventoryUI();
+        }
+
+        // Clear ingredient slots and show result
         this.ingredientSlots.forEach((slot, i) => {
           slot.item = null;
           if (slot.text) slot.text.destroy();
@@ -197,7 +216,6 @@ class CraftUI extends Phaser.Scene {
         if (this.outputText) this.outputText.destroy();
         if (this.outputImage) this.outputImage.destroy();
         const { width, height } = this.sys.game.config;
-        // Show result image if available
         if (match.result.imageKey && this.textures.exists(match.result.imageKey)) {
           this.outputImage = this.add.image(width / 2, height / 2 + 60, match.result.imageKey)
             .setScale(0.18).setOrigin(0.5);
@@ -211,13 +229,11 @@ class CraftUI extends Phaser.Scene {
           ).setOrigin(0.5);
           this.outputImage = null;
         }
-        // Store last crafted result for Take Item button
         this.lastCraftedResult = {
           ...match.result,
           key: match.result.key || selectedOrder[0],
           name: match.result.name || match.result.itemName || ''
         };
-        // Enable and reset Take Item button
         this._takeItemBtnMainTaken = false;
         this.takeItemBtnMain.setText('Take Item');
         this.takeItemBtnMain.setStyle({ backgroundColor: '#228B22', color: '#fff' });
