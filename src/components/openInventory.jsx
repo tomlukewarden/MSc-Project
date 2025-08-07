@@ -98,8 +98,12 @@ class OpenInventory extends Phaser.Scene {
         }
 
         // Name (top)
+        let displayName = item.name;
+        if (item.count && item.count > 1) {
+          displayName += ` x${item.count}`;
+        }
         const nameText = this.add.text(
-          x, y - 38, item.name, {
+          x, y - 38, displayName, {
             fontFamily: "Georgia",
             fontSize: "16px",
             color: "#222",
