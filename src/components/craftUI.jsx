@@ -14,6 +14,18 @@ class CraftUI extends Phaser.Scene {
 
   preload() {
     this.load.image('craftUIBg', '/assets/ui-items/overlayBg.png');
+
+    if (Array.isArray(recipieData)) {
+      recipieData.forEach(recipe => {
+        if (recipe.result && recipe.result.imageKey && !this.textures.exists(recipe.result.imageKey)) {
+          this.load.image(recipe.result.imageKey, `/assets/item-images/${recipe.result.imageKey}.png`);
+        }
+      });
+    }
+    // Optionally preload a default image
+    if (!this.textures.exists('coin')) {
+      this.load.image('coin', '/assets/item-images/coin.png');
+    }
   }
 
   create() {
@@ -71,30 +83,36 @@ class CraftUI extends Phaser.Scene {
       slot.item = null;
       slot.text = null;
       slot.image = null;
+      slot.index = i; // Track which slot this is
+
       slot.on('pointerdown', () => {
+        // Save reference to the slot being selected
+        this.selectedIngredientSlot = slot;
         this.scene.launch('OpenInventory', {
           mode: 'selectItemForCraft',
           onSelect: (item) => {
             // Remove from inventory immediately
             if (typeof inventoryManager.removeItemByKey === 'function') {
               inventoryManager.removeItemByKey(item.key);
-              this.showInventoryDraggables();
             }
-            slot.item = item;
-            if (slot.text) slot.text.destroy();
-            if (slot.image) slot.image.destroy();
-            if (item.imageKey) {
-              slot.image = this.add.image(slotX, slotY, item.imageKey)
+            // Place item in the correct slot
+            const targetSlot = this.selectedIngredientSlot;
+            targetSlot.item = item;
+            if (targetSlot.text) targetSlot.text.destroy();
+            if (targetSlot.image) targetSlot.image.destroy();
+            if (item.imageKey && this.textures.exists(item.imageKey)) {
+              targetSlot.image = this.add.image(slotX, slotY, item.imageKey)
                 .setScale(0.18).setOrigin(0.5);
-              slot.text = null;
+              targetSlot.text = null;
             } else {
-              slot.text = this.add.text(
+              targetSlot.text = this.add.text(
                 slotX, slotY + 22,
                 item.name || item.key,
                 { fontSize: '12px', color: '#222', backgroundColor: '#fff8', padding: { left: 2, right: 2, top: 1, bottom: 1 } }
               ).setOrigin(0.5);
-              slot.image = null;
+              targetSlot.image = null;
             }
+            this.selectedIngredientSlot = null; // Clear selection
           }
         });
       });
@@ -154,43 +172,6 @@ class CraftUI extends Phaser.Scene {
       this.takeItemBtnMain.setAlpha(0.5);
       this.takeItemBtnMain.disableInteractive();
     });
-
-    // Inventory sprites
-    this.inventorySprites = [];
-    this.showInventoryDraggables();
-
-    // Drag events (optional, if you want to support drag-and-drop)
-    this.input.on('dragstart', (pointer, gameObject) => {
-      gameObject.setAlpha(0.5);
-    });
-    this.input.on('dragend', (pointer, gameObject) => {
-      gameObject.setAlpha(1);
-    });
-    this.input.on('drop', (pointer, gameObject, dropZone) => {
-      dropZone.item = gameObject.itemData;
-      gameObject.x = dropZone.x;
-      gameObject.y = dropZone.y;
-      if (dropZone.text) dropZone.text.destroy();
-      dropZone.text = this.add.text(
-        dropZone.x,
-        dropZone.y + 22,
-        gameObject.itemData.name || gameObject.itemData.key,
-        { fontSize: '12px', color: '#222', backgroundColor: '#fff8', padding: { left: 2, right: 2, top: 1, bottom: 1 } }
-      ).setOrigin(0.5);
-    });
-  }
-
-  showInventoryDraggables() {
-    if (this.inventorySprites) this.inventorySprites.forEach(spr => spr.destroy());
-    this.inventorySprites = [];
-    const { width, height } = this.sys.game.config;
-    inventoryManager.items.forEach((item, i) => {
-      const spr = this.add.image(width / 2 - 120 + i * 48, height / 2 + 80, item.imageKey || 'coin')
-        .setScale(0.18)
-        .setInteractive({ draggable: true, useHandCursor: true });
-      spr.itemData = item;
-      this.inventorySprites.push(spr);
-    });
   }
 
   craftSomething() {
@@ -203,15 +184,7 @@ class CraftUI extends Phaser.Scene {
           recipe.order.every((key, idx) => key === selectedOrder[idx]);
       });
       if (match) {
-        // Remove used ingredients from inventory immediately after crafting
-        if (typeof inventoryManager.removeItemByKey === 'function') {
-          selectedOrder.forEach(key => {
-            inventoryManager.removeItemByKey(key);
-          });
-        }
-        this.showInventoryDraggables(); // Refresh inventory UI
-
-        // Clear ingredient slots
+        // No inventory dragables, just clear ingredient slots and show result
         this.ingredientSlots.forEach((slot, i) => {
           slot.item = null;
           if (slot.text) slot.text.destroy();
@@ -223,12 +196,20 @@ class CraftUI extends Phaser.Scene {
         if (this.outputText) this.outputText.destroy();
         if (this.outputImage) this.outputImage.destroy();
         const { width, height } = this.sys.game.config;
-        this.outputText = this.add.text(
-          width / 2,
-          height / 2 + 60,
-          match.result.name || match.result.key,
-          { fontSize: '16px', color: '#228B22', backgroundColor: '#fff8', padding: { left: 6, right: 6, top: 3, bottom: 3 } }
-        ).setOrigin(0.5);
+        // Show result image if available
+        if (match.result.imageKey && this.textures.exists(match.result.imageKey)) {
+          this.outputImage = this.add.image(width / 2, height / 2 + 60, match.result.imageKey)
+            .setScale(0.18).setOrigin(0.5);
+          this.outputText = null;
+        } else {
+          this.outputText = this.add.text(
+            width / 2,
+            height / 2 + 60,
+            match.result.name || match.result.key,
+            { fontSize: '16px', color: '#228B22', backgroundColor: '#fff8', padding: { left: 6, right: 6, top: 3, bottom: 3 } }
+          ).setOrigin(0.5);
+          this.outputImage = null;
+        }
         // Store last crafted result for Take Item button
         this.lastCraftedResult = {
           ...match.result,
