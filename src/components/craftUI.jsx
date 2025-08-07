@@ -88,6 +88,7 @@ class CraftUI extends Phaser.Scene {
       slot.on('pointerdown', () => {
         // Save reference to the slot being selected
         this.selectedIngredientSlot = slot;
+        this.scene.bringToTop('OpenInventory'); // Ensure inventory is on top
         this.scene.launch('OpenInventory', {
           mode: 'selectItemForCraft',
           onSelect: (item) => {
