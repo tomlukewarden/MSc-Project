@@ -30,6 +30,9 @@ import LoaderScene from "./scenes/loaderScene";
 import IntroScene from "./scenes/introScene";
 import CraftUI from "./craftUI";
 import CraftingTutorial from "../tutorials/craftingTutorial";
+import MovementTutorial from "../tutorials/movementTutorial";
+import FarmingTutorial from "../tutorials/farmingTutorial";
+import ForagingTutorial from "../tutorials/foragingTutorial";
 
 function GameCanvas() {
     const canvasRef = useRef(null);
@@ -91,7 +94,10 @@ function GameCanvas() {
     LoaderScene,
     IntroScene,
     CraftUI,
-    CraftingTutorial
+    CraftingTutorial,
+    MovementTutorial,
+    FarmingTutorial,
+    ForagingTutorial
   ]
 };
 
