@@ -1,6 +1,6 @@
 import { Plot } from "../farmingLogic";
 import { createMainChar } from "../../characters/mainChar";
-import { inventoryManager } from "../inventoryManager";   
+import { inventoryManager } from "../openInventory";   
 import { saveToLocal, loadFromLocal } from "../../utils/localStorage";
 // Ensure global inventoryManager instance
 if (typeof window !== "undefined") {
@@ -82,6 +82,7 @@ class PersonalGarden extends Phaser.Scene {
       ["garlicPlant", "/assets/plants/garlic.PNG"],
       ["thymePlant", "/assets/plants/thyme.PNG"],
       ["willowPlant", "/assets/plants/willow.PNG"],
+      ["craftingBench", "/assets/crafting/bench.png"]
     ];
     assets.forEach(([key, path]) => this.load.image(key, path));
   }
@@ -113,7 +114,6 @@ class PersonalGarden extends Phaser.Scene {
       backgroundColor: '#222',
       padding: { left: 8, right: 8, top: 4, bottom: 4 }
     }).setOrigin(0, 0).setDepth(99999);
-    // ...removed alert...
 
 
     // Tent image (not interactive)
@@ -173,7 +173,7 @@ class PersonalGarden extends Phaser.Scene {
                 this.updatePlotText(plotText, plot);
                 this.updatePlotColor(plotRect, plot);
                 preparedPlotImg.setVisible(true);
-                // ...removed alert...
+          
               }
               break;
             case 'prepared':
@@ -183,7 +183,7 @@ class PersonalGarden extends Phaser.Scene {
                   this.updatePlotText(plotText, plot);
                   this.updatePlotColor(plotRect, plot);
                   preparedPlotImg.setVisible(true);
-                  // ...removed alert...
+      
                 }
               });
               break;
@@ -243,7 +243,7 @@ class PersonalGarden extends Phaser.Scene {
     });
 
     const scaleFactor = 0.14;
-    this.add.image(0, 0, "gardenBackground").setOrigin(0).setScale(scaleFactor);
+    this.add.image(0, 0, "gardenBackground").setOrigin(0).setScale(0.22);
 
     // Tent image (not interactive)
     const tentImg = this.add.image(0, 0, "tent").setOrigin(0).setScale(scaleFactor).setDepth(5);
@@ -383,6 +383,20 @@ class PersonalGarden extends Phaser.Scene {
       this.saveSceneState();
       clearInterval(this._saveInterval);
     });
+
+    // Add the crafting bench image to the garden
+    const benchX = 450;
+    const benchY = 200;
+    const craftingBenchImg = this.add.image(benchX, benchY, "craftingBench")
+      .setScale(0.05)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(20);
+
+    craftingBenchImg.on("pointerdown", () => {
+      // Launch the CraftUI as a scene overlay
+      this.scene.launch('CraftUI');
+      this.scene.bringToTop('CraftUI');
+    });
   }
 
   saveSceneState() {
@@ -403,7 +417,15 @@ class PersonalGarden extends Phaser.Scene {
     saveToLocal('personalGardenSceneState', state);
   }
 
-  useToolOnPlot(plot) {
+/*************  ✨ Windsurf Command ⭐  *************/
+  /**
+   * Uses the current tool on the given plot, if possible.
+   * 
+   * @param {Plot} plot The plot to use the tool on.
+   * @returns {Object} An object with a success property (true/false) and an item property (the key of the item
+   *  added to the inventory, if any). If the tool is not recognized or not in the inventory, success is false.
+   */
+/*******  2298f030-e449-428d-b0bf-a58c16a07ef9  *******/  useToolOnPlot(plot) {
     alert('useToolOnPlot called: state=' + plot.state + ', tool=' + this.currentTool);
           alert('pointerdown event: state=' + plot.state + ', tool=' + this.currentTool);
     const inventory = this.inventoryManager.getInventory ? this.inventoryManager.getInventory() : this.inventoryManager.inventory;
@@ -491,7 +513,7 @@ class PersonalGarden extends Phaser.Scene {
       .setStrokeStyle(2, 0x4caf50)
       .setDepth(199);
     const hoeImg = this.add.image(40, 40, 'hoe')
-      .setScale(1.8)
+      .setScale(0.03)
       .setInteractive({ useHandCursor: true })
       .setDepth(203);
     // Watering Can
@@ -499,7 +521,7 @@ class PersonalGarden extends Phaser.Scene {
       .setStrokeStyle(2, 0x4caf50)
       .setDepth(199);
     const canImg = this.add.image(100, 40, 'wateringCan')
-      .setScale(1.8)
+      .setScale(0.03)
       .setInteractive({ useHandCursor: true })
       .setDepth(203);
     // Shovel
@@ -507,7 +529,7 @@ class PersonalGarden extends Phaser.Scene {
       .setStrokeStyle(2, 0x4caf50)
       .setDepth(199);
     const shovelImg = this.add.image(160, 40, 'shovel')
-      .setScale(1.8)
+      .setScale(0.03)
       .setInteractive({ useHandCursor: true })
       .setDepth(203);
 

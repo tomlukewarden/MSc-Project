@@ -55,19 +55,18 @@ export function receivedItem(scene, itemKey, itemName, options = {}) {
     scene.sound.play("sparkle", { volume: 0.7 });
   }
 
-  // --- Add to inventory ---
-  if (inventoryManager) {
+  // --- Add to inventory unless coin or seed ---
+  const isCoin = itemKey.toLowerCase() === "coin" || itemName.toLowerCase() === "coin";
+  const isSeed = itemKey.toLowerCase().includes("seed") || itemName.toLowerCase().includes("seed");
+  if (inventoryManager && !isCoin && !isSeed) {
     let saveKey = itemKey;
     let saveName = itemName;
     if (typeof itemKey === "string") {
       if (/\.[Pp][Nn][Gg]$/.test(itemKey)) {
         const baseName = itemKey.replace(/\.[Pp][Nn][Gg]$/, "");
-        // Lowercase plant name for key and name
         saveKey = baseName.toLowerCase() + "Plant";
         saveName = baseName.toLowerCase();
-      }
-      
-      else if (/^(spring|summer|autumn|winter)$/i.test(itemKey)) {
+      } else if (/^(spring|summer|autumn|winter)$/i.test(itemKey)) {
         const season = itemKey.charAt(0).toUpperCase() + itemKey.slice(1).toLowerCase();
         saveKey = season + "Shard";
       }
