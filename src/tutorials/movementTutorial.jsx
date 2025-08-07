@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { createMainChar } from '../characters/mainChar';
+import { showDialogue } from '../dialogue/dialogueUIHelpers';
 
 class MovementTutorial extends Phaser.Scene {
   constructor() {
@@ -8,6 +9,8 @@ class MovementTutorial extends Phaser.Scene {
     this.cursors = null;
     this.obstacles = [];
     this.collisionGroup = null;
+    this.dialogueStep = 0;
+    this.dialogueActive = false;
   }
 
   preload() {
@@ -26,7 +29,8 @@ class MovementTutorial extends Phaser.Scene {
     this.load.image("defaultLeftWalk2", "/assets/char/default/left-step-2.PNG");
     this.load.image("defaultRightWalk1", "/assets/char/default/right-step-1.PNG");
     this.load.image("defaultRightWalk2", "/assets/char/default/right-step-2.PNG");
-    this.load
+    this.load.image("butterflyHappy", "/assets/npc/butterfly/happy-butterfly-dio.png");
+    this.load.image("dialogueBoxBg", "/assets/ui-items/dialogue.png");
   }
 
   create() {
@@ -36,16 +40,6 @@ class MovementTutorial extends Phaser.Scene {
     this.add.image(width / 2, height / 2, 'personalGardenBg')
       .setDisplaySize(width, height)
       .setDepth(0);
-
-    // Instructions
-    this.add.rectangle(width / 2, 80, 600, 60, 0xffffff, 0.85)
-      .setStrokeStyle(2, 0x228B22)
-      .setDepth(1);
-    this.add.text(width / 2, 80, 'Use WASD to move. Avoid obstacles!', {
-      fontFamily: 'Georgia',
-      fontSize: '24px',
-      color: '#228B22'
-    }).setOrigin(0.5).setDepth(2);
 
     // Obstacles group
     this.collisionGroup = this.physics.add.staticGroup();
@@ -65,6 +59,27 @@ class MovementTutorial extends Phaser.Scene {
       this.time.delayedCall(200, () => this.player.clearTint());
     });
 
+    // Controls
+    this.cursors = this.input.keyboard.createCursorKeys();
+    this.wasd = this.input.keyboard.addKeys({
+      up: Phaser.Input.Keyboard.KeyCodes.W,
+      left: Phaser.Input.Keyboard.KeyCodes.A,
+      down: Phaser.Input.Keyboard.KeyCodes.S,
+      right: Phaser.Input.Keyboard.KeyCodes.D
+    });
+
+    // Show movement tutorial dialogue step-by-step
+    this.dialogueStep = 0;
+    this.dialogueActive = true;
+    this.showMovementDialogue();
+
+    // Advance dialogue on pointerdown
+    this.input.on('pointerdown', () => {
+      if (this.dialogueActive) {
+        this.advanceDialogue();
+      }
+    });
+
     // Back button
     const backBtn = this.add.text(width / 2, height - 60, "Back", {
       fontFamily: "Georgia",
@@ -80,6 +95,66 @@ class MovementTutorial extends Phaser.Scene {
       .on("pointerdown", () => {
         this.scene.start("PersonalGarden");
       });
+  }
+
+  showMovementDialogue() {
+    const steps = [
+      {
+        text: "Welcome to movement tutorial!\nLet's learn how to move your character.",
+      },
+       {
+        text: "Press W to move up, A to move left, S to move down, and D to move right.",
+      },
+      {
+        text: "Try moving around now! Notice how you can't walk through rocks or trees.",
+      },
+      {
+        text: "That's it! You're ready to explore.\n Try running around and when you are ready, move on!",
+      }
+    ];
+
+    if (this.dialogueStep < steps.length) {
+      showDialogue(this, steps[this.dialogueStep].text, {
+        imageKey: "butterflyHappy",
+        imageSide: "left",
+        options: [] 
+      });
+    } else {
+      // End of tutorial dialogue
+      this.dialogueActive = false;
+      this.destroyDialogueUI();
+    }
+  }
+
+  advanceDialogue() {
+    if (!this.dialogueActive) return;
+    this.dialogueStep += 1;
+    this.showMovementDialogue();
+  }
+
+  update() {
+    if (!this.player) return;
+    const speed = 180;
+    let vx = 0, vy = 0;
+
+    if (this.cursors.left.isDown || this.wasd.left.isDown) vx = -speed;
+    else if (this.cursors.right.isDown || this.wasd.right.isDown) vx = speed;
+
+    if (this.cursors.up.isDown || this.wasd.up.isDown) vy = -speed;
+    else if (this.cursors.down.isDown || this.wasd.down.isDown) vy = speed;
+
+    this.player.setVelocity(vx, vy);
+  }
+   destroyDialogueUI() {
+    if (this.dialogueBox) {
+      this.dialogueBox.box?.destroy();
+      this.dialogueBox.textObj?.destroy();
+      this.dialogueBox.image?.destroy();
+      if (this.dialogueBox.optionButtons) {
+        this.dialogueBox.optionButtons.forEach((btn) => btn.destroy());
+      }
+      this.dialogueBox = null;
+    }
   }
 }
 
