@@ -64,8 +64,8 @@ class WallGardenScene extends Phaser.Scene {
     this.load.image('bush', '/assets/misc/bush.png');
     this.load.image('elephant', '/assets/npc/elephant/elephant.png');
     this.load.image('elephantHappy', '/assets/npc/elephant/happy.png');
-    this.load.image('polarBear', '/assets/npc/polar/polarBear.png');
-    this.load.image('polarBearHappy', '/assets/npc/polar/polarBearHappy.png');
+    this.load.image('polarBear', '/assets/npc/polarBear/polar.PNG');
+    this.load.image('polarBearHappy', '/assets/npc/polarBear/happy.PNG');
     this.load.image('jasminePlant', '/assets/plants/jasmine.PNG');
     this.load.image('autumnShard', '/assets/items/autumn.png');
     this.load.image("baseCream", "/assets/shopItems/cream.png");
@@ -134,75 +134,7 @@ class WallGardenScene extends Phaser.Scene {
   if (!globalTimeManager.startTimestamp) {
     globalTimeManager.start();
   }
-    const craftBtnX = 120;
-    const craftBtnY = 80;
-    const craftBtnWidth = 140;
-    const craftBtnHeight = 48;
-    const craftBtnBg = this.add.rectangle(craftBtnX, craftBtnY, craftBtnWidth, craftBtnHeight, 0x3e7d3a, 0.95)
-      .setOrigin(0.5)
-      .setDepth(100)
-      .setInteractive({ useHandCursor: true });
-    const craftBtnText = this.add.text(craftBtnX, craftBtnY, '🛠️ Craft', {
-      fontFamily: 'Georgia',
-      fontSize: '26px',
-      color: '#fff',
-      align: 'center',
-      shadow: {
-        offsetX: 0,
-        offsetY: 0,
-        color: '#4caf50',
-        blur: 8,
-        fill: true
-      }
-    }).setOrigin(0.5).setDepth(101);
-
-    craftBtnText.setInteractive({ useHandCursor: true });
-    craftBtnText.on('pointerdown', () => {
-      craftBtnBg.emit('pointerdown');
-    });
-    craftBtnBg.on('pointerover', () => {
-      craftBtnBg.setFillStyle(0x4caf50, 0.98);
-      craftBtnText.setColor('#ffffcc');
-    });
-    craftBtnBg.on('pointerout', () => {
-      craftBtnBg.setFillStyle(0x3e7d3a, 0.95);
-      craftBtnText.setColor('#fff');
-    });
-    craftBtnBg.on('pointerdown', () => {
-      // Remove any existing CraftUI overlay
-      if (this.craftUIOverlay) {
-        this.craftUIOverlay.destroy(true);
-        this.craftUIOverlay = null;
-      }
-      // Get inventory items (as objects)
-      const items = inventoryManager.getItems ? inventoryManager.getItems() : [];
-      // Center overlay
-      const { width, height } = this.sys.game.config;
-      // Dynamically import the CraftUI class
-      import('../../components/craftUI').then(({ default: CraftUI }) => {
-        this.craftUIOverlay = new CraftUI(this, width / 2, height / 2);
-        this.craftUIOverlay.setDepth && this.craftUIOverlay.setDepth(200);
-        // Set inventory items as ingredients (first 3 for demo)
-        this.craftUIOverlay.setIngredients(items.slice(0, 3));
-    
-        const closeBtn = this.add.text(width / 2 + 140, height / 2 - 90, '✕', {
-          fontFamily: 'Georgia',
-          fontSize: '28px',
-          color: '#a33',
-          backgroundColor: '#fff5',
-          padding: { left: 10, right: 10, top: 2, bottom: 2 }
-        })
-          .setOrigin(0.5)
-          .setInteractive({ useHandCursor: true })
-          .setDepth(201);
-        closeBtn.on('pointerdown', () => {
-          this.craftUIOverlay.destroy(true);
-          closeBtn.destroy();
-          this.craftUIOverlay = null;
-        });
-      });
-    });
-    
+  
     if (typeof window !== "undefined") {
       window.inventoryManager = inventoryManager;
     }
@@ -433,7 +365,7 @@ class WallGardenScene extends Phaser.Scene {
     this.polarBear
       .setInteractive({ useHandCursor: true })
       .setDepth(10)
-      .setScale(0.1)
+      .setScale(0.06)
       .setOrigin(0.5, 0.9);
 
     // Polar Bear talk icon events

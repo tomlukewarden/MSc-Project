@@ -76,6 +76,10 @@ class ShardGardenScene extends Phaser.Scene {
     this.load.image('talk', '/assets/interact/talk.png');
     this.load.image('jasminePlant', '/assets/plants/jasmine.PNG');
     this.load.image('bush', '/assets/misc/bush.png');
+    this.load.image('mole', '/assets/npc/mole/mole.png');
+    this.load.image('moleHappy', '/assets/npc/mole/happy.png');
+    this.load.image('turtle', '/assets/npc/turtle/turtle.png');
+    this.load.image('turtleHappy', '/assets/npc/turtle/happy.png');
   }
 
   create() {
