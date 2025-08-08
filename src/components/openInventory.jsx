@@ -1,17 +1,15 @@
-import { CoinManager } from "../components/coinManager";
 import { loadFromLocal } from "../utils/localStorage";
 import InventoryManager from "./inventoryManager";
 import { saveToLocal } from "../utils/localStorage";
 
-
-const coinManager = typeof window !== "undefined" && window.coinManager ? window.coinManager : new CoinManager(loadFromLocal("coins") || 0);
+// Removed CoinManager import and all coin logic
 
 export const inventoryManager = new InventoryManager();
 
 class OpenInventory extends Phaser.Scene {
   constructor() {
     super({ key: "OpenInventory" });
-    this.coinText = null;
+    // Removed coinText property
     this.itemRects = [];
     this.itemTexts = [];
     this.itemImages = [];
@@ -28,7 +26,7 @@ class OpenInventory extends Phaser.Scene {
     // Use inventoryBackground image instead of rectangle
     const bg = this.add.image(width / 2, height / 2, "inventoryBackground")
       .setDisplaySize(600, 500)
-      .setDepth(105) // Background depth
+      .setDepth(105); // Background depth
 
     this.add.text(width / 2, height / 2 - 220, "Inventory", {
       fontFamily: "Georgia",
@@ -36,14 +34,7 @@ class OpenInventory extends Phaser.Scene {
       color: "#fff"
     }).setOrigin(0.5).setDepth(106);
 
-    // --- COINS ---
-    this.coinText = this.add.text(width / 2 + 270, height / 2 - 240, `${coinManager.coins}c`, {
-      fontFamily: "Georgia",
-      fontSize: "26px",
-      color: "#ffe066",
-      backgroundColor: "#222",
-      padding: { left: 12, right: 12, top: 6, bottom: 6 }
-    }).setOrigin(1, 0).setDepth(106);
+    // --- COINS REMOVED ---
 
     // Scrollable container for items
     const scrollMask = this.add.graphics().fillRect(width / 2 - 280, height / 2 - 180, 560, 400);

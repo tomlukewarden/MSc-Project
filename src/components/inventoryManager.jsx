@@ -24,12 +24,6 @@ class InventoryManager {
     this.listeners.forEach(cb => cb([...this.items]));
   }
 
-  _isCoin(item) {
-    const key = item?.key?.toLowerCase();
-    const name = item?.name?.toLowerCase();
-    return key === 'coin' || name === 'coin' || item?.type === 'coin';
-  }
-
   _normalizePlantKey(item) {
     const name = item?.name?.toLowerCase();
     if (!name) return;
@@ -41,7 +35,7 @@ class InventoryManager {
   }
 
   addItem(item) {
-    if (!item || this._isCoin(item)) return;
+    if (!item) return;
 
     const nameLower = item.name?.toLowerCase();
     const keyLower = item.key?.toLowerCase();

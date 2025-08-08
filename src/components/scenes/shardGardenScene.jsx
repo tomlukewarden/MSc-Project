@@ -1,6 +1,5 @@
 import { createButterfly, butterflyPillarDialogues, butterflyShardDialogues, butterflyGoodbyeDialogues } from "../../characters/butterfly";
 import { createMainChar } from "../../characters/mainChar";
-import { CoinManager } from "../coinManager";
 import { saveToLocal, loadFromLocal } from "../../utils/localStorage";
 import plantData from "../../plantData";
 import { showDialogue, showOption } from "../../dialogue/dialogueUIHelpers";
@@ -16,8 +15,6 @@ if (typeof window !== "undefined") {
 import { addPlantToJournal } from "../journalManager";
 import { receivedItem } from "../recievedItem";
 import globalTimeManager from "../../day/timeManager";
-
-const coinManager = typeof window !== "undefined" && window.coinManager ? window.coinManager : CoinManager.load();
 
 class ShardGardenScene extends Phaser.Scene {
   constructor() {
@@ -71,7 +68,6 @@ class ShardGardenScene extends Phaser.Scene {
     this.load.image('butterflySad', '/assets/npc/butterfly/sad-butterfly-dio.PNG');
     this.load.image('periwinklePlant', '/assets/plants/periwinkle.png');
     this.load.image('marigoldPlant', '/assets/plants/marigold.PNG');
-    this.load.image('coin', '/assets/misc/coin.png');
     this.load.audio('sparkle', '/assets/sound-effects/sparkle.mp3');
     this.load.audio('click', '/assets/sound-effects/click.mp3');
     this.load.image('dialogueBoxBg', '/assets/ui-items/dialogue.png');
@@ -89,7 +85,7 @@ class ShardGardenScene extends Phaser.Scene {
       'defaultFrontWalk1', 'defaultFrontWalk2', 'defaultBackWalk1', 'defaultBackWalk2', 'defaultLeftWalk1', 'defaultLeftWalk2',
       'defaultRightWalk1', 'defaultRightWalk2', 'elephant', 'spring', 'springHappy', 'summer', 'summerHappy',
       'autumnHappy', 'winterHappy', 'autumn', 'winter', 'butterflyHappy', 'butterflySad', 'periwinklePlant',
-      'marigoldPlant', 'coin', 'dialogueBoxBg', 'talk', 'jasminePlant', 'bush'
+      'marigoldPlant', 'dialogueBoxBg', 'talk', 'jasminePlant', 'bush'
     ];
     let missingKeys = expectedKeys.filter(k => !loadedKeys.includes(k));
     let debugText = `Loaded textures: ${loadedKeys.join(', ')}\nMissing: ${missingKeys.join(', ')}`;
@@ -107,10 +103,6 @@ class ShardGardenScene extends Phaser.Scene {
 
     // --- LOAD STATE FROM LOCAL STORAGE ---
     const sceneState = loadFromLocal('shardGardenSceneState') || {};
-    // Restore coins if present
-    if (sceneState.coins !== undefined) {
-      coinManager.set(sceneState.coins);
-    }
     // Restore shard counts, happySprites, and dialogue stage
     if (sceneState.shardCounts) {
       this.shardCounts = { ...this.shardCounts, ...sceneState.shardCounts };
@@ -281,7 +273,7 @@ class ShardGardenScene extends Phaser.Scene {
       });
     };
 
-    // Add bushes with periwinkle and coins
+    // Add bushes with garlic and thyme only (removed coins)
     this.setupBushes(width, height);
 
     // --- PERIODIC SAVE TO LOCAL STORAGE ---
@@ -303,7 +295,6 @@ class ShardGardenScene extends Phaser.Scene {
   // Save relevant state to localStorage
   saveSceneState() {
     const state = {
-      coins: coinManager.get ? coinManager.get() : 0,
       shardCounts: { ...this.shardCounts },
       happySprites: { ...this.happySprites },
       dialogueStage: this.dialogueStage,
@@ -353,8 +344,6 @@ class ShardGardenScene extends Phaser.Scene {
     const bushPositions = [
       { x: 180, y: 300 }, // Garlic
       { x: 260, y: 400 }, // Thyme
-      { x: 340, y: 250 }, // Coin
-      { x: 420, y: 350 }  // Coin
     ];
     const bushCount = bushPositions.length;
     const garlicIndex = 0;
@@ -407,20 +396,6 @@ class ShardGardenScene extends Phaser.Scene {
             this.bushDispensed[i] = true;
           }
         }
-        else {
-          const coins = Phaser.Math.Between(10, 30);
-          coinManager.add(coins);
-          saveToLocal("coins", coinManager.coins);
-          receivedItem(this, "coin", `${coins} Coins`, { scale: 0.15 });
-          showDialogue(this, `You found ${coins} coins hidden in the bush!`);
-          this.dialogueOnComplete = () => {
-            this.destroyDialogueUI && this.destroyDialogueUI();
-            this.dialogueActive = false;
-            this.updateHUDState && this.updateHUDState();
-            this.dialogueOnComplete = null;
-          };
-          this.bushDispensed[i] = true;
-        }
       });
     }
   }
@@ -443,16 +418,10 @@ class ShardGardenScene extends Phaser.Scene {
                   this.scene.stop("MiniGameScene");
                   this.scene.resume();
 
-                  // Award 50 coins for winning minigame
-                  const coinsWon = 50;
-                  coinManager.add(coinsWon);
-                  saveToLocal("coins", coinManager.coins);
-
                   const alreadyHas = inventoryManager.hasItemByKey && inventoryManager.hasItemByKey(plant.key);
                   if (!alreadyHas) {
                     addPlantToJournal(plant.key);
                     receivedItem(this, plant.key, plant.name);
-                    receivedItem(this, "coin", `${coinsWon} Coins`, { scale: 0.15 });
                   }
 
                   showDialogue(this,

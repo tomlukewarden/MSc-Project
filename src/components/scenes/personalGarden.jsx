@@ -14,7 +14,6 @@ import { receivedItem } from "../recievedItem";
 import itemsData from "../../items";
 import SeedPouchLogic from "../seedPouchLogic";
 import plantData from "../../plantData";
-import { CoinManager } from "../coinManager";
 
 class PersonalGarden extends Phaser.Scene {
   constructor() {
@@ -29,13 +28,8 @@ class PersonalGarden extends Phaser.Scene {
         window.inventoryManager = inventoryManager;
       }
       this.inventoryManager = window.inventoryManager;
-      if (!window.coinManager) {
-        window.coinManager = CoinManager.load ? CoinManager.load() : new CoinManager();
-      }
-      this.coinManager = window.coinManager;
     } else {
       this.inventoryManager = inventoryManager;
-      this.coinManager = CoinManager.load ? CoinManager.load() : new CoinManager();
     }
   }
 
@@ -89,18 +83,6 @@ class PersonalGarden extends Phaser.Scene {
   }
 
   create() {
-    // Show current coin count
-    const coinText = this.add.text(40, 70, `${this.coinManager.get ? this.coinManager.get() : this.coinManager.coins || 0}c`, {
-      fontFamily: 'Georgia',
-      fontSize: '20px',
-      color: '#ffe066',
-      backgroundColor: '#222',
-      padding: { left: 8, right: 8, top: 4, bottom: 4 }
-    }).setOrigin(0, 0).setDepth(99999);
-    // Update coin display when coins change
-    if (this.coinManager.onChange) {
-      this.coinManager.onChange((coins) => coinText.setText(`${coins}c`));
-    }
     // Ensure globalTimeManager is initialized and started
     globalTimeManager.init(this);
     if (!globalTimeManager.startTimestamp) {
@@ -194,7 +176,6 @@ class PersonalGarden extends Phaser.Scene {
                 this.updatePlotText(plotText, plot);
                 this.updatePlotColor(plotRect, plot);
                 preparedPlotImg.setVisible(false);
-                // ...removed alert...
               }
               break;
             case 'grown':

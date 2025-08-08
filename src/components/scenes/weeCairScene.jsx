@@ -17,15 +17,14 @@ import {
   fairyHelpDialogues,
   fairyGoodbyeDialogues
 } from "../../characters/fairy";
-import { CoinManager } from "../coinManager";
+// Removed CoinManager import
 import { saveToLocal, loadFromLocal } from "../../utils/localStorage";
 import { createMainChar } from "../../characters/mainChar";
 import { receivedItem } from "../../components/recievedItem";
 import {addPlantToJournal} from "../journalManager";
 import {inventoryManager} from "../inventoryManager";
 
-
-const coinManager = typeof window !== "undefined" && window.coinManager ? window.coinManager : CoinManager.load();
+// Removed coinManager instance
 
 class WeeCairScene extends Phaser.Scene {
   constructor() {
@@ -40,17 +39,17 @@ class WeeCairScene extends Phaser.Scene {
     this.load.image("weeCairBackground", "/assets/backgrounds/weecair/weecair.png");
     this.load.image("weeCairArch", "/assets/backgrounds/weecair/archway.png");
     this.load.image("defaultFront", "/assets/char/default/front-default.png");
-        this.load.image("defaultBack", "/assets/char/default/back-default.png");
-        this.load.image("defaultLeft", "/assets/char/default/left-default.png");
-        this.load.image("defaultRight", "/assets/char/default/right-default.png");
-        this.load.image("defaultFrontWalk1", "/assets/char/default/front-step-1.PNG");
-        this.load.image("defaultFrontWalk2", "/assets/char/default/front-step-2.PNG");
-        this.load.image("defaultBackWalk1", "/assets/char/default/back-step-1.PNG");
-        this.load.image("defaultBackWalk2", "/assets/char/default/back-step-2.PNG");
-        this.load.image("defaultLeftWalk1", "/assets/char/default/left-step-1.PNG");
-        this.load.image("defaultLeftWalk2", "/assets/char/default/left-step-2.PNG");
-        this.load.image("defaultRightWalk1", "/assets/char/default/right-step-1.PNG");
-        this.load.image("defaultRightWalk2", "/assets/char/default/right-step-2.PNG");
+    this.load.image("defaultBack", "/assets/char/default/back-default.png");
+    this.load.image("defaultLeft", "/assets/char/default/left-default.png");
+    this.load.image("defaultRight", "/assets/char/default/right-default.png");
+    this.load.image("defaultFrontWalk1", "/assets/char/default/front-step-1.PNG");
+    this.load.image("defaultFrontWalk2", "/assets/char/default/front-step-2.PNG");
+    this.load.image("defaultBackWalk1", "/assets/char/default/back-step-1.PNG");
+    this.load.image("defaultBackWalk2", "/assets/char/default/back-step-2.PNG");
+    this.load.image("defaultLeftWalk1", "/assets/char/default/left-step-1.PNG");
+    this.load.image("defaultLeftWalk2", "/assets/char/default/left-step-2.PNG");
+    this.load.image("defaultRightWalk1", "/assets/char/default/right-step-1.PNG");
+    this.load.image("defaultRightWalk2", "/assets/char/default/right-step-2.PNG");
     this.load.image("fairy", "/assets/npc/fairy/fairy.png");
     this.load.image("fairySad", "/assets/npc/fairy/fairy-sad.PNG");
     this.load.image("fairyHappy", "/assets/npc/fairy/fairy-happy.PNG");
@@ -68,7 +67,6 @@ class WeeCairScene extends Phaser.Scene {
   }
 
   create() {
-
     this.scene.launch("ControlScene");
     // --- Launch HUD ---
     this.scene.launch("HUDScene");
@@ -252,45 +250,45 @@ class WeeCairScene extends Phaser.Scene {
 
         // --- After fairyGoodbyeDialogues, show options ---
         if (this.activeDialogue === fairyGoodbyeDialogues) {
-      destroyDialogueUI(this);
-      this.dialogueActive = false;
-      this.updateHUDState();
+          destroyDialogueUI(this);
+          this.dialogueActive = false;
+          this.updateHUDState();
 
-      this.showStayOrGoOptions = () => {
-        showOption(this, "What would you like to do?", {
-          imageKey: "fairyHappy",
-          options: [
-            {
-              label: "Go to the botanic gardens",
-              onSelect: () => {
-                this.scene.start("WallGardenScene");
-              }
-            },
-            {
-              label: "Stay here",
-              onSelect: () => {
-                this.activeDialogue = ["Come back when you're ready!"];
-                this.activeImageKey = "fairyHappy";
-                this.currentDialogueIndex = 0;
-                this.dialogueActive = true;
-                this.updateHUDState();
-                showDialogue(this, this.activeDialogue[0], {
-                  imageKey: this.activeImageKey,
-                  onComplete: () => {
-                    this.dialogueActive = false;
-                    this.updateHUDState();
-                    this.showStayOrGoOptions();
+          this.showStayOrGoOptions = () => {
+            showOption(this, "What would you like to do?", {
+              imageKey: "fairyHappy",
+              options: [
+                {
+                  label: "Go to the botanic gardens",
+                  onSelect: () => {
+                    this.scene.start("WallGardenScene");
                   }
-                });
-              }
-            }
-          ]
-        });
-      };
+                },
+                {
+                  label: "Stay here",
+                  onSelect: () => {
+                    this.activeDialogue = ["Come back when you're ready!"];
+                    this.activeImageKey = "fairyHappy";
+                    this.currentDialogueIndex = 0;
+                    this.dialogueActive = true;
+                    this.updateHUDState();
+                    showDialogue(this, this.activeDialogue[0], {
+                      imageKey: this.activeImageKey,
+                      onComplete: () => {
+                        this.dialogueActive = false;
+                        this.updateHUDState();
+                        this.showStayOrGoOptions();
+                      }
+                    });
+                  }
+                }
+              ]
+            });
+          };
 
-      this.showStayOrGoOptions();
-      return;
-    }
+          this.showStayOrGoOptions();
+          return;
+        }
 
         // --- Normal sequence advancement ---
         destroyDialogueUI(this);
@@ -315,7 +313,8 @@ class WeeCairScene extends Phaser.Scene {
 
     // --- Responsive: Listen for resize events
     this.scale.on('resize', (gameSize) => {
-      const char = createMainChar(this, width, height, collisionObjects, scaleFactor);      this.handleResize(gameSize);
+      const char = createMainChar(this, width, height, collisionObjects, scaleFactor);      
+      this.handleResize(gameSize);
     });
 
     this.events.on("foxgloveGiven", () => {
@@ -326,9 +325,7 @@ class WeeCairScene extends Phaser.Scene {
         this.foxglovePlantReceived = false;
         // Show handover dialogue
         showDialogue(this, "You hand her the plant...", { imageKey: "bee" });
-        coinManager.add(200);
-        saveToLocal("coins", coinManager.coins);
-        // Move to thanks dialogue after short delay
+        // Removed coinManager.add and coin saving
         this.time.delayedCall(800, () => {
           this.currentSet = this.dialogueSequence.findIndex(
             (set) => set.lines === beeThanksDialogues
@@ -404,6 +401,5 @@ class WeeCairScene extends Phaser.Scene {
     }
   }
 }
-
 
 export default WeeCairScene;
