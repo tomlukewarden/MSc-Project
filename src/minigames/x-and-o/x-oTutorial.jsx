@@ -23,23 +23,25 @@ class XOTutorialScene extends Phaser.Scene {
       fontFamily: "Georgia"
     }).setOrigin(0.5).setDepth(1);
     // Instructions
-    this.add.text(width / 2, 170, "Get three in a row to win!\nYou are X, computer is O.", {
-      fontSize: "26px",
-      color: "#fff",
-      fontFamily: "Georgia",
-      align: "center"
-    }).setOrigin(0.5).setDepth(1);
-    // Board preview
-    this.add.image(width / 2, 320, "gameBoard").setDisplaySize(320, 320).setDepth(1);
+    this.add.text(width / 2, 170,
+      "Get three in a row to win!\nYou are X, computer is O.\nClick on a space on the board to place your icon.",
+      {
+        fontSize: "26px",
+        color: "#fff",
+        fontFamily: "Georgia",
+        align: "center"
+      }
+    ).setOrigin(0.5).setDepth(1);
+  
     // X and O icons
-    this.add.image(width / 2 - 80, 320, "xIcon").setDisplaySize(60, 60).setDepth(1);
-    this.add.image(width / 2 + 80, 320, "oIcon").setDisplaySize(60, 60).setDepth(1);
-    this.add.text(width / 2 - 80, 390, "You (X)", {
+    this.add.image(width / 2 - 80, 300, "xIcon").setDisplaySize(60, 60).setDepth(1);
+    this.add.image(width / 2 + 80, 300, "oIcon").setDisplaySize(60, 60).setDepth(1);
+    this.add.text(width / 2 - 80, 330, "You (X)", {
       fontSize: "22px",
       color: "#fff",
       fontFamily: "Georgia"
     }).setOrigin(0.5).setDepth(1);
-    this.add.text(width / 2 + 80, 390, "Computer (O)", {
+    this.add.text(width / 2 + 80, 330, "Computer (O)", {
       fontSize: "22px",
       color: "#fff",
       fontFamily: "Georgia"

@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { showDialogue } from '../dialogue/dialogueUIHelpers';
 
 class CraftingTutorial extends Phaser.Scene {
   constructor() {
@@ -9,6 +10,8 @@ class CraftingTutorial extends Phaser.Scene {
     ];
     this.craftingSlots = [null, null, null];
     this.result = null;
+    this.dialogueStep = 0;
+    this.dialogueActive = false;
   }
 
   preload() {
@@ -18,6 +21,8 @@ class CraftingTutorial extends Phaser.Scene {
     this.load.image('baseCream', '/assets/shopItems/cream.png');
     this.load.image('arrow', '/assets/ui-items/arrow.png');
     this.load.image('marigoldSalve', '/assets/crafting/creamRemedy.png');
+    this.load.image('dialogueBoxBg', '/assets/ui-items/dialogue.png');
+    this.load.image("butterflyHappy", "/assets/npc/butterfly/happy-butterfly-dio.png");
   }
 
   create() {
@@ -135,8 +140,8 @@ class CraftingTutorial extends Phaser.Scene {
     this.resultImage = null;
     this.resultLabel = null;
 
-    // Back button
-    const backBtn = this.add.text(width / 2, height - 60, "Back", {
+    // Next button (to IntroScene)
+    const nextBtn = this.add.text(width / 2, height - 60, "Finish Tutorial", {
       fontFamily: "Georgia",
       fontSize: "22px",
       color: "#fff",
@@ -144,22 +149,90 @@ class CraftingTutorial extends Phaser.Scene {
       padding: { left: 18, right: 18, top: 8, bottom: 8 }
     })
       .setOrigin(0.5)
+      .setDepth(2)
       .setInteractive({ useHandCursor: true })
-      .on("pointerover", () => backBtn.setStyle({ backgroundColor: "#145214" }))
-      .on("pointerout", () => backBtn.setStyle({ backgroundColor: "#228B22" }))
+      .on("pointerover", () => nextBtn.setStyle({ backgroundColor: "#145214" }))
+      .on("pointerout", () => nextBtn.setStyle({ backgroundColor: "#228B22" }))
       .on("pointerdown", () => {
-        this.scene.start("PersonalGarden");
+        this.scene.start("IntroScene");
       });
+
+    // Dialogue tutorial steps
+    this.dialogueStep = 0;
+    this.dialogueActive = true;
+    this.showCraftingDialogue();
+
+    // Advance dialogue on pointerdown
+    this.input.on('pointerdown', () => {
+      if (this.dialogueActive) {
+        this.advanceDialogue();
+      }
+    });
 
     // Initial crafting slots update
     this.updateCraftingSlots();
+  }
+
+  showCraftingDialogue() {
+    const steps = [
+      {
+        text: "Welcome to crafting! I will show you how to make remedies.",
+      },
+      {
+        text: "Click the Marigold and Base Cream from your inventory \n to put them into the crafting slots.",
+      },
+      {
+        text: "The correct pattern is Marigold, Base Cream, Marigold.",
+      },
+      {
+        text: "When the slots are filled, click 'Craft!' to make Marigold Salve.",
+      },
+      {
+        text: "If you make a mistake, you can remove items by clicking the slot.",
+      },
+      {
+        text: "That's it! Click 'Finish Tutorial' below to continue on your journey.",
+      }
+    ];
+
+    if (this.dialogueStep < steps.length - 1) {
+      showDialogue(this, steps[this.dialogueStep].text, {
+        imageKey: "butterflyHappy",
+        imageSide: "left",
+        options: []
+      });
+    } else if (this.dialogueStep === steps.length - 1) {
+      showDialogue(this, steps[this.dialogueStep].text, {
+        imageKey: "butterflyHappy",
+        imageSide: "left",
+        options: [
+          {
+            label: "Finish Tutorial",
+            onSelect: () => {
+              this.dialogueActive = false;
+              this.destroyDialogueUI();
+              this.scene.start("IntroScene");
+            }
+          }
+        ]
+      });
+    } else {
+      this.dialogueActive = false;
+      this.destroyDialogueUI();
+    }
+  }
+
+  advanceDialogue() {
+    if (!this.dialogueActive) return;
+    this.dialogueStep += 1;
+    this.showCraftingDialogue();
   }
 
   updateCraftingSlots() {
     const slotY = 350;
     const slotStartX = this.sys.game.config.width / 2 - 100;
     const slotSpacing = 100;
-    const slotScale = 0.09;
+    const slotScale = 0.04;
     for (let i = 0; i < 3; i++) {
       const x = slotStartX + i * slotSpacing;
       const slot = this.craftingSlotSprites[i];
@@ -179,11 +252,6 @@ class CraftingTutorial extends Phaser.Scene {
         slot.label = null;
       }
     }
-    // Clear result if slots change
-    if (this.resultImage) this.resultImage.destroy();
-    if (this.resultLabel) this.resultLabel.destroy();
-    this.resultImage = null;
-    this.resultLabel = null;
   }
 
   tryCraft() {
@@ -196,8 +264,10 @@ class CraftingTutorial extends Phaser.Scene {
         selected[2] === pattern[2]) {
       // Success!
       const x = this.sys.game.config.width / 2;
-      const y = 480;
-      this.resultImage = this.add.image(x, y, 'marigoldSalve').setScale(0.13).setDepth(4);
+      const y = this.sys.game.config.height - 200; // Show at bottom below craft button
+      if (this.resultImage) this.resultImage.destroy();
+      if (this.resultLabel) this.resultLabel.destroy();
+      this.resultImage = this.add.image(x, y, 'marigoldSalve').setScale(0.06).setDepth(4);
       this.resultLabel = this.add.text(x, y + 50, 'Marigold Salve Crafted!', {
         fontFamily: 'Georgia',
         fontSize: '20px',
@@ -221,6 +291,18 @@ class CraftingTutorial extends Phaser.Scene {
           this.resultLabel = null;
         }
       });
+    }
+  }
+
+  destroyDialogueUI() {
+    if (this.dialogueBox) {
+      this.dialogueBox.box?.destroy();
+      this.dialogueBox.textObj?.destroy();
+      this.dialogueBox.image?.destroy();
+      if (this.dialogueBox.optionButtons) {
+        this.dialogueBox.optionButtons.forEach((btn) => btn.destroy());
+      }
+      this.dialogueBox = null;
     }
   }
 }

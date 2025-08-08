@@ -1,12 +1,15 @@
 import Phaser from 'phaser';
+import { showDialogue } from '../dialogue/dialogueUIHelpers';
 
 class FarmingTutorial extends Phaser.Scene {
   constructor() {
     super({ key: 'FarmingTutorial' });
-    this.plotState = 'empty'; // 'empty', 'prepared', 'planted', 'grown', 'harvested'
+    this.plotState = 'empty';
     this.seedCount = 1;
     this.waterCount = 0;
     this.hasPlant = false;
+    this.dialogueStep = 0;
+    this.dialogueActive = false;
   }
 
   preload() {
@@ -17,6 +20,8 @@ class FarmingTutorial extends Phaser.Scene {
     this.load.image('hoe', '/assets/tools/hoe.png');
     this.load.image('marigoldPlant', '/assets/plants/marigold.PNG');
     this.load.image('arrow', '/assets/ui-items/arrow.png');
+    this.load.image("butterflyHappy", "/assets/npc/butterfly/happy-butterfly-dio.png");
+    this.load.image('dialogueBoxBg', '/assets/ui-items/dialogue.png');
   }
 
   create() {
@@ -40,8 +45,8 @@ class FarmingTutorial extends Phaser.Scene {
       fontStyle: 'bold'
     }).setOrigin(0.5).setDepth(2);
 
-    // Step instructions
-    this.instructionText = this.add.text(width / 2, 140, 'Step 1: Prepare the soil with the hoe.', {
+    // Instructions (will be updated by dialogue)
+    this.instructionText = this.add.text(width / 2, 140, '', {
       fontFamily: 'Georgia',
       fontSize: '24px',
       color: '#333'
@@ -107,7 +112,7 @@ class FarmingTutorial extends Phaser.Scene {
 
     // Step 1: Prepare soil
     hoeIcon.on('pointerdown', () => {
-      if (this.plotState === 'empty') {
+      if (this.plotState === 'empty' && !this.dialogueActive) {
         this.plotState = 'prepared';
         this.plotImg.setVisible(true);
         this.instructionText.setText('Step 2: Plant seeds in the prepared soil.');
@@ -116,7 +121,7 @@ class FarmingTutorial extends Phaser.Scene {
 
     // Step 2: Plant seed
     this.seedIcon.on('pointerdown', () => {
-      if (this.plotState === 'prepared' && this.seedCount > 0) {
+      if (this.plotState === 'prepared' && this.seedCount > 0 && !this.dialogueActive) {
         this.plotState = 'planted';
         this.seedCount -= 1;
         this.seedLabel.setText(`Marigold Seeds x${this.seedCount}`);
@@ -126,7 +131,7 @@ class FarmingTutorial extends Phaser.Scene {
 
     // Step 3: Water plant
     canIcon.on('pointerdown', () => {
-      if (this.plotState === 'planted' && this.waterCount < 3) {
+      if (this.plotState === 'planted' && this.waterCount < 3 && !this.dialogueActive) {
         this.waterCount += 1;
         this.waterLabel.setText(`Watered: ${this.waterCount}/3`);
         if (this.waterCount === 3) {
@@ -140,7 +145,7 @@ class FarmingTutorial extends Phaser.Scene {
 
     // Step 4: Harvest
     this.harvestBtn.on('pointerdown', () => {
-      if (this.plotState === 'grown') {
+      if (this.plotState === 'grown' && !this.dialogueActive) {
         this.plotState = 'harvested';
         this.plantImg.setVisible(false);
         this.harvestBtn.setVisible(false);
@@ -148,8 +153,20 @@ class FarmingTutorial extends Phaser.Scene {
       }
     });
 
-    // Back button
-    const backBtn = this.add.text(width / 2, height - 60, "Back", {
+    // Dialogue tutorial steps
+    this.dialogueStep = 0;
+    this.dialogueActive = true;
+    this.showFarmingDialogue();
+
+    // Advance dialogue on pointerdown
+    this.input.on('pointerdown', () => {
+      if (this.dialogueActive) {
+        this.advanceDialogue();
+      }
+    });
+
+    // Next button (separate, always visible at bottom)
+    const nextBtn = this.add.text(width / 2, height - 60, "Crafting Tutorial", {
       fontFamily: "Georgia",
       fontSize: "22px",
       color: "#fff",
@@ -157,12 +174,73 @@ class FarmingTutorial extends Phaser.Scene {
       padding: { left: 18, right: 18, top: 8, bottom: 8 }
     })
       .setOrigin(0.5)
+      .setDepth(5)
       .setInteractive({ useHandCursor: true })
-      .on("pointerover", () => backBtn.setStyle({ backgroundColor: "#145214" }))
-      .on("pointerout", () => backBtn.setStyle({ backgroundColor: "#228B22" }))
+      .on("pointerover", () => nextBtn.setStyle({ backgroundColor: "#145214" }))
+      .on("pointerout", () => nextBtn.setStyle({ backgroundColor: "#228B22" }))
       .on("pointerdown", () => {
-        this.scene.start("PersonalGarden");
+        this.scene.start("CraftingTutorial");
       });
+  }
+
+  showFarmingDialogue() {
+    const steps = [
+      {
+        text: "Welcome to farming! I'm here to help you grow your first plant.",
+      },
+      {
+        text: "Step 1: Click the hoe to prepare the soil.",
+      },
+      {
+        text: "Step 2: Click the seed packet to plant your marigold seed.",
+      },
+      {
+        text: "Step 3: Water the plant three times using the watering can.",
+      },
+      {
+        text: "Step 4: When the plant is grown, click to collect it.",
+      },
+      {
+        text: "Great job! Next up is crafting. Click below to continue.",
+      }
+    ];
+
+    if (this.dialogueStep < steps.length - 1) {
+      showDialogue(this, steps[this.dialogueStep].text, {
+        imageKey: "butterflyHappy",
+        imageSide: "left",
+        options: []
+      });
+    } else if (this.dialogueStep === steps.length - 1) {
+      // Last step: show "Continue" button
+      showDialogue(this, steps[this.dialogueStep].text, {
+        imageKey: "butterflyHappy",
+        imageSide: "left",
+    
+      });
+  ;
+    } else {
+      this.dialogueActive = false;
+      this.destroyDialogueUI();
+    }
+  }
+
+  advanceDialogue() {
+    if (!this.dialogueActive) return;
+    this.dialogueStep += 1;
+    this.showFarmingDialogue();
+  }
+
+  destroyDialogueUI() {
+    if (this.dialogueBox) {
+      this.dialogueBox.box?.destroy();
+      this.dialogueBox.textObj?.destroy();
+      this.dialogueBox.image?.destroy();
+      if (this.dialogueBox.optionButtons) {
+        this.dialogueBox.optionButtons.forEach((btn) => btn.destroy());
+      }
+      this.dialogueBox = null;
+    }
   }
 }
 

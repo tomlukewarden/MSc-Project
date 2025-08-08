@@ -33,6 +33,7 @@ import CraftingTutorial from "../tutorials/craftingTutorial";
 import MovementTutorial from "../tutorials/movementTutorial";
 import FarmingTutorial from "../tutorials/farmingTutorial";
 import ForagingTutorial from "../tutorials/foragingTutorial";
+import Tutorial from "../tutorials/tutorial";
 
 function GameCanvas() {
     const canvasRef = useRef(null);
@@ -97,7 +98,8 @@ function GameCanvas() {
     CraftingTutorial,
     MovementTutorial,
     FarmingTutorial,
-    ForagingTutorial
+    ForagingTutorial,
+    Tutorial
   ]
 };
 

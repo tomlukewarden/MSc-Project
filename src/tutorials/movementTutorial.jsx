@@ -80,8 +80,8 @@ class MovementTutorial extends Phaser.Scene {
       }
     });
 
-    // Back button
-    const backBtn = this.add.text(width / 2, height - 60, "Back", {
+    // Next button
+    const nextBtn = this.add.text(width / 2, height - 60, "Foraging Tutorial", {
       fontFamily: "Georgia",
       fontSize: "22px",
       color: "#fff",
@@ -93,7 +93,7 @@ class MovementTutorial extends Phaser.Scene {
       .on("pointerover", () => backBtn.setStyle({ backgroundColor: "#145214" }))
       .on("pointerout", () => backBtn.setStyle({ backgroundColor: "#228B22" }))
       .on("pointerdown", () => {
-        this.scene.start("PersonalGarden");
+        this.scene.start("ForagingTutorial", this.scene.settings.data?.nextData || {});
       });
   }
 
@@ -102,22 +102,38 @@ class MovementTutorial extends Phaser.Scene {
       {
         text: "Welcome to movement tutorial!\nLet's learn how to move your character.",
       },
-       {
+      {
         text: "Press W to move up, A to move left, S to move down, and D to move right.",
       },
       {
         text: "Try moving around now! Notice how you can't walk through rocks or trees.",
       },
       {
-        text: "That's it! You're ready to explore.\n Try running around and when you are ready, move on!",
+        text: "That's it! You're ready to explore.\nTry running around and when you are ready, move on!",
       }
     ];
 
-    if (this.dialogueStep < steps.length) {
+    if (this.dialogueStep < steps.length - 1) {
       showDialogue(this, steps[this.dialogueStep].text, {
         imageKey: "butterflyHappy",
         imageSide: "left",
-        options: [] 
+        options: []
+      });
+    } else if (this.dialogueStep === steps.length - 1) {
+      // Last step: show "Continue" button
+      showDialogue(this, steps[this.dialogueStep].text, {
+        imageKey: "butterflyHappy",
+        imageSide: "left",
+        options: [
+          {
+            label: "Continue to Foraging",
+            onSelect: () => {
+              this.dialogueActive = false;
+              this.destroyDialogueUI();
+              this.scene.start("ForagingTutorial", this.scene.settings.data?.nextData || {});
+            }
+          }
+        ]
       });
     } else {
       // End of tutorial dialogue

@@ -21,6 +21,7 @@ class ForagingTutorial extends Phaser.Scene {
     this.load.image('coin', '/assets/misc/coin.png');
     this.load.image('arrow', '/assets/ui-items/arrow.png');
     this.load.image("butterflyHappy", "/assets/npc/butterfly/happy-butterfly-dio.png");
+    this.load.image('dialogueBoxBg', '/assets/ui-items/dialogue.png');
   }
 
   create() {
@@ -30,11 +31,6 @@ class ForagingTutorial extends Phaser.Scene {
     this.add.image(width / 2, height / 2, 'personalGardenBg')
       .setDisplaySize(width, height)
       .setDepth(0);
-
-    // Overlay
-    this.add.rectangle(width / 2, height / 2, width - 80, height - 80, 0xffffff, 0.85)
-      .setStrokeStyle(2, 0x228B22)
-      .setDepth(1);
 
     // Title
     this.add.text(width / 2, 80, 'Foraging Tutorial', {
@@ -51,12 +47,12 @@ class ForagingTutorial extends Phaser.Scene {
       color: '#333'
     }).setOrigin(0.5).setDepth(2);
 
-    // Bush positions
+    // Bush positions (lower on the screen)
     const bushPositions = [
-      { x: width / 2 - 220, y: 300 }, // Jasmine
-      { x: width / 2 - 70, y: 400 },  // Marigold
-      { x: width / 2 + 70, y: 250 },  // Periwinkle
-      { x: width / 2 + 220, y: 350 }  // Coins
+      { x: width / 2 - 220, y: height - 220 }, // Jasmine
+      { x: width / 2 - 70, y: height - 120 },  // Marigold
+      { x: width / 2 + 70, y: height - 270 },  // Periwinkle
+      { x: width / 2 + 220, y: height - 170 }  // Coins
     ];
 
     // Plant keys for first three bushes
@@ -107,8 +103,8 @@ class ForagingTutorial extends Phaser.Scene {
       }
     });
 
-    // Back button
-    const backBtn = this.add.text(width / 2, height - 60, "Back", {
+    // Next button
+    const nextBtn = this.add.text(width / 2, height - 60, "Farming Tutorial", {
       fontFamily: "Georgia",
       fontSize: "22px",
       color: "#fff",
@@ -120,7 +116,7 @@ class ForagingTutorial extends Phaser.Scene {
       .on("pointerover", () => backBtn.setStyle({ backgroundColor: "#145214" }))
       .on("pointerout", () => backBtn.setStyle({ backgroundColor: "#228B22" }))
       .on("pointerdown", () => {
-        this.scene.start("PersonalGarden");
+        this.scene.start("FarmingTutorial");
       });
   }
 
@@ -150,11 +146,9 @@ class ForagingTutorial extends Phaser.Scene {
         imageSide: "left",
         options: []
       });
-      this.instructionText.setText(steps[this.dialogueStep].text.split('\n')[1] || steps[this.dialogueStep].text);
     } else {
       this.dialogueActive = false;
       this.destroyDialogueUI();
-      this.instructionText.setText('Click bushes to try foraging yourself!');
     }
   }
 
@@ -172,7 +166,7 @@ class ForagingTutorial extends Phaser.Scene {
     const popupText = this.add.text(x, y - 110, 'Quick! Click the plant to win it!', {
       fontFamily: 'Georgia',
       fontSize: '16px',
-      color: '#228B22'
+      color: '#000000ff'
     }).setOrigin(0.5).setDepth(11);
 
     const plantSprite = this.add.image(x, y - 60, plantKey)
@@ -211,7 +205,7 @@ class ForagingTutorial extends Phaser.Scene {
     this.resultLabel = this.add.text(x, y + 30, itemName, {
       fontFamily: 'Georgia',
       fontSize: '18px',
-      color: '#228B22'
+      color: '#000000ff'
     }).setOrigin(0.5).setDepth(12);
 
     this.time.delayedCall(2000, () => {
