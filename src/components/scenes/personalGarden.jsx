@@ -1,6 +1,6 @@
 import { Plot } from "../farmingLogic";
 import { createMainChar } from "../../characters/mainChar";
-import { inventoryManager } from "../openInventory";   
+import { inventoryManager } from "../openInventory";
 import { saveToLocal, loadFromLocal } from "../../utils/localStorage";
 // Ensure global inventoryManager instance
 if (typeof window !== "undefined") {
@@ -12,19 +12,18 @@ import { showDialogue, showOption } from "../../dialogue/dialogueUIHelpers";
 import globalTimeManager from "../../day/timeManager";
 import { receivedItem } from "../recievedItem";
 import itemsData from "../../items";
-import SeedPouchLogic from "../seedPouchLogic"; // Importing SeedPouchLogic for seed management
+import SeedPouchLogic from "../seedPouchLogic";
 import plantData from "../../plantData";
 import { CoinManager } from "../coinManager";
 
 class PersonalGarden extends Phaser.Scene {
   constructor() {
-    super("PersonalGarden", { physics: { default: 'arcade', arcade: { debug: false } } });
+    super("PersonalGarden", { physics: { default: 'arcade', arcade: { debug: true } } });
     this.plotSize = 64;
     this.rows = 3;
     this.cols = 5;
     this.plots = [];
     this.currentTool = "hoe";
-    // Ensure global inventoryManager and coinManager are always set and valid
     if (typeof window !== "undefined") {
       if (!window.inventoryManager) {
         window.inventoryManager = inventoryManager;
@@ -82,7 +81,9 @@ class PersonalGarden extends Phaser.Scene {
       ["garlicPlant", "/assets/plants/garlic.PNG"],
       ["thymePlant", "/assets/plants/thyme.PNG"],
       ["willowPlant", "/assets/plants/willow.PNG"],
-      ["craftingBench", "/assets/crafting/bench.png"]
+      ["craftingBench", "/assets/crafting/bench.png"],
+      ["hedgeArch", "/assets/backgrounds/personal/hedgeArchway.png"],
+      ["hedgeArchShadow", "/assets/backgrounds/personal/hedgeArchwayShadow.png"],
     ];
     assets.forEach(([key, path]) => this.load.image(key, path));
   }
@@ -130,7 +131,7 @@ class PersonalGarden extends Phaser.Scene {
     const gridWidth = this.cols * plotSpacing;
     const gridHeight = this.rows * plotSpacing;
     const startX = width / 2 - gridWidth / 2 + plotSpacing / 2;
-    const startY = height / 2 - gridHeight / 2 + 100;
+    const startY = height / 2 - gridHeight / 2 + 160;
 
     for (let row = 0; row < this.rows; row++) {
       for (let col = 0; col < this.cols; col++) {
@@ -173,7 +174,7 @@ class PersonalGarden extends Phaser.Scene {
                 this.updatePlotText(plotText, plot);
                 this.updatePlotColor(plotRect, plot);
                 preparedPlotImg.setVisible(true);
-          
+
               }
               break;
             case 'prepared':
@@ -183,7 +184,7 @@ class PersonalGarden extends Phaser.Scene {
                   this.updatePlotText(plotText, plot);
                   this.updatePlotColor(plotRect, plot);
                   preparedPlotImg.setVisible(true);
-      
+
                 }
               });
               break;
@@ -205,14 +206,10 @@ class PersonalGarden extends Phaser.Scene {
                 if (result.success && result.item) {
                   let plantKey = result.item;
                   const plantEntry = plantData.find(p => p.seedKey === result.item);
-                  alert('[Harvest] plantEntry: ' + JSON.stringify(plantEntry));
                   if (plantEntry && plantEntry.key) {
                     plantKey = plantEntry.key;
                   }
-                  alert('[Harvest] plantKey: ' + plantKey);
                   const plantItem = itemsData.find(i => i.key === plantKey);
-                  alert('[Harvest] plantItem: ' + JSON.stringify(plantItem));
-                  alert('[Harvest] receivedItem args: ' + JSON.stringify(plantItem) + ', ' + this.inventoryManager);
                   if (plantItem) {
                     receivedItem(this, plantItem.key, plantItem.name);
                   }
@@ -228,6 +225,48 @@ class PersonalGarden extends Phaser.Scene {
         });
       }
     }
+
+    // --- COLLISION GROUPS SETUP ---
+    // Create a physics group for obstacles (e.g. plots, fence, archway, etc.)
+    this.obstacleGroup = this.physics.add.staticGroup();
+
+    // Add plot rectangles to obstacle group for collision
+    this.plots.forEach(({ plotRect }) => {
+      this.obstacleGroup.add(plotRect);
+    });
+
+    // Add fence to obstacle group if you want collision
+    const scaleFactor = 0.14;
+    const fenceImg = this.add.image(0, 0, "fence").setOrigin(0).setScale(scaleFactor).setDepth(10);
+    this.obstacleGroup.add(fenceImg);
+
+    // Add archway to obstacle group if you want collision
+    const archScale = 0.2;
+    const archWidth = this.textures.exists('hedgeArch') ? this.textures.get('hedgeArch').getSourceImage().width * archScale : 180;
+    const archHeight = this.textures.exists('hedgeArch') ? this.textures.get('hedgeArch').getSourceImage().height * archScale : 220;
+    const archX = startX + gridWidth + archWidth / 2 - 40;
+    const archY = startY + gridHeight / 2 - 120;
+    const shadowArch = this.add.image(archX, archY + archHeight * 0.18, "hedgeArchShadow")
+      .setOrigin(0.5)
+      .setScale(archScale)
+      .setDepth(archY + 1);
+    const archway = this.add.image(archX, archY + archHeight * 0.18, "hedgeArch")
+      .setOrigin(0.5)
+      .setScale(archScale)
+      .setDepth(archY + 2);
+    this.obstacleGroup.add(archway);
+
+    // --- MAIN CHARACTER CREATION WITH COLLISION ---
+    const charStartX = startX + gridWidth / 2;
+    const charStartY = startY + gridHeight / 2;
+
+    this.mainChar = createMainChar(this, charStartX, charStartY, scaleFactor, this.obstacleGroup);
+    this.mainChar.setDepth(101).setOrigin(0.5, 0.5);
+
+    // Enable collision between mainChar and obstacles
+    this.physics.add.collider(this.mainChar, this.obstacleGroup);
+
+
     // Ensure player always has basic tools in inventory
     const defaultTools = ['hoe', 'wateringCan', 'shovel', 'seeds'];
     let inventory = this.inventoryManager.getInventory ? this.inventoryManager.getInventory() : this.inventoryManager.inventory;
@@ -242,7 +281,6 @@ class PersonalGarden extends Phaser.Scene {
       }
     });
 
-    const scaleFactor = 0.14;
     this.add.image(0, 0, "gardenBackground").setOrigin(0).setScale(0.22);
 
     // Tent image (not interactive)
@@ -250,7 +288,7 @@ class PersonalGarden extends Phaser.Scene {
 
     // Triangle icon above tent for next day
     const tentTriangleX = tentImg.x + tentImg.displayWidth / 2;
-    const tentTriangleY = tentImg.y + 60; 
+    const tentTriangleY = tentImg.y + 60;
     const triangleSize = 32;
     const triangle = this.add.triangle(
       tentTriangleX,
@@ -260,7 +298,7 @@ class PersonalGarden extends Phaser.Scene {
       triangleSize, triangleSize,
       0xffe066
     ).setDepth(10)
-     .setInteractive({ useHandCursor: true });
+      .setInteractive({ useHandCursor: true });
 
     // Tooltip text
     const nextDayText = this.add.text(tentTriangleX, tentTriangleY - 24, "Next Day", {
@@ -274,7 +312,6 @@ class PersonalGarden extends Phaser.Scene {
     triangle.on("pointerover", () => nextDayText.setAlpha(1));
     triangle.on("pointerout", () => nextDayText.setAlpha(0));
     triangle.on("pointerdown", () => {
-      alert('Advancing to next day! Previous day: ' + globalTimeManager.getDayNumber());
       this.scene.pause();
       this.scene.launch("DayEndScene", { day: globalTimeManager.getDayNumber() });
       this.scene.get("DayEndScene").events.once("dayEnded", () => {
@@ -283,7 +320,6 @@ class PersonalGarden extends Phaser.Scene {
         this.plots.forEach(({ plot }) => {
           plot.watered = false;
         });
-        alert('New day: ' + globalTimeManager.getDayNumber());
         // Update day number display
         if (this.dayText) {
           this.dayText.setText(`Day: ${globalTimeManager.getDayNumber()}`);
@@ -383,20 +419,6 @@ class PersonalGarden extends Phaser.Scene {
       this.saveSceneState();
       clearInterval(this._saveInterval);
     });
-
-    // Add the crafting bench image to the garden
-    const benchX = 450;
-    const benchY = 200;
-    const craftingBenchImg = this.add.image(benchX, benchY, "craftingBench")
-      .setScale(0.05)
-      .setInteractive({ useHandCursor: true })
-      .setDepth(20);
-
-    craftingBenchImg.on("pointerdown", () => {
-      // Launch the CraftUI as a scene overlay
-      this.scene.launch('CraftUI');
-      this.scene.bringToTop('CraftUI');
-    });
   }
 
   saveSceneState() {
@@ -415,70 +437,6 @@ class PersonalGarden extends Phaser.Scene {
       currentDay: globalTimeManager.getDayNumber(),
     };
     saveToLocal('personalGardenSceneState', state);
-  }
-
-/*************  ✨ Windsurf Command ⭐  *************/
-  /**
-   * Uses the current tool on the given plot, if possible.
-   * 
-   * @param {Plot} plot The plot to use the tool on.
-   * @returns {Object} An object with a success property (true/false) and an item property (the key of the item
-   *  added to the inventory, if any). If the tool is not recognized or not in the inventory, success is false.
-   */
-/*******  2298f030-e449-428d-b0bf-a58c16a07ef9  *******/  useToolOnPlot(plot) {
-    alert('useToolOnPlot called: state=' + plot.state + ', tool=' + this.currentTool);
-          alert('pointerdown event: state=' + plot.state + ', tool=' + this.currentTool);
-    const inventory = this.inventoryManager.getInventory ? this.inventoryManager.getInventory() : this.inventoryManager.inventory;
-    if (this.currentTool === 'hoe' && inventory.tools.includes('hoe')) {
-      return plot.prepare();
-    }
-    if (this.currentTool === 'seed' && inventory.tools.includes('seed')) {
-      return plot.plant(this.currentTool);
-    }
-    if (this.currentTool === 'wateringCan' && inventory.tools.includes('wateringCan')) {
-      return plot.water();
-    }
-    if (this.currentTool === 'shovel' && inventory.tools.includes('shovel')) {
-      // If plot is grown, harvest as normal
-      if (plot.state === 'grown') {
-        const result = plot.harvest();
-        if (result.success && result.item) {
-          let plantKey = result.item;
-          const plantEntry = plantData.find(p => p.seedKey === result.item);
-          if (plantEntry && plantEntry.key) {
-            plantKey = plantEntry.key;
-          }
-          const plantItem = itemsData.find(i => i.key === plantKey);
-          alert('[Harvest] plantKey: ' + plantKey);
-          alert('[Harvest] plantItem: ' + JSON.stringify(plantItem));
-          alert('[Harvest] receivedItem args: ' + JSON.stringify(plantItem) + ', ' + this.inventoryManager);
-          if (plantItem) {
-            receivedItem(plantItem, this.inventoryManager);
-          }
-        }
-        return result;
-      }
-      // If plot is already harvested, allow collecting again if not already in inventory
-      if (plot.state === 'harvested' && plot.seedType) {
-        let plantKey = plot.seedType;
-        const plantEntry = plantData.find(p => p.seedKey === plot.seedType);
-        if (plantEntry && plantEntry.key) {
-          plantKey = plantEntry.key;
-        }
-        const plantItem = itemsData.find(i => i.key === plantKey);
-        alert('[Harvested] plantKey: ' + plantKey);
-        alert('[Harvested] plantItem: ' + JSON.stringify(plantItem));
-        alert('[Harvested] receivedItem args: ' + JSON.stringify(plantItem) + ', ' + this.inventoryManager);
-        const invPlants = inventory.plants || [];
-        const alreadyCollected = invPlants.includes(plantKey);
-        if (plantItem && !alreadyCollected) {
-          receivedItem(plantItem, this.inventoryManager);
-          return { success: true, item: plantKey };
-        }
-      }
-      return { success: false };
-    }
-    return { success: false, message: 'Unknown tool or missing from inventory.' };
   }
 
   updatePlotText(text, plot) {
