@@ -1,17 +1,15 @@
-import { CoinManager } from "../components/coinManager";
 import { loadFromLocal } from "../utils/localStorage";
 import InventoryManager from "./inventoryManager";
 import { saveToLocal } from "../utils/localStorage";
 
-
-const coinManager = typeof window !== "undefined" && window.coinManager ? window.coinManager : new CoinManager(loadFromLocal("coins") || 0);
+// Removed CoinManager import and all coin logic
 
 export const inventoryManager = new InventoryManager();
 
 class OpenInventory extends Phaser.Scene {
   constructor() {
     super({ key: "OpenInventory" });
-    this.coinText = null;
+    // Removed coinText property
     this.itemRects = [];
     this.itemTexts = [];
     this.itemImages = [];
@@ -28,7 +26,7 @@ class OpenInventory extends Phaser.Scene {
     // Use inventoryBackground image instead of rectangle
     const bg = this.add.image(width / 2, height / 2, "inventoryBackground")
       .setDisplaySize(600, 500)
-      .setDepth(105) // Background depth
+      .setDepth(105); // Background depth
 
     this.add.text(width / 2, height / 2 - 220, "Inventory", {
       fontFamily: "Georgia",
@@ -36,14 +34,7 @@ class OpenInventory extends Phaser.Scene {
       color: "#fff"
     }).setOrigin(0.5).setDepth(106);
 
-    // --- COINS ---
-    this.coinText = this.add.text(width / 2 + 270, height / 2 - 240, `${coinManager.coins}c`, {
-      fontFamily: "Georgia",
-      fontSize: "26px",
-      color: "#ffe066",
-      backgroundColor: "#222",
-      padding: { left: 12, right: 12, top: 6, bottom: 6 }
-    }).setOrigin(1, 0).setDepth(106);
+    // --- COINS REMOVED ---
 
     // Scrollable container for items
     const scrollMask = this.add.graphics().fillRect(width / 2 - 280, height / 2 - 180, 560, 400);
@@ -78,33 +69,56 @@ class OpenInventory extends Phaser.Scene {
             .setDepth(112);
         }
 
-        let displayName = item.name;
+        // Show item count below the image if count > 1
+        let countText = null;
         if (item.count && item.count > 1) {
-          displayName += ` x${item.count}`;
+          countText = this.add.text(
+            x, y + 32, `${item.count}`,
+            {
+              fontFamily: "Georgia",
+              fontSize: "18px",
+              color: "#222",
+              backgroundColor: "#fff8",
+              padding: { left: 6, right: 6, top: 2, bottom: 2 }
+            }
+          ).setOrigin(0.5).setDepth(113);
         }
-        const nameText = this.add.text(
-          x, y - 38, displayName, {
-            fontFamily: "Georgia",
-            fontSize: "16px",
-            color: "#222",
-            fontStyle: "bold"
+
+        // Only show name on hover
+        let nameText = null;
+        rect.on("pointerover", () => {
+          nameText = this.add.text(
+            x, y - 38, item.name, {
+              fontFamily: "Georgia",
+              fontSize: "16px",
+              color: "#222",
+              fontStyle: "bold",
+              backgroundColor: "#fff8",
+              padding: { left: 6, right: 6, top: 2, bottom: 2 }
+            }
+          ).setOrigin(0.5).setDepth(1000);
+        });
+        rect.on("pointerout", () => {
+          if (nameText) {
+            nameText.destroy();
+            nameText = null;
           }
-        ).setOrigin(0.5).setDepth(113);
+        });
 
         rect.on("pointerdown", () => {
-          // Seed selection mode: call onSelect and close inventory
-          if (this.scene.settings.data && this.scene.settings.data.mode === 'selectSeed' && typeof this.scene.settings.data.onSelect === 'function') {
-            this.scene.settings.data.onSelect(item);
-            this.scene.stop();
-            return;
-          }
           // Crafting slot selection mode
-          if (this.scene.settings.data && this.scene.settings.data.mode === 'selectItemForCraft' && typeof this.scene.settings.data.onSelect === 'function') {
+          if (
+            this.scene.settings.data &&
+            this.scene.settings.data.mode === 'selectItemForCraft' &&
+            typeof this.scene.settings.data.onSelect === 'function'
+          ) {
+            // Remove item from inventory immediately when selected for crafting
+            inventoryManager.removeItemByKey && inventoryManager.removeItemByKey(item.key);
+            this.refreshInventoryUI();
             this.scene.settings.data.onSelect(item);
             this.scene.stop();
             return;
           }
-          // ...existing code for NPC gifting and item removal...
           const middleGardenScene = this.scene.get('MiddleGardenScene');
           if (middleGardenScene && middleGardenScene.awaitingPeriwinkleGive && item.key === "periwinklePlant") {
             inventoryManager.removeItemByKey && inventoryManager.removeItemByKey("periwinklePlant");
@@ -141,7 +155,7 @@ class OpenInventory extends Phaser.Scene {
           inventoryManager.removeItemByKey && inventoryManager.removeItemByKey(item.key);
         });
 
-        itemContainer.add([rect, img, nameText].filter(Boolean));
+        itemContainer.add([rect, img, countText].filter(Boolean));
       });
 
       // Calculate max scroll

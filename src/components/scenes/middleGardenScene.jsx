@@ -9,20 +9,14 @@ if (typeof window !== "undefined") {
 }
 import { addPlantToJournal } from "../journalManager";
 import { receivedItem } from "../recievedItem";
-import { CoinManager } from "../coinManager";
 import { saveToLocal, loadFromLocal } from "../../utils/localStorage";
 import { showDialogue, showOption } from "../../dialogue/dialogueUIHelpers";
 import { createWolf, wolfIntroDialogues, wolfThanksDialogues } from "../../characters/wolf";
 import {createDeer, deerIntroDialogues, deerThanksDialogues} from "../../characters/deer";
 import globalTimeManager from "../../day/timeManager";
 
-
-
-const coinManager = typeof window !== "undefined" && window.coinManager ? window.coinManager : CoinManager.load();
-
 class MiddleGardenScene extends Phaser.Scene {
   constructor() {
-    
     super({ key: 'MiddleGardenScene', physics: { default: 'arcade', arcade: { debug: false } } });
     this.garlicFound = false;
     this.thymeFound = false;
@@ -49,7 +43,6 @@ class MiddleGardenScene extends Phaser.Scene {
         this.load.image("defaultRightWalk2", "/assets/char/default/right-step-2.PNG");
     this.load.audio("click", "/assets/sound-effects/click.mp3");
     this.load.audio('sparkle', '/assets/sound-effects/sparkle.mp3');
-    this.load.image('coin', '/assets/misc/coin.png');
     this.load.image('garlicPlant', '/assets/plants/garlic.PNG');
     this.load.image('thymePlant', '/assets/plants/thyme.PNG');
     this.load.image('dialogueBoxBg', '/assets/ui-items/dialogue.png');
@@ -71,11 +64,10 @@ class MiddleGardenScene extends Phaser.Scene {
     if (!globalTimeManager.startTimestamp) {
       globalTimeManager.start();
     }
-    // Reset transitioning flag on scene creation
     this.transitioning = false;
     if (typeof window !== "undefined") {
-    window.inventoryManager = inventoryManager;
-}
+      window.inventoryManager = inventoryManager;
+    }
     this.scene.launch("HUDScene");
     this.scene.stop("StartScene");
     const { width, height } = this.sys.game.config;
@@ -173,7 +165,6 @@ class MiddleGardenScene extends Phaser.Scene {
     // Listen for periwinkle and marigold handover events from inventory
     this.events.on("periwinkleGiven", () => {
       this.awaitingPeriwinkleGive = false;
-      // Remove periwinkle by key as a failsafe
       inventoryManager.removeItemByKey && inventoryManager.removeItemByKey("periwinklePlant");
       if (!inventoryManager.hasItemByKey || !inventoryManager.hasItemByKey("periwinklePlant")) {
         showDialogue(this, "You hand the wolf the Periwinkle...", { imageKey: "wolf" });
@@ -192,7 +183,6 @@ class MiddleGardenScene extends Phaser.Scene {
     });
     this.events.on("marigoldGiven", () => {
       this.awaitingMarigoldGive = false;
-      // Remove marigold by key as a failsafe
       inventoryManager.removeItemByKey && inventoryManager.removeItemByKey("marigoldPlant");
       if (!inventoryManager.hasItemByKey || !inventoryManager.hasItemByKey("marigoldPlant")) {
         showDialogue(this, "You hand the deer the Marigold...", { imageKey: "deer" });
@@ -230,7 +220,6 @@ class MiddleGardenScene extends Phaser.Scene {
                 this.hasMadePeriwinkleChoice = true;
                 this.destroyDialogueUI();
                 this.dialogueActive = true;
-                // Set flag to await periwinkle handover
                 this.awaitingPeriwinkleGive = true;
                 this.scene.launch("OpenInventory");
               }
@@ -277,7 +266,6 @@ class MiddleGardenScene extends Phaser.Scene {
                 this.hasMadeMarigoldChoice = true;
                 this.destroyDialogueUI();
                 this.dialogueActive = true;
-                // Set flag to await marigold handover
                 this.awaitingMarigoldGive = true;
                 this.scene.launch("OpenInventory");
               }
@@ -353,14 +341,13 @@ class MiddleGardenScene extends Phaser.Scene {
             this.deerThanksDone = true;
             // Automatically give winter shard after thanks dialogue
             receivedItem(this, "winterShard", "Winter Shard");
-
           }
           this.deerDialogueActive = false;
           this.updateHUDState && this.updateHUDState();
         }
         return;
       }
-      // Plant/coin dialogue advance
+      // Plant dialogue advance
       if (this.dialogueActive && typeof this.dialogueOnComplete === "function") {
         this.dialogueOnComplete();
       }
@@ -387,16 +374,13 @@ class MiddleGardenScene extends Phaser.Scene {
 
     // --- LOAD SCENE STATE FROM LOCAL STORAGE ---
     const sceneState = loadFromLocal('middleGardenSceneState');
-if (sceneState) {
-  // Restore flags, inventory, coins, etc.
-  this.wolfThanksDone = !!sceneState.wolfThanksDone;
-  this.deerHasMarigold = !!sceneState.deerHasMarigold;
-  // Restore NPC textures
-  if (sceneState.wolfTexture && this.wolf) this.wolf.setTexture(sceneState.wolfTexture);
-  if (sceneState.deerTexture && this.deer) this.deer.setTexture(sceneState.deerTexture);
-  // Restore time of day
-  if (sceneState.timeOfDay) globalTimeManager.dayCycle.setTimeOfDay(sceneState.timeOfDay);
-}
+    if (sceneState) {
+      this.wolfThanksDone = !!sceneState.wolfThanksDone;
+      this.deerHasMarigold = !!sceneState.deerHasMarigold;
+      if (sceneState.wolfTexture && this.wolf) this.wolf.setTexture(sceneState.wolfTexture);
+      if (sceneState.deerTexture && this.deer) this.deer.setTexture(sceneState.deerTexture);
+      if (sceneState.timeOfDay) globalTimeManager.dayCycle.setTimeOfDay(sceneState.timeOfDay);
+    }
   }
 
   setupBushes(width, height) {
@@ -410,14 +394,12 @@ if (sceneState) {
     const jasmineIndex = 0;
     const marigoldIndex = 1;
     const periwinkleIndex = 2;
-    // Track dispensed state for each bush
     this.bushDispensed = this.bushDispensed || Array(bushCount).fill(false);
 
     for (let i = 0; i < bushCount; i++) {
       const { x, y } = bushPositions[i];
-      // Asset existence check for bush
       const bush = this.textures.exists('bush')
-        ? this.add.image(x, y, 'bush').setScale(1.8).setDepth(1).setInteractive({ useHandCursor: true })
+        ? this.add.image(x, y, 'bush').setScale(0.05).setDepth(1).setInteractive({ useHandCursor: true })
         : this.add.text(x, y, 'Missing: bush', { fontSize: '16px', color: '#f00', backgroundColor: '#fff' }).setOrigin(0.5).setDepth(999);
 
       bush.on("pointerdown", () => {
@@ -459,13 +441,9 @@ if (sceneState) {
             this.bushDispensed[i] = true;
           }
         }
-        // All other bushes give coins
+        // All other bushes (no coins)
         else {
-          const coins = Phaser.Math.Between(10, 30);
-          coinManager.add(coins);
-          saveToLocal("coins", coinManager.coins);
-          receivedItem(this, "coin", `${coins} Coins`, { scale: 0.15 });
-          showDialogue(this, `You found ${coins} coins hidden in the bush!`);
+          showDialogue(this, `You found nothing in the bush this time.`);
           this.dialogueOnComplete = () => {
             this.destroyDialogueUI && this.destroyDialogueUI();
             this.dialogueActive = false;
@@ -496,12 +474,8 @@ if (sceneState) {
                   this.scene.stop("MiniGameScene");
                   this.scene.resume();
 
-                  // Award 50 coins for winning minigame
-                  const coinsWon = 50;
-                  coinManager.add(coinsWon);
-                  saveToLocal("coins", coinManager.coins);
+                  // Award plant for winning minigame
                   receivedItem(this, plant.key, plant.name);
-                  receivedItem(this, "coin", `${coinsWon} Coins`, { scale: 0.15 });
                   inventoryManager.addItem(plant);
                   addPlantToJournal(plant.key);
 
@@ -554,9 +528,6 @@ if (sceneState) {
     const leftEdge = 50; 
 
     if (this.mainChar) {
-
-      console.log("mainChar.x:", this.mainChar.x);
-
       // Right edge
       if (this.mainChar.x >= rightEdge) {
         if (!this.transitioning) {
@@ -571,18 +542,16 @@ if (sceneState) {
       if (this.mainChar.x <= leftEdge) {
         if (!this.transitioning) {
           this.transitioning = true;
-          // Transition via LoaderScene, passing nextSceneKey and any relevant data
           this.scene.start("LoaderScene", {
             nextSceneKey: "WallGardenScene",
-            nextSceneData: {
-              // Add any data you want to pass to WallGardenScene here
-            }
+            nextSceneData: {}
           });
         }
       }
     }
   }
-   updateHUDState() {
+
+  updateHUDState() {
     if (this.dialogueActive) {
       this.scene.sleep("HUDScene");
     } else {
@@ -591,23 +560,22 @@ if (sceneState) {
   }
 
   saveSceneState() {
-  const state = {
-    coins: coinManager.get ? coinManager.get() : 0,
-    inventory: inventoryManager.getItems ? inventoryManager.getItems() : [],
-    garlicFound: !!this.garlicFound,
-    thymeFound: !!this.thymeFound,
-    wolfIntroDone: !!this.wolfIntroDone,
-    wolfThanksDone: !!this.wolfThanksDone,
-    wolfHasPeriwinkle: !!this.wolfHasPeriwinkle,
-    deerIntroDone: !!this.deerIntroDone,
-    deerThanksDone: !!this.deerThanksDone,
-    deerHasMarigold: !!this.deerHasMarigold,
-    wolfTexture: this.wolf ? this.wolf.texture.key : null,
-    deerTexture: this.deer ? this.deer.texture.key : null,
-    timeOfDay: globalTimeManager.getCurrentTimeOfDay()
-  };
-  saveToLocal('middleGardenSceneState', state);
-}
+    const state = {
+      inventory: inventoryManager.getItems ? inventoryManager.getItems() : [],
+      garlicFound: !!this.garlicFound,
+      thymeFound: !!this.thymeFound,
+      wolfIntroDone: !!this.wolfIntroDone,
+      wolfThanksDone: !!this.wolfThanksDone,
+      wolfHasPeriwinkle: !!this.wolfHasPeriwinkle,
+      deerIntroDone: !!this.deerIntroDone,
+      deerThanksDone: !!this.deerThanksDone,
+      deerHasMarigold: !!this.deerHasMarigold,
+      wolfTexture: this.wolf ? this.wolf.texture.key : null,
+      deerTexture: this.deer ? this.deer.texture.key : null,
+      timeOfDay: globalTimeManager.getCurrentTimeOfDay()
+    };
+    saveToLocal('middleGardenSceneState', state);
+  }
 
   destroyDialogueUI() {
     if (this.dialogueBox) {

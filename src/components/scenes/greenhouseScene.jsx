@@ -2,7 +2,6 @@ import Phaser from "phaser";
 import { elephantIntroDialogues, elephantThanksDialogues } from "../../characters/elephant";
 import { createElephant } from "../../characters/elephant";
 import { showDialogue, showOption, destroyDialogueUI } from "../../dialogue/dialogueUIHelpers";
-import { CoinManager } from "../coinManager";
 import { saveToLocal, loadFromLocal } from "../../utils/localStorage";
 import { createMainChar } from "../../characters/mainChar";
 import { inventoryManager } from "../inventoryManager";
@@ -16,8 +15,6 @@ if (typeof window !== "undefined") {
   }
 }
 
-const coinManager = typeof window !== "undefined" && window.coinManager ? window.coinManager : CoinManager.load();
-
 class GreenhouseScene extends Phaser.Scene {
     constructor() {
         super({ key: "GreenhouseScene", physics: { default: "arcade", arcade: { debug: false } } });
@@ -26,7 +23,6 @@ class GreenhouseScene extends Phaser.Scene {
     }
 
     preload() {
-  
         this.load.image("greenhouseBackground", "/assets/backgrounds/greenhouse/greenhouse.png");
         this.load.image("defaultFront", "/assets/char/default/front-default.png");
         this.load.image("defaultBack", "/assets/char/default/back-default.png");
@@ -43,7 +39,6 @@ class GreenhouseScene extends Phaser.Scene {
         this.load.audio("click", "/assets/sound-effects/click.mp3")
         this.load.audio("sparkle", "/assets/sound-effects/sparkle.mp3");
         this.load.image('dialogueBoxBg', '/assets/ui-items/dialogue.png');
-        this.load.image('coin', '/assets/misc/coin.png');
         this.load.image("autumnShard", "/assets/items/autumn.png");
     }
 
@@ -55,10 +50,6 @@ class GreenhouseScene extends Phaser.Scene {
         }
         // --- LOAD STATE FROM LOCAL STORAGE ---
         const sceneState = loadFromLocal('greenhouseSceneState') || {};
-        // Restore coins if present
-        if (sceneState.coins !== undefined) {
-            coinManager.set(sceneState.coins);
-        }
         // Restore inventory
         if (sceneState.inventory) {
             if (window.inventoryManager && window.inventoryManager.setItems) {
@@ -100,15 +91,13 @@ class GreenhouseScene extends Phaser.Scene {
 
     // Save relevant state to localStorage
     saveSceneState() {
-        // Save coins, inventory, and time of day
+        // Save inventory and time of day only
         const state = {
-            coins: coinManager.get ? coinManager.get() : 0,
             inventory: (window.inventoryManager && window.inventoryManager.getItems) ? window.inventoryManager.getItems() : [],
             timeOfDay: globalTimeManager.getCurrentTimeOfDay()
         };
         saveToLocal('greenhouseSceneState', state);
     }
-
 
     updateHUDState() {
         if (this.dialogueActive) {
@@ -118,33 +107,33 @@ class GreenhouseScene extends Phaser.Scene {
         }
     }
 
-  destroyDialogueUI() {
-    if (this.dialogueBox) {
-      this.dialogueBox.box?.destroy();
-      this.dialogueBox.textObj?.destroy();
-      this.dialogueBox.image?.destroy();
-      if (this.dialogueBox.optionButtons) {
-        this.dialogueBox.optionButtons.forEach((btn) => btn.destroy());
-      }
-      this.dialogueBox = null;
+    destroyDialogueUI() {
+        if (this.dialogueBox) {
+            this.dialogueBox.box?.destroy();
+            this.dialogueBox.textObj?.destroy();
+            this.dialogueBox.image?.destroy();
+            if (this.dialogueBox.optionButtons) {
+                this.dialogueBox.optionButtons.forEach((btn) => btn.destroy());
+            }
+            this.dialogueBox = null;
+        }
     }
-  }
 
-  update() {
-    if (this.mainChar) {
-      const charRight = this.mainChar.x + this.mainChar.displayWidth * (1 - this.mainChar.originX);
-      const sceneWidth = this.sys.game.config.width;
+    update() {
+        if (this.mainChar) {
+            const charRight = this.mainChar.x + this.mainChar.displayWidth * (1 - this.mainChar.originX);
+            const sceneWidth = this.sys.game.config.width;
 
-      // Only right edge transition (with buffer)
-      if (charRight >= sceneWidth - 5 && !this.transitioning) {
-        this.transitioning = true;
-        this.scene.start("LoaderScene", {
-          nextSceneKey: "WallGardenScene",
-          nextSceneData: {}
-        });
-      }
+            // Only right edge transition (with buffer)
+            if (charRight >= sceneWidth - 5 && !this.transitioning) {
+                this.transitioning = true;
+                this.scene.start("LoaderScene", {
+                    nextSceneKey: "WallGardenScene",
+                    nextSceneData: {}
+                });
+            }
+        }
     }
-  }
 }
 
 export default GreenhouseScene;

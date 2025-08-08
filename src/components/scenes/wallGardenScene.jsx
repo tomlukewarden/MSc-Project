@@ -1,7 +1,6 @@
 import Phaser from 'phaser';
 import { createButterfly, butterflyIntroDialogues } from '../../characters/butterfly';
 import { showDialogue, destroyDialogueUI, showOption } from '../../dialogue/dialogueUIHelpers';
-import { CoinManager } from '../coinManager';
 import { createMainChar } from '../../characters/mainChar';
 import ChestLogic from '../chestLogic';
 import { saveToLocal, loadFromLocal } from '../../utils/localStorage';
@@ -18,8 +17,6 @@ import { receivedItem } from "../recievedItem";
 import { createElephant, elephantIntroDialogues, elephantThanksDialogues } from '../../characters/elephant';
 import globalTimeManager from "../../day/timeManager";
 
-
-const coinManager = typeof window !== "undefined" && window.coinManager ? window.coinManager : CoinManager.load();
 
 class WallGardenScene extends Phaser.Scene {
   constructor() {
@@ -61,7 +58,6 @@ class WallGardenScene extends Phaser.Scene {
     this.load.audio("sparkle", "/assets/sound-effects/sparkle.mp3");
     this.load.image('butterflyHappy', '/assets/npc/butterfly/happy-butterfly-dio.png');
     this.load.image('periwinklePlant', '/assets/plants/periwinkle.png');
-    this.load.image('coin', '/assets/misc/coin.png');
     this.load.audio('click', '/assets/sound-effects/click.mp3');
     this.load.image('dialogueBoxBg', '/assets/ui-items/dialogue.png');
     this.load.image('bush', '/assets/misc/bush.png');
@@ -81,12 +77,11 @@ class WallGardenScene extends Phaser.Scene {
       'wallGardenBackground', 'wall1', 'wall2', 'trees', 'butterfly', 'defaultFront', 'defaultBack', 'defaultLeft', 'defaultRight',
       'defaultFrontWalk1', 'defaultFrontWalk2', 'defaultBackWalk1', 'defaultBackWalk2', 'defaultLeftWalk1', 'defaultLeftWalk2',
       'defaultRightWalk1', 'defaultRightWalk2', 'talk', 'chestClosed', 'chestOpen', 'foxglovePlant', 'springShard', 'butterflyHappy',
-      'periwinklePlant', 'coin', 'dialogueBoxBg', 'bush', 'elephant', 'elephantHappy', 'jasminePlant', 'autumnShard'
+      'periwinklePlant', 'dialogueBoxBg', 'bush', 'elephant', 'elephantHappy', 'jasminePlant', 'autumnShard'
     ];
     let missingKeys = expectedKeys.filter(k => !loadedKeys.includes(k));
-   let debugText = `Loaded textures: ${loadedKeys.join(', ')}\nMissing: ${missingKeys.join(', ')}`;
+    let debugText = `Loaded textures: ${loadedKeys.join(', ')}\nMissing: ${missingKeys.join(', ')}`;
     this.add.text(20, debugY, debugText, { fontSize: '14px', color: missingKeys.length ? '#f00' : '#080', backgroundColor: '#fff', wordWrap: { width: 800 } }).setDepth(-1);
-    // Reset transitioning flag on scene creation
     this.transitioning = false;
     // --- Personal Garden Button (above bushes) ---
     const btnX = 220;
@@ -206,18 +201,14 @@ class WallGardenScene extends Phaser.Scene {
     });
     
     if (typeof window !== "undefined") {
-    window.inventoryManager = inventoryManager;
-}
+      window.inventoryManager = inventoryManager;
+    }
     this.scene.launch('HUDScene');
     const { width, height } = this.sys.game.config;
     const scaleFactor = 0.175;
 
     // --- LOAD STATE FROM LOCAL STORAGE ---
     const sceneState = loadFromLocal('wallGardenSceneState') || {};
-    // Restore coins if present
-    if (sceneState.coins !== undefined) {
-      coinManager.set(sceneState.coins);
-    }
     // Restore inventory if present (assumes inventoryManager is imported)
     if (sceneState.inventory && Array.isArray(sceneState.inventory)) {
       inventoryManager.clear();
@@ -403,11 +394,9 @@ class WallGardenScene extends Phaser.Scene {
         }
         return;
       }
-      // Plant/coin dialogue advance
       if (this.dialogueActive && typeof this.dialogueOnComplete === "function") {
         this.dialogueOnComplete();
       }
-      // Always update HUD after any dialogue completes
       this.updateHUDState && this.updateHUDState();
     });
     
@@ -567,7 +556,6 @@ class WallGardenScene extends Phaser.Scene {
   // Save relevant state to localStorage
   saveSceneState(periwinkleFound) {
     const state = {
-      coins: coinManager.get ? coinManager.get() : 0,
       inventory: inventoryManager.getItems ? inventoryManager.getItems() : [],
       periwinkleFound: !!periwinkleFound,
       butterflyDialogueIndex: this.butterflyDialogueIndex,
@@ -588,7 +576,6 @@ class WallGardenScene extends Phaser.Scene {
       { name: "Foxglove Plant", color: 0x8bc34a, key: "foxglovePlant" },
       { name: "Tea Bag", color: 0xf5e6b3, key: "teaBag" },
     ];
-    // Asset existence check for chest
     const chest = this.textures.exists('chestClosed')
       ? this.add.image(width / 2 + 200, height / 2 - 40, 'chestClosed').setScale(2).setDepth(15).setInteractive()
       : this.add.text(width / 2 + 200, height / 2 - 40, 'Missing: chestClosed', { fontSize: '16px', color: '#f00', backgroundColor: '#fff' }).setOrigin(0.5).setDepth(999);
@@ -616,10 +603,9 @@ class WallGardenScene extends Phaser.Scene {
     const bushCount = bushPositions.length;
     // Set up rewards: 2 aloe plants, 1 base cream, 1 coins
     const bushRewards = [
-      { type: "item", key: "aloePlant", name: "Aloe Plant", color: 0x8bc34a },
+      { type: "item", key: "aloeSeeds", name: "Aloe Seeds", color: 0x8bc34a },
       { type: "item", key: "aloePlant", name: "Aloe Plant", color: 0x8bc34a },
       { type: "item", key: "baseCream", name: "Base Cream", color: 0xf5e6b3 },
-      { type: "coins" }
     ];
     this.bushDispensed = this.bushDispensed || Array(bushCount).fill(false);
 
@@ -627,7 +613,7 @@ class WallGardenScene extends Phaser.Scene {
       const { x, y } = bushPositions[i];
       // Asset existence check for bush
       const bush = this.textures.exists('bush')
-        ? this.add.image(x, y, 'bush').setScale(1.8).setDepth(1).setInteractive({ useHandCursor: true })
+        ? this.add.image(x, y, 'bush').setScale(0.05).setDepth(1).setInteractive({ useHandCursor: true })
         : this.add.text(x, y, 'Missing: bush', { fontSize: '16px', color: '#f00', backgroundColor: '#fff' }).setOrigin(0.5).setDepth(999);
 
       bush.on("pointerdown", () => {
@@ -650,16 +636,10 @@ class WallGardenScene extends Phaser.Scene {
 
         // Give aloePlant or baseCream
         const reward = bushRewards[i];
-        if (reward.type === "item") {
+        if (reward && reward.type === "item") {
           inventoryManager.addItem({ name: reward.name, key: reward.key, color: reward.color });
           receivedItem(this, reward.key, reward.name);
           showDialogue(this, `You found a ${reward.name} hidden in the bush!`);
-        } else if (reward.type === "coins") {
-          const coins = Phaser.Math.Between(10, 30);
-          coinManager.add(coins);
-          saveToLocal("coins", coinManager.coins);
-          receivedItem(this, "coin", `${coins} Coins`, { scale: 0.15 });
-          showDialogue(this, `You found ${coins} coins hidden in the bush!`);
         }
         this.dialogueOnComplete = () => {
           this.destroyDialogueUI();

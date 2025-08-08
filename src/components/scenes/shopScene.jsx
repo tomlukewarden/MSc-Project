@@ -12,15 +12,8 @@ if (typeof window !== "undefined") {
   }
 }
 
-// --- Ensure global coinManager instance ---
-import { CoinManager } from "../coinManager";
+// Removed CoinManager import and all coin logic
 import { saveToLocal, loadFromLocal } from "../../utils/localStorage";
-if (typeof window !== "undefined") {
-  if (!window.coinManager) {
-    window.coinManager = CoinManager.load ? CoinManager.load() : new CoinManager(loadFromLocal("coins") || 0);
-  }
-}
-const coinManager = window.coinManager;
 
 class ShopScene extends Phaser.Scene {
   constructor() {
@@ -65,25 +58,12 @@ class ShopScene extends Phaser.Scene {
     // Main shop background
     this.add.image(width / 2, height / 2, 'shopBackground').setDepth(0).setScale(0.225);
 
-    // Coins text (use global coinManager)
-    const coinText = this.add.text(width - 40, 30, `${coinManager.coins}c`, {
-      fontFamily: "Georgia",
-      fontSize: "24px",
-      color: "#ffe066",
-      backgroundColor: "#222",
-      padding: { left: 12, right: 12, top: 6, bottom: 6 }
-    }).setOrigin(1, 0).setDepth(10);
-
-    // Update coin display when coins change
-    if (coinManager.onChange) {
-      coinManager.onChange((coins) => coinText.setText(`${coins}c`));
-    }
+    // --- Coins and coinManager removed ---
 
     // Seeds from itemsData
     const seedItems = itemsData.filter(item => item.type === 'seed').map(item => ({
       key: item.key,
       name: item.name,
-      price: item.shopPrice ? item.shopPrice : 20,
       imageKey: item.imageKey || 'seeds',
       type: 'seed',
       plantKey: item.plantKey
@@ -96,7 +76,6 @@ class ShopScene extends Phaser.Scene {
     ).map(item => ({
       key: item.key,
       name: item.name,
-      price: item.shopPrice ? item.shopPrice : 40,
       imageKey: item.imageKey || item.key,
       type: 'extra'
     }));
@@ -162,10 +141,7 @@ class ShopScene extends Phaser.Scene {
           fontFamily: "Georgia", fontSize: "14px", color: "#fff"
         }).setOrigin(0.5, 0.5).setDepth(2);
         itemSprites.push(txt);
-        const priceTxt = this.add.text(x, y + 38, `${item.price}c`, {
-          fontFamily: "Georgia", fontSize: "13px", color: "#ffe066"
-        }).setOrigin(0.5, 0.5).setDepth(2);
-        itemSprites.push(priceTxt);
+       
 
         img.on('pointerover', () => img.setTint(0x88ccff));
         img.on('pointerout', () => img.clearTint());
@@ -174,65 +150,59 @@ class ShopScene extends Phaser.Scene {
           let quantity = 1;
           let quantityPrompt = this.add.dom(width / 2, height / 2).createFromHTML(`
             <div style='background:#222;padding:24px;border-radius:12px;'>
-              <h2 style='color:#fff;font-family:Georgia;'>Buy ${item.name}</h2>
+              <h2 style='color:#fff;font-family:Georgia;'>Take ${item.name}</h2>
               <label style='color:#fff;font-family:Georgia;'>How many?</label>
               <input id='qtyInput' type='number' min='1' value='1' style='width:60px;margin:0 12px;' />
-              <button id='buyBtn' style='margin-right:12px;'>Buy</button>
+              <button id='takeBtn' style='margin-right:12px;'>Take</button>
               <button id='cancelBtn'>Cancel</button>
               <div id='errorMsg' style='color:#ffe066;margin-top:8px;'></div>
             </div>
           `);
           quantityPrompt.setDepth(1000);
           const qtyInput = quantityPrompt.node.querySelector('#qtyInput');
-          const buyBtn = quantityPrompt.node.querySelector('#buyBtn');
+          const takeBtn = quantityPrompt.node.querySelector('#takeBtn');
           const cancelBtn = quantityPrompt.node.querySelector('#cancelBtn');
           const errorMsg = quantityPrompt.node.querySelector('#errorMsg');
 
-          buyBtn.onclick = () => {
+          takeBtn.onclick = () => {
             quantity = parseInt(qtyInput.value);
             if (isNaN(quantity) || quantity < 1) {
               errorMsg.textContent = 'Please enter a valid quantity.';
               return;
             }
-            const totalPrice = quantity * parseInt(item.price);
-            if (coinManager.coins >= totalPrice) {
-              coinManager.subtract(totalPrice);
-              // Seeds ONLY go to seed pouch, not inventory
-              if (item.type === 'seed') {
-                SeedPouchLogic.addSeed(item, quantity);
-                receivedItem(this, item.key, `${item.name} x${quantity}`);
-                quantityPrompt.destroy();
-                this.destroyDialogueUI();
-                showOption(this, `You bought ${item.name} x${quantity}!\nCheck your seed pouch.`, {
-                  options: [{ label: "OK", onSelect: () => this.destroyDialogueUI() }]
-                });
-              } else if (item.type === 'tool') {
-                for (let i = 0; i < quantity; i++) {
-                  if (typeof globalInventoryManager.addItem === 'function') {
-                    globalInventoryManager.addItem({ ...item, color: 0xd2b48c });
-                  }
+            // No coins required, just take the item
+            if (item.type === 'seed') {
+              SeedPouchLogic.addSeed(item, quantity);
+              receivedItem(this, item.key, `${item.name} x${quantity}`);
+              quantityPrompt.destroy();
+              this.destroyDialogueUI();
+              showOption(this, `You took ${item.name} x${quantity}!\nCheck your seed pouch.`, {
+                options: [{ label: "OK", onSelect: () => this.destroyDialogueUI() }]
+              });
+            } else if (item.type === 'tool') {
+              for (let i = 0; i < quantity; i++) {
+                if (typeof globalInventoryManager.addItem === 'function') {
+                  globalInventoryManager.addItem({ ...item, color: 0xd2b48c });
                 }
-                receivedItem(this, item.key, `${item.name} x${quantity}`);
-                quantityPrompt.destroy();
-                this.destroyDialogueUI();
-                showOption(this, `You bought ${item.name} x${quantity}!\nCheck your inventory.`, {
-                  options: [{ label: "OK", onSelect: () => this.destroyDialogueUI() }]
-                });
-              } else {
-                for (let i = 0; i < quantity; i++) {
-                  if (typeof globalInventoryManager.addItem === 'function') {
-                    globalInventoryManager.addItem({ ...item, color: 0xd2b48c });
-                  }
-                }
-                receivedItem(this, item.key, `${item.name} x${quantity}`);
-                quantityPrompt.destroy();
-                this.destroyDialogueUI();
-                showOption(this, `You bought ${item.name} x${quantity}!\nCheck your inventory.`, {
-                  options: [{ label: "OK", onSelect: () => this.destroyDialogueUI() }]
-                });
               }
+              receivedItem(this, item.key, `${item.name} x${quantity}`);
+              quantityPrompt.destroy();
+              this.destroyDialogueUI();
+              showOption(this, `You took ${item.name} x${quantity}!\nCheck your inventory.`, {
+                options: [{ label: "OK", onSelect: () => this.destroyDialogueUI() }]
+              });
             } else {
-              errorMsg.textContent = 'Not enough coins!';
+              for (let i = 0; i < quantity; i++) {
+                if (typeof globalInventoryManager.addItem === 'function') {
+                  globalInventoryManager.addItem({ ...item, color: 0xd2b48c });
+                }
+              }
+              receivedItem(this, item.key, `${item.name} x${quantity}`);
+              quantityPrompt.destroy();
+              this.destroyDialogueUI();
+              showOption(this, `You took ${item.name} x${quantity}!\nCheck your inventory.`, {
+                options: [{ label: "OK", onSelect: () => this.destroyDialogueUI() }]
+              });
             }
           };
           cancelBtn.onclick = () => {
