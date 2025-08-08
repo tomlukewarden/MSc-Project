@@ -15,6 +15,7 @@ if (typeof window !== "undefined") {
 import { addPlantToJournal } from "../journalManager";
 import { receivedItem } from "../recievedItem";
 import { createElephant, elephantIntroDialogues, elephantThanksDialogues } from '../../characters/elephant';
+import { createPolarBear, polarBearIntroDialogues, polarBearThanksDialogues } from '../../characters/polar';
 import globalTimeManager from "../../day/timeManager";
 
 
@@ -63,6 +64,8 @@ class WallGardenScene extends Phaser.Scene {
     this.load.image('bush', '/assets/misc/bush.png');
     this.load.image('elephant', '/assets/npc/elephant/elephant.png');
     this.load.image('elephantHappy', '/assets/npc/elephant/happy.png');
+    this.load.image('polarBear', '/assets/npc/polar/polarBear.png');
+    this.load.image('polarBearHappy', '/assets/npc/polar/polarBearHappy.png');
     this.load.image('jasminePlant', '/assets/plants/jasmine.PNG');
     this.load.image('autumnShard', '/assets/items/autumn.png');
     this.load.image("baseCream", "/assets/shopItems/cream.png");
@@ -394,14 +397,139 @@ class WallGardenScene extends Phaser.Scene {
         }
         return;
       }
+      // --- Polar Bear dialogue advance on click ---
+      if (this.polarBearDialogueActive) {
+        this.polarBearDialogueIndex++;
+        if (this.activePolarBearDialogues && this.polarBearDialogueIndex < this.activePolarBearDialogues.length) {
+          showDialogue(this, this.activePolarBearDialogues[this.polarBearDialogueIndex], { imageKey: "polarBear" });
+        } else {
+          this.destroyDialogueUI();
+          this.dialogueActive = false;
+          this.updateHUDState && this.updateHUDState();
+
+          if (!this.polarBearIntroDone && this.activePolarBearDialogues === polarBearIntroDialogues) {
+            this.polarBearIntroDone = true;
+          }
+          if (this.polarBearHasCream && this.activePolarBearDialogues === polarBearThanksDialogues) {
+            this.polarBearThanksDone = true;
+            // Automatically give winter shard after thanks dialogue
+            receivedItem(this, "winterShard", "Winter Shard");
+            // Always remove baseCream as a failsafe
+            inventoryManager.removeItemByKey && inventoryManager.removeItemByKey("baseCream");
+          }
+          this.polarBearDialogueActive = false;
+          this.updateHUDState && this.updateHUDState();
+        }
+        return;
+      }
       if (this.dialogueActive && typeof this.dialogueOnComplete === "function") {
         this.dialogueOnComplete();
       }
       this.updateHUDState && this.updateHUDState();
     });
-    
-    
-    
+
+    // --- Polar Bear NPC ---
+    this.polarBear = createPolarBear(this, width / 2 - 200, height / 2 + 100);
+    this.polarBear
+      .setInteractive({ useHandCursor: true })
+      .setDepth(10)
+      .setScale(0.1)
+      .setOrigin(0.5, 0.9);
+
+    // Polar Bear talk icon events
+    this.polarBear.on("pointerover", (pointer) => {
+      talkIcon.setVisible(true);
+      talkIcon.setPosition(pointer.worldX + 32, pointer.worldY);
+    });
+    this.polarBear.on("pointermove", (pointer) => {
+      talkIcon.setPosition(pointer.worldX + 32, pointer.worldY);
+    });
+    this.polarBear.on("pointerout", () => {
+      talkIcon.setVisible(false);
+    });
+
+    // --- Polar Bear dialogue and gifting logic ---
+    this.polarBearDialogueActive = false;
+    this.polarBearDialogueIndex = 0;
+    this.hasBaseCream = () => inventoryManager.hasItemByKey && inventoryManager.hasItemByKey("baseCream");
+
+    // Listen for baseCream handover event from inventory
+    this.events.on("baseCreamGiven", () => {
+      this.awaitingBaseCreamGive = false;
+      // Remove ALL baseCream items from inventory as a failsafe
+      if (typeof inventoryManager.getItems === "function" && typeof inventoryManager.removeItemByKey === "function") {
+        let items = inventoryManager.getItems();
+        let creamCount = items.filter(item => item.key === "baseCream").length;
+        for (let i = 0; i < creamCount; i++) {
+          inventoryManager.removeItemByKey("baseCream");
+        }
+      }
+      // Debug: show inventory after removal using alert
+      const items = typeof inventoryManager.getItems === "function" ? inventoryManager.getItems() : [];
+      const hasCream = items.some(item => item.key === "baseCream");
+      if (!hasCream) {
+        showDialogue(this, "You hand the polar bear the Base Cream...", { imageKey: "polarBear" });
+        this.polarBear.setTexture && this.polarBear.setTexture("polarBearHappy");
+        this.time.delayedCall(800, () => {
+          this.polarBearDialogueActive = true;
+          this.polarBearDialogueIndex = 0;
+          this.activePolarBearDialogues = polarBearThanksDialogues;
+          showDialogue(this, this.activePolarBearDialogues[this.polarBearDialogueIndex], { imageKey: "polarBear" });
+          this.updateHUDState && this.updateHUDState();
+        });
+        this.polarBearHasCream = true;
+      } else {
+        showDialogue(this, "You still have the Base Cream.", { imageKey: "polarBear" });
+      }
+    });
+
+    // Polar Bear click handler
+    this.polarBear.on("pointerdown", () => {
+      if (!this.polarBearIntroDone && !this.polarBearDialogueActive) {
+        this.polarBearDialogueActive = true;
+        this.polarBearDialogueIndex = 0;
+        this.activePolarBearDialogues = polarBearIntroDialogues;
+        showDialogue(this, this.activePolarBearDialogues[this.polarBearDialogueIndex], { imageKey: "polarBear" });
+        this.updateHUDState && this.updateHUDState();
+        return;
+      }
+      if (this.polarBearIntroDone && !this.polarBearThanksDone && this.hasBaseCream()) {
+        showOption(this, "Give the polar bear the Base Cream?", {
+          imageKey: "polarBear",
+          options: [
+            {
+              label: "Yes",
+              onSelect: () => {
+                this.hasMadeBaseCreamChoice = true;
+                this.destroyDialogueUI();
+                this.dialogueActive = true;
+                // Set flag to await baseCream handover
+                this.awaitingBaseCreamGive = true;
+                this.scene.launch("OpenInventory");
+              }
+            },
+            {
+              label: "No",
+              onSelect: () => {
+                this.destroyDialogueUI();
+                this.dialogueActive = true;
+                showDialogue(this, "You decide to hold off for now.", { imageKey: "polarBear" });
+              }
+            }
+          ]
+        });
+        return;
+      }
+      if (this.polarBearIntroDone && !this.polarBearThanksDone && !this.hasBaseCream()) {
+        showDialogue(this, "The polar bear looks at you expectantly. Maybe you need to find something for them...", { imageKey: "polarBear" });
+        this.time.delayedCall(1800, () => {
+          this.destroyDialogueUI();
+          this.dialogueActive = false;
+          this.updateHUDState && this.updateHUDState();
+        });
+        return;
+      }
+    });
 
     // --- Map and background ---
     const map = this.make.tilemap({ key: "wallGardenMap" });
