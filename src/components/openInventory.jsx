@@ -78,20 +78,43 @@ class OpenInventory extends Phaser.Scene {
             .setDepth(112);
         }
 
-        let displayName = item.name;
+        // Show item count below the image if count > 1
+        let countText = null;
         if (item.count && item.count > 1) {
-          displayName += ` x${item.count}`;
+          countText = this.add.text(
+            x, y + 32, `${item.count}`,
+            {
+              fontFamily: "Georgia",
+              fontSize: "18px",
+              color: "#222",
+              backgroundColor: "#fff8",
+              padding: { left: 6, right: 6, top: 2, bottom: 2 }
+            }
+          ).setOrigin(0.5).setDepth(113);
         }
-        const nameText = this.add.text(
-          x, y - 38, displayName, {
-            fontFamily: "Georgia",
-            fontSize: "16px",
-            color: "#222",
-            fontStyle: "bold"
-          }
-        ).setOrigin(0.5).setDepth(113);
 
-       rect.on("pointerdown", () => {
+        // Only show name on hover
+        let nameText = null;
+        rect.on("pointerover", () => {
+          nameText = this.add.text(
+            x, y - 38, item.name, {
+              fontFamily: "Georgia",
+              fontSize: "16px",
+              color: "#222",
+              fontStyle: "bold",
+              backgroundColor: "#fff8",
+              padding: { left: 6, right: 6, top: 2, bottom: 2 }
+            }
+          ).setOrigin(0.5).setDepth(1000);
+        });
+        rect.on("pointerout", () => {
+          if (nameText) {
+            nameText.destroy();
+            nameText = null;
+          }
+        });
+
+        rect.on("pointerdown", () => {
           // Crafting slot selection mode
           if (
             this.scene.settings.data &&
@@ -105,7 +128,6 @@ class OpenInventory extends Phaser.Scene {
             this.scene.stop();
             return;
           }
-          // ...existing code for NPC gifting and item removal...
           const middleGardenScene = this.scene.get('MiddleGardenScene');
           if (middleGardenScene && middleGardenScene.awaitingPeriwinkleGive && item.key === "periwinklePlant") {
             inventoryManager.removeItemByKey && inventoryManager.removeItemByKey("periwinklePlant");
@@ -142,7 +164,7 @@ class OpenInventory extends Phaser.Scene {
           inventoryManager.removeItemByKey && inventoryManager.removeItemByKey(item.key);
         });
 
-        itemContainer.add([rect, img, nameText].filter(Boolean));
+        itemContainer.add([rect, img, countText].filter(Boolean));
       });
 
       // Calculate max scroll
