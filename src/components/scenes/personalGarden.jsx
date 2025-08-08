@@ -32,7 +32,6 @@ class PersonalGarden extends Phaser.Scene {
       this.inventoryManager = inventoryManager;
     }
   }
-
   preload() {
     // Load all required assets for the garden scene
     const assets = [
@@ -78,18 +77,21 @@ class PersonalGarden extends Phaser.Scene {
       ["craftingBench", "/assets/crafting/bench.png"],
       ["hedgeArch", "/assets/backgrounds/personal/hedgeArchway.png"],
       ["hedgeArchShadow", "/assets/backgrounds/personal/hedgeArchwayShadow.png"],
+      ["plotEmptyImg", "/assets/farming/empty.png"], // Added empty plot image
+      ["plotPreparedImg", "/assets/farming/prepared.PNG"],
+      ["plotPlantedImg", "/assets/farming/planted.png"],
+      ["plotWateredImg", "/assets/farming/water2.png"],
+      ["plotHarvestedImg", "/assets/farming/harvested.png"], // Added harvested plot image
     ];
     assets.forEach(([key, path]) => this.load.image(key, path));
   }
 
   create() {
-    // Ensure globalTimeManager is initialized and started
     globalTimeManager.init(this);
     if (!globalTimeManager.startTimestamp) {
       globalTimeManager.start();
     }
 
-    // Show current day number for debugging
     this.dayText = this.add.text(40, 100, `Day: ${globalTimeManager.getDayNumber()}`, {
       fontSize: '20px',
       color: '#ffe066',
@@ -98,13 +100,8 @@ class PersonalGarden extends Phaser.Scene {
       padding: { left: 8, right: 8, top: 4, bottom: 4 }
     }).setOrigin(0, 0).setDepth(99999);
 
-
-    // Tent image (not interactive)
     const tent = this.add.image(700, 100, 'tent');
-    // Only the triangle above the tent advances the day
-    // --- UI and gameplay setup ---
     const { width, height } = this.sys.game.config;
-    // Create a grid of plots
     this.rows = 3;
     this.cols = 5;
     this.plots = [];
@@ -120,11 +117,20 @@ class PersonalGarden extends Phaser.Scene {
         const plot = new Plot();
         const plotX = startX + col * plotSpacing;
         const plotY = startY + row * plotSpacing;
+
+        // Create the stage image sprite for this plot
+        const stageImg = this.add.image(plotX, plotY, plot.getStageImageKey())
+          .setOrigin(0.5)
+          .setDepth(102)
+          .setDisplaySize(0.03 * plotSize, 0.03 * plotSize);
+
+        // Rectangle for interaction and color
         const plotRect = this.add.rectangle(plotX, plotY, plotSize, plotSize, 0x8bc34a, 0.85)
           .setStrokeStyle(2, 0x4caf50)
           .setOrigin(0.5)
           .setInteractive({ useHandCursor: true })
           .setDepth(100);
+
         const plotText = this.add.text(plotX, plotY, '', {
           fontSize: '14px',
           color: '#fff',
@@ -132,58 +138,45 @@ class PersonalGarden extends Phaser.Scene {
           align: 'center'
         }).setOrigin(0.5).setDepth(101);
 
-        // Prepared plot image (hidden by default)
-        const preparedPlotImg = this.add.image(plotX, plotY, 'preoparedPlot')
-          .setOrigin(0.5)
-          .setDepth(102)
-          .setVisible(false)
-          .setDisplaySize(plotSize, plotSize);
+        plot.stageImageSprite = stageImg;
+        this.plots.push({ plot, plotRect, plotText, stageImg });
 
-        // Store plot, rect, and text for later reference
-        this.plots.push({ plot, plotRect, plotText, preparedPlotImg });
-
-        // Initial update
         this.updatePlotText(plotText, plot);
         this.updatePlotColor(plotRect, plot);
+        this.updatePlotStageImage(plot);
 
-        // Plot interaction: clean logic for hoe, seed pouch, water, harvest
         plotRect.on('pointerdown', () => {
           let result;
+          let shouldUpdateImage = false;
           switch (plot.state) {
             case 'empty':
               if (this.currentTool === 'hoe') {
                 result = plot.prepare();
-                this.updatePlotText(plotText, plot);
-                this.updatePlotColor(plotRect, plot);
-                preparedPlotImg.setVisible(true);
-
+                shouldUpdateImage = result.success;
               }
               break;
             case 'prepared':
               this.scene.launch('OpenSeedPouch', {
                 onSelect: (seedItem) => {
                   result = plot.plant(seedItem);
+                  shouldUpdateImage = result.success;
                   this.updatePlotText(plotText, plot);
                   this.updatePlotColor(plotRect, plot);
-                  preparedPlotImg.setVisible(true);
-
+                  this.updatePlotStageImage(plot);
                 }
               });
               break;
             case 'planted':
+            case 'watered':
               if (this.currentTool === 'wateringCan') {
                 result = plot.water();
-                this.updatePlotText(plotText, plot);
-                this.updatePlotColor(plotRect, plot);
-                preparedPlotImg.setVisible(false);
+                shouldUpdateImage = result.success;
               }
               break;
             case 'grown':
               if (this.currentTool === 'shovel') {
                 result = plot.harvest();
-                this.updatePlotText(plotText, plot);
-                this.updatePlotColor(plotRect, plot);
-                preparedPlotImg.setVisible(false);
+                shouldUpdateImage = result.success;
                 if (result.success && result.item) {
                   let plantKey = result.item;
                   const plantEntry = plantData.find(p => p.seedKey === result.item);
@@ -198,30 +191,30 @@ class PersonalGarden extends Phaser.Scene {
               }
               break;
             case 'harvested':
-              preparedPlotImg.setVisible(false);
+              shouldUpdateImage = true;
               break;
             default:
               break;
+          }
+          this.updatePlotText(plotText, plot);
+          this.updatePlotColor(plotRect, plot);
+          if (shouldUpdateImage) {
+            this.updatePlotStageImage(plot);
           }
         });
       }
     }
 
     // --- COLLISION GROUPS SETUP ---
-    // Create a physics group for obstacles (e.g. plots, fence, archway, etc.)
     this.obstacleGroup = this.physics.add.staticGroup();
-
-    // Add plot rectangles to obstacle group for collision
     this.plots.forEach(({ plotRect }) => {
       this.obstacleGroup.add(plotRect);
     });
 
-    // Add fence to obstacle group if you want collision
     const scaleFactor = 0.14;
     const fenceImg = this.add.image(0, 0, "fence").setOrigin(0).setScale(scaleFactor).setDepth(10);
     this.obstacleGroup.add(fenceImg);
 
-    // Add archway to obstacle group if you want collision
     const archScale = 0.2;
     const archWidth = this.textures.exists('hedgeArch') ? this.textures.get('hedgeArch').getSourceImage().width * archScale : 180;
     const archHeight = this.textures.exists('hedgeArch') ? this.textures.get('hedgeArch').getSourceImage().height * archScale : 220;
@@ -237,18 +230,14 @@ class PersonalGarden extends Phaser.Scene {
       .setDepth(archY + 2);
     this.obstacleGroup.add(archway);
 
-    // --- MAIN CHARACTER CREATION WITH COLLISION ---
     const charStartX = startX + gridWidth / 2;
     const charStartY = startY + gridHeight / 2;
 
     this.mainChar = createMainChar(this, charStartX, charStartY, scaleFactor, this.obstacleGroup);
     this.mainChar.setDepth(101).setOrigin(0.5, 0.5);
 
-    // Enable collision between mainChar and obstacles
     this.physics.add.collider(this.mainChar, this.obstacleGroup);
 
-
-    // Ensure player always has basic tools in inventory
     const defaultTools = ['hoe', 'wateringCan', 'shovel', 'seeds'];
     let inventory = this.inventoryManager.getInventory ? this.inventoryManager.getInventory() : this.inventoryManager.inventory;
     if (!inventory || typeof inventory !== 'object') {
@@ -264,10 +253,8 @@ class PersonalGarden extends Phaser.Scene {
 
     this.add.image(0, 0, "gardenBackground").setOrigin(0).setScale(0.221);
 
-    // Tent image (not interactive)
     const tentImg = this.add.image(0, 0, "tent").setOrigin(0).setScale(scaleFactor).setDepth(5);
 
-    // Triangle icon above tent for next day
     const tentTriangleX = tentImg.x + tentImg.displayWidth / 2;
     const tentTriangleY = tentImg.y + 60;
     const triangleSize = 32;
@@ -281,7 +268,6 @@ class PersonalGarden extends Phaser.Scene {
     ).setDepth(10)
       .setInteractive({ useHandCursor: true });
 
-    // Tooltip text
     const nextDayText = this.add.text(tentTriangleX, tentTriangleY - 24, "Next Day", {
       fontFamily: "Georgia",
       fontSize: "16px",
@@ -297,11 +283,9 @@ class PersonalGarden extends Phaser.Scene {
       this.scene.launch("DayEndScene", { day: globalTimeManager.getDayNumber() });
       this.scene.get("DayEndScene").events.once("dayEnded", () => {
         globalTimeManager.nextDay();
-        // Reset watered state for all plots so watering is allowed again
         this.plots.forEach(({ plot }) => {
           plot.watered = false;
         });
-        // Update day number display
         if (this.dayText) {
           this.dayText.setText(`Day: ${globalTimeManager.getDayNumber()}`);
         }
@@ -311,9 +295,8 @@ class PersonalGarden extends Phaser.Scene {
 
     this.add.image(0, 0, "fence").setOrigin(0).setScale(scaleFactor).setDepth(200);
 
-    // Add the crafting bench image to the garden
-    const benchX = 420; // Position to the right of the plot grid
-    const benchY = 180; // Vertically centered with grid
+    const benchX = 420;
+    const benchY = 180;
     const craftingBenchImg = this.add.image(benchX, benchY, "craftingBench")
       .setScale(0.07)
       .setInteractive({ useHandCursor: true })
@@ -332,7 +315,6 @@ class PersonalGarden extends Phaser.Scene {
     this.scene.launch("HUDScene");
     this.scene.bringToTop("HUDScene");
 
-    // Load state using loadFromLocal
     const loadedState = loadFromLocal('personalGardenSceneState');
 
     const backBtnX = width - 40;
@@ -354,7 +336,6 @@ class PersonalGarden extends Phaser.Scene {
 
     backButton.setDepth(10);
 
-    // Restore tool and time only
     if (loadedState?.currentTool) this.currentTool = loadedState.currentTool;
     if (loadedState?.timeOfDay) {
       globalTimeManager.dayCycle.setTimeOfDay(loadedState.timeOfDay);
@@ -366,7 +347,6 @@ class PersonalGarden extends Phaser.Scene {
       }
     }
 
-    // Sign to enter shop
     const signX = 80;
     const signY = height - 80;
     const sign = this.add.image(signX, signY, "sign")
@@ -459,8 +439,13 @@ class PersonalGarden extends Phaser.Scene {
     }
   }
 
+  updatePlotStageImage(plot) {
+    if (plot.stageImageSprite) {
+      plot.stageImageSprite.setTexture(plot.getStageImageKey());
+    }
+  }
+
   createToolButtons() {
-    // Hoe
     const hoeBg = this.add.rectangle(40, 40, 48, 48, 0x222233, 0.95)
       .setStrokeStyle(2, 0x4caf50)
       .setDepth(199);
@@ -468,7 +453,6 @@ class PersonalGarden extends Phaser.Scene {
       .setScale(0.03)
       .setInteractive({ useHandCursor: true })
       .setDepth(203);
-    // Watering Can
     const canBg = this.add.rectangle(100, 40, 48, 48, 0x222233, 0.95)
       .setStrokeStyle(2, 0x4caf50)
       .setDepth(199);
@@ -476,7 +460,6 @@ class PersonalGarden extends Phaser.Scene {
       .setScale(0.03)
       .setInteractive({ useHandCursor: true })
       .setDepth(203);
-    // Shovel
     const shovelBg = this.add.rectangle(160, 40, 48, 48, 0x222233, 0.95)
       .setStrokeStyle(2, 0x4caf50)
       .setDepth(199);

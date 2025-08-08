@@ -15,59 +15,92 @@ if (Array.isArray(itemsData)) {
   });
 }
 
+// Map plant keys to their grown image keys
+const grownImages = {
+  foxglovePlant: 'foxglovePlant',      // Use your actual image key for grown foxglove
+  marigoldPlant: 'marigoldPlant',
+  jasminePlant: 'jasminePlant',
+  aloePlant: 'aloePlant',
+  lavenderPlant: 'lavenderPlant',
+  periwinklePlant: 'periwinklePlant',
+  garlicPlant: 'garlicPlant',
+  thymePlant: 'thymePlant',
+  willowPlant: 'willowPlant'
+};
+
 export class Plot {
   constructor() {
     this.state = 'empty'; 
     this.seedType = null;
     this.growthStage = 0;
     this.watered = false;
-    this.waterCount = 0; // Number of days watered
-    this.lastWateredDay = null; // Track last day watered
+    this.waterCount = 0; 
+    this.lastWateredDay = null;
+    this.stageImage = null;
+  }
+
+  // Helper to get the image key for the current stage
+  getStageImageKey() {
+    switch (this.state) {
+      case 'empty':
+        return 'plotEmptyImg'; 
+      case 'prepared':
+        return 'plotPreparedImg'; 
+      case 'planted':
+        return 'plotPlantedImg'; 
+      case 'watered':
+        return 'plotWateredImg';
+      case 'grown':
+        // Show the plant image when grown
+        return grownImages[this.seedType] || 'plotGrownImg';
+      case 'harvested':
+        return 'plotHarvestedImg'; 
+      default:
+        return null;
+    }
   }
 
   prepare() {
     if (this.state === 'empty') {
       this.state = 'prepared';
+      this.stageImage = this.getStageImageKey();
       return { success: true, message: 'Ground prepared.' };
     }
     return { success: false, message: 'Already prepared or not empty.' };
   }
 
   plant(seedType) {
-    // Accept seeds from seed pouch
     if (this.state !== 'prepared') {
       return { success: false, message: 'Ground not prepared.' };
     }
-    // Normalize seedType to object for robust matching
     let normalizedSeedType = typeof seedType === 'string'
       ? SeedPouchLogic.getSeeds().find(item => item.name === seedType || item.type === seedType || item.key === seedType)
       : seedType;
     if (!normalizedSeedType) {
       return { success: false, message: `No ${typeof seedType === 'string' ? seedType : (seedType.name || seedType.type || seedType.key)} seeds in pouch.` };
     }
-    // Find seed in pouch
     const isSeedMatch = (item) => {
       if (!item) return false;
       return item.name === normalizedSeedType.name || item.type === normalizedSeedType.type || item.key === normalizedSeedType.key;
     };
     let seedIdx = SeedPouchLogic.getSeeds().findIndex(isSeedMatch);
     let seedObj = seedIdx !== -1 ? SeedPouchLogic.getSeeds()[seedIdx] : null;
-    // Support stackable seeds
     if (seedObj && seedObj.count && seedObj.count > 0) {
       SeedPouchLogic.removeSeed(seedObj.key, 1);
       this.state = 'planted';
-      this.seedType = seedObj.name || seedObj.type || seedObj.key;
+      this.stageImage = this.getStageImageKey();
+      this.seedType = seedObj.key; // Use key for grownImages lookup
       this.growthStage = 0;
       this.watered = false;
       this.waterCount = 0;
       this.lastWateredDay = null;
       return { success: true, message: `Planted ${this.seedType}.` };
     }
-    // Remove non-stackable seed
     if (seedObj) {
       SeedPouchLogic.removeSeed(seedObj.key, 1);
       this.state = 'planted';
-      this.seedType = seedObj.name || seedObj.type || seedObj.key;
+      this.stageImage = this.getStageImageKey();
+      this.seedType = seedObj.key;
       this.growthStage = 0;
       this.watered = false;
       this.waterCount = 0;
@@ -78,35 +111,28 @@ export class Plot {
   }
 
   water() {
-    // Accept a day parameter for daily watering, or use globalTimeManager if available
-    // Always use the global day number for watering logic
     let currentDay = globalTimeManager.getDayNumber();
-    console.log('[Plot.water] currentDay:', currentDay, 'lastWateredDay:', this.lastWateredDay, 'waterCount:', this.waterCount);
     if (this.state === 'planted') {
-      // Always allow watering, but only increment growth if it's a new day
       if (this.lastWateredDay === null || currentDay > this.lastWateredDay) {
         this.watered = true;
         this.waterCount = (this.waterCount || 0) + 1;
         this.lastWateredDay = currentDay;
         if (this.waterCount >= 3) {
           this.state = 'grown';
+          this.stageImage = this.getStageImageKey();
         }
-        console.log('[Plot.water] Watered. New lastWateredDay:', this.lastWateredDay);
         return { success: true, message: `Watered the plant. (${this.waterCount}/3)` };
       } else {
-        // Already watered today, allow watering but don't increment growth
-        console.log('[Plot.water] Already watered today. No growth increment.');
         return { success: true, message: 'Watered again, but only one watering per day counts towards growth.' };
       }
     }
-    console.log('[Plot.water] Cannot water now. State:', this.state);
     return { success: false, message: 'Cannot water now.' };
   }
 
   harvest() {
     if (this.state === 'grown') {
       this.state = 'harvested';
-      // Use plantKey from itemsData for the harvested plant
+      this.stageImage = this.getStageImageKey();
       let plant = seedToPlantMap[this.seedType] || this.seedType;
       this.seedType = null;
       this.growthStage = 0;
@@ -120,6 +146,7 @@ export class Plot {
 
   reset() {
     this.state = 'empty';
+    this.stageImage = this.getStageImageKey();
     this.seedType = null;
     this.growthStage = 0;
     this.watered = false;
