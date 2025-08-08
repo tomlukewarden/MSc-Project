@@ -63,7 +63,7 @@ class ForagingTutorial extends Phaser.Scene {
     for (let i = 0; i < bushPositions.length; i++) {
       const { x, y } = bushPositions[i];
       const bush = this.add.image(x, y, 'bush')
-        .setScale(1.3)
+        .setScale(0.05)
         .setDepth(2)
         .setInteractive({ useHandCursor: true });
 

@@ -355,7 +355,7 @@ class ShardGardenScene extends Phaser.Scene {
       const { x, y } = bushPositions[i];
       // Asset existence check for bush
       const bush = this.textures.exists('bush')
-        ? this.add.image(x, y, 'bush').setScale(1.8).setDepth(1).setInteractive({ useHandCursor: true })
+        ? this.add.image(x, y, 'bush').setScale(0.05).setDepth(1).setInteractive({ useHandCursor: true })
         : this.add.text(x, y, 'Missing: bush', { fontSize: '16px', color: '#f00', backgroundColor: '#fff' }).setOrigin(0.5).setDepth(999);
 
       bush.on("pointerdown", () => {
