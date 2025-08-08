@@ -18,7 +18,7 @@ class CraftUI extends Phaser.Scene {
     if (Array.isArray(recipieData)) {
       recipieData.forEach(recipe => {
         if (recipe.result && recipe.result.imageKey && !this.textures.exists(recipe.result.imageKey)) {
-          this.load.image(recipe.result.imageKey, `/assets/item-images/${recipe.result.imageKey}.png`);
+          this.load.image(recipe.result.imageKey, `/assets/crafting/${recipe.result.imageKey}.png`);
         }
       });
     }

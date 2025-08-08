@@ -91,15 +91,16 @@ class OpenInventory extends Phaser.Scene {
           }
         ).setOrigin(0.5).setDepth(113);
 
-        rect.on("pointerdown", () => {
-          // Seed selection mode: call onSelect and close inventory
-          if (this.scene.settings.data && this.scene.settings.data.mode === 'selectSeed' && typeof this.scene.settings.data.onSelect === 'function') {
-            this.scene.settings.data.onSelect(item);
-            this.scene.stop();
-            return;
-          }
+       rect.on("pointerdown", () => {
           // Crafting slot selection mode
-          if (this.scene.settings.data && this.scene.settings.data.mode === 'selectItemForCraft' && typeof this.scene.settings.data.onSelect === 'function') {
+          if (
+            this.scene.settings.data &&
+            this.scene.settings.data.mode === 'selectItemForCraft' &&
+            typeof this.scene.settings.data.onSelect === 'function'
+          ) {
+            // Remove item from inventory immediately when selected for crafting
+            inventoryManager.removeItemByKey && inventoryManager.removeItemByKey(item.key);
+            this.refreshInventoryUI();
             this.scene.settings.data.onSelect(item);
             this.scene.stop();
             return;
