@@ -281,7 +281,7 @@ class PersonalGarden extends Phaser.Scene {
       }
     });
 
-    this.add.image(0, 0, "gardenBackground").setOrigin(0).setScale(0.22);
+    this.add.image(0, 0, "gardenBackground").setOrigin(0).setScale(0.221);
 
     // Tent image (not interactive)
     const tentImg = this.add.image(0, 0, "tent").setOrigin(0).setScale(scaleFactor).setDepth(5);
@@ -328,7 +328,20 @@ class PersonalGarden extends Phaser.Scene {
       });
     });
 
-    this.add.image(0, 0, "fence").setOrigin(0).setScale(scaleFactor).setDepth(10);
+    this.add.image(0, 0, "fence").setOrigin(0).setScale(scaleFactor).setDepth(200);
+
+    // Add the crafting bench image to the garden
+    const benchX = 420; // Position to the right of the plot grid
+    const benchY = 180; // Vertically centered with grid
+    const craftingBenchImg = this.add.image(benchX, benchY, "craftingBench")
+      .setScale(0.07)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(20);
+
+    craftingBenchImg.on("pointerdown", () => {
+      this.scene.launch('CraftUI');
+      this.scene.bringToTop('CraftUI');
+    });
 
     globalTimeManager.init(this);
     if (!globalTimeManager.startTimestamp) {
