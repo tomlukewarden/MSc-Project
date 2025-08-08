@@ -23,12 +23,15 @@ class FishTutorialScene extends Phaser.Scene {
             fontFamily: "Georgia"
         }).setOrigin(0.5);
         // Instructions
-        this.add.text(width / 2, 170, "Catch as many good fish as you can!\nAvoid the bad fish.", {
+        this.add.text(width / 2, 170,
+        "\n\nMove the fishing line left and right with the arrow keys.\nClick anywhere to drop the line and try to catch a fish.\nCatch only the good fish (round or pointy) for points.\nIf you catch a bad fish, the game ends!\nCatch 10 good fish to win.",
+          {
             fontSize: "26px",
             color: "#fff",
             fontFamily: "Georgia",
             align: "center"
-        }).setOrigin(0.5);
+          }
+        ).setOrigin(0.5);
         // Fish images and labels
         const fishInfo = [
             { key: "roundFish1", label: "Good Fish" },
@@ -37,11 +40,11 @@ class FishTutorialScene extends Phaser.Scene {
         ];
         fishInfo.forEach((info, i) => {
             const x = width / 2 - 180 + i * 180;
-            const y = 260;
+            const y = 400;
             this.add.image(x, y, info.key).setScale(0.13);
             this.add.text(x, y + 60, info.label, {
                 fontSize: "22px",
-                color: info.label === "Bad Fish" ? "#ff4444" : "#fff",
+                color: info.label === "Bad Fish" ? "#000000ff" : "#fff",
                 fontFamily: "Georgia"
             }).setOrigin(0.5);
         });

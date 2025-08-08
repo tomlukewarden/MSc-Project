@@ -29,6 +29,11 @@ import XOTutorialScene from "../minigames/x-and-o/x-oTutorial";
 import LoaderScene from "./scenes/loaderScene";
 import IntroScene from "./scenes/introScene";
 import CraftUI from "./craftUI";
+import CraftingTutorial from "../tutorials/craftingTutorial";
+import MovementTutorial from "../tutorials/movementTutorial";
+import FarmingTutorial from "../tutorials/farmingTutorial";
+import ForagingTutorial from "../tutorials/foragingTutorial";
+import Tutorial from "../tutorials/tutorial";
 
 function GameCanvas() {
     const canvasRef = useRef(null);
@@ -89,7 +94,12 @@ function GameCanvas() {
     XOTutorialScene,
     LoaderScene,
     IntroScene,
-    CraftUI
+    CraftUI,
+    CraftingTutorial,
+    MovementTutorial,
+    FarmingTutorial,
+    ForagingTutorial,
+    Tutorial
   ]
 };
 

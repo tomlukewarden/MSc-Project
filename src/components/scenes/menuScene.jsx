@@ -20,9 +20,13 @@ class MenuScene extends Phaser.Scene {
       { key: "MiddleGardenScene", label: "Middle Garden" },
       { key: "ShardGardenScene", label: "Shard Garden" },
       { key: "PersonalGarden", label: "Personal Garden" },
+      { key: "CraftingTutorial", label: "Crafting Tutorial" },
+      {key: "MovementTutorial", label: "Movement Tutorial"},
+      { key: "FarmingTutorial", label: "Farming Tutorial" },
+      { key: "ForagingTutorial", label: "Foraging Tutorial" },
+      { key: "Tutorial", label: "Tutorial" }
     ];
     const extraScenes = [
-      { key: "EndGameScene", label: "End Game" },
       { key: "XOTutorialScene", label: "X and O tutorial" },
       { key: "FishTutorialScene", label: "Fish Tutorial" }
     ];
