@@ -188,6 +188,13 @@ class PersonalGarden extends Phaser.Scene {
                     receivedItem(this, plantItem.key, plantItem.name);
                   }
                 }
+                // Automatically reset plot to empty after harvest
+                if (result.success) {
+                  plot.reset();
+                  this.updatePlotText(plotText, plot);
+                  this.updatePlotColor(plotRect, plot);
+                  this.updatePlotStageImage(plot);
+                }
               }
               break;
             case 'harvested':
