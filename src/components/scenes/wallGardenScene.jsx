@@ -223,24 +223,24 @@ class WallGardenScene extends Phaser.Scene {
     // --- Elephant dialogue and gifting logic ---
     this.elephantDialogueActive = false;
     this.elephantDialogueIndex = 0;
-    this.hasJasmine = () => inventoryManager.hasItemByKey && inventoryManager.hasItemByKey("jasminePlant");
+    // Change required item to Jasmine Tea
+    this.hasJasmineTea = () => inventoryManager.hasItemByKey && inventoryManager.hasItemByKey("jasmineTea");
 
-    // Listen for jasmine handover event from inventory
-    this.events.on("jasmineGiven", () => {
-      this.awaitingJasmineGive = false;
-      // Remove ALL jasmine items from inventory as a failsafe
+    // Listen for jasmineTea handover event from inventory
+    this.events.on("jasmineTeaGiven", () => {
+      this.awaitingJasmineTeaGive = false;
+      // Remove ALL jasmineTea items from inventory as a failsafe
       if (typeof inventoryManager.getItems === "function" && typeof inventoryManager.removeItemByKey === "function") {
         let items = inventoryManager.getItems();
-        let jasmineCount = items.filter(item => item.key === "jasminePlant").length;
-        for (let i = 0; i < jasmineCount; i++) {
-          inventoryManager.removeItemByKey("jasminePlant");
+        let teaCount = items.filter(item => item.key === "jasmineTea").length;
+        for (let i = 0; i < teaCount; i++) {
+          inventoryManager.removeItemByKey("jasmineTea");
         }
       }
-      // Debug: show inventory after removal using alert
       const items = typeof inventoryManager.getItems === "function" ? inventoryManager.getItems() : [];
-      const hasJasmine = items.some(item => item.key === "jasminePlant");
-      if (!hasJasmine) {
-        showDialogue(this, "You hand the elephant the Jasmine...", { imageKey: "elephant" });
+      const hasJasmineTea = items.some(item => item.key === "jasmineTea");
+      if (!hasJasmineTea) {
+        showDialogue(this, "You hand the elephant the Jasmine Tea...", { imageKey: "elephant" });
         this.elephant.setTexture && this.elephant.setTexture("elephantHappy");
         this.time.delayedCall(800, () => {
           this.elephantDialogueActive = true;
@@ -249,9 +249,9 @@ class WallGardenScene extends Phaser.Scene {
           showDialogue(this, this.activeElephantDialogues[this.elephantDialogueIndex], { imageKey: "elephant" });
           this.updateHUDState && this.updateHUDState();
         });
-        this.elephantHasJasmine = true;
+        this.elephantHasJasmineTea = true;
       } else {
-        showDialogue(this, "You still have the Jasmine.", { imageKey: "elephant" });
+        showDialogue(this, "You still have the Jasmine Tea.", { imageKey: "elephant" });
       }
     });
 
@@ -265,18 +265,18 @@ class WallGardenScene extends Phaser.Scene {
         this.updateHUDState && this.updateHUDState();
         return;
       }
-      if (this.elephantIntroDone && !this.elephantThanksDone && this.hasJasmine()) {
-        showOption(this, "Give the elephant the Jasmine?", {
+      if (this.elephantIntroDone && !this.elephantThanksDone && this.hasJasmineTea()) {
+        showOption(this, "Give the elephant the Jasmine Tea?", {
           imageKey: "elephant",
           options: [
             {
               label: "Yes",
               onSelect: () => {
-                this.hasMadeJasmineChoice = true;
+                this.hasMadeJasmineTeaChoice = true;
                 this.destroyDialogueUI();
                 this.dialogueActive = true;
-                // Set flag to await jasmine handover
-                this.awaitingJasmineGive = true;
+                // Set flag to await jasmineTea handover
+                this.awaitingJasmineTeaGive = true;
                 this.scene.launch("OpenInventory");
               }
             },
@@ -292,7 +292,7 @@ class WallGardenScene extends Phaser.Scene {
         });
         return;
       }
-      if (this.elephantIntroDone && !this.elephantThanksDone && !this.hasJasmine()) {
+      if (this.elephantIntroDone && !this.elephantThanksDone && !this.hasJasmineTea()) {
         showDialogue(this, "The elephant looks at you expectantly. Maybe you need to find something for them...", { imageKey: "elephant" });
         this.time.delayedCall(1800, () => {
           this.destroyDialogueUI();
@@ -317,12 +317,12 @@ class WallGardenScene extends Phaser.Scene {
           if (!this.elephantIntroDone && this.activeElephantDialogues === elephantIntroDialogues) {
             this.elephantIntroDone = true;
           }
-          if (this.elephantHasJasmine && this.activeElephantDialogues === elephantThanksDialogues) {
+          if (this.elephantHasJasmineTea && this.activeElephantDialogues === elephantThanksDialogues) {
             this.elephantThanksDone = true;
             // Automatically give autumn shard after thanks dialogue
             receivedItem(this, "autumnShard", "Autumn Shard");
-            // Always remove jasmine as a failsafe
-            inventoryManager.removeItemByKey && inventoryManager.removeItemByKey("jasminePlant");
+            // Always remove jasmineTea as a failsafe
+            inventoryManager.removeItemByKey && inventoryManager.removeItemByKey("jasmineTea");
           }
           this.elephantDialogueActive = false;
           this.updateHUDState && this.updateHUDState();
@@ -383,24 +383,24 @@ class WallGardenScene extends Phaser.Scene {
     // --- Polar Bear dialogue and gifting logic ---
     this.polarBearDialogueActive = false;
     this.polarBearDialogueIndex = 0;
-    this.hasBaseCream = () => inventoryManager.hasItemByKey && inventoryManager.hasItemByKey("baseCream");
+    // Change required item to Willow Bark Tea
+    this.hasWillowBarkTea = () => inventoryManager.hasItemByKey && inventoryManager.hasItemByKey("willowBarkTea");
 
-    // Listen for baseCream handover event from inventory
-    this.events.on("baseCreamGiven", () => {
-      this.awaitingBaseCreamGive = false;
-      // Remove ALL baseCream items from inventory as a failsafe
+    // Listen for willowBarkTea handover event from inventory
+    this.events.on("willowBarkTeaGiven", () => {
+      this.awaitingWillowBarkTeaGive = false;
+      // Remove ALL willowBarkTea items from inventory as a failsafe
       if (typeof inventoryManager.getItems === "function" && typeof inventoryManager.removeItemByKey === "function") {
         let items = inventoryManager.getItems();
-        let creamCount = items.filter(item => item.key === "baseCream").length;
-        for (let i = 0; i < creamCount; i++) {
-          inventoryManager.removeItemByKey("baseCream");
+        let teaCount = items.filter(item => item.key === "willowBarkTea").length;
+        for (let i = 0; i < teaCount; i++) {
+          inventoryManager.removeItemByKey("willowBarkTea");
         }
       }
-      // Debug: show inventory after removal using alert
       const items = typeof inventoryManager.getItems === "function" ? inventoryManager.getItems() : [];
-      const hasCream = items.some(item => item.key === "baseCream");
-      if (!hasCream) {
-        showDialogue(this, "You hand the polar bear the Base Cream...", { imageKey: "polarBear" });
+      const hasWillowBarkTea = items.some(item => item.key === "willowBarkTea");
+      if (!hasWillowBarkTea) {
+        showDialogue(this, "You hand the polar bear the Willow Bark Tea...", { imageKey: "polarBear" });
         this.polarBear.setTexture && this.polarBear.setTexture("polarBearHappy");
         this.time.delayedCall(800, () => {
           this.polarBearDialogueActive = true;
@@ -409,9 +409,9 @@ class WallGardenScene extends Phaser.Scene {
           showDialogue(this, this.activePolarBearDialogues[this.polarBearDialogueIndex], { imageKey: "polarBear" });
           this.updateHUDState && this.updateHUDState();
         });
-        this.polarBearHasCream = true;
+        this.polarBearHasWillowBarkTea = true;
       } else {
-        showDialogue(this, "You still have the Base Cream.", { imageKey: "polarBear" });
+        showDialogue(this, "You still have the Willow Bark Tea.", { imageKey: "polarBear" });
       }
     });
 
@@ -425,18 +425,18 @@ class WallGardenScene extends Phaser.Scene {
         this.updateHUDState && this.updateHUDState();
         return;
       }
-      if (this.polarBearIntroDone && !this.polarBearThanksDone && this.hasBaseCream()) {
-        showOption(this, "Give the polar bear the Base Cream?", {
+      if (this.polarBearIntroDone && !this.polarBearThanksDone && this.hasWillowBarkTea()) {
+        showOption(this, "Give the polar bear the Willow Bark Tea?", {
           imageKey: "polarBear",
           options: [
             {
               label: "Yes",
               onSelect: () => {
-                this.hasMadeBaseCreamChoice = true;
+                this.hasMadeWillowBarkTeaChoice = true;
                 this.destroyDialogueUI();
                 this.dialogueActive = true;
-                // Set flag to await baseCream handover
-                this.awaitingBaseCreamGive = true;
+                // Set flag to await willowBarkTea handover
+                this.awaitingWillowBarkTeaGive = true;
                 this.scene.launch("OpenInventory");
               }
             },
@@ -452,7 +452,7 @@ class WallGardenScene extends Phaser.Scene {
         });
         return;
       }
-      if (this.polarBearIntroDone && !this.polarBearThanksDone && !this.hasBaseCream()) {
+      if (this.polarBearIntroDone && !this.polarBearThanksDone && !this.hasWillowBarkTea()) {
         showDialogue(this, "The polar bear looks at you expectantly. Maybe you need to find something for them...", { imageKey: "polarBear" });
         this.time.delayedCall(1800, () => {
           this.destroyDialogueUI();
