@@ -13,6 +13,8 @@ import { saveToLocal, loadFromLocal } from "../../utils/localStorage";
 import { showDialogue, showOption } from "../../dialogue/dialogueUIHelpers";
 import { createWolf, wolfIntroDialogues, wolfThanksDialogues } from "../../characters/wolf";
 import {createDeer, deerIntroDialogues, deerThanksDialogues} from "../../characters/deer";
+import { createMole, moleIntroDialogues, moleThanksDialogues } from "../../characters/mole";
+import { createTurtle, turtleIntroDialogues, turtleThanksDialogues } from "../../characters/turtle";
 import globalTimeManager from "../../day/timeManager";
 
 class MiddleGardenScene extends Phaser.Scene {
@@ -57,6 +59,10 @@ class MiddleGardenScene extends Phaser.Scene {
     this.load.image('periwinklePlant', '/assets/plants/periwinkle.png');
     this.load.image('marigoldPlant', '/assets/plants/marigold.PNG');
     this.load.image('jasminePlant', '/assets/plants/jasmine.PNG');
+        this.load.image('mole', '/assets/npc/mole/mole.png');
+    this.load.image('moleHappy', '/assets/npc/mole/happy.png');
+    this.load.image('turtle', '/assets/npc/turtle/turtle.png');
+    this.load.image('turtleHappy', '/assets/npc/turtle/happy.png');
   }
 
   create() {
@@ -103,6 +109,187 @@ class MiddleGardenScene extends Phaser.Scene {
     this.mainChar = createMainChar(this, width / 2, height / 2, scaleFactor, collisionGroup);
     this.mainChar.setDepth(1).setOrigin(0.5, 0.5);
 
+
+    // --- Mole NPC ---
+    this.mole = createMole(this, width / 2 + 200, height / 2 + 100);
+    this.mole
+      .setInteractive({ useHandCursor: true })
+      .setDepth(10)
+      .setScale(0.09)
+      .setOrigin(-3.5, 2);
+
+    // --- Turtle NPC ---
+    this.turtle = createTurtle(this, width / 2 - 200, height / 2 + 100);
+    this.turtle
+      .setInteractive({ useHandCursor: true })
+      .setDepth(1)
+      .setScale(0.12)
+      .setOrigin(-0.2, 1.7);
+
+    // Mole talk icon events
+    this.mole.on("pointerover", (pointer) => {
+      talkIcon.setVisible(true);
+      talkIcon.setPosition(pointer.worldX + 32, pointer.worldY);
+    });
+    this.mole.on("pointermove", (pointer) => {
+      talkIcon.setPosition(pointer.worldX + 32, pointer.worldY);
+    });
+    this.mole.on("pointerout", () => {
+      talkIcon.setVisible(false);
+    });
+
+    // Turtle talk icon events
+    this.turtle.on("pointerover", (pointer) => {
+      talkIcon.setVisible(true);
+      talkIcon.setPosition(pointer.worldX + 32, pointer.worldY);
+    });
+    this.turtle.on("pointermove", (pointer) => {
+      talkIcon.setPosition(pointer.worldX + 32, pointer.worldY);
+    });
+    this.turtle.on("pointerout", () => {
+      talkIcon.setVisible(false);
+    });
+
+    // --- Mole dialogue and gifting logic ---
+    this.moleDialogueActive = false;
+    this.moleDialogueIndex = 0;
+    this.hasPeriwinkle = () => inventoryManager.hasItemByKey && inventoryManager.hasItemByKey("periwinklePlant");
+
+    // --- Turtle dialogue and gifting logic ---
+    this.turtleDialogueActive = false;
+    this.turtleDialogueIndex = 0;
+    this.hasMarigold = () => inventoryManager.hasItemByKey && inventoryManager.hasItemByKey("marigoldPlant");
+
+    // Listen for periwinkle and marigold handover events from inventory
+    this.events.on("periwinkleGiven", () => {
+      this.awaitingPeriwinkleGive = false;
+      inventoryManager.removeItemByKey && inventoryManager.removeItemByKey("periwinklePlant");
+      if (!inventoryManager.hasItemByKey || !inventoryManager.hasItemByKey("periwinklePlant")) {
+        showDialogue(this, "You hand the mole the Periwinkle...", { imageKey: "mole" });
+        this.mole.setTexture && this.mole.setTexture("moleHappy");
+        this.time.delayedCall(800, () => {
+          this.moleDialogueActive = true;
+          this.moleDialogueIndex = 0;
+          this.activeMoleDialogues = moleThanksDialogues;
+          showDialogue(this, this.activeMoleDialogues[this.moleDialogueIndex], { imageKey: "mole" });
+          this.updateHUDState && this.updateHUDState();
+        });
+        this.moleHasPeriwinkle = true;
+      } else {
+        showDialogue(this, "You still have the Periwinkle.", { imageKey: "mole" });
+      }
+    });
+    this.events.on("marigoldGiven", () => {
+      this.awaitingMarigoldGive = false;
+      inventoryManager.removeItemByKey && inventoryManager.removeItemByKey("marigoldPlant");
+      if (!inventoryManager.hasItemByKey || !inventoryManager.hasItemByKey("marigoldPlant")) {
+        showDialogue(this, "You hand the turtle the Marigold...", { imageKey: "turtle" });
+        this.turtle.setTexture && this.turtle.setTexture("turtleHappy");
+        this.time.delayedCall(800, () => {
+          this.turtleDialogueActive = true;
+          this.turtleDialogueIndex = 0;
+          this.activeTurtleDialogues = turtleThanksDialogues;
+          showDialogue(this, this.activeTurtleDialogues[this.turtleDialogueIndex], { imageKey: "turtle" });
+          this.updateHUDState && this.updateHUDState();
+        });
+        this.turtleHasMarigold = true;
+      } else {
+        showDialogue(this, "You still have the Marigold.", { imageKey: "turtle" });
+      }
+    });
+
+    // Mole click handler
+    this.mole.on("pointerdown", () => {
+      if (!this.moleIntroDone && !this.moleDialogueActive) {
+        this.moleDialogueActive = true;
+        this.moleDialogueIndex = 0;
+        this.activeMoleDialogues = moleIntroDialogues;
+        showDialogue(this, this.activeMoleDialogues[this.moleDialogueIndex], { imageKey: "mole" });
+        this.updateHUDState && this.updateHUDState();
+        return;
+      }
+      if (this.moleIntroDone && !this.moleThanksDone && this.hasPeriwinkle()) {
+        showOption(this, "Give the mole the Periwinkle?", {
+          imageKey: "mole",
+          options: [
+            {
+              label: "Yes",
+              onSelect: () => {
+                this.hasMadePeriwinkleChoice = true;
+                this.destroyDialogueUI();
+                this.dialogueActive = true;
+                this.awaitingPeriwinkleGive = true;
+                this.scene.launch("OpenInventory");
+              }
+            },
+            {
+              label: "No",
+              onSelect: () => {
+                this.destroyDialogueUI();
+                this.dialogueActive = true;
+                showDialogue(this, "You decide to hold off for now.", { imageKey: "mole" });
+              }
+            }
+          ]
+        });
+        return;
+      }
+      if (this.moleIntroDone && !this.moleThanksDone && !this.hasPeriwinkle()) {
+        showDialogue(this, "The mole looks at you expectantly. Maybe you need to find something for them?", { imageKey: "mole" });
+        this.time.delayedCall(1800, () => {
+          this.destroyDialogueUI();
+          this.dialogueActive = false;
+          this.updateHUDState && this.updateHUDState();
+        });
+        return;
+      }
+    });
+    // Turtle click handler
+    this.turtle.on("pointerdown", () => {
+      if (!this.turtleIntroDone && !this.turtleDialogueActive) {
+        this.turtleDialogueActive = true;
+        this.turtleDialogueIndex = 0;
+        this.activeTurtleDialogues = turtleIntroDialogues;
+        showDialogue(this, this.activeTurtleDialogues[this.turtleDialogueIndex], { imageKey: "turtle" });
+        this.updateHUDState && this.updateHUDState();
+        return;
+      }
+      if (this.turtleIntroDone && !this.turtleThanksDone && this.hasMarigold()) {
+        showOption(this, "Give the turtle the Marigold?", {
+          imageKey: "turtle",
+          options: [
+            {
+              label: "Yes",
+              onSelect: () => {
+                this.hasMadeMarigoldChoice = true;
+                this.destroyDialogueUI();
+                this.dialogueActive = true;
+                this.awaitingMarigoldGive = true;
+                this.scene.launch("OpenInventory");
+              }
+            },
+            {
+              label: "No",
+              onSelect: () => {
+                this.destroyDialogueUI();
+                this.dialogueActive = true;
+                showDialogue(this, "You decide to hold off for now.", { imageKey: "turtle" });
+              }
+            }
+          ]
+        });
+        return;
+      }
+      if (this.turtleIntroDone && !this.turtleThanksDone && !this.hasMarigold()) {
+        showDialogue(this, "The turtle looks at you expectantly. Maybe you need to find something for them...", { imageKey: "turtle" });
+        this.time.delayedCall(1800, () => {
+          this.destroyDialogueUI();
+          this.dialogueActive = false;
+          this.updateHUDState && this.updateHUDState();
+        });
+        return;
+      }
+    });
 
     // --- Wolf NPC ---
     this.wolf = createWolf(this, width / 2 + 200, height / 2 + 100);
@@ -314,9 +501,7 @@ class MiddleGardenScene extends Phaser.Scene {
           }
           if (this.wolfHasPeriwinkle && this.activeWolfDialogues === wolfThanksDialogues) {
             this.wolfThanksDone = true;
-            // Automatically give summer shard after thanks dialogue
             receivedItem(this, "summerShard", "Summer Shard");
-            // Always remove periwinkle as a failsafe
             inventoryManager.removeItemByKey && inventoryManager.removeItemByKey("periwinklePlant");
           }
           this.wolfDialogueActive = false;
@@ -339,10 +524,55 @@ class MiddleGardenScene extends Phaser.Scene {
           }
           if (this.deerHasMarigold && this.activeDeerDialogues === deerThanksDialogues) {
             this.deerThanksDone = true;
-            // Automatically give winter shard after thanks dialogue
             receivedItem(this, "winterShard", "Winter Shard");
           }
           this.deerDialogueActive = false;
+          this.updateHUDState && this.updateHUDState();
+        }
+        return;
+      }
+      // Mole dialogue advance
+      if (this.moleDialogueActive) {
+        this.moleDialogueIndex++;
+        if (this.activeMoleDialogues && this.moleDialogueIndex < this.activeMoleDialogues.length) {
+          showDialogue(this, this.activeMoleDialogues[this.moleDialogueIndex], { imageKey: "mole" });
+        } else {
+          this.destroyDialogueUI();
+          this.dialogueActive = false;
+          this.updateHUDState && this.updateHUDState();
+
+          if (!this.moleIntroDone && this.activeMoleDialogues === moleIntroDialogues) {
+            this.moleIntroDone = true;
+          }
+          if (this.moleHasPeriwinkle && this.activeMoleDialogues === moleThanksDialogues) {
+            this.moleThanksDone = true;
+            receivedItem(this, "springShard", "Spring Shard");
+            inventoryManager.removeItemByKey && inventoryManager.removeItemByKey("periwinklePlant");
+          }
+          this.moleDialogueActive = false;
+          this.updateHUDState && this.updateHUDState();
+        }
+        return;
+      }
+      // Turtle dialogue advance
+      if (this.turtleDialogueActive) {
+        this.turtleDialogueIndex++;
+        if (this.activeTurtleDialogues && this.turtleDialogueIndex < this.activeTurtleDialogues.length) {
+          showDialogue(this, this.activeTurtleDialogues[this.turtleDialogueIndex], { imageKey: "turtle" });
+        } else {
+          this.destroyDialogueUI();
+          this.dialogueActive = false;
+          this.updateHUDState && this.updateHUDState();
+
+          if (!this.turtleIntroDone && this.activeTurtleDialogues === turtleIntroDialogues) {
+            this.turtleIntroDone = true;
+          }
+          if (this.turtleHasMarigold && this.activeTurtleDialogues === turtleThanksDialogues) {
+            this.turtleThanksDone = true;
+            receivedItem(this, "autumnShard", "Autumn Shard");
+            inventoryManager.removeItemByKey && inventoryManager.removeItemByKey("marigoldPlant");
+          }
+          this.turtleDialogueActive = false;
           this.updateHUDState && this.updateHUDState();
         }
         return;
@@ -351,7 +581,6 @@ class MiddleGardenScene extends Phaser.Scene {
       if (this.dialogueActive && typeof this.dialogueOnComplete === "function") {
         this.dialogueOnComplete();
       }
-      // Always update HUD after any dialogue completes
       this.updateHUDState && this.updateHUDState();
     });
 
@@ -385,10 +614,10 @@ class MiddleGardenScene extends Phaser.Scene {
 
   setupBushes(width, height) {
     const bushPositions = [
-      { x: 180, y: 300 }, 
-      { x: 260, y: 400 }, 
-      { x: 340, y: 250 }, 
-      { x: 420, y: 350 }  
+      { x: 100, y: 300 }, 
+      { x: 120, y: 500 }, 
+      { x: 1150, y: 250 }, 
+      { x: 1200, y: 550 }  
     ];
     const bushCount = bushPositions.length;
     const jasmineIndex = 0;

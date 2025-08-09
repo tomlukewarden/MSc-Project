@@ -1,4 +1,5 @@
 export const moleIntroDialogues = [
+    "",
     "Hey there… uh, quick question. \n Are mushrooms supposed to grow on moles?",
     "I’ve been digging like usual, \n but lately these little fungi keep popping up \n all over me.",
     "They’re not itchy or anything, just... weird. I don’t know what’s going on.",
