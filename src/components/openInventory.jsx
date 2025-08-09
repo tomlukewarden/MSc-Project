@@ -18,7 +18,18 @@ class OpenInventory extends Phaser.Scene {
 
   preload() {
     this.load.image("inventoryBackground", "/assets/ui-items/overlayBg.png");
-  }
+    this.load.image("baseCream", "/assets/shopItems/cream.png");
+    this.load.image("aloeAfterSunCream", )
+ this.load.image('foxglovePlant', '/assets/plants/foxglove.png');
+    this.load.image('marigoldPlant', '/assets/plants/marigold.PNG');
+    this.load.image('jasminePlant', '/assets/plants/jasmine.PNG');
+    this.load.image('aloePlant', '/assets/plants/aloe.PNG');
+    this.load.image('lavenderPlant', '/assets/plants/lavender.PNG');
+    this.load.image('periwinklePlant', '/assets/plants/periwinkle.png');
+    this.load.image('garlicPlant', '/assets/plants/garlic.PNG');
+    this.load.image('thymePlant', '/assets/plants/thyme.PNG');
+    this.load.image('willowPlant', '/assets/plants/willow.PNG');  
+}
 
   create() {
     const { width, height } = this.sys.game.config;
@@ -112,46 +123,123 @@ class OpenInventory extends Phaser.Scene {
             this.scene.settings.data.mode === 'selectItemForCraft' &&
             typeof this.scene.settings.data.onSelect === 'function'
           ) {
-            // Remove item from inventory immediately when selected for crafting
             inventoryManager.removeItemByKey && inventoryManager.removeItemByKey(item.key);
             this.refreshInventoryUI();
             this.scene.settings.data.onSelect(item);
             this.scene.stop();
             return;
           }
+
+          // --- MiddleGardenScene handovers ---
           const middleGardenScene = this.scene.get('MiddleGardenScene');
+          if (middleGardenScene && middleGardenScene.awaitingPeriwinkleExtractGive && item.key === "periwinkleExtract") {
+            alert("Handing over Periwinkle Extract to Wolf (MiddleGardenScene)");
+            inventoryManager.removeItemByKey && inventoryManager.removeItemByKey("periwinkleExtract");
+            this.scene.stop();
+            middleGardenScene.events.emit("periwinkleExtractGiven");
+            middleGardenScene.events.emit("inventoryClosed");
+            return;
+          }
+          if (middleGardenScene && middleGardenScene.awaitingMarigoldSalveGive && item.key === "marigoldSalve") {
+            alert("Handing over Marigold Salve to Deer (MiddleGardenScene)");
+            inventoryManager.removeItemByKey && inventoryManager.removeItemByKey("marigoldSalve");
+            this.scene.stop();
+            middleGardenScene.events.emit("marigoldSalveGiven");
+            middleGardenScene.events.emit("inventoryClosed");
+            return;
+          }
+          if (middleGardenScene && middleGardenScene.awaitingGarlicPasteGive && item.key === "garlicPaste") {
+            alert("Handing over Garlic Paste to Mole (MiddleGardenScene)");
+            inventoryManager.removeItemByKey && inventoryManager.removeItemByKey("garlicPaste");
+            this.scene.stop();
+            middleGardenScene.events.emit("garlicPasteGiven");
+            middleGardenScene.events.emit("inventoryClosed");
+            return;
+          }
+          if (middleGardenScene && middleGardenScene.awaitingThymeInfusedOilGive && item.key === "thymeInfusedOil") {
+            alert("Handing over Thyme Infused Oil to Turtle (MiddleGardenScene)");
+            inventoryManager.removeItemByKey && inventoryManager.removeItemByKey("thymeInfusedOil");
+            this.scene.stop();
+            middleGardenScene.events.emit("thymeInfusedOilGiven");
+            middleGardenScene.events.emit("inventoryClosed");
+            return;
+          }
+
+          // --- GreenhouseScene handovers ---
+          const greenhouseScene = this.scene.get('GreenhouseScene');
+          if (greenhouseScene && greenhouseScene.awaitingLavenderOilGive && item.key === "lavenderOil") {
+            alert("Handing over Lavender Oil to Rabbit (GreenhouseScene)");
+            inventoryManager.removeItemByKey && inventoryManager.removeItemByKey("lavenderOil");
+            this.scene.stop();
+            greenhouseScene.events.emit("lavenderOilGiven");
+            greenhouseScene.events.emit("inventoryClosed");
+            return;
+          }
+          if (greenhouseScene && greenhouseScene.awaitingAloeAfterSunCreamGive && item.key === "aloeAfterSunCream") {
+            alert("Handing over Aloe After-Sun Cream to Pig (GreenhouseScene)");
+            inventoryManager.removeItemByKey && inventoryManager.removeItemByKey("aloeAfterSunCream");
+            this.scene.stop();
+            greenhouseScene.events.emit("aloeAfterSunCreamGiven");
+            greenhouseScene.events.emit("inventoryClosed");
+            return;
+          }
+
+          // --- WallGardenScene handovers ---
+          const wallGardenScene = this.scene.get('WallGardenScene');
+          if (wallGardenScene && wallGardenScene.awaitingJasmineTeaGive && item.key === "jasmineTea") {
+            alert("Handing over Jasmine Tea to Elephant (WallGardenScene)");
+            inventoryManager.removeItemByKey && inventoryManager.removeItemByKey("jasmineTea");
+            this.scene.stop();
+            wallGardenScene.events.emit("jasmineTeaGiven");
+            wallGardenScene.events.emit("inventoryClosed");
+            return;
+          }
+          if (wallGardenScene && wallGardenScene.awaitingWillowBarkTeaGive && item.key === "willowBarkTea") {
+            alert("Handing over Willow Bark Tea to Polar Bear (WallGardenScene)");
+            inventoryManager.removeItemByKey && inventoryManager.removeItemByKey("willowBarkTea");
+            this.scene.stop();
+            wallGardenScene.events.emit("willowBarkTeaGiven");
+            wallGardenScene.events.emit("inventoryClosed");
+            return;
+          }
+
+          // --- Legacy/other handovers ---
           if (middleGardenScene && middleGardenScene.awaitingPeriwinkleGive && item.key === "periwinklePlant") {
+            alert("Handing over Periwinkle Plant (legacy) to Wolf (MiddleGardenScene)");
             inventoryManager.removeItemByKey && inventoryManager.removeItemByKey("periwinklePlant");
-            this.scene.stop(); // Close inventory
+            this.scene.stop();
             middleGardenScene.events.emit("periwinkleGiven");
             middleGardenScene.events.emit("inventoryClosed");
             return;
           }
           if (middleGardenScene && middleGardenScene.awaitingMarigoldGive && item.key === "marigoldPlant") {
+            alert("Handing over Marigold Plant (legacy) to Deer (MiddleGardenScene)");
             inventoryManager.removeItemByKey && inventoryManager.removeItemByKey("marigoldPlant");
-            this.scene.stop(); // Close inventory
+            this.scene.stop();
             middleGardenScene.events.emit("marigoldGiven");
             middleGardenScene.events.emit("inventoryClosed");
             return;
           }
-          const wallGardenScene = this.scene.get('WallGardenScene');
           if (wallGardenScene && wallGardenScene.awaitingJasmineGive && item.key === "jasminePlant") {
-            if (typeof inventoryManager.removeItemByKey === "function") {
-              inventoryManager.removeItemByKey("jasminePlant");
-            }
+            alert("Handing over Jasmine Plant (legacy) to Elephant (WallGardenScene)");
+            inventoryManager.removeItemByKey && inventoryManager.removeItemByKey("jasminePlant");
             wallGardenScene.awaitingJasmineGive = false;
-            this.scene.stop(); // Close inventory
+            this.scene.stop();
             wallGardenScene.events.emit("jasmineGiven");
             wallGardenScene.events.emit("inventoryClosed");
             return;
           }
           const mainScene = this.scene.get('WeeCairScene');
           if (mainScene && mainScene.awaitingFoxgloveGive && item.key === "foxglovePlant") {
+            alert("Handing over Foxglove Plant to Main Scene");
             inventoryManager.removeItemByKey && inventoryManager.removeItemByKey("foxglovePlant");
-            this.scene.stop(); // Close inventory
+            this.scene.stop();
             mainScene.events.emit("foxgloveGiven");
             return;
           }
+
+          // Default: remove item but no handover event
+          alert("No matching NPC handover found for item: " + item.key);
           inventoryManager.removeItemByKey && inventoryManager.removeItemByKey(item.key);
         });
 
@@ -178,6 +266,23 @@ class OpenInventory extends Phaser.Scene {
       if (!currentlyOver.length) {
         this.scene.stop("OpenInventory");
       }
+    });
+
+    // Add "Clear Inventory" button
+    const clearBtn = this.add.text(width / 2 + 220, height / 2 - 220, "Clear Inventory", {
+      fontFamily: "Georgia",
+      fontSize: "18px",
+      color: "#fff",
+      backgroundColor: "#a33",
+      padding: { left: 10, right: 10, top: 6, bottom: 6 }
+    })
+      .setOrigin(0.5)
+      .setDepth(106)
+      .setInteractive({ useHandCursor: true });
+
+    clearBtn.on("pointerdown", () => {
+      inventoryManager.clear && inventoryManager.clear();
+      this.refreshInventoryUI();
     });
   }
 

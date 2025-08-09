@@ -14,6 +14,7 @@ class CraftUI extends Phaser.Scene {
 
   preload() {
     this.load.image('craftUIBg', '/assets/ui-items/overlayBg.png');
+    
 
     if (Array.isArray(recipieData)) {
       recipieData.forEach(recipe => {
@@ -168,34 +169,6 @@ class CraftUI extends Phaser.Scene {
       this.takeItemBtnMain.setAlpha(0.5);
       this.takeItemBtnMain.disableInteractive();
     });
-
-    // Return Items button
-    this.returnItemsBtn = this.add.text(width / 2, height / 2 + 130, 'Return Items', {
-      fontFamily: 'sans-serif',
-      fontSize: '16px',
-      backgroundColor: '#f5e6b3',
-      color: '#795548',
-      padding: { left: 10, right: 10, top: 4, bottom: 4 }
-    }).setOrigin(0.5).setInteractive({ useHandCursor: true });
-
-    this.returnItemsBtn.on('pointerdown', () => {
-      this.ingredientSlots.forEach(slot => {
-        if (slot.item) {
-          inventoryManager.addItem(slot.item);
-          // Call receivedItem for each returned item
-          receivedItem(this, slot.item.key, slot.item.name || slot.item.key);
-          slot.item = null;
-          if (slot.text) slot.text.destroy();
-          if (slot.image) slot.image.destroy();
-          slot.text = null;
-          slot.image = null;
-        }
-      });
-      // Optionally refresh inventory UI
-      if (this.scene.isActive('OpenInventory') && this.scene.get('OpenInventory').refreshInventoryUI) {
-        this.scene.get('OpenInventory').refreshInventoryUI();
-      }
-    });
   }
 
   craftSomething() {
@@ -244,7 +217,7 @@ class CraftUI extends Phaser.Scene {
         const { width, height } = this.sys.game.config;
         if (match.result.imageKey && this.textures.exists(match.result.imageKey)) {
           this.outputImage = this.add.image(width / 2, height / 2 + 60, match.result.imageKey)
-            .setScale(0.18).setOrigin(0.5);
+            .setScale(0.06).setOrigin(0.5);
           this.outputText = null;
         } else {
           this.outputText = this.add.text(

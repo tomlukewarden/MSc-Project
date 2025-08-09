@@ -663,7 +663,7 @@ class WallGardenScene extends Phaser.Scene {
     const bushCount = bushPositions.length;
     // Set up rewards: 2 aloe plants, 1 base cream, 1 coins
     const bushRewards = [
-      { type: "item", key: "aloeSeeds", name: "Aloe Seeds", color: 0x8bc34a },
+      { type: "item", key: "aloePlant", name: "Aloe Plant", color: 0x8bc34a },
       { type: "item", key: "aloePlant", name: "Aloe Plant", color: 0x8bc34a },
       { type: "item", key: "baseCream", name: "Base Cream", color: 0xf5e6b3 },
     ];

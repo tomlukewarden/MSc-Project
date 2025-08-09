@@ -4,7 +4,7 @@ import { createPig, pigIntroDialogues, pigThanksDialogues } from "../../characte
 import { showDialogue, showOption, destroyDialogueUI } from "../../dialogue/dialogueUIHelpers";
 import { saveToLocal, loadFromLocal } from "../../utils/localStorage";
 import { createMainChar } from "../../characters/mainChar";
-import { inventoryManager } from "../inventoryManager";
+import { inventoryManager } from "../openInventory";
 import { receivedItem } from "../recievedItem";
 import globalTimeManager from "../../day/timeManager";
 
@@ -134,19 +134,15 @@ class GreenhouseScene extends Phaser.Scene {
         // --- Rabbit dialogue and gifting logic ---
         this.rabbitDialogueActive = false;
         this.rabbitDialogueIndex = 0;
-        this.hasPeriwinkle = () => inventoryManager.hasItemByKey && inventoryManager.hasItemByKey("periwinklePlant");
+        // Change required item to Lavender Oil
+        this.hasLavenderOil = () => inventoryManager.hasItemByKey && inventoryManager.hasItemByKey("lavenderOil");
 
-        // --- Pig dialogue and gifting logic ---
-        this.pigDialogueActive = false;
-        this.pigDialogueIndex = 0;
-        this.hasMarigold = () => inventoryManager.hasItemByKey && inventoryManager.hasItemByKey("marigoldPlant");
-
-        // Listen for periwinkle and marigold handover events from inventory
-        this.events.on("periwinkleGiven", () => {
-          this.awaitingPeriwinkleGive = false;
-          inventoryManager.removeItemByKey && inventoryManager.removeItemByKey("periwinklePlant");
-          if (!inventoryManager.hasItemByKey || !inventoryManager.hasItemByKey("periwinklePlant")) {
-            showDialogue(this, "You hand the rabbit the Periwinkle...", { imageKey: "rabbit" });
+        // Listen for lavenderOil handover event from inventory
+        this.events.on("lavenderOilGiven", () => {
+          this.awaitingLavenderOilGive = false;
+          inventoryManager.removeItemByKey && inventoryManager.removeItemByKey("lavenderOil");
+          if (!inventoryManager.hasItemByKey || !inventoryManager.hasItemByKey("lavenderOil")) {
+            showDialogue(this, "You hand the rabbit the Lavender Oil...", { imageKey: "rabbit" });
             this.rabbit.setTexture && this.rabbit.setTexture("rabbitHappy");
             this.time.delayedCall(800, () => {
               this.rabbitDialogueActive = true;
@@ -155,27 +151,9 @@ class GreenhouseScene extends Phaser.Scene {
               showDialogue(this, this.activeRabbitDialogues[this.rabbitDialogueIndex], { imageKey: "rabbit" });
               this.updateHUDState && this.updateHUDState();
             });
-            this.rabbitHasPeriwinkle = true;
+            this.rabbitHasLavenderOil = true;
           } else {
-            showDialogue(this, "You still have the Periwinkle.", { imageKey: "rabbit" });
-          }
-        });
-        this.events.on("marigoldGiven", () => {
-          this.awaitingMarigoldGive = false;
-          inventoryManager.removeItemByKey && inventoryManager.removeItemByKey("marigoldPlant");
-          if (!inventoryManager.hasItemByKey || !inventoryManager.hasItemByKey("marigoldPlant")) {
-            showDialogue(this, "You hand the pig the Marigold...", { imageKey: "pig" });
-            this.pig.setTexture && this.pig.setTexture("pigHappy");
-            this.time.delayedCall(800, () => {
-              this.pigDialogueActive = true;
-              this.pigDialogueIndex = 0;
-              this.activePigDialogues = pigThanksDialogues;
-              showDialogue(this, this.activePigDialogues[this.pigDialogueIndex], { imageKey: "pig" });
-              this.updateHUDState && this.updateHUDState();
-            });
-            this.pigHasMarigold = true;
-          } else {
-            showDialogue(this, "You still have the Marigold.", { imageKey: "pig" });
+            showDialogue(this, "You still have the Lavender Oil.", { imageKey: "rabbit" });
           }
         });
 
@@ -189,17 +167,17 @@ class GreenhouseScene extends Phaser.Scene {
             this.updateHUDState && this.updateHUDState();
             return;
           }
-          if (this.rabbitIntroDone && !this.rabbitThanksDone && this.hasPeriwinkle()) {
-            showOption(this, "Give the rabbit the Periwinkle?", {
+          if (this.rabbitIntroDone && !this.rabbitThanksDone && this.hasLavenderOil()) {
+            showOption(this, "Give the rabbit the Lavender Oil?", {
               imageKey: "rabbit",
               options: [
                 {
                   label: "Yes",
                   onSelect: () => {
-                    this.hasMadePeriwinkleChoice = true;
+                    this.hasMadeLavenderOilChoice = true;
                     this.destroyDialogueUI();
                     this.dialogueActive = true;
-                    this.awaitingPeriwinkleGive = true;
+                    this.awaitingLavenderOilGive = true;
                     this.scene.launch("OpenInventory");
                   }
                 },
@@ -215,7 +193,7 @@ class GreenhouseScene extends Phaser.Scene {
             });
             return;
           }
-          if (this.rabbitIntroDone && !this.rabbitThanksDone && !this.hasPeriwinkle()) {
+          if (this.rabbitIntroDone && !this.rabbitThanksDone && !this.hasLavenderOil()) {
             showDialogue(this, "The rabbit looks at you expectantly. Maybe you need to find something for them?", { imageKey: "rabbit" });
             this.time.delayedCall(1800, () => {
               this.destroyDialogueUI();
@@ -225,6 +203,35 @@ class GreenhouseScene extends Phaser.Scene {
             return;
           }
         });
+        // --- Pig dialogue and gifting logic ---
+        this.pigDialogueActive = false;
+        this.pigDialogueIndex = 0;
+        // Change required item to Aloe After-Sun Cream
+        this.hasAloeAfterSunCream = () => inventoryManager.hasItemByKey && inventoryManager.hasItemByKey("aloeAfterSunCream");
+
+        // Listen for aloeAfterSunCream handover event from inventory
+        this.events.on("aloeAfterSunCreamGiven", () => {
+          alert("Event: aloeAfterSunCreamGiven triggered in GreenhouseScene");
+          this.awaitingAloeAfterSunCreamGive = false;
+          inventoryManager.removeItemByKey && inventoryManager.removeItemByKey("aloeAfterSunCream");
+          if (!inventoryManager.hasItemByKey || !inventoryManager.hasItemByKey("aloeAfterSunCream")) {
+            alert("Giving Aloe After-Sun Cream to Pig and starting thanks dialogue");
+            showDialogue(this, "You hand the pig the Aloe After-Sun Cream...", { imageKey: "pig" });
+            this.pig.setTexture && this.pig.setTexture("pigHappy");
+            this.time.delayedCall(800, () => {
+              this.pigDialogueActive = true;
+              this.pigDialogueIndex = 0;
+              this.activePigDialogues = pigThanksDialogues;
+              showDialogue(this, this.activePigDialogues[this.pigDialogueIndex], { imageKey: "pigHappy" });
+              this.updateHUDState && this.updateHUDState();
+            });
+            this.pigHasAloeAfterSunCream = true;
+          } else {
+            alert("Pig still has Aloe After-Sun Cream in inventory after removal attempt");
+            showDialogue(this, "You still have the Aloe After-Sun Cream.", { imageKey: "pig" });
+          }
+        });
+
         // Pig click handler
         this.pig.on("pointerdown", () => {
           if (!this.pigIntroDone && !this.pigDialogueActive) {
@@ -235,17 +242,17 @@ class GreenhouseScene extends Phaser.Scene {
             this.updateHUDState && this.updateHUDState();
             return;
           }
-          if (this.pigIntroDone && !this.pigThanksDone && this.hasMarigold()) {
-            showOption(this, "Give the pig the Marigold?", {
+          if (this.pigIntroDone && !this.pigThanksDone && this.hasAloeAfterSunCream()) {
+            showOption(this, "Give the pig the Aloe After-Sun Cream?", {
               imageKey: "pig",
               options: [
                 {
                   label: "Yes",
                   onSelect: () => {
-                    this.hasMadeMarigoldChoice = true;
+                    this.hasMadeAloeAfterSunCreamChoice = true;
                     this.destroyDialogueUI();
                     this.dialogueActive = true;
-                    this.awaitingMarigoldGive = true;
+                    this.awaitingAloeAfterSunCreamGive = true;
                     this.scene.launch("OpenInventory");
                   }
                 },
@@ -261,7 +268,7 @@ class GreenhouseScene extends Phaser.Scene {
             });
             return;
           }
-          if (this.pigIntroDone && !this.pigThanksDone && !this.hasMarigold()) {
+          if (this.pigIntroDone && !this.pigThanksDone && !this.hasAloeAfterSunCream()) {
             showDialogue(this, "The pig looks at you expectantly. Maybe you need to find something for them...", { imageKey: "pig" });
             this.time.delayedCall(1800, () => {
               this.destroyDialogueUI();
@@ -288,10 +295,10 @@ class GreenhouseScene extends Phaser.Scene {
               if (!this.rabbitIntroDone && this.activeRabbitDialogues === rabbitIntroDialogues) {
                 this.rabbitIntroDone = true;
               }
-              if (this.rabbitHasPeriwinkle && this.activeRabbitDialogues === rabbitThanksDialogues) {
+              if (this.rabbitHasLavenderOil && this.activeRabbitDialogues === rabbitThanksDialogues) {
                 this.rabbitThanksDone = true;
                 receivedItem(this, "autumnShard", "Autumn Shard");
-                inventoryManager.removeItemByKey && inventoryManager.removeItemByKey("periwinklePlant");
+                inventoryManager.removeItemByKey && inventoryManager.removeItemByKey("lavenderOil");
               }
               this.rabbitDialogueActive = false;
               this.updateHUDState && this.updateHUDState();
@@ -311,9 +318,10 @@ class GreenhouseScene extends Phaser.Scene {
               if (!this.pigIntroDone && this.activePigDialogues === pigIntroDialogues) {
                 this.pigIntroDone = true;
               }
-              if (this.pigHasMarigold && this.activePigDialogues === pigThanksDialogues) {
+              if (this.pigHasAloeAfterSunCream && this.activePigDialogues === pigThanksDialogues) {
                 this.pigThanksDone = true;
                 receivedItem(this, "winterShard", "Winter Shard");
+                inventoryManager.removeItemByKey && inventoryManager.removeItemByKey("aloeAfterSunCream");
               }
               this.pigDialogueActive = false;
               this.updateHUDState && this.updateHUDState();
