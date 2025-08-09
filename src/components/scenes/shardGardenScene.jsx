@@ -3,7 +3,7 @@ import { createMainChar } from "../../characters/mainChar";
 import { saveToLocal, loadFromLocal } from "../../utils/localStorage";
 import plantData from "../../plantData";
 import { showDialogue, showOption } from "../../dialogue/dialogueUIHelpers";
-import {shardLogic} from "../shardLogic";
+import { shardLogic } from "../shardLogic";
 import { inventoryManager } from "../openInventory";
 // Ensure global inventoryManager instance
 import { inventoryManager as globalInventoryManager } from "../inventoryManager";
@@ -46,17 +46,17 @@ class ShardGardenScene extends Phaser.Scene {
     this.load.image('folliage', '/assets/backgrounds/shardGarden/folliage.png');
     this.load.image('butterfly', '/assets/npc/butterfly/front-butterfly.png');
     this.load.image("defaultFront", "/assets/char/default/front-default.png");
-        this.load.image("defaultBack", "/assets/char/default/back-default.png");
-        this.load.image("defaultLeft", "/assets/char/default/left-default.png");
-        this.load.image("defaultRight", "/assets/char/default/right-default.png");
-        this.load.image("defaultFrontWalk1", "/assets/char/default/front-step-1.PNG");
-        this.load.image("defaultFrontWalk2", "/assets/char/default/front-step-2.PNG");
-        this.load.image("defaultBackWalk1", "/assets/char/default/back-step-1.PNG");
-        this.load.image("defaultBackWalk2", "/assets/char/default/back-step-2.PNG");
-        this.load.image("defaultLeftWalk1", "/assets/char/default/left-step-1.PNG");
-        this.load.image("defaultLeftWalk2", "/assets/char/default/left-step-2.PNG");
-        this.load.image("defaultRightWalk1", "/assets/char/default/right-step-1.PNG");
-        this.load.image("defaultRightWalk2", "/assets/char/default/right-step-2.PNG");
+    this.load.image("defaultBack", "/assets/char/default/back-default.png");
+    this.load.image("defaultLeft", "/assets/char/default/left-default.png");
+    this.load.image("defaultRight", "/assets/char/default/right-default.png");
+    this.load.image("defaultFrontWalk1", "/assets/char/default/front-step-1.PNG");
+    this.load.image("defaultFrontWalk2", "/assets/char/default/front-step-2.PNG");
+    this.load.image("defaultBackWalk1", "/assets/char/default/back-step-1.PNG");
+    this.load.image("defaultBackWalk2", "/assets/char/default/back-step-2.PNG");
+    this.load.image("defaultLeftWalk1", "/assets/char/default/left-step-1.PNG");
+    this.load.image("defaultLeftWalk2", "/assets/char/default/left-step-2.PNG");
+    this.load.image("defaultRightWalk1", "/assets/char/default/right-step-1.PNG");
+    this.load.image("defaultRightWalk2", "/assets/char/default/right-step-2.PNG");
     this.load.image("elephant", "/assets/npc/elephant/elephant.png");
     this.load.image('spring', '/assets/backgrounds/shardGarden/spring/sad.png');
     this.load.image('springHappy', '/assets/backgrounds/shardGarden/spring/happy.png');
@@ -184,7 +184,7 @@ class ShardGardenScene extends Phaser.Scene {
               showDialogue(this, `No ${season} shards left to return!`);
             }
           } else {
-            showDialogue(this, `You don't have a ${season} shard in your inventory.`,  { imageKey: {shardKey} });
+            showDialogue(this, `You don't have a ${season} shard in your inventory.`,  { imageKey: shardKey });
           }
           this.updateHUDState();
         });
@@ -387,58 +387,8 @@ class ShardGardenScene extends Phaser.Scene {
     // --- Bushes/Flowerbeds logic ---
     this.setupBushes(width, height);
 
-    // --- Dialogue advance on click ---
+    // --- Mole and Turtle dialogue advance ---
     this.input.on("pointerdown", () => {
-      this.sound.play("click");
-      // Wolf dialogue advance
-      if (this.wolfDialogueActive) {
-        this.wolfDialogueIndex++;
-        if (this.activeWolfDialogues && this.wolfDialogueIndex < this.activeWolfDialogues.length) {
-          showDialogue(this, this.activeWolfDialogues[this.wolfDialogueIndex], { imageKey: "wolf" });
-        } else {
-          this.destroyDialogueUI();
-          this.dialogueActive = false;
-          this.updateHUDState && this.updateHUDState();
-
-          if (!this.wolfIntroDone && this.activeWolfDialogues === wolfIntroDialogues) {
-            this.wolfIntroDone = true;
-          }
-          if (this.wolfHasPeriwinkle && this.activeWolfDialogues === wolfThanksDialogues) {
-            this.wolfThanksDone = true;
-            // Automatically give summer shard after thanks dialogue
-            receivedItem(this, "summerShard", "Summer Shard");
-            // Always remove periwinkle as a failsafe
-            inventoryManager.removeItemByKey && inventoryManager.removeItemByKey("periwinklePlant");
-          }
-          this.wolfDialogueActive = false;
-          this.updateHUDState && this.updateHUDState();
-        }
-        return;
-      }
-      // Deer dialogue advance
-      if (this.deerDialogueActive) {
-        this.deerDialogueIndex++;
-        if (this.activeDeerDialogues && this.deerDialogueIndex < this.activeDeerDialogues.length) {
-          showDialogue(this, this.activeDeerDialogues[this.deerDialogueIndex], { imageKey: "deer" });
-        } else {
-          this.destroyDialogueUI();
-          this.dialogueActive = false;
-          this.updateHUDState && this.updateHUDState();
-          
-          if (!this.deerIntroDone && this.activeDeerDialogues === deerIntroDialogues) {
-            this.deerIntroDone = true;
-          }
-          if (this.deerHasMarigold && this.activeDeerDialogues === deerThanksDialogues) {
-            this.deerThanksDone = true;
-            // Automatically give winter shard after thanks dialogue
-            receivedItem(this, "winterShard", "Winter Shard");
-          }
-          this.deerDialogueActive = false;
-          this.updateHUDState && this.updateHUDState();
-        }
-        return;
-      }
-      // Mole dialogue advance
       if (this.moleDialogueActive) {
         this.moleDialogueIndex++;
         if (this.activeMoleDialogues && this.moleDialogueIndex < this.activeMoleDialogues.length) {
@@ -463,7 +413,6 @@ class ShardGardenScene extends Phaser.Scene {
         }
         return;
       }
-      // Turtle dialogue advance
       if (this.turtleDialogueActive) {
         this.turtleDialogueIndex++;
         if (this.activeTurtleDialogues && this.turtleDialogueIndex < this.activeTurtleDialogues.length) {
@@ -472,7 +421,7 @@ class ShardGardenScene extends Phaser.Scene {
           this.destroyDialogueUI();
           this.dialogueActive = false;
           this.updateHUDState && this.updateHUDState();
-          
+
           if (!this.turtleIntroDone && this.activeTurtleDialogues === turtleIntroDialogues) {
             this.turtleIntroDone = true;
           }
@@ -511,16 +460,7 @@ class ShardGardenScene extends Phaser.Scene {
       this.transitioning = false;
     });
 
-    if (sceneState) {
-      this.wolfThanksDone = !!sceneState.wolfThanksDone;
-      this.deerHasMarigold = !!sceneState.deerHasMarigold;
-      if (sceneState.wolfTexture && this.wolf) this.wolf.setTexture(sceneState.wolfTexture);
-      if (sceneState.deerTexture && this.deer) this.deer.setTexture(sceneState.deerTexture);
-      if (sceneState.timeOfDay) globalTimeManager.dayCycle.setTimeOfDay(sceneState.timeOfDay);
-    }
-  
-
-    // --- Talk icon hover logic ---
+    // --- Butterfly dialogue logic ---
     butterfly.on("pointerover", (pointer) => {
       talkIcon.setVisible(true);
       talkIcon.setPosition(pointer.worldX + 32, pointer.worldY);
@@ -542,7 +482,7 @@ class ShardGardenScene extends Phaser.Scene {
       this.updateHUDState();
     });
 
-    // Play click sound on any pointerdown
+    // Play click sound on any pointerdown for butterfly dialogue
     this.input.on("pointerdown", (pointer, currentlyOver) => {
       this.sound.play("click");
       if (currentlyOver && currentlyOver.includes(butterfly)) return;
@@ -575,6 +515,12 @@ class ShardGardenScene extends Phaser.Scene {
             text: "Yes",
             callback: () => {
               this.destroyDialogueUI();
+              // Remove butterfly from scene
+              if (butterfly && butterfly.destroy) {
+                butterfly.destroy();
+              }
+              // Optionally, set a flag so butterfly logic is skipped if you return to this scene
+              this.butterflyRemoved = true;
               this.scene.start("PersonalGarden");
             }
           },
@@ -598,24 +544,8 @@ class ShardGardenScene extends Phaser.Scene {
 
     // Add bushes with garlic and thyme only (removed coins)
     this.setupBushes(width, height);
-
-    // --- PERIODIC SAVE TO LOCAL STORAGE ---
-    this._saveInterval = setInterval(() => {
-      this.saveSceneState();
-    }, 8000);
-
-    // Save on shutdown/stop
-    this.events.on('shutdown', () => {
-      this.saveSceneState();
-      clearInterval(this._saveInterval);
-    });
-    this.events.on('destroy', () => {
-      this.saveSceneState();
-      clearInterval(this._saveInterval);
-    });
   }
 
-  // Save relevant state to localStorage
   saveSceneState() {
     const state = {
       shardCounts: { ...this.shardCounts },
@@ -777,7 +707,7 @@ class ShardGardenScene extends Phaser.Scene {
             }
           }
         ],
-        imageKey: plant.imageKey
+        imageKey: plant.imageKey || plant.key // fallback to key if imageKey missing
       }
     );
   }
@@ -791,7 +721,6 @@ class ShardGardenScene extends Phaser.Scene {
       this.dialogueOnComplete = null;
     };
   }
-
 }
 
 export default ShardGardenScene;

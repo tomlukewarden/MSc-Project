@@ -125,10 +125,10 @@ class NewGameScene extends Phaser.Scene {
         this.registry.set("farmName", farmName);
         this.registry.set("gender", selectedGender);
 
-        // Go to game
+        
         nameInput.destroy();
         farmInput.destroy();
-        this.scene.start("IntroScene");
+        this.scene.start("Tutorial");
       });
   }
 }
