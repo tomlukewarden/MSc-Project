@@ -15,6 +15,7 @@ if (typeof window !== "undefined") {
 import { addPlantToJournal } from "../journalManager";
 import { receivedItem } from "../recievedItem";
 import { createElephant, elephantIntroDialogues, elephantThanksDialogues } from '../../characters/elephant';
+import { createPolarBear, polarBearIntroDialogues, polarBearThanksDialogues } from '../../characters/polar';
 import globalTimeManager from "../../day/timeManager";
 
 
@@ -63,6 +64,8 @@ class WallGardenScene extends Phaser.Scene {
     this.load.image('bush', '/assets/misc/bush.png');
     this.load.image('elephant', '/assets/npc/elephant/elephant.png');
     this.load.image('elephantHappy', '/assets/npc/elephant/happy.png');
+    this.load.image('polarBear', '/assets/npc/polarBear/polar.PNG');
+    this.load.image('polarBearHappy', '/assets/npc/polarBear/happy.PNG');
     this.load.image('jasminePlant', '/assets/plants/jasmine.PNG');
     this.load.image('autumnShard', '/assets/items/autumn.png');
     this.load.image("baseCream", "/assets/shopItems/cream.png");
@@ -131,75 +134,7 @@ class WallGardenScene extends Phaser.Scene {
   if (!globalTimeManager.startTimestamp) {
     globalTimeManager.start();
   }
-    const craftBtnX = 120;
-    const craftBtnY = 80;
-    const craftBtnWidth = 140;
-    const craftBtnHeight = 48;
-    const craftBtnBg = this.add.rectangle(craftBtnX, craftBtnY, craftBtnWidth, craftBtnHeight, 0x3e7d3a, 0.95)
-      .setOrigin(0.5)
-      .setDepth(100)
-      .setInteractive({ useHandCursor: true });
-    const craftBtnText = this.add.text(craftBtnX, craftBtnY, '🛠️ Craft', {
-      fontFamily: 'Georgia',
-      fontSize: '26px',
-      color: '#fff',
-      align: 'center',
-      shadow: {
-        offsetX: 0,
-        offsetY: 0,
-        color: '#4caf50',
-        blur: 8,
-        fill: true
-      }
-    }).setOrigin(0.5).setDepth(101);
-
-    craftBtnText.setInteractive({ useHandCursor: true });
-    craftBtnText.on('pointerdown', () => {
-      craftBtnBg.emit('pointerdown');
-    });
-    craftBtnBg.on('pointerover', () => {
-      craftBtnBg.setFillStyle(0x4caf50, 0.98);
-      craftBtnText.setColor('#ffffcc');
-    });
-    craftBtnBg.on('pointerout', () => {
-      craftBtnBg.setFillStyle(0x3e7d3a, 0.95);
-      craftBtnText.setColor('#fff');
-    });
-    craftBtnBg.on('pointerdown', () => {
-      // Remove any existing CraftUI overlay
-      if (this.craftUIOverlay) {
-        this.craftUIOverlay.destroy(true);
-        this.craftUIOverlay = null;
-      }
-      // Get inventory items (as objects)
-      const items = inventoryManager.getItems ? inventoryManager.getItems() : [];
-      // Center overlay
-      const { width, height } = this.sys.game.config;
-      // Dynamically import the CraftUI class
-      import('../../components/craftUI').then(({ default: CraftUI }) => {
-        this.craftUIOverlay = new CraftUI(this, width / 2, height / 2);
-        this.craftUIOverlay.setDepth && this.craftUIOverlay.setDepth(200);
-        // Set inventory items as ingredients (first 3 for demo)
-        this.craftUIOverlay.setIngredients(items.slice(0, 3));
-    
-        const closeBtn = this.add.text(width / 2 + 140, height / 2 - 90, '✕', {
-          fontFamily: 'Georgia',
-          fontSize: '28px',
-          color: '#a33',
-          backgroundColor: '#fff5',
-          padding: { left: 10, right: 10, top: 2, bottom: 2 }
-        })
-          .setOrigin(0.5)
-          .setInteractive({ useHandCursor: true })
-          .setDepth(201);
-        closeBtn.on('pointerdown', () => {
-          this.craftUIOverlay.destroy(true);
-          closeBtn.destroy();
-          this.craftUIOverlay = null;
-        });
-      });
-    });
-    
+  
     if (typeof window !== "undefined") {
       window.inventoryManager = inventoryManager;
     }
@@ -288,24 +223,24 @@ class WallGardenScene extends Phaser.Scene {
     // --- Elephant dialogue and gifting logic ---
     this.elephantDialogueActive = false;
     this.elephantDialogueIndex = 0;
-    this.hasJasmine = () => inventoryManager.hasItemByKey && inventoryManager.hasItemByKey("jasminePlant");
+    // Change required item to Jasmine Tea
+    this.hasJasmineTea = () => inventoryManager.hasItemByKey && inventoryManager.hasItemByKey("jasmineTea");
 
-    // Listen for jasmine handover event from inventory
-    this.events.on("jasmineGiven", () => {
-      this.awaitingJasmineGive = false;
-      // Remove ALL jasmine items from inventory as a failsafe
+    // Listen for jasmineTea handover event from inventory
+    this.events.on("jasmineTeaGiven", () => {
+      this.awaitingJasmineTeaGive = false;
+      // Remove ALL jasmineTea items from inventory as a failsafe
       if (typeof inventoryManager.getItems === "function" && typeof inventoryManager.removeItemByKey === "function") {
         let items = inventoryManager.getItems();
-        let jasmineCount = items.filter(item => item.key === "jasminePlant").length;
-        for (let i = 0; i < jasmineCount; i++) {
-          inventoryManager.removeItemByKey("jasminePlant");
+        let teaCount = items.filter(item => item.key === "jasmineTea").length;
+        for (let i = 0; i < teaCount; i++) {
+          inventoryManager.removeItemByKey("jasmineTea");
         }
       }
-      // Debug: show inventory after removal using alert
       const items = typeof inventoryManager.getItems === "function" ? inventoryManager.getItems() : [];
-      const hasJasmine = items.some(item => item.key === "jasminePlant");
-      if (!hasJasmine) {
-        showDialogue(this, "You hand the elephant the Jasmine...", { imageKey: "elephant" });
+      const hasJasmineTea = items.some(item => item.key === "jasmineTea");
+      if (!hasJasmineTea) {
+        showDialogue(this, "You hand the elephant the Jasmine Tea...", { imageKey: "elephant" });
         this.elephant.setTexture && this.elephant.setTexture("elephantHappy");
         this.time.delayedCall(800, () => {
           this.elephantDialogueActive = true;
@@ -314,9 +249,9 @@ class WallGardenScene extends Phaser.Scene {
           showDialogue(this, this.activeElephantDialogues[this.elephantDialogueIndex], { imageKey: "elephant" });
           this.updateHUDState && this.updateHUDState();
         });
-        this.elephantHasJasmine = true;
+        this.elephantHasJasmineTea = true;
       } else {
-        showDialogue(this, "You still have the Jasmine.", { imageKey: "elephant" });
+        showDialogue(this, "You still have the Jasmine Tea.", { imageKey: "elephant" });
       }
     });
 
@@ -330,18 +265,18 @@ class WallGardenScene extends Phaser.Scene {
         this.updateHUDState && this.updateHUDState();
         return;
       }
-      if (this.elephantIntroDone && !this.elephantThanksDone && this.hasJasmine()) {
-        showOption(this, "Give the elephant the Jasmine?", {
+      if (this.elephantIntroDone && !this.elephantThanksDone && this.hasJasmineTea()) {
+        showOption(this, "Give the elephant the Jasmine Tea?", {
           imageKey: "elephant",
           options: [
             {
               label: "Yes",
               onSelect: () => {
-                this.hasMadeJasmineChoice = true;
+                this.hasMadeJasmineTeaChoice = true;
                 this.destroyDialogueUI();
                 this.dialogueActive = true;
-                // Set flag to await jasmine handover
-                this.awaitingJasmineGive = true;
+                // Set flag to await jasmineTea handover
+                this.awaitingJasmineTeaGive = true;
                 this.scene.launch("OpenInventory");
               }
             },
@@ -357,7 +292,7 @@ class WallGardenScene extends Phaser.Scene {
         });
         return;
       }
-      if (this.elephantIntroDone && !this.elephantThanksDone && !this.hasJasmine()) {
+      if (this.elephantIntroDone && !this.elephantThanksDone && !this.hasJasmineTea()) {
         showDialogue(this, "The elephant looks at you expectantly. Maybe you need to find something for them...", { imageKey: "elephant" });
         this.time.delayedCall(1800, () => {
           this.destroyDialogueUI();
@@ -382,14 +317,39 @@ class WallGardenScene extends Phaser.Scene {
           if (!this.elephantIntroDone && this.activeElephantDialogues === elephantIntroDialogues) {
             this.elephantIntroDone = true;
           }
-          if (this.elephantHasJasmine && this.activeElephantDialogues === elephantThanksDialogues) {
+          if (this.elephantHasJasmineTea && this.activeElephantDialogues === elephantThanksDialogues) {
             this.elephantThanksDone = true;
             // Automatically give autumn shard after thanks dialogue
             receivedItem(this, "autumnShard", "Autumn Shard");
-            // Always remove jasmine as a failsafe
-            inventoryManager.removeItemByKey && inventoryManager.removeItemByKey("jasminePlant");
+            // Always remove jasmineTea as a failsafe
+            inventoryManager.removeItemByKey && inventoryManager.removeItemByKey("jasmineTea");
           }
           this.elephantDialogueActive = false;
+          this.updateHUDState && this.updateHUDState();
+        }
+        return;
+      }
+      // --- Polar Bear dialogue advance on click ---
+      if (this.polarBearDialogueActive) {
+        this.polarBearDialogueIndex++;
+        if (this.activePolarBearDialogues && this.polarBearDialogueIndex < this.activePolarBearDialogues.length) {
+          showDialogue(this, this.activePolarBearDialogues[this.polarBearDialogueIndex], { imageKey: "polarBear" });
+        } else {
+          this.destroyDialogueUI();
+          this.dialogueActive = false;
+          this.updateHUDState && this.updateHUDState();
+
+          if (!this.polarBearIntroDone && this.activePolarBearDialogues === polarBearIntroDialogues) {
+            this.polarBearIntroDone = true;
+          }
+          if (this.polarBearHasCream && this.activePolarBearDialogues === polarBearThanksDialogues) {
+            this.polarBearThanksDone = true;
+            // Automatically give winter shard after thanks dialogue
+            receivedItem(this, "winterShard", "Winter Shard");
+            // Always remove baseCream as a failsafe
+            inventoryManager.removeItemByKey && inventoryManager.removeItemByKey("baseCream");
+          }
+          this.polarBearDialogueActive = false;
           this.updateHUDState && this.updateHUDState();
         }
         return;
@@ -399,9 +359,109 @@ class WallGardenScene extends Phaser.Scene {
       }
       this.updateHUDState && this.updateHUDState();
     });
-    
-    
-    
+
+    // --- Polar Bear NPC ---
+    this.polarBear = createPolarBear(this, width / 2 - 200, height / 2 + 100);
+    this.polarBear
+      .setInteractive({ useHandCursor: true })
+      .setDepth(10)
+      .setScale(0.06)
+      .setOrigin(0.5, 0.9);
+
+    // Polar Bear talk icon events
+    this.polarBear.on("pointerover", (pointer) => {
+      talkIcon.setVisible(true);
+      talkIcon.setPosition(pointer.worldX + 32, pointer.worldY);
+    });
+    this.polarBear.on("pointermove", (pointer) => {
+      talkIcon.setPosition(pointer.worldX + 32, pointer.worldY);
+    });
+    this.polarBear.on("pointerout", () => {
+      talkIcon.setVisible(false);
+    });
+
+    // --- Polar Bear dialogue and gifting logic ---
+    this.polarBearDialogueActive = false;
+    this.polarBearDialogueIndex = 0;
+    // Change required item to Willow Bark Tea
+    this.hasWillowBarkTea = () => inventoryManager.hasItemByKey && inventoryManager.hasItemByKey("willowBarkTea");
+
+    // Listen for willowBarkTea handover event from inventory
+    this.events.on("willowBarkTeaGiven", () => {
+      this.awaitingWillowBarkTeaGive = false;
+      // Remove ALL willowBarkTea items from inventory as a failsafe
+      if (typeof inventoryManager.getItems === "function" && typeof inventoryManager.removeItemByKey === "function") {
+        let items = inventoryManager.getItems();
+        let teaCount = items.filter(item => item.key === "willowBarkTea").length;
+        for (let i = 0; i < teaCount; i++) {
+          inventoryManager.removeItemByKey("willowBarkTea");
+        }
+      }
+      const items = typeof inventoryManager.getItems === "function" ? inventoryManager.getItems() : [];
+      const hasWillowBarkTea = items.some(item => item.key === "willowBarkTea");
+      if (!hasWillowBarkTea) {
+        showDialogue(this, "You hand the polar bear the Willow Bark Tea...", { imageKey: "polarBear" });
+        this.polarBear.setTexture && this.polarBear.setTexture("polarBearHappy");
+        this.time.delayedCall(800, () => {
+          this.polarBearDialogueActive = true;
+          this.polarBearDialogueIndex = 0;
+          this.activePolarBearDialogues = polarBearThanksDialogues;
+          showDialogue(this, this.activePolarBearDialogues[this.polarBearDialogueIndex], { imageKey: "polarBear" });
+          this.updateHUDState && this.updateHUDState();
+        });
+        this.polarBearHasWillowBarkTea = true;
+      } else {
+        showDialogue(this, "You still have the Willow Bark Tea.", { imageKey: "polarBear" });
+      }
+    });
+
+    // Polar Bear click handler
+    this.polarBear.on("pointerdown", () => {
+      if (!this.polarBearIntroDone && !this.polarBearDialogueActive) {
+        this.polarBearDialogueActive = true;
+        this.polarBearDialogueIndex = 0;
+        this.activePolarBearDialogues = polarBearIntroDialogues;
+        showDialogue(this, this.activePolarBearDialogues[this.polarBearDialogueIndex], { imageKey: "polarBear" });
+        this.updateHUDState && this.updateHUDState();
+        return;
+      }
+      if (this.polarBearIntroDone && !this.polarBearThanksDone && this.hasWillowBarkTea()) {
+        showOption(this, "Give the polar bear the Willow Bark Tea?", {
+          imageKey: "polarBear",
+          options: [
+            {
+              label: "Yes",
+              onSelect: () => {
+                this.hasMadeWillowBarkTeaChoice = true;
+                this.destroyDialogueUI();
+                this.dialogueActive = true;
+                // Set flag to await willowBarkTea handover
+                this.awaitingWillowBarkTeaGive = true;
+                this.scene.launch("OpenInventory");
+              }
+            },
+            {
+              label: "No",
+              onSelect: () => {
+                this.destroyDialogueUI();
+                this.dialogueActive = true;
+                showDialogue(this, "You decide to hold off for now.", { imageKey: "polarBear" });
+              }
+            }
+          ]
+        });
+        return;
+      }
+      if (this.polarBearIntroDone && !this.polarBearThanksDone && !this.hasWillowBarkTea()) {
+        showDialogue(this, "The polar bear looks at you expectantly. Maybe you need to find something for them...", { imageKey: "polarBear" });
+        this.time.delayedCall(1800, () => {
+          this.destroyDialogueUI();
+          this.dialogueActive = false;
+          this.updateHUDState && this.updateHUDState();
+        });
+        return;
+      }
+    });
 
     // --- Map and background ---
     const map = this.make.tilemap({ key: "wallGardenMap" });
@@ -603,7 +663,7 @@ class WallGardenScene extends Phaser.Scene {
     const bushCount = bushPositions.length;
     // Set up rewards: 2 aloe plants, 1 base cream, 1 coins
     const bushRewards = [
-      { type: "item", key: "aloeSeeds", name: "Aloe Seeds", color: 0x8bc34a },
+      { type: "item", key: "aloePlant", name: "Aloe Plant", color: 0x8bc34a },
       { type: "item", key: "aloePlant", name: "Aloe Plant", color: 0x8bc34a },
       { type: "item", key: "baseCream", name: "Base Cream", color: 0xf5e6b3 },
     ];

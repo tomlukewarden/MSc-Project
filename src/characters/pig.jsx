@@ -1,4 +1,5 @@
 export const pigIntroDialogues = [
+    "",
     "Oink—ow! Careful! \n My back is *so* sunburnt \n I can’t even roll over properly.",
     "I thought I was just getting a healthy glow… \n turns out pigs aren’t built for beach days.",
     "Could you maybe help? \n I’m kinda sizzling over here."

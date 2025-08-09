@@ -1,5 +1,6 @@
 export const polarBearIntroDialogues = [
-    "Ugh... is it just me, \n or is it way too warm for autumn?",
+    "",
+    "Ugh... is it just me, \n or is it way too warm?",
     "I’ve been feeling kinda off lately. \n My head’s fuzzy and I keep overheating.",
     "It’s weird. I’m a polar bear \n — I *don’t* get warm.",
     "Think you could help? \n I don’t know what’s going on, \n but I’m definitely not at my best."

@@ -1,4 +1,5 @@
 export const turtleIntroDialogues = [
+    "",
     "Oh dear… I’ve caught a dreadful chill.",
     "No matter how many scarves I wear,\n I just can’t seem to shake this cold.",
     "Would you mind \n helping an old shell like me?"
