@@ -272,9 +272,6 @@ class GreenhouseScene extends Phaser.Scene {
           }
         });
 
-        // --- Bushes/Flowerbeds logic ---
-        this.setupBushes(width, height);
-
         // --- Dialogue advance on click ---
         this.input.on("pointerdown", () => {
           this.sound.play("click");
@@ -293,9 +290,7 @@ class GreenhouseScene extends Phaser.Scene {
               }
               if (this.rabbitHasPeriwinkle && this.activeRabbitDialogues === rabbitThanksDialogues) {
                 this.rabbitThanksDone = true;
-                // Automatically give autumn shard after thanks dialogue
                 receivedItem(this, "autumnShard", "Autumn Shard");
-                // Always remove periwinkle as a failsafe
                 inventoryManager.removeItemByKey && inventoryManager.removeItemByKey("periwinklePlant");
               }
               this.rabbitDialogueActive = false;
@@ -318,7 +313,6 @@ class GreenhouseScene extends Phaser.Scene {
               }
               if (this.pigHasMarigold && this.activePigDialogues === pigThanksDialogues) {
                 this.pigThanksDone = true;
-                // Automatically give winter shard after thanks dialogue
                 receivedItem(this, "winterShard", "Winter Shard");
               }
               this.pigDialogueActive = false;
@@ -330,7 +324,6 @@ class GreenhouseScene extends Phaser.Scene {
           if (this.dialogueActive && typeof this.dialogueOnComplete === "function") {
             this.dialogueOnComplete();
           }
-          // Always update HUD after any dialogue completes
           this.updateHUDState && this.updateHUDState();
         });
 

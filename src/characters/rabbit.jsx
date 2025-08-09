@@ -1,4 +1,5 @@
 export const rabbitIntroDialogues = [
+    "",
     "Hi... sorry, \n I’m just really tired.",
     "I usually find lavender calming, \n but lately I just can’t seem to relax.",
     "No matter what I try, I can’t sleep.\n  It’s like my thoughts won’t stop hopping around.",
