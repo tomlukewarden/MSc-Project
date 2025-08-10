@@ -97,43 +97,7 @@ const recipieData = [
         order: ['willowPlant', 'teabag', 'willowPlant'],
     description: 'A herbal tea made from willow bark, known for its pain-relieving properties.',
         result: { key: 'willowBarkTea', name: 'Willow Bark Tea', imageKey: 'willowBarkTea', amount: 1 },
-    },
-  {
-    id: 12,
-    name: 'Calming Tea',
-    ingredients: [
-      { key: 'lavenderPlant', amount: 2 },
-      { key: 'jasminePlant', amount: 1 },
-      { key: 'teabag', amount: 1 },
-    ],
-    order: ['lavenderPlant', 'jasminePlant', 'teabag', 'lavenderPlant'],
-    description: 'A calming tea made from lavender and jasmine, perfect for relaxation and stress relief.',
-    result: { key: 'calmingTea', name: 'Calming Tea', imageKey: 'calmingTea', amount: 1 },
-  },
-  {
-    id: 13,
-    name: 'Pain Relief Ointment',
-    ingredients: [
-      { key: 'willowPlant', amount: 2 },
-      { key: 'garlicPlant', amount: 1 },
-      { key: 'baseCream', amount: 1 },
-    ],
-    order: ['willowPlant', 'garlicPlant', 'baseCream', 'willowPlant'],
-    description: 'An ointment made from willow bark and garlic, known for its pain-relieving properties.',
-    result: { key: 'painReliefOintment', name: 'Pain Relief Ointment', imageKey: 'painReliefOintment', amount: 1 },
-  },
-  {
-    id: 14,
-    name: 'Digestive Aid',
-    ingredients: [
-      { key: 'thymePlant', amount: 2 },
-      { key: 'periwinklePlant', amount: 1 },
-      { key: 'teabag', amount: 1 },
-    ],
-    order: ['thymePlant', 'periwinklePlant', 'teabag', 'thymePlant'],
-    description: 'A herbal tea made from thyme and periwinkle, known to aid digestion and soothe stomach issues.',
-    result: { key: 'digestiveAid', name: 'Digestive Aid', imageKey: 'digestiveAid', amount: 1 },
-  }
+    }
 ];
 
 export default recipieData
