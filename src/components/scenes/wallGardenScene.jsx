@@ -2,16 +2,8 @@ import Phaser from 'phaser';
 import { createButterfly, butterflyIntroDialogues } from '../../characters/butterfly';
 import { showDialogue, destroyDialogueUI, showOption } from '../../dialogue/dialogueUIHelpers';
 import { createMainChar } from '../../characters/mainChar';
-import ChestLogic from '../chestLogic';
 import { saveToLocal, loadFromLocal } from '../../utils/localStorage';
 import plantData from "../../plantData";
-import { inventoryManager } from "../inventoryManager";
-// Ensure global inventoryManager instance
-if (typeof window !== "undefined") {
-  if (!window.inventoryManager) {
-    window.inventoryManager = inventoryManager;
-  }
-}
 import { addPlantToJournal } from "../journalManager";
 import { receivedItem } from "../recievedItem";
 import { createElephant, elephantIntroDialogues, elephantThanksDialogues } from '../../characters/elephant';
@@ -22,7 +14,6 @@ import globalTimeManager from "../../day/timeManager";
 class WallGardenScene extends Phaser.Scene {
   constructor() {
     super({ key: 'WallGardenScene', physics: { default: 'arcade', arcade: { debug: false } } });
-    this.chestLogic = new ChestLogic();
     this.butterflyDialogueIndex = 0;
     this.butterflyDialogueActive = false;
     this.dialogueActive = false;
@@ -52,8 +43,6 @@ class WallGardenScene extends Phaser.Scene {
         this.load.image("defaultRightWalk2", "/assets/char/default/right-step-2.PNG");
     this.load.audio('click', '/assets/sound-effects/click.mp3');
     this.load.image('talk', '/assets/interact/talk.png');
-    this.load.image('chestClosed', '/assets/misc/chest-closed.png');
-    this.load.image('chestOpen', '/assets/misc/chest-open.png');
     this.load.image("foxglovePlant", "/assets/plants/foxglove.png");
     this.load.image("springShard", "/assets/items/spring.png");
     this.load.audio("sparkle", "/assets/sound-effects/sparkle.mp3");
@@ -79,7 +68,7 @@ class WallGardenScene extends Phaser.Scene {
     const expectedKeys = [
       'wallGardenBackground', 'wall1', 'wall2', 'trees', 'butterfly', 'defaultFront', 'defaultBack', 'defaultLeft', 'defaultRight',
       'defaultFrontWalk1', 'defaultFrontWalk2', 'defaultBackWalk1', 'defaultBackWalk2', 'defaultLeftWalk1', 'defaultLeftWalk2',
-      'defaultRightWalk1', 'defaultRightWalk2', 'talk', 'chestClosed', 'chestOpen', 'foxglovePlant', 'springShard', 'butterflyHappy',
+      'defaultRightWalk1', 'defaultRightWalk2', 'talk', 'foxglovePlant', 'springShard', 'butterflyHappy',
       'periwinklePlant', 'dialogueBoxBg', 'bush', 'elephant', 'elephantHappy', 'jasminePlant', 'autumnShard'
     ];
     let missingKeys = expectedKeys.filter(k => !loadedKeys.includes(k));
@@ -506,9 +495,6 @@ class WallGardenScene extends Phaser.Scene {
       });
     }
 
-    // --- Place chest in the scene ---
-    this.setupChest(width, height);
-
     // --- Main Character ---
     this.mainChar = createMainChar(this, width / 2, height / 2, scaleFactor, collisionGroup);
     this.mainChar.setDepth(10).setOrigin(1, -5);
@@ -626,32 +612,6 @@ class WallGardenScene extends Phaser.Scene {
     saveToLocal('wallGardenSceneState', state);
   }
 
-  setupChest(width, height) {
-    const chestItemsArray = [
-      { name: "Spring Shard", color: 0x88cc88, key: "springShard" },
-      { name: "Summer Shard", color: 0x88cc88, key: "summerShard" },
-      { name: "Autumn Shard", color: 0x88cc88, key: "autumnShard" },
-      { name: "Winter Shard", color: 0x88cc88, key: "winterShard" },
-      { name: "Foxglove Plant", color: 0x8bc34a, key: "foxglovePlant" },
-      { name: "Foxglove Plant", color: 0x8bc34a, key: "foxglovePlant" },
-      { name: "Tea Bag", color: 0xf5e6b3, key: "teaBag" },
-    ];
-    const chest = this.textures.exists('chestClosed')
-      ? this.add.image(width / 2 + 200, height / 2 - 40, 'chestClosed').setScale(2).setDepth(15).setInteractive()
-      : this.add.text(width / 2 + 200, height / 2 - 40, 'Missing: chestClosed', { fontSize: '16px', color: '#f00', backgroundColor: '#fff' }).setOrigin(0.5).setDepth(999);
-
-    this.chestLogic.scene = this;
-    this.chestLogic.setChest(chest);
-
-    chest.on("pointerdown", () => {
-      chest.setTexture('chestOpen');
-      this.chestLogic.openChest(chestItemsArray);
-
-      this.scene.get("ChestUI").events.once("shutdown", () => {
-        chest.setTexture('chestClosed');
-      });
-    });
-  }
 
   setupBushes(width, height, periwinkleFound) {
     const bushPositions = [
