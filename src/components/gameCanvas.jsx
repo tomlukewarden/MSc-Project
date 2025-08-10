@@ -14,7 +14,6 @@ import MapScene from "./scenes/mapScene";
 import WallGardenScene from "./scenes/wallGardenScene";
 import ShardGardenScene from "./scenes/shardGardenScene";
 import MiddleGardenScene from "./scenes/middleGardenScene";
-import chestUI from "./chestUI";
 import MiniGameScene from "./scenes/minigameScene";
 import ControlScene from "./scenes/controlsScene";
 import EndGameScene from "./scenes/endgame";
@@ -28,8 +27,6 @@ import FishTutorialScene from "../minigames/fish/fishTutorialScene";
 import XOTutorialScene from "../minigames/x-and-o/x-oTutorial";
 import LoaderScene from "./scenes/loaderScene";
 import IntroScene from "./scenes/introScene";
-import CraftUI from "./craftUI";
-import CraftingTutorial from "../tutorials/craftingTutorial";
 import MovementTutorial from "../tutorials/movementTutorial";
 import FarmingTutorial from "../tutorials/farmingTutorial";
 import ForagingTutorial from "../tutorials/foragingTutorial";
@@ -82,7 +79,6 @@ function GameCanvas() {
     OpenJournal,
     OpenInventory,
     OpenSettings,
-    chestUI,
     ControlScene,
     MiniGameScene,
     PersonalGarden,
@@ -95,8 +91,6 @@ function GameCanvas() {
     XOTutorialScene,
     LoaderScene,
     IntroScene,
-    CraftUI,
-    CraftingTutorial,
     MovementTutorial,
     FarmingTutorial,
     ForagingTutorial,
