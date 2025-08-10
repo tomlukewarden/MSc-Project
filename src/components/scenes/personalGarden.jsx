@@ -428,8 +428,11 @@ class PersonalGarden extends Phaser.Scene {
   }
 
   updatePlotText(text, plot) {
+    // Only show state name, not seed type, when seeds are planted
     let display = plot.state.charAt(0).toUpperCase() + plot.state.slice(1);
-    if (plot.seedType) display += `\n${plot.seedType}`;
+    if (plot.state !== "planted") {
+      if (plot.seedType) display += `\n${plot.seedType}`;
+    }
     text.setText(display);
   }
 
