@@ -25,10 +25,10 @@ class ShardGardenScene extends Phaser.Scene {
     this.activeDialogue = [];
     this.activeDialogueIndex = 0;
     this.shardCounts = {
-      spring: 1,
-      summer: 1,
-      autumn: 1,
-      winter: 1
+      spring: 3,
+      summer: 2,
+      autumn: 2,
+      winter: 2
     };
     this.happySprites = {
       spring: false,
