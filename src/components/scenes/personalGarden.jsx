@@ -92,12 +92,12 @@ class PersonalGarden extends Phaser.Scene {
     if (!globalTimeManager.startTimestamp) {
       globalTimeManager.start();
     }
-
-    this.sound.play("theme1", {
-      loop: true,
-      volume: 0.1
-    });
-
+if (this.sound.get('shopTheme')) {
+  this.sound.stopByKey('shopTheme');
+}
+if (!this.sound.get('theme1')) {
+  this.sound.play('theme1', { loop: true, volume: 0.2 });
+}
     this.dayText = this.add.text(40, 100, `Day: ${globalTimeManager.getDayNumber()}`, {
       fontSize: '20px',
       color: '#ffe066',

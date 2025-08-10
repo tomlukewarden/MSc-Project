@@ -230,6 +230,39 @@ const itemsData = [
     description: "A tool for harvesting plants.",
     imageKey: "shovelImage",
     type: "tool"
+  },
+  {
+    id:"springShard",
+    key: "springShard",
+    name: "Spring Shard",
+    price: 100,
+    description: "A shard of spring energy, used to power the garden.",
+    imageKey: "springShard",
+    type: "extra"
+  },
+  {id: "summerShard",
+    key: "summerShard",
+    name: "Summer Shard",
+    price: 100,
+    description: "A shard of summer energy, used to power the garden.",
+    imageKey: "summerShard",
+    type: "extra"
+  },
+  {id: "autumnShard",
+    key: "autumnShard",
+    name: "Autumn Shard",
+    price: 100,
+    description: "A shard of autumn energy, used to power the garden.",
+    imageKey: "autumnShard",
+    type: "extra"
+  },
+  {id: "winterShard",
+    key: "winterShard",
+    name: "Winter Shard",  
+    price: 100,
+    description: "A shard of winter energy, used to power the garden.",
+    imageKey: "winterShard",
+    type: "extra"
   }
 ];
 

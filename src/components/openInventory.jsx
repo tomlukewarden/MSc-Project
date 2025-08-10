@@ -1,6 +1,5 @@
-import { loadFromLocal } from "../utils/localStorage";
+
 import InventoryManager from "./inventoryManager";
-import { saveToLocal } from "../utils/localStorage";
 import recipieData from "../recipieData";
 export const inventoryManager = new InventoryManager();
 

@@ -211,11 +211,9 @@ class GreenhouseScene extends Phaser.Scene {
 
         // Listen for aloeAfterSunCream handover event from inventory
         this.events.on("aloeAfterSunCreamGiven", () => {
-          alert("Event: aloeAfterSunCreamGiven triggered in GreenhouseScene");
           this.awaitingAloeAfterSunCreamGive = false;
           inventoryManager.removeItemByKey && inventoryManager.removeItemByKey("aloeAfterSunCream");
           if (!inventoryManager.hasItemByKey || !inventoryManager.hasItemByKey("aloeAfterSunCream")) {
-            alert("Giving Aloe After-Sun Cream to Pig and starting thanks dialogue");
             showDialogue(this, "You hand the pig the Aloe After-Sun Cream...", { imageKey: "pig" });
             this.pig.setTexture && this.pig.setTexture("pigHappy");
             this.time.delayedCall(800, () => {
@@ -227,7 +225,6 @@ class GreenhouseScene extends Phaser.Scene {
             });
             this.pigHasAloeAfterSunCream = true;
           } else {
-            alert("Pig still has Aloe After-Sun Cream in inventory after removal attempt");
             showDialogue(this, "You still have the Aloe After-Sun Cream.", { imageKey: "pig" });
           }
         });

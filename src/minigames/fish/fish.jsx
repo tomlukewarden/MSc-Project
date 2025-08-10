@@ -279,17 +279,16 @@ class FishGameScene extends Phaser.Scene {
         this.spawnFishTimer.remove(false);
         let msg = win ? "You win! Final score: " + this.score : "Game Over! You caught a bad fish.";
         this.add.text(400, 300, msg, { fontSize: "32px", color: "#ffe066", backgroundColor: "#222" }).setOrigin(0.5);
+
         if (win) {
-            alert("[FishGameScene] WIN detected.");
+            console.log("[FishGameScene] WIN detected.");
             if (this.onWin) {
                 console.log("[FishGameScene] Calling onWin callback...");
                 this.onWin();
             } else {
-                alert("[FishGameScene] onWin callback is missing!");
+                console.warn("[FishGameScene] onWin callback is missing!");
             }
-            // Stop FishGameScene and MiniGameScene after win
-            this.scene.stop("FishGameScene");
-            this.scene.stop("MiniGameScene");
+            // No alerts here
         } else {
             this.showRestartButton();
         }

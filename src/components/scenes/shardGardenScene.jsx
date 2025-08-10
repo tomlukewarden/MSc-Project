@@ -488,7 +488,7 @@ class ShardGardenScene extends Phaser.Scene {
   showPlantMinigame(plant, foundFlag) {
     showOption(
       this,
-      `You found a ${plant.name} plant! But a cheeky animal is trying to steal it!`,
+      `You found a ${plant.name} plant! \n But a cheeky animal is trying to steal it!`,
       {
         options: [
           {
@@ -512,7 +512,9 @@ class ShardGardenScene extends Phaser.Scene {
                   showDialogue(this,
                     alreadyHas
                       ? `You already have the ${plant.name} plant.`
-                      : `You won the game! The animal reluctantly gives you the ${plant.name} plant.`,
+                      : `You won the game! The animal reluctantly \n gives you the ${plant.name} plant.`, {
+                        imageKey: plant.imageKey
+                      }
                   );
 
                   this[foundFlag] = true;

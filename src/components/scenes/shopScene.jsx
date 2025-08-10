@@ -38,13 +38,25 @@ class ShopScene extends Phaser.Scene {
     this.load.image("alcoholBase", "/assets/shopItems/alcohol.png");
     this.load.image("teaBag", "/assets/shopItems/teabag.png");
     this.load.audio('sparkle', '/assets/sound-effects/sparkle.mp3');
+    this.load.image("springShard", "/assets/items/spring.png");
+    this.load.image("summerShard", "/assets/items/summer.png");
+    this.load.image("autumnShard", "/assets/items/autumn.png");
+    this.load.image("winterShard", "/assets/items/winter.png");
 
   }
 
   create() {
 
     this.scene.stop("HUDScene");
-    this.sound.play('shopTheme', { loop: true, volume: 0.1 });
+ // Stop main theme
+if (this.sound.get('theme1')) {
+  this.sound.stopByKey('theme1');
+}
+// Play shop or end credits music
+this.sound.play('shopTheme', { loop: true, volume: 0.2 });
+// Or for end credits:
+this.sound.play('endCreditsTheme', { loop: true, volume: 0.2 });
+
     const { width, height } = this.scale;
 
     // Main shop background
@@ -61,11 +73,7 @@ class ShopScene extends Phaser.Scene {
       plantKey: item.plantKey
     }));
 
-    // Only show crafting materials as extras
-    const craftingMaterialKeys = ["baseCream", "oilBase", "alcoholBase", "teaBag"];
-    const extraItems = itemsData.filter(item =>
-      craftingMaterialKeys.includes(item.key)
-    ).map(item => ({
+    const extraItems = itemsData.filter(item => item.type === 'extra').map(item => ({
       key: item.key,
       name: item.name,
       imageKey: item.imageKey || item.key,
