@@ -444,18 +444,59 @@ class PersonalGarden extends Phaser.Scene {
       case 'planted':
         rect.setFillStyle(0x33691e, 0.9);
         break;
-      case 'grown':
+      case 'watered':
         rect.setFillStyle(0x4caf50, 0.9);
         break;
-      case 'harvested':
-        rect.setFillStyle(0x9e9e9e, 0.8);
+      case 'grown':
+        rect.setFillStyle(0x4caf50, 0.9);
         break;
     }
   }
 
   updatePlotStageImage(plot) {
     if (plot.stageImageSprite) {
-      plot.stageImageSprite.setTexture(plot.getStageImageKey());
+      // Always show prepared plot as the base
+      plot.stageImageSprite.setTexture("plotPreparedImg").setScale(0.07).setDepth(102);
+
+      // Remove previous overlay if present
+      if (plot.stageOverlaySprite) {
+        plot.stageOverlaySprite.destroy();
+        plot.stageOverlaySprite = null;
+      }
+
+      let overlayKey = null;
+      let overlayScale = 0.03; // Default scale
+
+      if (plot.state === "grown") {
+        // Show the grown plant image, larger
+        let plantKey = plot.seedType;
+        const plantEntry = plantData.find(p => p.seedKey === plantKey || p.key === plantKey);
+        overlayKey = plantEntry ? plantEntry.key : "plotHarvestedImg";
+        overlayScale = 0.06; // Larger for grown
+      } else if (plot.state === "planted" && plot.waterCount >= 2) {
+        overlayKey = "plotWateredImg";
+        overlayScale = 0.06; // Larger for watered
+      } else if (plot.state === "planted") {
+        overlayKey = "plotPlantedImg";
+        overlayScale = 0.02; // Smaller for planted
+      } else if (plot.state === "watered") {
+        overlayKey = "plotWateredImg";
+        overlayScale = 0.06; // Larger for watered
+      } else if (plot.state === "empty") {
+        overlayKey = "plotEmptyImg";
+        overlayScale = 0.03;
+      }
+
+      if (overlayKey) {
+        plot.stageOverlaySprite = this.add.image(
+          plot.stageImageSprite.x,
+          plot.stageImageSprite.y,
+          overlayKey
+        )
+          .setOrigin(0.5)
+          .setScale(overlayScale)
+          .setDepth(plot.stageImageSprite.depth + 1);
+      }
     }
   }
 
@@ -493,7 +534,7 @@ class PersonalGarden extends Phaser.Scene {
 
     hoeImg.on('pointerdown', () => {
       this.currentTool = 'hoe';
-      this.toolIconSprites.forEach((sprite) => {
+      this.toolIconSprites.forEach((sprites) => {
         sprite.bg.setFillStyle(sprite.key === 'hoe' ? 0x4caf50 : 0x222233, 0.95);
       });
     });
