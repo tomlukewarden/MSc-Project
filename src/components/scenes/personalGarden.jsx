@@ -81,9 +81,10 @@ class PersonalGarden extends Phaser.Scene {
       ["plotPreparedImg", "/assets/farming/prepared.PNG"],
       ["plotPlantedImg", "/assets/farming/planted.png"],
       ["plotWateredImg", "/assets/farming/water2.png"],
-      ["plotHarvestedImg", "/assets/farming/harvested.png"], // Added harvested plot image
+      ["plotHarvestedImg", "/assets/farming/harvested.png"],
     ];
     assets.forEach(([key, path]) => this.load.image(key, path));
+    this.load.audio("theme1", "/assets/music/main-theme-1.mp3");
   }
 
   create() {
@@ -91,6 +92,11 @@ class PersonalGarden extends Phaser.Scene {
     if (!globalTimeManager.startTimestamp) {
       globalTimeManager.start();
     }
+
+    this.sound.play("theme1", {
+      loop: true,
+      volume: 0.1
+    });
 
     this.dayText = this.add.text(40, 100, `Day: ${globalTimeManager.getDayNumber()}`, {
       fontSize: '20px',
@@ -369,6 +375,7 @@ class PersonalGarden extends Phaser.Scene {
             text: "Yes",
             callback: () => {
               if (this.destroyDialogueUI) this.destroyDialogueUI();
+              this.sound.stopByKey && this.sound.stopByKey("theme1");
               this.scene.start("LoaderScene", {
                 nextSceneKey: "ShopScene",
                 nextSceneData: {}

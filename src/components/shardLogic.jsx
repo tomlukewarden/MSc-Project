@@ -40,6 +40,7 @@ export function shardLogic(scene) {
       scene.winterShardSprite.setTexture('winterHappy');
     }
     if (scene && scene.scene) {
+      this.sound.stopByKey && this.sound.stopByKey("theme1");
       scene.scene.start("EndGameScene");
     }
   }
