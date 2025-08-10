@@ -147,9 +147,18 @@ class ShardGardenScene extends Phaser.Scene {
     const seasonScale = 0.09;
     const spacing = 800 * scaleFactor;
     const startX = width / 2 - ((seasons.length - 1) * spacing) / 2;
-    const y = height * scaleFactor + 100;
+
+    // Pick 4 distinct y coordinates for the pillars
+    const yCoords = [
+      height * scaleFactor + 100,
+      height * scaleFactor + 180,
+      height * scaleFactor + 140,
+      height * scaleFactor + 220
+    ];
 
     seasons.forEach((season, i) => {
+      const y = yCoords[i]; // Assign each pillar a different y coordinate
+
       let seasonImg;
       if (this.textures.exists(season)) {
         seasonImg = this.add.image(startX + i * spacing, y, season)
@@ -409,8 +418,8 @@ class ShardGardenScene extends Phaser.Scene {
 
   setupBushes(width, height) {
     const bushPositions = [
-      { x: 180, y: 300 }, // Garlic
-      { x: 260, y: 400 }, // Thyme
+      { x: 180, y: 600 }, // Garlic
+      { x: 1200, y: 600 }, // Thyme
     ];
     const bushCount = bushPositions.length;
     const garlicIndex = 0;

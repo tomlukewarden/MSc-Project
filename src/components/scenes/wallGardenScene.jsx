@@ -612,8 +612,7 @@ class WallGardenScene extends Phaser.Scene {
     saveToLocal('wallGardenSceneState', state);
   }
 
-
-  setupBushes(width, height, periwinkleFound) {
+  setupBushes(width, height) {
     const bushPositions = [
       { x: 180, y: 400 },
       { x: 260, y: 500 },
@@ -621,53 +620,119 @@ class WallGardenScene extends Phaser.Scene {
       { x: 420, y: 350 }
     ];
     const bushCount = bushPositions.length;
-    // Set up rewards: 2 aloe plants, 1 base cream, 1 coins
-    const bushRewards = [
-      { type: "item", key: "aloePlant", name: "Aloe Plant", color: 0x8bc34a },
-      { type: "item", key: "aloePlant", name: "Aloe Plant", color: 0x8bc34a },
-      { type: "item", key: "baseCream", name: "Base Cream", color: 0xf5e6b3 },
+    // Two bushes have plants, two are empty
+    const bushContents = [
+      { key: "willowPlant", name: "Willow Plant", foundFlag: "willowFound" },
+      { key: "thymePlant", name: "Thyme Plant", foundFlag: "thymeFound" },
+      null,
+      null
     ];
     this.bushDispensed = this.bushDispensed || Array(bushCount).fill(false);
 
     for (let i = 0; i < bushCount; i++) {
       const { x, y } = bushPositions[i];
-      // Asset existence check for bush
       const bush = this.textures.exists('bush')
         ? this.add.image(x, y, 'bush').setScale(0.05).setDepth(1).setInteractive({ useHandCursor: true })
         : this.add.text(x, y, 'Missing: bush', { fontSize: '16px', color: '#f00', backgroundColor: '#fff' }).setOrigin(0.5).setDepth(999);
 
       bush.on("pointerdown", () => {
-        this.sound.play("click");
-        if (this.dialogueActive) return;
-        this.dialogueActive = true;
-        this.updateHUDState();
+        // Prevent double activation
+        if (this.dialogueActive || this.bushDispensed[i]) return;
 
-        // If already dispensed, show empty dialogue
-        if (this.bushDispensed[i]) {
+        this.dialogueActive = true;
+        this.updateHUDState && this.updateHUDState();
+
+        if (!bushContents[i]) {
           showDialogue(this, "This bush is empty!");
           this.dialogueOnComplete = () => {
-            this.destroyDialogueUI();
+            this.destroyDialogueUI && this.destroyDialogueUI();
             this.dialogueActive = false;
-            this.updateHUDState();
+            this.updateHUDState && this.updateHUDState();
             this.dialogueOnComplete = null;
           };
+          this.bushDispensed[i] = true;
           return;
         }
 
-        // Give aloePlant or baseCream
-        const reward = bushRewards[i];
-        if (reward && reward.type === "item") {
-          inventoryManager.addItem({ name: reward.name, key: reward.key, color: reward.color });
-          receivedItem(this, reward.key, reward.name);
-          showDialogue(this, `You found a ${reward.name} hidden in the bush!`);
+        // Launch minigame for plant
+        const plant = plantData.find(p => p.key === bushContents[i].key);
+        if (!plant) {
+          showDialogue(this, "You found a rare plant, but its data is missing!", {});
+          this.dialogueOnComplete = () => {
+            this.destroyDialogueUI && this.destroyDialogueUI();
+            this.dialogueActive = false;
+            this.updateHUDState && this.updateHUDState();
+            this.dialogueOnComplete = null;
+          };
+          this.bushDispensed[i] = true;
+          return;
         }
-        this.dialogueOnComplete = () => {
-          this.destroyDialogueUI();
-          this.dialogueActive = false;
-          this.updateHUDState();
-          this.dialogueOnComplete = null;
-        };
-        this.bushDispensed[i] = true;
+
+        showOption(
+          this,
+          `You found a ${plant.name} plant! But a cheeky animal is trying to steal it!`,
+          {
+            options: [
+              {
+                label: "Play a game to win it!",
+                callback: () => {
+                  this.destroyDialogueUI && this.destroyDialogueUI();
+                  this.dialogueActive = false;
+                  this.updateHUDState && this.updateHUDState();
+                  this.dialogueOnComplete = null;
+
+                  // Launch minigame and handle result
+                  this.scene.launch("MiniGameScene", {
+                    onWin: () => {
+                      this.scene.stop("MiniGameScene");
+                      // Only reward if not already found
+                      if (!this[bushContents[i].foundFlag]) {
+                        addPlantToJournal(plant.key);
+                        receivedItem(this, plant.key, plant.name);
+                        this[bushContents[i].foundFlag] = true;
+                      }
+                      showDialogue(this,
+                        this[bushContents[i].foundFlag]
+                          ? `You won the game! The animal reluctantly gives you the ${plant.name} plant.`
+                          : `You already have the ${plant.name} plant.`
+                      );
+                      this.dialogueActive = true;
+                      this.dialogueOnComplete = () => {
+                        this.destroyDialogueUI && this.destroyDialogueUI();
+                        this.dialogueActive = false;
+                        this.updateHUDState && this.updateHUDState();
+                        this.dialogueOnComplete = null;
+                      };
+                    },
+                    onLose: () => {
+                      this.scene.stop("MiniGameScene");
+                      showDialogue(this, "You didn't win the plant this time.");
+                      this.dialogueActive = true;
+                      this.dialogueOnComplete = () => {
+                        this.destroyDialogueUI && this.destroyDialogueUI();
+                        this.dialogueActive = false;
+                        this.updateHUDState && this.updateHUDState();
+                        this.dialogueOnComplete = null;
+                      };
+                    }
+                  });
+                  this.scene.pause();
+                  this.bushDispensed[i] = true;
+                }
+              },
+              {
+                label: "Try again later",
+                callback: () => {
+                  this.destroyDialogueUI && this.destroyDialogueUI();
+                  this.dialogueActive = false;
+                  this.updateHUDState && this.updateHUDState();
+                  this.dialogueOnComplete = null;
+                }
+              }
+            ],
+            imageKey: plant.imageKey || plant.key
+          }
+        );
       });
     }
   }
