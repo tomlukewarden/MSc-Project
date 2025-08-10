@@ -161,14 +161,17 @@ class ShardGardenScene extends Phaser.Scene {
       const y = yCoords[i]; // Assign each pillar a different y coordinate
 
       let seasonImg;
-      if (this.textures.exists(season)) {
-        seasonImg = this.add.image(startX + i * spacing, y, season)
+      const isHappy = this.shardCounts[season] === 0; // Only happy when all shards given
+
+      const spriteKey = isHappy ? season + "Happy" : season;
+      if (this.textures.exists(spriteKey)) {
+        seasonImg = this.add.image(startX + i * spacing, y, spriteKey)
           .setScale(seasonScale)
           .setDepth(10)
           .setInteractive({ useHandCursor: true });
       } else {
-        console.warn(`Image asset missing: ${season}`);
-        seasonImg = this.add.text(startX + i * spacing, y, `Missing: ${season}`, { fontSize: '16px', color: '#f00', backgroundColor: '#fff' }).setOrigin(0.5).setDepth(999);
+        console.warn(`Image asset missing: ${spriteKey}`);
+        seasonImg = this.add.text(startX + i * spacing, y, `Missing: ${spriteKey}`, { fontSize: '16px', color: '#f00', backgroundColor: '#fff' }).setOrigin(0.5).setDepth(999);
       }
       this[season + 'ShardSprite'] = seasonImg;
 
@@ -184,6 +187,11 @@ class ShardGardenScene extends Phaser.Scene {
               inventoryManager.removeItemByKey && inventoryManager.removeItemByKey(shardKey);
               showDialogue(this, `You returned a ${season} shard! (${this.shardCounts[season]} left)`);
               shardLogic(this);
+
+              // Update pillar sprite to happy if all shards given
+              if (this.shardCounts[season] === 0 && this.textures.exists(season + "Happy")) {
+                seasonImg.setTexture(season + "Happy");
+              }
             } else {
               showDialogue(this, `No ${season} shards left to return!`);
             }
