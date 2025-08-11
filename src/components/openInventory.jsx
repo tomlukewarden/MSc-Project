@@ -1,4 +1,3 @@
-
 import InventoryManager from "./inventoryManager";
 import recipieData from "../recipieData";
 export const inventoryManager = new InventoryManager();
@@ -256,7 +255,20 @@ class OpenInventory extends Phaser.Scene {
             return !invItem || typeof invItem.count !== "number" || invItem.count < ingredient.amount;
           });
           if (missing.length > 0) {
-            alert("Not enough items to craft!\nMissing: " + missing.map(i => `${i.amount}x ${i.key}`).join(", "));
+            // Show missing items message in-game instead of alert
+            const msg = "Not enough items to craft!\nMissing: " + missing.map(i => `${i.amount}x ${i.key}`).join(", ");
+            this.add.text(width / 2, height / 2 + 200, msg, {
+              fontFamily: "Georgia",
+              fontSize: "16px",
+              color: "#fff",
+              backgroundColor: "#a33",
+              padding: { left: 12, right: 12, top: 6, bottom: 6 }
+            }).setOrigin(0.5).setDepth(200)
+              .setAlpha(0.95)
+              .setScrollFactor(0)
+              .setInteractive()
+              .on("pointerdown", function () { this.destroy(); });
+
             return;
           }
           // Remove ingredients from inventory
@@ -265,7 +277,21 @@ class OpenInventory extends Phaser.Scene {
               inventoryManager.removeItemByKey(ingredient.key, ingredient.amount);
           });
           inventoryManager.addItem({ key: recipe.result.key, name: recipe.result.name });
-          alert(`Crafted: ${recipe.result.name}`);
+
+          // Show crafted message in-game instead of alert
+          const craftedMsg = `Crafted: ${recipe.result.name}`;
+          this.add.text(width / 2, height / 2 + 200, craftedMsg, {
+            fontFamily: "Georgia",
+            fontSize: "16px",
+            color: "#fff",
+            backgroundColor: "#567d46",
+            padding: { left: 12, right: 12, top: 6, bottom: 6 }
+          }).setOrigin(0.5).setDepth(200)
+            .setAlpha(0.95)
+            .setScrollFactor(0)
+            .setInteractive()
+            .on("pointerdown", function () { this.destroy(); });
+
           this.refreshUI();
         });
 

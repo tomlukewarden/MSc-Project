@@ -76,21 +76,18 @@ class InventoryManager {
       (i.key && i.key.toLowerCase() === idLower)
     );
     if (idx === -1) {
-      alert(`Item "${identifier}" not found in inventory!`);
+      // Removed alert, just return false
       return false;
     }
 
     const item = this.items[idx];
-    alert(`Removing item: ${JSON.stringify(item)}`);
     if (item.count && item.count > 1) {
       item.count--;
       this._notify();
-      alert(`Decremented count. New count: ${item.count}`);
       return true;
     } else {
-      const [removed] = this.items.splice(idx, 1);
+      this.items.splice(idx, 1);
       this._notify();
-      alert(`Removed item completely: ${JSON.stringify(removed)}`);
       return true;
     }
   }
