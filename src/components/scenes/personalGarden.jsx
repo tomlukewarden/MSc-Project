@@ -339,7 +339,7 @@ if (!this.sound.get('theme1')) {
       backgroundColor: "#3bb273",
       padding: { left: 12, right: 12, top: 6, bottom: 6 }
     })
-      .setOrigin(1, 0.5)
+      .setOrigin(1, 3.5)
       .setInteractive({ useHandCursor: true })
       .on("pointerdown", () => {
         this.scene.stop("PersonalGarden");

@@ -37,7 +37,6 @@ class CraftingTutorial extends Phaser.Scene {
     }).setOrigin(0.5);
 
     // Step 2: Switch to Crafting Tab
-    this.add.image(width / 2 - 180, 220, "craftTab").setScale(0.7);
     this.add.text(width / 2, 220, "2. Click the Crafting tab.", {
       fontSize: "26px",
       color: "#fff",
@@ -45,7 +44,6 @@ class CraftingTutorial extends Phaser.Scene {
     }).setOrigin(0.5);
 
     // Step 3: Browse Recipes
-    this.add.image(width / 2 - 220, 300, "ingredientIcon").setScale(0.7);
     this.add.text(width / 2, 300, "3. Browse recipes and check ingredients.", {
       fontSize: "26px",
       color: "#fff",
@@ -53,7 +51,7 @@ class CraftingTutorial extends Phaser.Scene {
     }).setOrigin(0.5);
 
     // Step 4: Craft Button
-    this.add.image(width / 2 - 180, 380, "craftBtn").setScale(0.7);
+  
     this.add.text(width / 2, 380, "4. Click Craft to make the remedy.", {
       fontSize: "26px",
       color: "#fff",
@@ -61,7 +59,7 @@ class CraftingTutorial extends Phaser.Scene {
     }).setOrigin(0.5);
 
     // Step 5: Feedback
-    this.add.image(width / 2 - 220, 460, "arrow").setScale(0.7);
+   
     this.add.text(width / 2, 460, "5. If you have all ingredients, you’ll see a success message.", {
       fontSize: "26px",
       color: "#fff",
@@ -75,7 +73,7 @@ class CraftingTutorial extends Phaser.Scene {
     }).setOrigin(0.5);
 
     // Step 6: Exit
-    this.add.image(width / 2 - 180, 560, "exitBtn").setScale(0.7);
+ 
     this.add.text(width / 2, 560, "6. Click Exit to return to the game.", {
       fontSize: "26px",
       color: "#fff",

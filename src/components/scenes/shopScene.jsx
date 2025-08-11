@@ -51,10 +51,10 @@ class ShopScene extends Phaser.Scene {
 if (this.sound.get('theme1')) {
   this.sound.stopByKey('theme1');
 }
+alert("If you are struggling to collect shards. Just grab them in the extras tab of the shop! :)");
 // Play shop or end credits music
 this.sound.play('shopTheme', { loop: true, volume: 0.2 });
 // Or for end credits:
-this.sound.play('endCreditsTheme', { loop: true, volume: 0.2 });
 
     const { width, height } = this.scale;
 

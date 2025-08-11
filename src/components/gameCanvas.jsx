@@ -30,6 +30,7 @@ import IntroScene from "./scenes/introScene";
 import MovementTutorial from "../tutorials/movementTutorial";
 import FarmingTutorial from "../tutorials/farmingTutorial";
 import ForagingTutorial from "../tutorials/foragingTutorial";
+import CraftingTutorial from "../tutorials/craftingTutorial";
 import Tutorial from "../tutorials/tutorial";
 import CreditsScene from "./scenes/credits";
 
@@ -94,6 +95,7 @@ function GameCanvas() {
     MovementTutorial,
     FarmingTutorial,
     ForagingTutorial,
+    CraftingTutorial,
     Tutorial,
     CreditsScene,
   ]
