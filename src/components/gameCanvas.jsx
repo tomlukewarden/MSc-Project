@@ -7,10 +7,9 @@ import GreenhouseScene from "./scenes/greenhouseScene";
 import WeeCairScene from "./scenes/weeCairScene";
 import StartScene from "./scenes/startScene";
 import ShopScene from "./scenes/shopScene";
-import Menu from "./scenes/menuScene";
+// import Menu from "./scenes/menuScene";
 import OpenInventory from "./openInventory";
 import OpenSettings from "./openSettings";
-import MapScene from "./scenes/mapScene";
 import WallGardenScene from "./scenes/wallGardenScene";
 import ShardGardenScene from "./scenes/shardGardenScene";
 import MiddleGardenScene from "./scenes/middleGardenScene";
@@ -66,9 +65,7 @@ function GameCanvas() {
       },
   canvas: canvasRef.current,
   scene: [
-    Menu,
     StartScene,
-    MapScene,
     ShopScene,
     WeeCairScene,
     GreenhouseScene,
