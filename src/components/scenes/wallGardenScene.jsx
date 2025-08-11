@@ -43,11 +43,9 @@ class WallGardenScene extends Phaser.Scene {
         this.load.image("defaultRightWalk2", "/assets/char/default/right-step-2.PNG");
     this.load.audio('click', '/assets/sound-effects/click.mp3');
     this.load.image('talk', '/assets/interact/talk.png');
-    this.load.image("foxglovePlant", "/assets/plants/foxglove.png");
     this.load.image("springShard", "/assets/items/spring.png");
     this.load.audio("sparkle", "/assets/sound-effects/sparkle.mp3");
     this.load.image('butterflyHappy', '/assets/npc/butterfly/happy-butterfly-dio.png');
-    this.load.image('periwinklePlant', '/assets/plants/periwinkle.png');
     this.load.audio('click', '/assets/sound-effects/click.mp3');
     this.load.image('dialogueBoxBg', '/assets/ui-items/dialogue.png');
     this.load.image('bush', '/assets/misc/bush.png');
@@ -55,12 +53,20 @@ class WallGardenScene extends Phaser.Scene {
     this.load.image('elephantHappy', '/assets/npc/elephant/happy.png');
     this.load.image('polarBear', '/assets/npc/polarBear/polar.PNG');
     this.load.image('polarBearHappy', '/assets/npc/polarBear/happy.PNG');
-    this.load.image('jasminePlant', '/assets/plants/jasmine.PNG');
     this.load.image('autumnShard', '/assets/items/autumn.png');
     this.load.image("baseCream", "/assets/shopItems/cream.png");
     this.load.image("aloePlant", "/assets/plants/aloe.PNG");
     this.load.image('aloeAfterSunCream', '/assets/crafting/creamRemedy.png');
     this.load.audio("option", "/assets/sound-effects/option.mp3");
+       this.load.image('foxglovePlant', '/assets/plants/foxglove.png');
+    this.load.image('marigoldPlant', '/assets/plants/marigold.PNG');
+    this.load.image('jasminePlant', '/assets/plants/jasmine.PNG');
+    this.load.image('aloePlant', '/assets/plants/aloe.PNG');
+    this.load.image('lavenderPlant', '/assets/plants/lavender.PNG');
+    this.load.image('periwinklePlant', '/assets/plants/periwinkle.png');
+    this.load.image('garlicPlant', '/assets/plants/garlic.PNG');
+    this.load.image('thymePlant', '/assets/plants/thyme.PNG');
+    this.load.image('willowPlant', '/assets/plants/willow.PNG');
   }
 
   create() {
@@ -615,35 +621,32 @@ class WallGardenScene extends Phaser.Scene {
 
   setupBushes(width, height) {
     const bushPositions = [
-      { x: 180, y: 400 },
-      { x: 260, y: 500 },
-      { x: 340, y: 450 },
-      { x: 420, y: 350 }
+      { x: 180, y: 600 }, // Garlic
+      { x: 300, y: 400 }, // Thyme
+      { x: 400, y: 500 }, // Random bush 1
+      { x: 500, y: 550 }, // Random bush 2
     ];
     const bushCount = bushPositions.length;
-    // Two bushes have plants, two are empty
-    const bushContents = [
-      { key: "willowPlant", name: "Willow Plant", foundFlag: "willowFound" },
-      { key: "thymePlant", name: "Thyme Plant", foundFlag: "thymeFound" },
-      null,
-      null
-    ];
+    const garlicIndex = 0;
+    const thymeIndex = 1;
+    // Track dispensed state for each bush
     this.bushDispensed = this.bushDispensed || Array(bushCount).fill(false);
 
     for (let i = 0; i < bushCount; i++) {
       const { x, y } = bushPositions[i];
+      // Asset existence check for bush
       const bush = this.textures.exists('bush')
         ? this.add.image(x, y, 'bush').setScale(0.05).setDepth(1).setInteractive({ useHandCursor: true })
         : this.add.text(x, y, 'Missing: bush', { fontSize: '16px', color: '#f00', backgroundColor: '#fff' }).setOrigin(0.5).setDepth(999);
 
       bush.on("pointerdown", () => {
-        // Prevent double activation
-        if (this.dialogueActive || this.bushDispensed[i]) return;
-
+        this.sound.play("click");
+        if (this.dialogueActive) return;
         this.dialogueActive = true;
         this.updateHUDState && this.updateHUDState();
 
-        if (!bushContents[i]) {
+        // If already dispensed, show empty dialogue
+        if (this.bushDispensed[i]) {
           showDialogue(this, "This bush is empty!");
           this.dialogueOnComplete = () => {
             this.destroyDialogueUI && this.destroyDialogueUI();
@@ -651,91 +654,103 @@ class WallGardenScene extends Phaser.Scene {
             this.updateHUDState && this.updateHUDState();
             this.dialogueOnComplete = null;
           };
-          this.bushDispensed[i] = true;
           return;
         }
 
-        // Launch minigame for plant
-        const plant = plantData.find(p => p.key === bushContents[i].key);
-        if (!plant) {
-          showDialogue(this, "You found a rare plant, but its data is missing!", {});
-          this.dialogueOnComplete = () => {
-            this.destroyDialogueUI && this.destroyDialogueUI();
-            this.dialogueActive = false;
-            this.updateHUDState && this.updateHUDState();
-            this.dialogueOnComplete = null;
-          };
-          this.bushDispensed[i] = true;
-          return;
-        }
-
-        showOption(
-          this,
-          `You found a ${plant.name} plant! But a cheeky animal is trying to steal it!`,
-          {
-            options: [
-              {
-                label: "Play a game to win it!",
-                callback: () => {
-                  this.destroyDialogueUI && this.destroyDialogueUI();
-                  this.dialogueActive = false;
-                  this.updateHUDState && this.updateHUDState();
-                  this.dialogueOnComplete = null;
-
-                  // Launch minigame and handle result
-                  this.scene.launch("MiniGameScene", {
-                    onWin: () => {
-                      this.scene.stop("MiniGameScene");
-                      // Only reward if not already found
-                      if (!this[bushContents[i].foundFlag]) {
-                        addPlantToJournal(plant.key);
-                        receivedItem(this, plant.key, plant.name);
-                        this[bushContents[i].foundFlag] = true;
-                      }
-                      showDialogue(this,
-                        this[bushContents[i].foundFlag]
-                          ? `You won the game! The animal reluctantly gives you the ${plant.name} plant.`
-                          : `You already have the ${plant.name} plant.`
-                      );
-                      this.dialogueActive = true;
-                      this.dialogueOnComplete = () => {
-                        this.destroyDialogueUI && this.destroyDialogueUI();
-                        this.dialogueActive = false;
-                        this.updateHUDState && this.updateHUDState();
-                        this.dialogueOnComplete = null;
-                      };
-                    },
-                    onLose: () => {
-                      this.scene.stop("MiniGameScene");
-                      showDialogue(this, "You didn't win the plant this time.");
-                      this.dialogueActive = true;
-                      this.dialogueOnComplete = () => {
-                        this.destroyDialogueUI && this.destroyDialogueUI();
-                        this.dialogueActive = false;
-                        this.updateHUDState && this.updateHUDState();
-                        this.dialogueOnComplete = null;
-                      };
-                    }
-                  });
-                  this.scene.pause();
-                  this.bushDispensed[i] = true;
-                }
-              },
-              {
-                label: "Try again later",
-                callback: () => {
-                  this.destroyDialogueUI && this.destroyDialogueUI();
-                  this.dialogueActive = false;
-                  this.updateHUDState && this.updateHUDState();
-                  this.dialogueOnComplete = null;
-                }
-              }
-            ],
-            imageKey: plant.imageKey || plant.key
+        if (i === garlicIndex && !this.garlicFound) {
+          const garlic = plantData.find(p => p.key === "garlicPlant");
+          if (garlic) {
+            this.showPlantMinigame(garlic, "garlicFound");
+            this.bushDispensed[i] = true;
+          } else {
+            this.showPlantMissing();
+            this.bushDispensed[i] = true;
           }
-        );
+        }
+        else if (i === thymeIndex && !this.thymeFound) {
+          const thyme = plantData.find(p => p.key === "thymePlant");
+          if (thyme) {
+            this.showPlantMinigame(thyme, "thymeFound");
+            this.bushDispensed[i] = true;
+          } else {
+            this.showPlantMissing();
+            this.bushDispensed[i] = true;
+          }
+        }
       });
     }
+  }
+
+  showPlantMinigame(plant, foundFlag) {
+    showOption(
+      this,
+      `You found a ${plant.name} plant! \n But a cheeky animal is trying to steal it!`,
+      {
+        imageKey: plant.imageKey,
+        options: [
+          {
+            label: "Play a game to win it!",
+            callback: () => {
+              this.destroyDialogueUI && this.destroyDialogueUI();
+              this.dialogueActive = false;
+              this.updateHUDState && this.updateHUDState();
+              this.dialogueOnComplete = null;
+              this.scene.launch("MiniGameScene", {
+                onWin: () => {
+                  this.scene.stop("MiniGameScene");
+                  this.scene.resume();
+
+                  const alreadyHas = inventoryManager.hasItemByKey && inventoryManager.hasItemByKey(plant.key);
+                  if (!alreadyHas) {
+                    addPlantToJournal(plant.key);
+                    receivedItem(this, plant.key, plant.name);
+                  }
+
+                  showDialogue(this,
+                    alreadyHas
+                      ? `You already have the ${plant.name} plant.`
+                      : `You won the game! The animal reluctantly \n gives you the ${plant.name} plant.`, {
+                        imageKey: plant.imageKey
+                      }
+                  );
+
+                  this[foundFlag] = true;
+                  this.dialogueActive = true;
+
+                  this.dialogueOnComplete = () => {
+                    this.destroyDialogueUI();
+                    this.dialogueActive = false;
+                    this.updateHUDState && this.updateHUDState();
+                    this.dialogueOnComplete = null;
+                  };
+                }
+              });
+              this.scene.pause();
+            }
+          },
+          {
+            label: "Try again later",
+            callback: () => {
+              this.destroyDialogueUI && this.destroyDialogueUI();
+              this.dialogueActive = false;
+              this.updateHUDState && this.updateHUDState();
+              this.dialogueOnComplete = null;
+            }
+          }
+        ],
+        imageKey: plant.imageKey || plant.key // fallback to key if imageKey missing
+      }
+    );
+  }
+
+  showPlantMissing() {
+    showDialogue(this, "You found a rare plant, but its data is missing!", {});
+    this.dialogueOnComplete = () => {
+      this.destroyDialogueUI && this.destroyDialogueUI();
+      this.dialogueActive = false;
+      this.updateHUDState && this.updateHUDState();
+      this.dialogueOnComplete = null;
+    };
   }
 
   update() {
@@ -781,6 +796,6 @@ class WallGardenScene extends Phaser.Scene {
       this.dialogueBox = null;
     }
   }
-}
 
+}
 export default WallGardenScene;
