@@ -2,6 +2,7 @@ import Phaser from "phaser";
 import { getCollectedPlants } from "./journalManager";
 import plantData from "../plantData";
 import recipieData from "../recipieData";
+import buddiesData from "../buddies";
 import { saveToLocal, loadFromLocal } from "../utils/localStorage";
 
 class OpenJournal extends Phaser.Scene {
@@ -43,6 +44,18 @@ class OpenJournal extends Phaser.Scene {
     this.load.image('thymePlant', '/assets/plants/thyme.PNG');
     this.load.image('willowPlant', '/assets/plants/willow.PNG');
     this.load.image('journal', '/assets/ui-items/book.png');
+    this.load.image("beeBuddy", "/assets/npc/bee/bee-happy.png");
+    this.load.image("butterflyBuddy", "/assets/npc/butterfly/happy-butterfly-dio.png");
+    this.load.image("fairyBuddy", "/assets/npc/fairy/fairy-happy.PNG")
+    this.load.image("elephantBuddy", "/assets/npc/elephant/happy.png");
+    this.load.image("wolfBuddy", "/assets/npc/wolf/happy.png");
+    this.load.image("deerBuddy", "/assets/npc/deer/happy.png");
+    this.load.image("pigBuddy", "/assets/npc/pig/happy.png");
+    this.load.image("turtleBuddy", "/assets/npc/turtle/happy.png");
+    this.load.image("rabbitBuddy", "/assets/npc/rabbit/happy.png");
+    this.load.image("polarBearBuddy", "/assets/npc/polarBear/happy.PNG");
+    this.load.image("moleBuddy", "/assets/npc/mole/happy.png");
+
     // Optionally, load all plant images here if not already loaded elsewhere
     plantData.forEach(plant => {
       if (plant.imageKey) {
@@ -76,7 +89,8 @@ class OpenJournal extends Phaser.Scene {
       padding: { left: 24, right: 24, top: 8, bottom: 8 },
       fontStyle: active ? "bold" : "normal"
     });
-    this.plantsTab = this.add.text(width / 2 - 80, tabY, "Plants", tabStyle(this.activeTab === "plants"))
+
+    this.plantsTab = this.add.text(width / 2 - 120, tabY, "Plants", tabStyle(this.activeTab === "plants"))
       .setOrigin(0.5)
       .setInteractive({ useHandCursor: true })
       .on("pointerdown", () => {
@@ -86,12 +100,24 @@ class OpenJournal extends Phaser.Scene {
           this.renderJournalTab();
         }
       });
-    this.recipiesTab = this.add.text(width / 2 + 80, tabY, "Recipies", tabStyle(this.activeTab === "recipies"))
+
+    this.recipiesTab = this.add.text(width / 2, tabY, "Recipies", tabStyle(this.activeTab === "recipies"))
       .setOrigin(0.5)
       .setInteractive({ useHandCursor: true })
       .on("pointerdown", () => {
         if (this.activeTab !== "recipies") {
           this.activeTab = "recipies";
+          this.currentPage = 0;
+          this.renderJournalTab();
+        }
+      });
+
+    this.buddiesTab = this.add.text(width / 2 + 120, tabY, "Buddies", tabStyle(this.activeTab === "buddies"))
+      .setOrigin(0.5)
+      .setInteractive({ useHandCursor: true })
+      .on("pointerdown", () => {
+        if (this.activeTab !== "buddies") {
+          this.activeTab = "buddies";
           this.currentPage = 0;
           this.renderJournalTab();
         }
@@ -119,7 +145,7 @@ class OpenJournal extends Phaser.Scene {
       this.scene.resume("HUDScene");
     });
 
-    // Next/Prev buttons for both tabs
+    // Next/Prev buttons for all tabs
     this.nextBtnBg = this.add.rectangle(width / 2 + 120, height - 60, 110, 40, 0xe0cda9, 0.8)
       .setOrigin(0.5)
       .setInteractive({ useHandCursor: true });
@@ -148,6 +174,9 @@ class OpenJournal extends Phaser.Scene {
       } else if (this.activeTab === "recipies" && this.currentPage < recipieData.length - 1) {
         this.currentPage++;
         this.renderJournalTab();
+      } else if (this.activeTab === "buddies" && this.currentPage < buddiesData.length - 1) {
+        this.currentPage++;
+        this.renderJournalTab();
       }
     });
     this.nextBtn.on("pointerdown", () => {
@@ -155,6 +184,9 @@ class OpenJournal extends Phaser.Scene {
         this.currentPage++;
         this.renderJournalTab();
       } else if (this.activeTab === "recipies" && this.currentPage < recipieData.length - 1) {
+        this.currentPage++;
+        this.renderJournalTab();
+      } else if (this.activeTab === "buddies" && this.currentPage < buddiesData.length - 1) {
         this.currentPage++;
         this.renderJournalTab();
       }
@@ -185,6 +217,10 @@ class OpenJournal extends Phaser.Scene {
     if (this.recipeImage && !this.recipeImage.destroyed) this.recipeImage.destroy();
     if (this.recipeName && !this.recipeName.destroyed) this.recipeName.destroy();
     if (this.recipeIngredients && !this.recipeIngredients.destroyed) this.recipeIngredients.destroy();
+    if (this.recipeDescription && !this.recipeDescription.destroyed) this.recipeDescription.destroy();
+    if (this.buddyImage && !this.buddyImage.destroyed) this.buddyImage.destroy();
+    if (this.buddyName && !this.buddyName.destroyed) this.buddyName.destroy();
+    if (this.buddyDesc && !this.buddyDesc.destroyed) this.buddyDesc.destroy();
 
     // Update tab styles
     const tabStyle = (active) => ({
@@ -197,11 +233,14 @@ class OpenJournal extends Phaser.Scene {
     });
     this.plantsTab.setStyle(tabStyle(this.activeTab === "plants"));
     this.recipiesTab.setStyle(tabStyle(this.activeTab === "recipies"));
+    this.buddiesTab.setStyle(tabStyle(this.activeTab === "buddies"));
 
     if (this.activeTab === "plants") {
       this.renderPlantPage();
-    } else {
+    } else if (this.activeTab === "recipies") {
       this.renderRecipePage();
+    } else if (this.activeTab === "buddies") {
+      this.renderBuddyPage();
     }
   }
 
@@ -245,8 +284,8 @@ class OpenJournal extends Phaser.Scene {
 
     // Plant image
     if (plant.imageKey && this.textures.exists(plant.imageKey)) {
-      this.plantImage = this.add.image(width / 2 - 100, height / 2, plant.imageKey)
-        .setDisplaySize(120, 120)
+      this.plantImage = this.add.image(width / 2 - 180, height / 2, plant.imageKey)
+        .setDisplaySize(200, 200)
         .setDepth(2);
     }
 
@@ -308,8 +347,8 @@ class OpenJournal extends Phaser.Scene {
 
     // Recipe image
     if (recipe.imageKey && this.textures.exists(recipe.imageKey)) {
-      this.recipeImage = this.add.image(width / 2 - 100, height / 2, recipe.imageKey)
-        .setDisplaySize(120, 120)
+      this.recipeImage = this.add.image(width / 2 - 180, height / 2, recipe.imageKey)
+        .setDisplaySize(200, 200)
         .setDepth(2);
     }
 
@@ -377,6 +416,67 @@ class OpenJournal extends Phaser.Scene {
     // Enable/disable buttons
     if (showNav) {
       this.nextBtn.setAlpha(this.currentPage < recipieData.length - 1 ? 1 : 0.4);
+      this.prevBtn.setAlpha(this.currentPage > 0 ? 1 : 0.4);
+    }
+  }
+
+  renderBuddyPage() {
+    // Remove previous buddy display if any
+    if (this.buddyImage && !this.buddyImage.destroyed) this.buddyImage.destroy();
+    if (this.buddyName && !this.buddyName.destroyed) this.buddyName.destroy();
+    if (this.buddyDesc && !this.buddyDesc.destroyed) this.buddyDesc.destroy();
+    if (this.pageNumText && !this.pageNumText.destroyed) this.pageNumText.destroy();
+
+    const { width, height } = this.sys.game.config;
+    const buddy = buddiesData[this.currentPage];
+
+    if (!buddy) {
+      this.buddyName = this.add.text(width / 2, height / 2, "No buddies found.", {
+        fontFamily: "Georgia",
+        fontSize: "24px",
+        color: "#2d4739"
+      }).setOrigin(0.5);
+      return;
+    }
+
+    // Buddy image
+    if (buddy.imageKey && this.textures.exists(buddy.imageKey)) {
+      this.buddyImage = this.add.image(width / 2 - 180, height / 2, buddy.imageKey)
+        .setDisplaySize(200, 200) 
+        .setDepth(2);
+    }
+
+    // Buddy name
+    this.buddyName = this.add.text(width / 2 + 40, height / 2 - 40, buddy.name, {
+      fontFamily: "Georgia",
+      fontSize: "32px",
+      color: "#2d4739"
+    });
+
+    // Buddy description
+    this.buddyDesc = this.add.text(width / 2 + 40, height / 2 + 10, buddy.description || "No info.", {
+      fontFamily: "Georgia",
+      fontSize: "20px",
+      color: "#444",
+      wordWrap: { width: 260 }
+    });
+
+    // Page number
+    this.pageNumText = this.add.text(width / 2, 580, `Page ${this.currentPage + 1} of ${buddiesData.length}`, {
+      fontFamily: "Georgia",
+      fontSize: "18px",
+      color: "#3e2f1c"
+    }).setOrigin(0.5);
+
+    // Show/hide buttons based on number of buddies
+    const showNav = buddiesData.length > 1;
+    this.nextBtn.setVisible(showNav);
+    this.nextBtnBg.setVisible(showNav);
+    this.prevBtn.setVisible(showNav);
+    this.prevBtnBg.setVisible(showNav);
+    // Enable/disable buttons
+    if (showNav) {
+      this.nextBtn.setAlpha(this.currentPage < buddiesData.length - 1 ? 1 : 0.4);
       this.prevBtn.setAlpha(this.currentPage > 0 ? 1 : 0.4);
     }
   }
