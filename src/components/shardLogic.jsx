@@ -39,7 +39,11 @@ export function shardLogic(scene) {
     if (scene.winterShardSprite && scene.winterShardSprite.texture.key !== 'winterHappy') {
       scene.winterShardSprite.setTexture('winterHappy');
     }
-    if (scene && scene.scene) {
+    // Use scene for sound and scene transitions
+    if (scene.sound && typeof scene.sound.stopByKey === "function") {
+      scene.sound.stopByKey("theme1");
+    }
+    if (scene.scene && typeof scene.scene.start === "function") {
       scene.scene.start("EndGameScene");
     }
   }

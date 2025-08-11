@@ -72,15 +72,8 @@ const itemsData = [
     imageKey: "willowPlant",
     type: "plant"
   },
-  {
-    id: "teaBag",
-    key: "teaBag",
-    name: "Tea Bag",
-    price: 5,
-    description: "A simple tea bag for brewing.",
-    imageKey: "teaBagImage",
-    type: "extra",
-  },
+
+  // Extras (base cream, oil, alcohol, teabag)
   {
     id: "baseCream",
     key: "baseCream",
@@ -88,7 +81,7 @@ const itemsData = [
     price: 10,
     description: "A versatile base cream for making salves.",
     imageKey: "baseCream",
-    type: "extra", 
+    type: "extra"
   },
   {
     id: "oilBase",
@@ -97,17 +90,28 @@ const itemsData = [
     price: 15,
     description: "A base oil for making oils.",
     imageKey: "oilBase",
-    type: "extra",
+    type: "extra"
   },
   {
     id: "alcoholBase",
     key: "alcoholBase",
     name: "Alcohol Base",
     price: 20,
-    description: "A base alcohol for making salves.",
+    description: "A base alcohol for making tinctures.",
     imageKey: "alcoholBase",
-    type: "extra",
+    type: "extra"
   },
+  {
+    id: "teaBag",
+    key: "teaBag",
+    name: "Tea Bag",
+    price: 5,
+    description: "A simple tea bag for brewing.",
+    imageKey: "teaBag",
+    type: "extra"
+  },
+
+  // Seeds
   {
     id: "foxgloveSeeds",
     key: "foxgloveSeeds",
@@ -198,6 +202,8 @@ const itemsData = [
     type: "seed",
     plantKey: "willowPlant"
   },
+
+  // Tools
   {
     id:"hoe",
     key: "hoe",
@@ -224,6 +230,39 @@ const itemsData = [
     description: "A tool for harvesting plants.",
     imageKey: "shovelImage",
     type: "tool"
+  },
+  {
+    id:"springShard",
+    key: "springShard",
+    name: "Spring Shard",
+    price: 100,
+    description: "A shard of spring energy, used to power the garden.",
+    imageKey: "springShard",
+    type: "extra"
+  },
+  {id: "summerShard",
+    key: "summerShard",
+    name: "Summer Shard",
+    price: 100,
+    description: "A shard of summer energy, used to power the garden.",
+    imageKey: "summerShard",
+    type: "extra"
+  },
+  {id: "autumnShard",
+    key: "autumnShard",
+    name: "Autumn Shard",
+    price: 100,
+    description: "A shard of autumn energy, used to power the garden.",
+    imageKey: "autumnShard",
+    type: "extra"
+  },
+  {id: "winterShard",
+    key: "winterShard",
+    name: "Winter Shard",  
+    price: 100,
+    description: "A shard of winter energy, used to power the garden.",
+    imageKey: "winterShard",
+    type: "extra"
   }
 ];
 

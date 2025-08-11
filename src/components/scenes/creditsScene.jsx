@@ -6,21 +6,18 @@ class CreditsScene extends Phaser.Scene {
   }
 
   preload() {
-    this.load.image('creditsBg', '/assets/credits/credits-bg.jpg');
-    this.load.audio('creditsTheme', '/assets/music/credits.mp3');
+    this.load.audio('finalTheme', '/assets/music/credits.mp3');
   }
 
   create() {
+    const music = this.sound.add('finalTheme', { loop: true, volume: 0.35 });
+
     const { width, height } = this.sys.game.config;
 
     // Background
     const bg = this.add.image(width / 2, height / 2, 'creditsBg')
       .setDisplaySize(width, height)
       .setAlpha(0.8);
-
-    // Play background music
-    const music = this.sound.add('creditsTheme', { loop: true, volume: 0.4 });
-    music.play();
 
     // Credits content
     const creditsText = `

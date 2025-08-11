@@ -12,7 +12,6 @@ if (typeof window !== "undefined") {
   }
 }
 
-// Removed CoinManager import and all coin logic
 import { saveToLocal, loadFromLocal } from "../../utils/localStorage";
 
 class ShopScene extends Phaser.Scene {
@@ -34,25 +33,29 @@ class ShopScene extends Phaser.Scene {
     this.load.audio('click', '/assets/sound-effects/click.mp3');
     this.load.audio("shopTheme", "/assets/music/shop-theme.mp3");
     this.load.image('dialogueBoxBg', '/assets/ui-items/dialogue.png');
-    this.load.image("oilBaseImage", "/assets/shopItems/oil.png");
-    this.load.image("creamBaseImage", "/assets/shopItems/cream.png");
-    this.load.image("alchoholBaseImage", "/assets/shopItems/alcohol.png");
+    this.load.image("baseCream", "/assets/shopItems/cream.png");
+    this.load.image("oilBase", "/assets/shopItems/oil.png");
+    this.load.image("alcoholBase", "/assets/shopItems/alcohol.png");
+    this.load.image("teaBag", "/assets/shopItems/teabag.png");
     this.load.audio('sparkle', '/assets/sound-effects/sparkle.mp3');
-    this.load.image('foxglovePlant', '/assets/plants/foxglove.png');
-    this.load.image('marigoldPlant', '/assets/plants/marigold.PNG');
-    this.load.image('jasminePlant', '/assets/plants/jasmine.PNG');
-    this.load.image('aloePlant', '/assets/plants/aloe.PNG');
-    this.load.image('lavenderPlant', '/assets/plants/lavender.PNG');
-    this.load.image('periwinklePlant', '/assets/plants/periwinkle.png');
-    this.load.image('garlicPlant', '/assets/plants/garlic.PNG');
-    this.load.image('thymePlant', '/assets/plants/thyme.PNG');
-    this.load.image('willowPlant', '/assets/plants/willow.PNG');
+    this.load.image("springShard", "/assets/items/spring.png");
+    this.load.image("summerShard", "/assets/items/summer.png");
+    this.load.image("autumnShard", "/assets/items/autumn.png");
+    this.load.image("winterShard", "/assets/items/winter.png");
   }
 
   create() {
 
     this.scene.stop("HUDScene");
-    this.sound.play('shopTheme', { loop: true, volume: 0.1 });
+ // Stop main theme
+if (this.sound.get('theme1')) {
+  this.sound.stopByKey('theme1');
+}
+alert("If you are struggling to collect shards. Just grab them in the extras tab of the shop! :)");
+// Play shop or end credits music
+this.sound.play('shopTheme', { loop: true, volume: 0.2 });
+// Or for end credits:
+
     const { width, height } = this.scale;
 
     // Main shop background
@@ -69,11 +72,7 @@ class ShopScene extends Phaser.Scene {
       plantKey: item.plantKey
     }));
 
-    // Only show crafting materials as extras
-    const craftingMaterialKeys = ["baseCream", "oilBase", "alchoholBase", "creamBase", "oilBaseImage", "creamBaseImage", "alchoholBaseImage"];
-    const extraItems = itemsData.filter(item =>
-      craftingMaterialKeys.includes(item.key)
-    ).map(item => ({
+    const extraItems = itemsData.filter(item => item.type === 'extra').map(item => ({
       key: item.key,
       name: item.name,
       imageKey: item.imageKey || item.key,
@@ -132,8 +131,13 @@ class ShopScene extends Phaser.Scene {
           x, y, 90, 90, tab === 'seeds' ? 0x567d46 : 0x222233, 1
         ).setStrokeStyle(2, 0x88ccff).setDepth(1);
         itemSprites.push(bg);
+
+        // Set scale for images, baseCream is smaller
+        let imgScale = 0.07;
+        if (item.key === "baseCream") imgScale = 0.02;
+
         const img = this.add.image(x, y - 18, item.imageKey)
-          .setScale(0.07)
+          .setScale(imgScale)
           .setDepth(2)
           .setInteractive({ useHandCursor: true });
         itemSprites.push(img);
@@ -242,6 +246,7 @@ class ShopScene extends Phaser.Scene {
       .on("pointerover", () => backBtn.setStyle({ backgroundColor: "#444" }))
       .on("pointerout", () => backBtn.setStyle({ backgroundColor: "#222" }))
       .on("pointerdown", () => {
+        this.sound.stopByKey && this.sound.stopByKey("shopTheme");
         this.scene.start("LoaderScene", {
           nextSceneKey: "PersonalGarden",
           nextSceneData: {}

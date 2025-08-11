@@ -1,6 +1,5 @@
-import { loadFromLocal } from "../utils/localStorage";
+
 import InventoryManager from "./inventoryManager";
-import { saveToLocal } from "../utils/localStorage";
 import recipieData from "../recipieData";
 export const inventoryManager = new InventoryManager();
 
@@ -116,6 +115,17 @@ class OpenInventory extends Phaser.Scene {
 
         // --- NPC handover logic for all scenes ---
         itemImg.on("pointerdown", () => {
+
+          const weeCairScene = this.scene.get('WeeCairScene');
+          if (weeCairScene) {
+            if (weeCairScene.awaitingFoxgloveGive && item.key === "foxglovePlant") {
+              inventoryManager.removeItemByKey("foxglovePlant");
+              weeCairScene.events.emit("foxgloveGiven");
+              weeCairScene.awaitingFoxgloveGive = false;
+              this.scene.stop();
+              return;
+            }
+          } 
           // GreenhouseScene
           const greenhouseScene = this.scene.get('GreenhouseScene');
           if (greenhouseScene) {

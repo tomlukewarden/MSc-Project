@@ -1,309 +1,98 @@
-import Phaser from 'phaser';
-import { showDialogue } from '../dialogue/dialogueUIHelpers';
+import Phaser from "phaser";
 
 class CraftingTutorial extends Phaser.Scene {
   constructor() {
-    super({ key: 'CraftingTutorial' });
-    this.inventory = [
-      { key: 'marigoldPlant', name: 'Marigold', count: 2 },
-      { key: 'baseCream', name: 'Base Cream', count: 1 }
-    ];
-    this.craftingSlots = [null, null, null];
-    this.result = null;
-    this.dialogueStep = 0;
-    this.dialogueActive = false;
+    super({ key: "CraftingTutorial" });
   }
 
   preload() {
-    this.load.image('personalGardenBg', '/assets/backgrounds/personal/personalBackground.png');
-    this.load.image('craftingBench', '/assets/crafting/bench.png');
-    this.load.image('marigoldPlant', '/assets/plants/marigold.PNG');
-    this.load.image('baseCream', '/assets/shopItems/cream.png');
-    this.load.image('arrow', '/assets/ui-items/arrow.png');
-    this.load.image('marigoldSalve', '/assets/crafting/creamRemedy.png');
-    this.load.image('dialogueBoxBg', '/assets/ui-items/dialogue.png');
-    this.load.image("butterflyHappy", "/assets/npc/butterfly/happy-butterfly-dio.png");
+    this.load.image("inventoryBg", "/assets/ui-items/overlayBg.png");
+    this.load.image("craftTab", "/assets/ui-items/craftTab.png");
+    this.load.image("ingredientIcon", "/assets/ui-items/ingredient.png");
+    this.load.image("craftBtn", "/assets/ui-items/craftBtn.png");
+    this.load.image("arrow", "/assets/ui-items/arrow.png");
+    this.load.image("exitBtn", "/assets/ui-items/exitBtn.png");
   }
 
   create() {
     const { width, height } = this.sys.game.config;
 
     // Background
-    this.add.image(width / 2, height / 2, 'personalGardenBg')
-      .setDisplaySize(width, height)
-      .setDepth(0);
-
-    // Overlay
-    this.add.rectangle(width / 2, height / 2, width - 80, height - 80, 0xffffff, 0.85)
-      .setStrokeStyle(2, 0x228B22)
-      .setDepth(1);
+    this.add.image(width / 2, height / 2, "inventoryBg").setDisplaySize(width - 80, height - 80);
 
     // Title
-    this.add.text(width / 2, 80, 'Crafting Tutorial', {
-      fontFamily: 'Georgia',
-      fontSize: '38px',
-      color: '#228B22',
-      fontStyle: 'bold'
-    }).setOrigin(0.5).setDepth(2);
-
-    // Inventory display
-    this.inventorySprites = [];
-    this.add.text(width / 2 - 220, 160, 'Inventory:', {
-      fontFamily: 'Georgia',
-      fontSize: '24px',
-      color: '#333'
-    }).setOrigin(0, 0.5).setDepth(2);
-
-    // Space out inventory items and size them down
-    const invStartX = width / 2 - 180;
-    const invSpacing = 300;
-    const invScale = 0.07;
-    this.inventory.forEach((item, idx) => {
-      const x = invStartX + idx * invSpacing;
-      const y = 210;
-      const sprite = this.add.image(x, y, item.key)
-        .setScale(invScale)
-        .setDepth(2)
-        .setInteractive({ useHandCursor: true });
-      const label = this.add.text(x, y + 38, `${item.name} x${item.count}`, {
-        fontFamily: 'Georgia',
-        fontSize: '16px',
-        color: '#333'
-      }).setOrigin(0.5).setDepth(2);
-
-      sprite.on('pointerdown', () => {
-        // Find first empty crafting slot
-        const slotIdx = this.craftingSlots.findIndex(s => !s);
-        if (slotIdx !== -1 && item.count > 0) {
-          this.craftingSlots[slotIdx] = { ...item, key: item.key, name: item.name };
-          item.count -= 1;
-          label.setText(`${item.name} x${item.count}`);
-          this.updateCraftingSlots();
-        }
-      });
-
-      this.inventorySprites.push({ sprite, label });
-    });
-
-    // Crafting slots display
-    this.craftingSlotSprites = [];
-    this.add.text(width / 2, 300, 'Crafting Slots:', {
-      fontFamily: 'Georgia',
-      fontSize: '24px',
-      color: '#333'
-    }).setOrigin(0.5).setDepth(2);
-
-    // Space out crafting slots and size items down
-    const slotY = 350;
-    const slotStartX = width / 2 - 100;
-    const slotSpacing = 100;
-    const slotScale = 0.09;
-    for (let i = 0; i < 3; i++) {
-      const x = slotStartX + i * slotSpacing;
-      const slotRect = this.add.rectangle(x, slotY, 60, 60, 0xffffff, 1)
-        .setStrokeStyle(2, 0x228B22)
-        .setDepth(2);
-      this.craftingSlotSprites.push({ rect: slotRect, image: null, label: null });
-
-      slotRect.setInteractive({ useHandCursor: true });
-      slotRect.on('pointerdown', () => {
-        // Remove item from slot and return to inventory
-        if (this.craftingSlots[i]) {
-          const invItem = this.inventory.find(it => it.key === this.craftingSlots[i].key);
-          if (invItem) {
-            invItem.count += 1;
-            const invSprite = this.inventorySprites.find(s => s.sprite.texture.key === invItem.key);
-            if (invSprite) {
-              invSprite.label.setText(`${invItem.name} x${invItem.count}`);
-            }
-          }
-          this.craftingSlots[i] = null;
-          this.updateCraftingSlots();
-        }
-      });
-    }
-
-    // Craft button
-    this.craftBtn = this.add.text(width / 2, slotY + 80, 'Craft!', {
-      fontFamily: 'Georgia',
-      fontSize: '26px',
-      color: '#fff',
-      backgroundColor: '#228B22',
-      padding: { left: 18, right: 18, top: 8, bottom: 8 }
-    }).setOrigin(0.5).setDepth(2).setInteractive({ useHandCursor: true });
-
-    this.craftBtn.on('pointerdown', () => {
-      this.tryCraft();
-    });
-
-    // Result display
-    this.resultImage = null;
-    this.resultLabel = null;
-
-    // Next button (to IntroScene)
-    const nextBtn = this.add.text(width / 2, height - 60, "Finish Tutorial", {
+    this.add.text(width / 2, 80, "How to Craft Remedies", {
+      fontSize: "38px",
+      color: "#ffe066",
       fontFamily: "Georgia",
-      fontSize: "22px",
+      backgroundColor: "#222",
+      padding: { left: 16, right: 16, top: 8, bottom: 8 }
+    }).setOrigin(0.5);
+
+    // Step 1: Open Inventory
+    this.add.text(width / 2, 160, "1. Open your inventory.", {
+      fontSize: "26px",
       color: "#fff",
-      backgroundColor: "#228B22",
-      padding: { left: 18, right: 18, top: 8, bottom: 8 }
-    })
-      .setOrigin(0.5)
-      .setDepth(2)
-      .setInteractive({ useHandCursor: true })
-      .on("pointerover", () => nextBtn.setStyle({ backgroundColor: "#145214" }))
-      .on("pointerout", () => nextBtn.setStyle({ backgroundColor: "#228B22" }))
-      .on("pointerdown", () => {
-        this.scene.start("IntroScene");
-      });
+      fontFamily: "Georgia"
+    }).setOrigin(0.5);
 
-    // Dialogue tutorial steps
-    this.dialogueStep = 0;
-    this.dialogueActive = true;
-    this.showCraftingDialogue();
+    // Step 2: Switch to Crafting Tab
+    this.add.text(width / 2, 220, "2. Click the Crafting tab.", {
+      fontSize: "26px",
+      color: "#fff",
+      fontFamily: "Georgia"
+    }).setOrigin(0.5);
 
-    // Advance dialogue on pointerdown
-    this.input.on('pointerdown', () => {
-      if (this.dialogueActive) {
-        this.advanceDialogue();
-      }
+    // Step 3: Browse Recipes
+    this.add.text(width / 2, 300, "3. Browse recipes and check ingredients.", {
+      fontSize: "26px",
+      color: "#fff",
+      fontFamily: "Georgia"
+    }).setOrigin(0.5);
+
+    // Step 4: Craft Button
+  
+    this.add.text(width / 2, 380, "4. Click Craft to make the remedy.", {
+      fontSize: "26px",
+      color: "#fff",
+      fontFamily: "Georgia"
+    }).setOrigin(0.5);
+
+    // Step 5: Feedback
+   
+    this.add.text(width / 2, 460, "5. If you have all ingredients, you’ll see a success message.", {
+      fontSize: "26px",
+      color: "#fff",
+      fontFamily: "Georgia"
+    }).setOrigin(0.5);
+
+    this.add.text(width / 2, 500, "If not, you’ll see which items are missing.", {
+      fontSize: "22px",
+      color: "#ffe066",
+      fontFamily: "Georgia"
+    }).setOrigin(0.5);
+
+    // Step 6: Exit
+ 
+    this.add.text(width / 2, 560, "6. Click Exit to return to the game.", {
+      fontSize: "26px",
+      color: "#fff",
+      fontFamily: "Georgia"
+    }).setOrigin(0.5);
+
+    // Exit button to leave tutorial
+    const exit = this.add.text(width - 60, 40, "Exit", {
+      fontSize: "28px",
+      color: "#ffe066",
+      fontFamily: "Georgia",
+      backgroundColor: "#222",
+      padding: { left: 12, right: 12, top: 6, bottom: 6 }
+    }).setOrigin(1, 0).setInteractive({ useHandCursor: true });
+    exit.on("pointerdown", () => {
+      this.scene.stop("CraftingTutorial");
+      // Optionally return to inventory or main scene
+      this.scene.resume("OpenInventory");
     });
-
-    // Initial crafting slots update
-    this.updateCraftingSlots();
-  }
-
-  showCraftingDialogue() {
-    const steps = [
-      {
-        text: "Welcome to crafting! I will show you how to make remedies.",
-      },
-      {
-        text: "Click the Marigold and Base Cream from your inventory \n to put them into the crafting slots.",
-      },
-      {
-        text: "The correct pattern is Marigold, Base Cream, Marigold.",
-      },
-      {
-        text: "When the slots are filled, click 'Craft!' to make Marigold Salve.",
-      },
-      {
-        text: "If you make a mistake, you can remove items by clicking the slot.",
-      },
-      {
-        text: "That's it! Click 'Finish Tutorial' below to continue on your journey.",
-      }
-    ];
-
-    if (this.dialogueStep < steps.length - 1) {
-      showDialogue(this, steps[this.dialogueStep].text, {
-        imageKey: "butterflyHappy",
-        imageSide: "left",
-        options: []
-      });
-    } else if (this.dialogueStep === steps.length - 1) {
-      showDialogue(this, steps[this.dialogueStep].text, {
-        imageKey: "butterflyHappy",
-        imageSide: "left",
-        options: [
-          {
-            label: "Finish Tutorial",
-            onSelect: () => {
-              this.dialogueActive = false;
-              this.destroyDialogueUI();
-              this.scene.start("IntroScene");
-            }
-          }
-        ]
-      });
-    } else {
-      this.dialogueActive = false;
-      this.destroyDialogueUI();
-    }
-  }
-
-  advanceDialogue() {
-    if (!this.dialogueActive) return;
-    this.dialogueStep += 1;
-    this.showCraftingDialogue();
-  }
-
-  updateCraftingSlots() {
-    const slotY = 350;
-    const slotStartX = this.sys.game.config.width / 2 - 100;
-    const slotSpacing = 100;
-    const slotScale = 0.04;
-    for (let i = 0; i < 3; i++) {
-      const x = slotStartX + i * slotSpacing;
-      const slot = this.craftingSlotSprites[i];
-      if (slot.image) slot.image.destroy();
-      if (slot.label) slot.label.destroy();
-      if (this.craftingSlots[i]) {
-        slot.image = this.add.image(x, slotY, this.craftingSlots[i].key)
-          .setScale(slotScale)
-          .setDepth(3);
-        slot.label = this.add.text(x, slotY + 32, this.craftingSlots[i].name, {
-          fontFamily: 'Georgia',
-          fontSize: '14px',
-          color: '#228B22'
-        }).setOrigin(0.5).setDepth(3);
-      } else {
-        slot.image = null;
-        slot.label = null;
-      }
-    }
-  }
-
-  tryCraft() {
-    // Only allow: [marigold, baseCream, marigold] in that order
-    const pattern = ['marigoldPlant', 'baseCream', 'marigoldPlant'];
-    const selected = this.craftingSlots.map(s => s && s.key);
-    if (selected.length === 3 &&
-        selected[0] === pattern[0] &&
-        selected[1] === pattern[1] &&
-        selected[2] === pattern[2]) {
-      // Success!
-      const x = this.sys.game.config.width / 2;
-      const y = this.sys.game.config.height - 200; // Show at bottom below craft button
-      if (this.resultImage) this.resultImage.destroy();
-      if (this.resultLabel) this.resultLabel.destroy();
-      this.resultImage = this.add.image(x, y, 'marigoldSalve').setScale(0.06).setDepth(4);
-      this.resultLabel = this.add.text(x, y + 50, 'Marigold Salve Crafted!', {
-        fontFamily: 'Georgia',
-        fontSize: '20px',
-        color: '#228B22'
-      }).setOrigin(0.5).setDepth(4);
-      // Remove items from slots
-      this.craftingSlots = [null, null, null];
-      this.updateCraftingSlots();
-    } else {
-      // Failure
-      const x = this.sys.game.config.width / 2;
-      const y = 480;
-      this.resultLabel = this.add.text(x, y, 'Incorrect pattern! Try again.', {
-        fontFamily: 'Georgia',
-        fontSize: '18px',
-        color: '#a33'
-      }).setOrigin(0.5).setDepth(4);
-      this.time.delayedCall(2000, () => {
-        if (this.resultLabel) {
-          this.resultLabel.destroy();
-          this.resultLabel = null;
-        }
-      });
-    }
-  }
-
-  destroyDialogueUI() {
-    if (this.dialogueBox) {
-      this.dialogueBox.box?.destroy();
-      this.dialogueBox.textObj?.destroy();
-      this.dialogueBox.image?.destroy();
-      if (this.dialogueBox.optionButtons) {
-        this.dialogueBox.optionButtons.forEach((btn) => btn.destroy());
-      }
-      this.dialogueBox = null;
-    }
   }
 }
 

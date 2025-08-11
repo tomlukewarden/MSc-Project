@@ -9,6 +9,7 @@ const recipieData = [
     order: ['foxglovePlant', 'teabag', 'foxglovePlant'],
     description: 'A soothing herbal tea made from foxglove leaves, known to aid irregular heart rhythms.',
     result: { key: 'foxgloveTea', name: 'Foxglove Tea', imageKey: 'foxgloveTea', amount: 1 },
+    imageKey : 'foxgloveTea',
   },
   {
     id: 2,
@@ -20,6 +21,7 @@ const recipieData = [
     order: ['aloePlant', 'baseCream', 'aloePlant'],
     description: 'A soothing cream made from aloe vera, perfect for after sun exposure.',
     result: { key: 'aloeAfterSunCream', name: 'After-Sun Cream', imageKey: 'aloeAfterSunCream', amount: 1 },
+    imageKey: 'aloeAfterSunCream',
   },
   {
     id: 3,
@@ -31,6 +33,7 @@ const recipieData = [
     order: ['jasminePlant', 'teabag', 'jasminePlant'],
     description: 'A fragrant tea made from jasmine flowers, known for its calming properties.',
     result: { key: 'jasmineTea', name: 'Jasmine Tea', imageKey: 'jasmineTea', amount: 1 },
+    imageKey: 'jasmineTea',
   },
     {
         id: 4,
@@ -42,6 +45,7 @@ const recipieData = [
         order: ['lavenderPlant', 'lavenderPlant', 'oilBase', 'lavenderPlant'],
         description: 'A calming oil made from lavender flowers, perfect for relaxation and aromatherapy.',
         result: { key: 'lavenderOil', name: 'Lavender Oil', imageKey: 'lavenderOil', amount: 1 },
+        imageKey: 'lavenderOil',
     },
     {
         id: 5,
@@ -53,6 +57,7 @@ const recipieData = [
         order: ['marigoldPlant', 'baseCream', 'marigoldPlant'],
         description: 'A healing salve made from marigold flowers, known for its skin-soothing properties.',
         result: { key: 'marigoldSalve', name: 'Marigold Salve', imageKey: 'marigoldSalve', amount: 1 },
+        imageKey: 'marigoldSalve',
     },
     {
         id: 6,
@@ -64,6 +69,7 @@ const recipieData = [
         order: ['garlicPlant', 'oilBase', 'garlicPlant', 'garlicPlant'],
         description: 'A potent paste made from garlic, known for its antibacterial and antifungal properties.',
         result: { key: 'garlicPaste', name: 'Garlic Paste', imageKey: 'garlicPaste', amount: 1 },
+        imageKey: 'garlicPaste',
     },
     {
         id: 7,
@@ -75,6 +81,7 @@ const recipieData = [
         order: ['periwinklePlant', 'alcoholBase', 'periwinklePlant'],
         description: 'An extract made from periwinkle leaves, known for its medicinal properties for issues such as toothaches.',
         result: { key: 'periwinkleExtract', name: 'Periwinkle Extract', imageKey: 'periwinkleExtract', amount: 1 },
+        imageKey: 'periwinkleExtract',
     },
     {
         id: 8,
@@ -86,6 +93,7 @@ const recipieData = [
         order: ['thymePlant', 'oilBase', 'thymePlant'],
         description: 'An infused oil made from thyme, known for its culinary and medicinal properties.',
         result: { key: 'thymeInfusedOil', name: 'Thyme Infused Oil', imageKey: 'thymeInfusedOil', amount: 1 },
+        imageKey: 'thymeInfusedOil',
     },
     {
         id: 9,
@@ -97,6 +105,7 @@ const recipieData = [
         order: ['willowPlant', 'teabag', 'willowPlant'],
     description: 'A herbal tea made from willow bark, known for its pain-relieving properties.',
         result: { key: 'willowBarkTea', name: 'Willow Bark Tea', imageKey: 'willowBarkTea', amount: 1 },
+        imageKey: 'willowBarkTea',
     }
 ];
 

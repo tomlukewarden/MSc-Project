@@ -25,10 +25,10 @@ class ShardGardenScene extends Phaser.Scene {
     this.activeDialogue = [];
     this.activeDialogueIndex = 0;
     this.shardCounts = {
-      spring: 1,
-      summer: 1,
-      autumn: 1,
-      winter: 1
+      spring: 3,
+      summer: 2,
+      autumn: 2,
+      winter: 2
     };
     this.happySprites = {
       spring: false,
@@ -74,6 +74,7 @@ class ShardGardenScene extends Phaser.Scene {
     this.load.image('talk', '/assets/interact/talk.png');
     this.load.image('jasminePlant', '/assets/plants/jasmine.PNG');
     this.load.image('bush', '/assets/misc/bush.png');
+     this.load.audio("theme1", "/assets/music/main-theme-1.mp3");
   }
 
   create() {
@@ -147,18 +148,30 @@ class ShardGardenScene extends Phaser.Scene {
     const seasonScale = 0.09;
     const spacing = 800 * scaleFactor;
     const startX = width / 2 - ((seasons.length - 1) * spacing) / 2;
-    const y = height * scaleFactor + 100;
+
+    // Pick 4 distinct y coordinates for the pillars
+    const yCoords = [
+      height * scaleFactor + 100,
+      height * scaleFactor + 180,
+      height * scaleFactor + 140,
+      height * scaleFactor + 220
+    ];
 
     seasons.forEach((season, i) => {
+      const y = yCoords[i]; // Assign each pillar a different y coordinate
+
       let seasonImg;
-      if (this.textures.exists(season)) {
-        seasonImg = this.add.image(startX + i * spacing, y, season)
+      const isHappy = this.shardCounts[season] === 0; // Only happy when all shards given
+
+      const spriteKey = isHappy ? season + "Happy" : season;
+      if (this.textures.exists(spriteKey)) {
+        seasonImg = this.add.image(startX + i * spacing, y, spriteKey)
           .setScale(seasonScale)
           .setDepth(10)
           .setInteractive({ useHandCursor: true });
       } else {
-        console.warn(`Image asset missing: ${season}`);
-        seasonImg = this.add.text(startX + i * spacing, y, `Missing: ${season}`, { fontSize: '16px', color: '#f00', backgroundColor: '#fff' }).setOrigin(0.5).setDepth(999);
+        console.warn(`Image asset missing: ${spriteKey}`);
+        seasonImg = this.add.text(startX + i * spacing, y, `Missing: ${spriteKey}`, { fontSize: '16px', color: '#f00', backgroundColor: '#fff' }).setOrigin(0.5).setDepth(999);
       }
       this[season + 'ShardSprite'] = seasonImg;
 
@@ -174,6 +187,11 @@ class ShardGardenScene extends Phaser.Scene {
               inventoryManager.removeItemByKey && inventoryManager.removeItemByKey(shardKey);
               showDialogue(this, `You returned a ${season} shard! (${this.shardCounts[season]} left)`);
               shardLogic(this);
+
+              // Update pillar sprite to happy if all shards given
+              if (this.shardCounts[season] === 0 && this.textures.exists(season + "Happy")) {
+                seasonImg.setTexture(season + "Happy");
+              }
             } else {
               showDialogue(this, `No ${season} shards left to return!`);
             }
@@ -409,8 +427,8 @@ class ShardGardenScene extends Phaser.Scene {
 
   setupBushes(width, height) {
     const bushPositions = [
-      { x: 180, y: 300 }, // Garlic
-      { x: 260, y: 400 }, // Thyme
+      { x: 180, y: 600 }, // Garlic
+      { x: 1200, y: 600 }, // Thyme
     ];
     const bushCount = bushPositions.length;
     const garlicIndex = 0;
@@ -470,7 +488,7 @@ class ShardGardenScene extends Phaser.Scene {
   showPlantMinigame(plant, foundFlag) {
     showOption(
       this,
-      `You found a ${plant.name} plant! But a cheeky animal is trying to steal it!`,
+      `You found a ${plant.name} plant! \n But a cheeky animal is trying to steal it!`,
       {
         options: [
           {
@@ -494,7 +512,9 @@ class ShardGardenScene extends Phaser.Scene {
                   showDialogue(this,
                     alreadyHas
                       ? `You already have the ${plant.name} plant.`
-                      : `You won the game! The animal reluctantly gives you the ${plant.name} plant.`,
+                      : `You won the game! The animal reluctantly \n gives you the ${plant.name} plant.`, {
+                        imageKey: plant.imageKey
+                      }
                   );
 
                   this[foundFlag] = true;

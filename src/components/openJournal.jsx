@@ -2,6 +2,7 @@ import Phaser from "phaser";
 import { getCollectedPlants } from "./journalManager";
 import plantData from "../plantData";
 import recipieData from "../recipieData";
+import { saveToLocal, loadFromLocal } from "../utils/localStorage";
 
 class OpenJournal extends Phaser.Scene {
   constructor() {
@@ -11,6 +12,7 @@ class OpenJournal extends Phaser.Scene {
 
   init(data) {
     let collectedKeys = [];
+    let journalState = loadFromLocal && loadFromLocal("journalState");
     if (data && Array.isArray(data.plants) && data.plants.length > 0) {
       collectedKeys = data.plants;
     } else {
@@ -19,7 +21,15 @@ class OpenJournal extends Phaser.Scene {
     this.collectedPlants = collectedKeys
       .map(key => plantData.find(p => p.key === key))
       .filter(Boolean); // Remove any not found
-    this.currentPage = 0;
+
+    // Restore tab and page if available
+    if (journalState) {
+      this.activeTab = journalState.activeTab || "plants";
+      this.currentPage = typeof journalState.currentPage === "number" ? journalState.currentPage : 0;
+    } else {
+      this.activeTab = "plants";
+      this.currentPage = 0;
+    }
   }
 
   preload() {
@@ -39,7 +49,11 @@ class OpenJournal extends Phaser.Scene {
         this.load.image(plant.imageKey, `/assets/items/${plant.imageKey}.png`);
       }
     });
-  }
+    recipieData.forEach(recipe => {
+      if (recipe.result && recipe.result.imageKey) {
+        this.load.image(recipe.result.imageKey, `/assets/crafting/${recipe.result.imageKey}.png`);
+      }
+    });  }
 
   create() {
     const { width, height } = this.sys.game.config;
@@ -95,6 +109,12 @@ class OpenJournal extends Phaser.Scene {
       .setInteractive({ useHandCursor: true })
       .setDepth(10);
     this.closeBtn.on("pointerdown", () => {
+      // Save current tab and page to local storage
+      saveToLocal("journalState", {
+        activeTab: this.activeTab,
+        currentPage: this.currentPage,
+        collectedPlants: this.collectedPlants.map(p => p.key)
+      });
       this.scene.stop();
       this.scene.resume("HUDScene");
     });
@@ -191,19 +211,25 @@ class OpenJournal extends Phaser.Scene {
     if (this.plantName && !this.plantName.destroyed) this.plantName.destroy();
     if (this.plantMedicinal && !this.plantMedicinal.destroyed) this.plantMedicinal.destroy();
     if (this.pageNumText && !this.pageNumText.destroyed) this.pageNumText.destroy();
-  // Clean up on shutdown/destroy
-  this.events.on('shutdown', () => {
-    if (this.plantImage && !this.plantImage.destroyed) this.plantImage.destroy();
-    if (this.plantName && !this.plantName.destroyed) this.plantName.destroy();
-    if (this.plantMedicinal && !this.plantMedicinal.destroyed) this.plantMedicinal.destroy();
-    if (this.pageNumText && !this.pageNumText.destroyed) this.pageNumText.destroy();
-  });
-  this.events.on('destroy', () => {
-    if (this.plantImage && !this.plantImage.destroyed) this.plantImage.destroy();
-    if (this.plantName && !this.plantName.destroyed) this.plantName.destroy();
-    if (this.plantMedicinal && !this.plantMedicinal.destroyed) this.plantMedicinal.destroy();
-    if (this.pageNumText && !this.pageNumText.destroyed) this.pageNumText.destroy();
-  });
+    if (this.recipeImages && Array.isArray(this.recipeImages)) {
+      this.recipeImages.forEach(img => { if (img && !img.destroyed) img.destroy(); });
+    }
+
+    // Clean up on shutdown/destroy
+    this.events.on('shutdown', () => {
+      if (this.plantImage && !this.plantImage.destroyed) this.plantImage.destroy();
+      if (this.plantName && !this.plantName.destroyed) this.plantName.destroy();
+      if (this.plantMedicinal && !this.plantMedicinal.destroyed) this.plantMedicinal.destroy();
+      if (this.pageNumText && !this.pageNumText.destroyed) this.pageNumText.destroy();
+    });
+
+    this.events.on('destroy', () => {
+      if (this.plantImage && !this.plantImage.destroyed) this.plantImage.destroy();
+      if (this.plantName && !this.plantName.destroyed) this.plantName.destroy();
+      if (this.plantMedicinal && !this.plantMedicinal.destroyed) this.plantMedicinal.destroy();
+      if (this.pageNumText && !this.pageNumText.destroyed) this.pageNumText.destroy();
+      
+    });
 
     const { width, height } = this.sys.game.config;
     const plant = this.collectedPlants[this.currentPage];
@@ -238,6 +264,7 @@ class OpenJournal extends Phaser.Scene {
       color: "#444",
       wordWrap: { width: 260 }
     });
+  
 
     // Page number
     this.pageNumText = this.add.text(width / 2, 580, `Page ${this.currentPage + 1} of ${this.collectedPlants.length}`, {
