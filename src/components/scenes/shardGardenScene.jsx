@@ -76,6 +76,7 @@ class ShardGardenScene extends Phaser.Scene {
     this.load.image('bush', '/assets/misc/bush.png');
      this.load.audio("theme1", "/assets/music/main-theme-1.mp3");
      this.load.audio("option", "/assets/sound-effects/option.mp3");
+     this.load.audio("shardAdd", "/assets/sound-effects/shard.mp3");
   }
 
   create() {
@@ -186,6 +187,12 @@ class ShardGardenScene extends Phaser.Scene {
             if (this.shardCounts[season] > 0) {
               this.shardCounts[season]--;
               inventoryManager.removeItemByKey && inventoryManager.removeItemByKey(shardKey);
+
+              // Play shard add sound when a shard is returned
+              if (this.sound && typeof this.sound.play === "function") {
+                this.sound.play("shardAdd", { volume: 0.7 });
+              }
+
               showDialogue(this, `You returned a ${season} shard! (${this.shardCounts[season]} left)`);
               shardLogic(this);
 

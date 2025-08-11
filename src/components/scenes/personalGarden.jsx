@@ -157,6 +157,32 @@ if (!this.sound.get('theme1')) {
         this.updatePlotColor(plotRect, plot);
         this.updatePlotStageImage(plot);
 
+        // --- Add hover images for prepared and grown plots ---
+        let hoverImg = null;
+        plotRect.on('pointerover', () => {
+          if (plot.state === 'prepared') {
+            // Show plant image on hover for prepared plot
+            if (!hoverImg) {
+              hoverImg = this.add.image(plotX, plotY - 32, 'plant')
+                .setScale(0.08)
+                .setDepth(200);
+            }
+          } else if (plot.state === 'grown') {
+            // Show harvest image on hover for grown plot
+            if (!hoverImg) {
+              hoverImg = this.add.image(plotX, plotY - 32, 'harvest')
+                .setScale(0.08)
+                .setDepth(200);
+            }
+          }
+        });
+        plotRect.on('pointerout', () => {
+          if (hoverImg) {
+            hoverImg.destroy();
+            hoverImg = null;
+          }
+        });
+
         plotRect.on('pointerdown', () => {
           let result;
           let shouldUpdateImage = false;
