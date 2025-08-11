@@ -199,9 +199,13 @@ class OpenSettings extends Phaser.Scene {
           removeFromLocal("HUDState");
           removeFromLocal("OpenJournal");
           removeFromLocal("OpenInventory");
-
-   
-          localStorage.clear();
+          // Reset in-memory inventory
+          if (window.inventoryManager) {
+            window.inventoryManager.clear && window.inventoryManager.clear();
+            // Or, if your InventoryManager uses an array:
+            window.inventoryManager.items = [];
+            window.inventoryManager.emitChange && window.inventoryManager.emitChange();
+          }
 
           confirmBg.destroy();
           confirmText.destroy();

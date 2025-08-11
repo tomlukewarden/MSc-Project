@@ -11,11 +11,10 @@ export const fairyIntroDialogues = [
 export const fairyHelpDialogues = [
     "",
     "Sounds like some kind of funny heartbeat!",
-    "I've heard that Foxglove can be used to help with that",
-    "Can you check your journal?",
-    "It should give you an idea of the remedy that Paula needs.",
-    "I have the foxglove and the teabag.",
-    "Head over to that crafting bench up there and combine them.",
+    "I've heard that Foxglove can be\n used to help with that",
+"I wonder if she puts it in her tea it may help",
+    "I have the foxglove",
+    "Give it to her and see what happens!",
 ];
 
 export const fairyGoodbyeDialogues = [
