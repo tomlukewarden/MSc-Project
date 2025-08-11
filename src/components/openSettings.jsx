@@ -193,6 +193,18 @@ class OpenSettings extends Phaser.Scene {
           removeFromLocal("shardGardenSceneState");
           removeFromLocal("greenhouseSceneState");
           removeFromLocal("timeOfDay");
+          removeFromLocal("journalState");
+          removeFromLocal("inventory");
+          removeFromLocal("settings");
+          removeFromLocal("HUDState");
+          removeFromLocal("OpenJournal");
+          removeFromLocal("OpenInventory");
+          // Remove any other custom keys you use:
+          // removeFromLocal("customKey");
+
+   
+          localStorage.clear();
+
           confirmBg.destroy();
           confirmText.destroy();
           yesBtn.destroy();
