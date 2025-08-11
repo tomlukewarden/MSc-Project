@@ -12,7 +12,6 @@ class OpenInventory extends Phaser.Scene {
   preload() {
     this.load.image("inventoryBackground", "/assets/ui-items/overlayBg.png");
     this.load.image("baseCream", "/assets/shopItems/cream.png");
-    this.load.image("aloeAfterSunCream", "/assets/crafting/aloeAfterSunCream.png");
     this.load.image('foxglovePlant', '/assets/plants/foxglove.png');
     this.load.image('marigoldPlant', '/assets/plants/marigold.PNG');
     this.load.image('jasminePlant', '/assets/plants/jasmine.PNG');

@@ -193,6 +193,20 @@ class OpenSettings extends Phaser.Scene {
           removeFromLocal("shardGardenSceneState");
           removeFromLocal("greenhouseSceneState");
           removeFromLocal("timeOfDay");
+          removeFromLocal("journalState");
+          removeFromLocal("inventory");
+          removeFromLocal("settings");
+          removeFromLocal("HUDState");
+          removeFromLocal("OpenJournal");
+          removeFromLocal("OpenInventory");
+          // Reset in-memory inventory
+          if (window.inventoryManager) {
+            window.inventoryManager.clear && window.inventoryManager.clear();
+            // Or, if your InventoryManager uses an array:
+            window.inventoryManager.items = [];
+            window.inventoryManager.emitChange && window.inventoryManager.emitChange();
+          }
+
           confirmBg.destroy();
           confirmText.destroy();
           yesBtn.destroy();

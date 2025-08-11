@@ -66,15 +66,23 @@ class ShardGardenScene extends Phaser.Scene {
     this.load.image('winter', '/assets/backgrounds/shardGarden/winter/sad.png');
     this.load.image('butterflyHappy', '/assets/npc/butterfly/happy-butterfly-dio.png');
     this.load.image('butterflySad', '/assets/npc/butterfly/sad-butterfly-dio.PNG');
-    this.load.image('periwinklePlant', '/assets/plants/periwinkle.png');
-    this.load.image('marigoldPlant', '/assets/plants/marigold.PNG');
     this.load.audio('sparkle', '/assets/sound-effects/sparkle.mp3');
     this.load.audio('click', '/assets/sound-effects/click.mp3');
     this.load.image('dialogueBoxBg', '/assets/ui-items/dialogue.png');
     this.load.image('talk', '/assets/interact/talk.png');
-    this.load.image('jasminePlant', '/assets/plants/jasmine.PNG');
     this.load.image('bush', '/assets/misc/bush.png');
      this.load.audio("theme1", "/assets/music/main-theme-1.mp3");
+     this.load.audio("option", "/assets/sound-effects/option.mp3");
+     this.load.audio("shardAdd", "/assets/sound-effects/shard.mp3");
+        this.load.image('foxglovePlant', '/assets/plants/foxglove.png');
+    this.load.image('marigoldPlant', '/assets/plants/marigold.PNG');
+    this.load.image('jasminePlant', '/assets/plants/jasmine.PNG');
+    this.load.image('aloePlant', '/assets/plants/aloe.PNG');
+    this.load.image('lavenderPlant', '/assets/plants/lavender.PNG');
+    this.load.image('periwinklePlant', '/assets/plants/periwinkle.png');
+    this.load.image('garlicPlant', '/assets/plants/garlic.PNG');
+    this.load.image('thymePlant', '/assets/plants/thyme.PNG');
+    this.load.image('willowPlant', '/assets/plants/willow.PNG');
   }
 
   create() {
@@ -185,6 +193,12 @@ class ShardGardenScene extends Phaser.Scene {
             if (this.shardCounts[season] > 0) {
               this.shardCounts[season]--;
               inventoryManager.removeItemByKey && inventoryManager.removeItemByKey(shardKey);
+
+              // Play shard add sound when a shard is returned
+              if (this.sound && typeof this.sound.play === "function") {
+                this.sound.play("shardAdd", { volume: 0.7 });
+              }
+
               showDialogue(this, `You returned a ${season} shard! (${this.shardCounts[season]} left)`);
               shardLogic(this);
 
@@ -490,6 +504,7 @@ class ShardGardenScene extends Phaser.Scene {
       this,
       `You found a ${plant.name} plant! \n But a cheeky animal is trying to steal it!`,
       {
+        imageKey: plant.imageKey,
         options: [
           {
             label: "Play a game to win it!",
@@ -540,8 +555,7 @@ class ShardGardenScene extends Phaser.Scene {
               this.dialogueOnComplete = null;
             }
           }
-        ],
-        imageKey: plant.imageKey || plant.key // fallback to key if imageKey missing
+        ]
       }
     );
   }

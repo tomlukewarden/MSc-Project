@@ -26,6 +26,11 @@ export function showOption(scene, text, config = {}) {
   const boxWidth = Math.min(600, width * 0.8);
   const boxHeight = Math.min(220, height * 0.3);
 
+  // Play sound effect when option box appears
+  if (scene.sound && typeof scene.sound.play === "function") {
+    scene.sound.play("option", { volume: 0.5 });
+  }
+
   scene.dialogueBox = createOptionBox(scene, text, {
     ...config,
     boxWidth,

@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-
+import { loadFromLocal } from "../../utils/localStorage";
 
 class StartScene extends Phaser.Scene {
     constructor() {
@@ -15,14 +15,13 @@ class StartScene extends Phaser.Scene {
     }
 
     create() {
-     
         if (this.sound.get("finalTheme")) {
             this.sound.stopByKey("finalTheme");
         }
-           this.sound.play("theme1", {
-      loop: true,
-      volume: 0.1
-    });
+        this.sound.play("theme1", {
+            loop: true,
+            volume: 0.1
+        });
         const { width, height } = this.sys.game.config;
 
         // Stop HUD and Journal scenes if running
@@ -41,12 +40,19 @@ class StartScene extends Phaser.Scene {
             .setInteractive();
 
         startButton.on("pointerdown", () => {
-            console.log("Switching to NewGameScene");
-            this.scene.stop("StartScene");
-            this.scene.start("NewGameScene");
+            const savedState = loadFromLocal("personalGardenSceneState");
+            if (savedState) {
+                // Resume game from saved state
+                this.scene.stop("StartScene");
+                this.scene.start("PersonalGarden", { loadedState: savedState });
+                this.scene.launch("HUDScene");
+            } else {
+                // Start new game
+                this.scene.stop("StartScene");
+                this.scene.start("NewGameScene");
+            }
         });
 
-      
         this.add.text(width / 2, height / 1.05, "Made by Thomas Warden | Art by Emma Formosa", {
             fontSize: "16px",
             fill: "#000"

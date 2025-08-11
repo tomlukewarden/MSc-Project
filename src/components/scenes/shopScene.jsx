@@ -42,6 +42,7 @@ class ShopScene extends Phaser.Scene {
     this.load.image("summerShard", "/assets/items/summer.png");
     this.load.image("autumnShard", "/assets/items/autumn.png");
     this.load.image("winterShard", "/assets/items/winter.png");
+    this.load.audio("option", "/assets/sound-effects/option.mp3");
   }
 
   create() {
