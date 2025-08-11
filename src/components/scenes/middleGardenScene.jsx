@@ -63,6 +63,7 @@ class MiddleGardenScene extends Phaser.Scene {
     this.load.image('moleHappy', '/assets/npc/mole/happy.png');
     this.load.image('turtle', '/assets/npc/turtle/turtle.png');
     this.load.image('turtleHappy', '/assets/npc/turtle/happy.png');
+    this.load.audio("option", "/assets/sound-effects/option.mp3");
   }
 
   create() {

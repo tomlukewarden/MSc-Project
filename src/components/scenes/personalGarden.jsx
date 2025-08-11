@@ -82,9 +82,15 @@ class PersonalGarden extends Phaser.Scene {
       ["plotPlantedImg", "/assets/farming/planted.png"],
       ["plotWateredImg", "/assets/farming/water2.png"],
       ["plotHarvestedImg", "/assets/farming/harvested.png"],
+      ["plant", "/assets/interact/plant.png"],
+      ["harvest", "/assets/interact/harvest.png"],
     ];
     assets.forEach(([key, path]) => this.load.image(key, path));
     this.load.audio("theme1", "/assets/music/main-theme-1.mp3");
+    this.load.audio("dig", "/assets/sound-effects/dig.mp3");
+    this.load.audio("water", "/assets/sound-effects/water.mp3");
+    this.load.audio("harvest", "/assets/sound-effects/harvest.mp3");
+    this.load.audio("option", "/assets/sound-effects/option.mp3");
   }
 
   create() {
@@ -157,6 +163,7 @@ if (!this.sound.get('theme1')) {
           switch (plot.state) {
             case 'empty':
               if (this.currentTool === 'hoe') {
+                this.sound.play('dig');
                 result = plot.prepare();
                 shouldUpdateImage = result.success;
               }
@@ -175,12 +182,14 @@ if (!this.sound.get('theme1')) {
             case 'planted':
             case 'watered':
               if (this.currentTool === 'wateringCan') {
+                this.sound.play('water');
                 result = plot.water();
                 shouldUpdateImage = result.success;
               }
               break;
             case 'grown':
               if (this.currentTool === 'shovel') {
+                this.sound.play('harvest');
                 result = plot.harvest();
                 shouldUpdateImage = result.success;
                 if (result.success && result.item) {
@@ -360,16 +369,22 @@ if (!this.sound.get('theme1')) {
       }
     }
 
-    const signX = 80;
-    const signY = height - 80;
-    const sign = this.add.image(signX, signY, "sign")
-      .setScale(1.5)
+    // Remove the sign image and replace with a button
+    const shopBtnX = 120;
+    const shopBtnY = height - 80;
+    const shopButtonBg = this.add.rectangle(shopBtnX, shopBtnY, 140, 50, 0x567d46, 0.95)
+      .setStrokeStyle(2, 0x88ccff)
       .setDepth(20)
       .setInteractive({ useHandCursor: true });
 
-    sign.on("pointerdown", () => {
+    const shopButtonText = this.add.text(shopBtnX, shopBtnY, "Shop", {
+      fontFamily: "Georgia",
+      fontSize: "24px",
+      color: "#fff"
+    }).setOrigin(0.5).setDepth(21);
+
+    shopButtonBg.on("pointerdown", () => {
       showOption(this, "Would you like to go to the shop?", {
-        imageKey: "sign",
         options: [
           {
             text: "Yes",

@@ -64,6 +64,7 @@ class WeeCairScene extends Phaser.Scene {
     this.load.audio("theme1", "/assets/music/main-theme-1.mp3");
     this.load.image('dialogueBoxBg', '/assets/ui-items/dialogue.png');
     this.load.image("craftingBench", "/assets/crafting/bench.png");
+    this.load.audio("option", "/assets/sound-effects/option.mp3");
   }
 
   create() {
