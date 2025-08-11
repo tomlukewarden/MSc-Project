@@ -199,8 +199,6 @@ class OpenSettings extends Phaser.Scene {
           removeFromLocal("HUDState");
           removeFromLocal("OpenJournal");
           removeFromLocal("OpenInventory");
-          // Remove any other custom keys you use:
-          // removeFromLocal("customKey");
 
    
           localStorage.clear();

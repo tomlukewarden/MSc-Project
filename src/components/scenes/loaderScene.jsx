@@ -5,6 +5,8 @@ class LoaderScene extends Phaser.Scene {
     super({ key: 'LoaderScene' });
     this.nextSceneKey = null;
     this.nextSceneData = null;
+    this.progressBar = null;
+    this.progressFill = null;
   }
 
   init(data) {
@@ -13,18 +15,63 @@ class LoaderScene extends Phaser.Scene {
   }
 
   preload() {
-    // Show loading text
     const { width, height } = this.sys.game.config;
-    this.loadingText = this.add.text(width / 2, height / 2, 'Loading...', {
-      fontFamily: 'Georgia',
-      fontSize: '32px',
-      color: '#3e7d3a',
-      backgroundColor: '#fff',
-      align: 'center'
-    }).setOrigin(0.5).setDepth(1000);
 
-    // Preload all assets used in updated scenes
-    // --- WallGardenScene ---
+    // Soft pastel background
+    this.cameras.main.setBackgroundColor('#f3f0e9');
+
+    // Add floating decorative elements (e.g. leaves)
+    this.leaves = this.add.group();
+    for (let i = 0; i < 8; i++) {
+      const leaf = this.add.rectangle(
+        Phaser.Math.Between(0, width),
+        Phaser.Math.Between(0, height),
+        10,
+        6,
+        0x8bb174
+      );
+      leaf.alpha = 0.7;
+      this.leaves.add(leaf);
+    }
+
+    // Title text
+    this.titleText = this.add.text(width / 2, height / 2 - 100, 'Preparing the Garden...', {
+      fontFamily: 'Georgia',
+      fontSize: '36px',
+      color: '#3e7d3a'
+    }).setOrigin(0.5);
+
+    // Progress bar background
+    this.progressBar = this.add.rectangle(width / 2, height / 2, 300, 20, 0xe0d8c3);
+    this.progressFill = this.add.rectangle(width / 2 - 150, height / 2, 0, 20, 0x8bb174).setOrigin(0, 0.5);
+
+    // Progress text
+    this.progressText = this.add.text(width / 2, height / 2 + 40, '0%', {
+      fontFamily: 'Georgia',
+      fontSize: '20px',
+      color: '#5a6c57'
+    }).setOrigin(0.5);
+
+    // Animate leaves drifting down
+    this.tweens.add({
+      targets: this.leaves.getChildren(),
+      y: `+=${height + 20}`,
+      repeat: -1,
+      duration: Phaser.Math.Between(4000, 8000),
+      delay: (_, i) => i * 200,
+      onRepeat: (tween, target) => {
+        target.x = Phaser.Math.Between(0, width);
+        target.y = -20;
+      }
+    });
+
+    // Progress tracking
+    this.load.on('progress', (value) => {
+      this.progressFill.width = 300 * value;
+      this.progressText.setText(Math.floor(value * 100) + '%');
+    });
+
+    // --- Preload assets (same as before) ---
     this.load.tilemapTiledJSON("wallGardenMap", "/assets/maps/wallGardenMap.json");
     this.load.image('wall1', '/assets/backgrounds/wallGarden/wall1.png');
     this.load.image('wall2', '/assets/backgrounds/wallGarden/wall2.png');
@@ -47,10 +94,8 @@ class LoaderScene extends Phaser.Scene {
     this.load.audio('click', '/assets/sound-effects/click.mp3');
     this.load.audio('sparkle', '/assets/sound-effects/sparkle.mp3');
 
-    // --- GreenhouseScene ---
     this.load.image('greenhouseBackground', '/assets/backgrounds/greenhouse/greenhouse.png');
 
-    // --- MiddleGardenScene ---
     this.load.image('finalGardenBackground', '/assets/backgrounds/finalGarden/middleBackground.png');
     this.load.image('folliage1', '/assets/backgrounds/finalGarden/folliage1.png');
     this.load.image('folliage2', '/assets/backgrounds/finalGarden/folliage2.png');
@@ -64,7 +109,6 @@ class LoaderScene extends Phaser.Scene {
     this.load.image('deerHappy', '/assets/npc/deer/deerHappy.png');
     this.load.image('marigoldPlant', '/assets/plants/marigold.PNG');
 
-    // --- PersonalGarden ---
     this.load.image('hoe', '/assets/tools/hoe.png');
     this.load.image('wateringCan', '/assets/tools/wateringCan.png');
     this.load.image('shovel', '/assets/tools/shovel.png');
@@ -87,25 +131,21 @@ class LoaderScene extends Phaser.Scene {
     this.load.image('lavenderPlant', '/assets/plants/lavender.PNG');
     this.load.image('willowPlant', '/assets/plants/willow.PNG');
 
-    // --- ShopScene ---
     this.load.image('shopBackground', '/assets/backgrounds/shop/shop.jpg');
     this.load.image('oilBaseImage', '/assets/shopItems/oil.png');
     this.load.audio('shopTheme', '/assets/music/shop-theme.mp3');
 
-    // --- MinigameScene ---
-    // (Assume minigame assets are loaded in their own scenes, but preload common UI/audio here)
     this.load.image('dialogueBoxBg', '/assets/ui-items/dialogue.png');
     this.load.audio('click', '/assets/sound-effects/click.mp3');
     this.load.audio('sparkle', '/assets/sound-effects/sparkle.mp3');
-  
   }
 
   create() {
-    // Fade out loading text
+    // Fade out everything before switching
     this.tweens.add({
-      targets: this.loadingText,
+      targets: [this.titleText, this.progressBar, this.progressFill, this.progressText, ...this.leaves.getChildren()],
       alpha: 0,
-      duration: 500,
+      duration: 600,
       onComplete: () => {
         this.scene.start(this.nextSceneKey, this.nextSceneData);
       }
