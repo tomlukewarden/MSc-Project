@@ -738,7 +738,6 @@ class WallGardenScene extends Phaser.Scene {
             }
           }
         ],
-        imageKey: plant.imageKey || plant.key // fallback to key if imageKey missing
       }
     );
   }

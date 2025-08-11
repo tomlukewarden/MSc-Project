@@ -555,8 +555,7 @@ class ShardGardenScene extends Phaser.Scene {
               this.dialogueOnComplete = null;
             }
           }
-        ],
-        imageKey: plant.imageKey || plant.key // fallback to key if imageKey missing
+        ]
       }
     );
   }
