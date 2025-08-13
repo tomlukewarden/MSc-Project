@@ -126,17 +126,30 @@ class NewGameScene extends Phaser.Scene {
         this.registry.set("gender", selectedGender);
 
         // Send to backend
+        const initialGameState = {
+          inventory: [],
+          personalGardenSceneState: null,
+          middleGardenSceneState: null,
+          wallGardenSceneState: null,
+          shardGardenSceneState: null,
+          greenhouseSceneState: null,
+          timeOfDay: null,
+          journalState: null,
+          settings: null,
+          HUDState: null
+        };
+
         try {
           const response = await fetch("http://localhost:3000/user", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               nickname: characterName,
-              farmname: farmName
+              farmname: farmName,
+              gameState: initialGameState
             })
           });
           const result = await response.json();
-          // Optionally handle result (e.g. show error if not ok)
           if (!response.ok) {
             validationText.setText("Failed to create user. Try again.").setVisible(true);
             return;

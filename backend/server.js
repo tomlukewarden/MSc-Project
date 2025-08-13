@@ -27,22 +27,43 @@ app.get('/user', async (req, res) => {
 
 
 app.post('/user', async (req, res) => {
-  const { nickname, farmname } = req.body;
-  const { data, error } = await supabase
+  const { nickname, farmname, gameState } = req.body;
+  console.log("POST /user called with:", { nickname, farmname, gameState });
+
+  // Insert user with gameState
+  const { data: userData, error: userError } = await supabase
     .from('user')
-    .insert([{ nickname, farmname }])
+    .insert([{ nickname, farmname, gameState }])
     .select();
-  if (error) return res.status(500).json({ error: error.message });
-  res.json(data);
+
+  console.log("User insert result:", { userData, userError });
+
+  if (userError) {
+    console.error("User insert error:", userError);
+    return res.status(500).json({ error: userError.message });
+  }
+
+  // Return the new user
+  res.json({ user: userData[0] });
 });
 
 app.post('/save', async (req, res) => {
   const { nickname, gameState } = req.body;
+  console.log("POST /save called with:", { nickname, gameState });
+
+  // Update gameState for the user
   const { data, error } = await supabase
     .from('user')
-    .insert([{ nickname, gameState }])
+    .update({ gameState })
+    .eq('nickname', nickname)
     .select();
-  if (error) return res.status(500).json({ error: error.message });
+
+  console.log("Save update result:", { data, error });
+
+  if (error) {
+    console.error("Save update error:", error);
+    return res.status(500).json({ error: error.message });
+  }
   res.json(data);
 });
 

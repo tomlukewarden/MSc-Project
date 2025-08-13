@@ -65,7 +65,22 @@ export function removeFromLocal(key) {
   }
 }
 
-// Collect all relevant keys
+export function saveGameStateToDB(nickname, gameState) {
+  fetch('http://localhost:3000/save', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      nickname,
+      gameState // send as object for json/jsonb column
+    })
+  })
+    .then(res => res.json())
+    .then(data => console.log("Saved!", data))
+    .catch(err => console.error("Save error:", err));
+}
+
+// Usage example:
+const nickname = loadFromLocal("characterName");
 const gameState = {
   inventory: loadFromLocal("inventory"),
   personalGardenSceneState: loadFromLocal("personalGardenSceneState"),
@@ -77,20 +92,6 @@ const gameState = {
   journalState: loadFromLocal("journalState"),
   settings: loadFromLocal("settings"),
   HUDState: loadFromLocal("HUDState"),
- 
 };
 
-// Send to backend
-const nickname = loadFromLocal("characterName");
-
-fetch('http://localhost:3000/save', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({
-    nickname,
-    gameState: JSON.stringify(gameState)
-  })
-})
-  .then(res => res.json())
-  .then(data => console.log("Saved!", data))
-  .catch(err => console.error("Save error:", err));
+saveGameStateToDB(nickname, gameState);
