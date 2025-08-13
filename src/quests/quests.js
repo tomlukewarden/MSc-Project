@@ -1,6 +1,11 @@
 import buddiesData from "../buddies";
 
 const quests = [
+    {    id: 0,
+        title: "Welcome to the Gardens",
+        description: "Go and talk to your fairy friend to get started.",
+        completed: false
+    },
     {
         id: 1,
         title: "Help Paula Nator",
