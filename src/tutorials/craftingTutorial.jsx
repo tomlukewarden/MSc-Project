@@ -90,8 +90,8 @@ class CraftingTutorial extends Phaser.Scene {
     }).setOrigin(1, 0).setInteractive({ useHandCursor: true });
     exit.on("pointerdown", () => {
       this.scene.stop("CraftingTutorial");
-      // Optionally return to inventory or main scene
-      this.scene.resume("OpenInventory");
+
+      this.scene.start("IntroScene");
     });
   }
 }
