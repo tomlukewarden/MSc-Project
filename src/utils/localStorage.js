@@ -81,11 +81,13 @@ const gameState = {
 };
 
 // Send to backend
+const nickname = loadFromLocal("characterName");
+
 fetch('http://localhost:3000/save', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({
-    nickname, // or get from user input
+    nickname,
     gameState: JSON.stringify(gameState)
   })
 })

@@ -110,7 +110,7 @@ class NewGameScene extends Phaser.Scene {
       .setInteractive({ useHandCursor: true })
       .on("pointerover", () => startBtn.setStyle({ backgroundColor: "#2e8c5a" }))
       .on("pointerout", () => startBtn.setStyle({ backgroundColor: "#3bb273" }))
-      .on("pointerdown", () => {
+      .on("pointerdown", async () => {
         const characterName = nameInput.node.value.trim();
         const farmName = farmInput.node.value.trim();
 
@@ -120,12 +120,32 @@ class NewGameScene extends Phaser.Scene {
           return;
         }
 
-        // Save data
+        // Save data locally
         this.registry.set("characterName", characterName);
         this.registry.set("farmName", farmName);
         this.registry.set("gender", selectedGender);
 
-        
+        // Send to backend
+        try {
+          const response = await fetch("http://localhost:3000/user", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              nickname: characterName,
+              farmname: farmName
+            })
+          });
+          const result = await response.json();
+          // Optionally handle result (e.g. show error if not ok)
+          if (!response.ok) {
+            validationText.setText("Failed to create user. Try again.").setVisible(true);
+            return;
+          }
+        } catch (err) {
+          validationText.setText("Network error. Try again.").setVisible(true);
+          return;
+        }
+
         nameInput.destroy();
         farmInput.destroy();
         this.scene.start("Tutorial");

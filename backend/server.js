@@ -25,12 +25,12 @@ app.get('/user', async (req, res) => {
   res.json(data);
 });
 
-// Add user
+
 app.post('/user', async (req, res) => {
-  const { nickname } = req.body;
+  const { nickname, farmname } = req.body;
   const { data, error } = await supabase
     .from('user')
-    .insert([{ nickname: nickname }])
+    .insert([{ nickname, farmname }])
     .select();
   if (error) return res.status(500).json({ error: error.message });
   res.json(data);
