@@ -162,29 +162,34 @@ class StartScene extends Phaser.Scene {
                 return;
             }
 
-         fetch(`http://localhost:3000/user?nickname=${nickname}&farmname=${farmname}`)
-           .then(res => res.json())
-           .then(userData => {
-            console.log("Loaded userData:", userData); // Add this line
-            // Optionally update lastLogin or active status
-            fetch('http://localhost:3000/user/active', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ id: userData.id, lastLogin: new Date().toISOString() })
-            });
+            fetch(`http://localhost:3000/user?nickname=${nickname}&farmname=${farmname}`)
+              .then(res => res.json())
+              .then(userData => {
+                console.log("Loaded userData:", userData);
 
-            // Start game with loaded user/gameState
-            this.scene.stop("StartScene");
-            this.scene.start("PersonalGarden", { loadedState: userData.gameState });
-            this.scene.launch("HUDScene");
-          });
-            
-            // Cleanup popup
-            inputBg.destroy();
-            inputText.destroy();
-            nicknameInput.destroy();
-            farmInput.destroy();
-            submitBtn.destroy();
+                // Save userId and nickname to localStorage
+                localStorage.setItem("userId", userData.id);
+                localStorage.setItem("characterName", userData.nickname);
+
+                // Optionally update lastLogin or active status
+                fetch('http://localhost:3000/user/active', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ id: userData.id, lastLogin: new Date().toISOString() })
+                });
+
+                // Start game with loaded user/gameState
+                this.scene.stop("StartScene");
+                this.scene.start("PersonalGarden", { loadedState: userData.gameState });
+                this.scene.launch("HUDScene");
+
+                // Cleanup popup
+                inputBg.destroy();
+                inputText.destroy();
+                nicknameInput.destroy();
+                farmInput.destroy();
+                submitBtn.destroy();
+              });
         });
     }
 }
