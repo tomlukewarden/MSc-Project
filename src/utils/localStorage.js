@@ -64,3 +64,31 @@ export function removeFromLocal(key) {
     return false;
   }
 }
+
+// Collect all relevant keys
+const gameState = {
+  inventory: loadFromLocal("inventory"),
+  personalGardenSceneState: loadFromLocal("personalGardenSceneState"),
+  middleGardenSceneState: loadFromLocal("middleGardenSceneState"),
+  wallGardenSceneState: loadFromLocal("wallGardenSceneState"),
+  shardGardenSceneState: loadFromLocal("shardGardenSceneState"),
+  greenhouseSceneState: loadFromLocal("greenhouseSceneState"),
+  timeOfDay: loadFromLocal("timeOfDay"),
+  journalState: loadFromLocal("journalState"),
+  settings: loadFromLocal("settings"),
+  HUDState: loadFromLocal("HUDState"),
+ 
+};
+
+// Send to backend
+fetch('http://localhost:3000/save', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    nickname, // or get from user input
+    gameState: JSON.stringify(gameState)
+  })
+})
+  .then(res => res.json())
+  .then(data => console.log("Saved!", data))
+  .catch(err => console.error("Save error:", err));

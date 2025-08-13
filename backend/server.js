@@ -36,6 +36,27 @@ app.post('/user', async (req, res) => {
   res.json(data);
 });
 
+app.post('/save', async (req, res) => {
+  const { nickname, gameState } = req.body;
+  const { data, error } = await supabase
+    .from('user')
+    .insert([{ nickname, gameState }])
+    .select();
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data);
+});
+
+app.get('/load', async (req, res) => {
+  const { nickname } = req.query;
+  const { data, error } = await supabase
+    .from('user')
+    .select('*')
+    .eq('nickname', nickname)
+    .single();
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data);
+});
+
 app.listen(process.env.PORT, () => {
   console.log(`🚀 Server running on http://localhost:${process.env.PORT}`);
 });
