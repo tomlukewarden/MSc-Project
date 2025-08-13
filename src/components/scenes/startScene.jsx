@@ -165,11 +165,19 @@ class StartScene extends Phaser.Scene {
          fetch(`http://localhost:3000/user?nickname=${nickname}&farmname=${farmname}`)
            .then(res => res.json())
            .then(userData => {
-              // Start game with loaded user/gameState
-              this.scene.stop("StartScene");
-              this.scene.start("PersonalGarden", { loadedState: userData.gameState });
-              this.scene.launch("HUDScene");
-              });
+            console.log("Loaded userData:", userData); // Add this line
+            // Optionally update lastLogin or active status
+            fetch('http://localhost:3000/user/active', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ id: userData.id, lastLogin: new Date().toISOString() })
+            });
+
+            // Start game with loaded user/gameState
+            this.scene.stop("StartScene");
+            this.scene.start("PersonalGarden", { loadedState: userData.gameState });
+            this.scene.launch("HUDScene");
+          });
             
             // Cleanup popup
             inputBg.destroy();
@@ -177,11 +185,6 @@ class StartScene extends Phaser.Scene {
             nicknameInput.destroy();
             farmInput.destroy();
             submitBtn.destroy();
-
-            // For now, just start the game (replace with actual load logic)
-            this.scene.stop("StartScene");
-            this.scene.start("PersonalGarden");
-            this.scene.launch("HUDScene");
         });
     }
 }

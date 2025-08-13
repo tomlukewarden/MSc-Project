@@ -20,7 +20,14 @@ app.get('/', (req, res) => {
 
 // Get all users
 app.get('/user', async (req, res) => {
-  const { data, error } = await supabase.from('user').select('*');
+  const { nickname, farmname } = req.query;
+  const { data, error } = await supabase
+    .from('user')
+    .select('*')
+    .eq('nickname', nickname)
+    .eq('farmname', farmname)
+    .single(); // <-- ensures a single object is returned
+
   if (error) return res.status(500).json({ error: error.message });
   res.json(data);
 });
@@ -76,6 +83,24 @@ app.get('/load', async (req, res) => {
     .single();
   if (error) return res.status(500).json({ error: error.message });
   res.json(data);
+});
+
+app.post('/user/active', async (req, res) => {
+  const { id, lastLogin } = req.body;
+  console.log("POST /user/active called with:", { id, lastLogin });
+
+  const { data, error } = await supabase
+    .from('user')
+    .update({ lastLogin })
+    .eq('id', id) // <-- use id, not nickname
+    .select();
+
+  if (error) {
+    console.error("User lastLogin update error:", error);
+    return res.status(500).json({ error: error.message });
+  }
+
+  res.json({ user: data[0] });
 });
 
 app.listen(process.env.PORT, () => {
