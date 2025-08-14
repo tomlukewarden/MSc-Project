@@ -11,7 +11,7 @@ import { createElephant, elephantIntroDialogues, elephantThanksDialogues } from 
 import { createPolarBear, polarBearIntroDialogues, polarBearThanksDialogues } from '../../characters/polar';
 import { createDeer, deerIntroDialogues, deerThanksDialogues } from '../../characters/deer';
 import globalTimeManager from "../../day/timeManager";
-import globalInventoryManager from "../globalInventoryManager";
+import globalInventoryManager from "../inventoryManager";
 
 class WallGardenScene extends Phaser.Scene {
   constructor() {
