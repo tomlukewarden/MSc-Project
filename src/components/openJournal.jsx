@@ -532,48 +532,72 @@ class OpenJournal extends Phaser.Scene {
   // --- New Quest Page Renderer ---
   renderQuestPage() {
     const { width, height } = this.sys.game.config;
+
     // Remove previous quest display if any
     if (this.questTitle && !this.questTitle.destroyed) this.questTitle.destroy();
     if (this.questDesc && !this.questDesc.destroyed) this.questDesc.destroy();
     if (this.pageNumText && !this.pageNumText.destroyed) this.pageNumText.destroy();
+    if (this.completedTitle && !this.completedTitle.destroyed) this.completedTitle.destroy();
+    if (this.completedList && !this.completedList.destroyed) this.completedList.destroy();
 
-    const quest = quests[this.currentPage];
+    // Filter active and completed quests
+    const activeQuests = quests.filter(q => q.active);
+    const completedQuests = quests.filter(q => q.completed);
+
+    // Show active quest (if any)
+    const quest = activeQuests[this.currentPage];
     if (!quest) {
-      this.questTitle = this.add.text(width / 2, height / 2, "No quests available.", {
+      this.questTitle = this.add.text(width / 2, height / 2, "No active quests.", {
         fontFamily: "Georgia",
         fontSize: "24px",
         color: "#2d4739"
       }).setOrigin(0.5);
-      return;
+    } else {
+      this.questTitle = this.add.text(width / 2, height / 2 - 40, quest.title, {
+        fontFamily: "Georgia",
+        fontSize: "32px",
+        color: "#2d4739"
+      }).setOrigin(0.5);
+
+      this.questDesc = this.add.text(width / 2, height / 2 + 10, quest.description, {
+        fontFamily: "Georgia",
+        fontSize: "20px",
+        color: "#444",
+        wordWrap: { width: 400 }
+      }).setOrigin(0.5);
+
+      this.pageNumText = this.add.text(width / 2, 580, `Page ${this.currentPage + 1} of ${activeQuests.length}`, {
+        fontFamily: "Georgia",
+        fontSize: "18px",
+        color: "#3e2f1c"
+      }).setOrigin(0.5);
     }
 
-    this.questTitle = this.add.text(width / 2, height / 2 - 40, quest.title, {
-      fontFamily: "Georgia",
-      fontSize: "32px",
-      color: "#2d4739"
-    }).setOrigin(0.5);
+    // Show completed quests below
+    if (completedQuests.length > 0) {
+      this.completedTitle = this.add.text(width / 2, height - 180, "Completed Quests:", {
+        fontFamily: "Georgia",
+        fontSize: "22px",
+        color: "#567d46"
+      }).setOrigin(0.5);
 
-    this.questDesc = this.add.text(width / 2, height / 2 + 10, quest.description, {
-      fontFamily: "Georgia",
-      fontSize: "20px",
-      color: "#444",
-      wordWrap: { width: 400 }
-    }).setOrigin(0.5);
+      const completedText = completedQuests.map(q => `• ${q.title}`).join('\n');
+      this.completedList = this.add.text(width / 2, height - 150, completedText, {
+        fontFamily: "Georgia",
+        fontSize: "18px",
+        color: "#888",
+        wordWrap: { width: 400 }
+      }).setOrigin(0.5);
+    }
 
-    this.pageNumText = this.add.text(width / 2, 580, `Page ${this.currentPage + 1} of ${quests.length}`, {
-      fontFamily: "Georgia",
-      fontSize: "18px",
-      color: "#3e2f1c"
-    }).setOrigin(0.5);
-
-    // Show/hide buttons based on number of quests
-    const showNav = quests.length > 1;
+    // Show/hide buttons based on number of active quests
+    const showNav = activeQuests.length > 1;
     this.nextBtn.setVisible(showNav);
     this.nextBtnBg.setVisible(showNav);
     this.prevBtn.setVisible(showNav);
     this.prevBtnBg.setVisible(showNav);
     if (showNav) {
-      this.nextBtn.setAlpha(this.currentPage < quests.length - 1 ? 1 : 0.4);
+      this.nextBtn.setAlpha(this.currentPage < activeQuests.length - 1 ? 1 : 0.4);
       this.prevBtn.setAlpha(this.currentPage > 0 ? 1 : 0.4);
     }
   }

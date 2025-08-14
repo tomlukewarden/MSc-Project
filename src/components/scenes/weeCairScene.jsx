@@ -5,6 +5,7 @@ if (typeof window !== "undefined") {
   }
 }
 import Phaser from "phaser";
+import quests from "../../quests/quests";
 import { showDialogue, showOption, destroyDialogueUI } from "../../dialogue/dialogueUIHelpers";
 import {
   createBee,
@@ -233,20 +234,51 @@ class WeeCairScene extends Phaser.Scene {
           imageKey: this.activeImageKey
         });
       } else {
-        // --- After beeThanksDialogues, receive spring shard ---
-        if (this.activeDialogue === beeThanksDialogues && !this.springShardReceived) {
-          receivedItem(this, "springShard", "Spring Shard");
-          addPlantToJournal("springShard");
-          this.springShardReceived = true;
+        if (this.currentSet === 0) { 
+         
+          const welcomeQuest = quests.find(q => q.id === 0);
+          if (welcomeQuest) {
+            welcomeQuest.active = false;
+            welcomeQuest.completed = true;
+            saveToLocal("quests", quests); // Optionally persist
+            console.log("Quest 'Welcome to the Gardens' completed!");
+          }
 
-          this.time.delayedCall(1000, () => {
-            this.activeDialogue = fairyGoodbyeDialogues;
-            this.activeImageKey = "fairyHappy";
-            this.currentDialogueIndex = 0;
-            this.dialogueActive = true;
-            showDialogue(this, this.activeDialogue[this.currentDialogueIndex], { imageKey: this.activeImageKey });
-          });
-          return;
+          // Activate "Help Paula Nator" quest
+          const paulaQuest = quests.find(q => q.title === "Help Paula Nator");
+          if (paulaQuest) {
+            paulaQuest.active = true;
+            saveToLocal("quests", quests);
+            console.log("Quest 'Help Paula Nator' is now active!");
+          }
+        }
+
+        // --- After beeThanksDialogues, receive spring shard ---
+        if (this.activeDialogue === beeThanksDialogues) {
+          // Complete "Help Paula Nator" quest
+          const paulaQuest = quests.find(q => q.title === "Help Paula Nator");
+          if (paulaQuest) {
+            paulaQuest.active = false;
+            paulaQuest.completed = true;
+            saveToLocal("quests", quests); // Optionally persist
+            console.log("Quest 'Help Paula Nator' completed!");
+          }
+
+          // Existing spring shard logic
+          if (!this.springShardReceived) {
+            receivedItem(this, "springShard", "Spring Shard");
+            addPlantToJournal("springShard");
+            this.springShardReceived = true;
+
+            this.time.delayedCall(1000, () => {
+              this.activeDialogue = fairyGoodbyeDialogues;
+              this.activeImageKey = "fairyHappy";
+              this.currentDialogueIndex = 0;
+              this.dialogueActive = true;
+              showDialogue(this, this.activeDialogue[this.currentDialogueIndex], { imageKey: this.activeImageKey });
+            });
+            return;
+          }
         }
 
         // --- After fairyGoodbyeDialogues, show options ---
