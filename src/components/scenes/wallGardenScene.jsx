@@ -9,6 +9,7 @@ import { addPlantToJournal } from "../journalManager";
 import { receivedItem } from "../recievedItem";
 import { createElephant, elephantIntroDialogues, elephantThanksDialogues } from '../../characters/elephant';
 import { createPolarBear, polarBearIntroDialogues, polarBearThanksDialogues } from '../../characters/polar';
+import {createDeer, deerIntroDialogues, deerThanksDialogues} from '../../characters/deer';
 import globalTimeManager from "../../day/timeManager";
 
 
@@ -42,6 +43,8 @@ class WallGardenScene extends Phaser.Scene {
         this.load.image("defaultLeftWalk2", "/assets/char/default/left-step-2.PNG");
         this.load.image("defaultRightWalk1", "/assets/char/default/right-step-1.PNG");
         this.load.image("defaultRightWalk2", "/assets/char/default/right-step-2.PNG");
+           this.load.image('deer', '/assets/npc/deer/deer.png')
+    this.load.image('deerHappy', '/assets/npc/deer/happy.png')
     this.load.audio('click', '/assets/sound-effects/click.mp3');
     this.load.image('talk', '/assets/interact/talk.png');
     this.load.image("springShard", "/assets/items/spring.png");
@@ -484,6 +487,150 @@ class WallGardenScene extends Phaser.Scene {
           this.dialogueActive = false;
           this.updateHUDState && this.updateHUDState();
         });
+        return;
+      }
+    });
+
+    // --- Deer NPC ---
+    this.deer = createDeer(this, width / 2, height / 2 - 120);
+    this.deer
+      .setInteractive({ useHandCursor: true })
+      .setDepth(30)
+      .setScale(0.13)
+      .setOrigin(4, 0.3);
+
+    // Deer talk icon events
+    this.deer.on("pointerover", (pointer) => {
+      talkIcon.setVisible(true);
+      talkIcon.setPosition(pointer.worldX + 32, pointer.worldY);
+    });
+    this.deer.on("pointermove", (pointer) => {
+      talkIcon.setPosition(pointer.worldX + 32, pointer.worldY);
+    });
+    this.deer.on("pointerout", () => {
+      talkIcon.setVisible(false);
+    });
+
+    // --- Deer dialogue and gifting logic ---
+    this.deerDialogueActive = false;
+    this.deerDialogueIndex = 0;
+    this.hasMarigoldSalve = () => inventoryManager.hasItemByKey && inventoryManager.hasItemByKey("marigoldSalve");
+
+    // Listen for marigoldSalve handover event from inventory
+    this.events.on("marigoldSalveGiven", () => {
+      this.awaitingMarigoldSalveGive = false;
+      // Remove ALL marigoldSalve items from inventory as a failsafe
+      if (typeof inventoryManager.getItems === "function" && typeof inventoryManager.removeItemByKey === "function") {
+        let items = inventoryManager.getItems();
+        let salveCount = items.filter(item => item.key === "marigoldSalve").length;
+        for (let i = 0; i < salveCount; i++) {
+          inventoryManager.removeItemByKey("marigoldSalve");
+        }
+      }
+      const items = typeof inventoryManager.getItems === "function" ? inventoryManager.getItems() : [];
+      const hasMarigoldSalve = items.some(item => item.key === "marigoldSalve");
+      if (!hasMarigoldSalve) {
+        showDialogue(this, "You hand the deer the Marigold Salve...", { imageKey: "deer" });
+        this.deer.setTexture && this.deer.setTexture("deerHappy");
+        this.time.delayedCall(800, () => {
+          this.deerDialogueActive = true;
+          this.deerDialogueIndex = 0;
+          this.activeDeerDialogues = deerThanksDialogues;
+          showDialogue(this, this.activeDeerDialogues[this.deerDialogueIndex], { imageKey: "deer" });
+          this.updateHUDState && this.updateHUDState();
+        });
+        this.deerHasMarigoldSalve = true;
+      } else {
+        showDialogue(this, "You still have the Marigold Salve.", { imageKey: "deer" });
+      }
+    });
+
+    // Deer click handler
+    this.deer.on("pointerdown", () => {
+      if (!this.deerIntroDone && !this.deerDialogueActive) {
+        this.deerDialogueActive = true;
+        this.deerDialogueIndex = 0;
+        this.activeDeerDialogues = deerIntroDialogues;
+        showDialogue(this, this.activeDeerDialogues[this.deerDialogueIndex], { imageKey: "deer" });
+        this.updateHUDState && this.updateHUDState();
+
+        // --- Activate Elkton John's quest when first meeting ---
+        const deerQuest = quests.find(q => q.title === "Help Elkton John");
+        if (deerQuest && !deerQuest.active && !deerQuest.completed) {
+          deerQuest.active = true;
+          saveToLocal("quests", quests);
+          console.log("Quest 'Help Elkton John' is now active!");
+        }
+        return;
+      }
+      if (this.deerIntroDone && !this.deerThanksDone && this.hasMarigoldSalve()) {
+        showOption(this, "Give the deer the Marigold Salve?", {
+          imageKey: "deer",
+          options: [
+            {
+              label: "Yes",
+              onSelect: () => {
+                this.hasMadeMarigoldSalveChoice = true;
+                this.destroyDialogueUI();
+                this.dialogueActive = true;
+                // Set flag to await marigoldSalve handover
+                this.awaitingMarigoldSalveGive = true;
+                this.scene.launch("OpenInventory");
+              }
+            },
+            {
+              label: "No",
+              onSelect: () => {
+                this.destroyDialogueUI();
+                this.dialogueActive = true;
+                showDialogue(this, "You decide to hold off for now.", { imageKey: "deer" });
+              }
+            }
+          ]
+        });
+        return;
+      }
+      if (this.deerIntroDone && !this.deerThanksDone && !this.hasMarigoldSalve()) {
+        showDialogue(this, "The deer looks at you expectantly. Maybe you need to find something for them...", { imageKey: "deer" });
+        this.time.delayedCall(1800, () => {
+          this.destroyDialogueUI();
+          this.dialogueActive = false;
+          this.updateHUDState && this.updateHUDState();
+        });
+        return;
+      }
+    });
+
+    // Deer dialogue advance on click
+    this.input.on("pointerdown", () => {
+      if (this.deerDialogueActive) {
+        this.deerDialogueIndex++;
+        if (this.activeDeerDialogues && this.deerDialogueIndex < this.activeDeerDialogues.length) {
+          showDialogue(this, this.activeDeerDialogues[this.deerDialogueIndex], { imageKey: "deer" });
+        } else {
+          this.destroyDialogueUI();
+          this.dialogueActive = false;
+          this.updateHUDState && this.updateHUDState();
+
+          if (!this.deerIntroDone && this.activeDeerDialogues === deerIntroDialogues) {
+            this.deerIntroDone = true;
+          }
+          if (this.deerHasMarigoldSalve && this.activeDeerDialogues === deerThanksDialogues) {
+            this.deerThanksDone = true;
+            // --- Complete Elkton John's quest after thanks dialogue ---
+            const deerQuest = quests.find(q => q.title === "Help Elkton John");
+            if (deerQuest) {
+              deerQuest.active = false;
+              deerQuest.completed = true;
+              saveToLocal("quests", quests);
+              console.log("Quest 'Help Elkton John' completed!");
+            }
+            receivedItem(this, "springShard", "Spring Shard");
+            inventoryManager.removeItemByKey && inventoryManager.removeItemByKey("marigoldSalve");
+          }
+          this.deerDialogueActive = false;
+          this.updateHUDState && this.updateHUDState();
+        }
         return;
       }
     });

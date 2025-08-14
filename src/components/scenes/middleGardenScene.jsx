@@ -12,7 +12,6 @@ import { receivedItem } from "../recievedItem";
 import { saveToLocal, loadFromLocal } from "../../utils/localStorage";
 import { showDialogue, showOption } from "../../dialogue/dialogueUIHelpers";
 import { createWolf, wolfIntroDialogues, wolfThanksDialogues } from "../../characters/wolf";
-import {createDeer, deerIntroDialogues, deerThanksDialogues} from "../../characters/deer";
 import { createMole, moleIntroDialogues, moleThanksDialogues } from "../../characters/mole";
 import { createTurtle, turtleIntroDialogues, turtleThanksDialogues } from "../../characters/turtle";
 import globalTimeManager from "../../day/timeManager";
@@ -53,8 +52,6 @@ class MiddleGardenScene extends Phaser.Scene {
     this.load.image('talk', '/assets/ui-items/talk.png');
     this.load.image('summerShard', '/assets/items/summer.png');
     this.load.image('winterShard', '/assets/items/winter.png');
-    this.load.image('deer', '/assets/npc/deer/deer.png')
-    this.load.image('deerHappy', '/assets/npc/deer/happy.png')
     this.load.image('bush', '/assets/misc/bush.png');
     this.load.image('periwinklePlant', '/assets/plants/periwinkle.png');
     this.load.image('marigoldPlant', '/assets/plants/marigold.PNG');
@@ -278,14 +275,6 @@ class MiddleGardenScene extends Phaser.Scene {
       .setScale(0.15)
       .setOrigin(0.5, 0.9);
 
-    // --- Deer NPC ---
-    this.deer = createDeer(this, width / 2 - 200, height / 2 + 100);
-    this.deer
-      .setInteractive({ useHandCursor: true })
-      .setDepth(1)
-      .setScale(0.15)
-      .setOrigin(0.5, 0.2);
-
     // --- Talk icon ---
     const talkIcon = this.add
       .image(0, 0, "talk")
@@ -303,18 +292,6 @@ class MiddleGardenScene extends Phaser.Scene {
       talkIcon.setPosition(pointer.worldX + 32, pointer.worldY);
     });
     this.wolf.on("pointerout", () => {
-      talkIcon.setVisible(false);
-    });
-
-    // Deer talk icon events
-    this.deer.on("pointerover", (pointer) => {
-      talkIcon.setVisible(true);
-      talkIcon.setPosition(pointer.worldX + 32, pointer.worldY);
-    });
-    this.deer.on("pointermove", (pointer) => {
-      talkIcon.setPosition(pointer.worldX + 32, pointer.worldY);
-    });
-    this.deer.on("pointerout", () => {
       talkIcon.setVisible(false);
     });
 
@@ -413,28 +390,6 @@ class MiddleGardenScene extends Phaser.Scene {
             inventoryManager.removeItemByKey && inventoryManager.removeItemByKey("periwinkleExtract");
           }
           this.wolfDialogueActive = false;
-          this.updateHUDState && this.updateHUDState();
-        }
-        return;
-      }
-      // Deer dialogue advance
-      if (this.deerDialogueActive) {
-        this.deerDialogueIndex++;
-        if (this.activeDeerDialogues && this.deerDialogueIndex < this.activeDeerDialogues.length) {
-          showDialogue(this, this.activeDeerDialogues[this.deerDialogueIndex], { imageKey: "deer" });
-        } else {
-          this.destroyDialogueUI();
-          this.dialogueActive = false;
-          this.updateHUDState && this.updateHUDState();
-          
-          if (!this.deerIntroDone && this.activeDeerDialogues === deerIntroDialogues) {
-            this.deerIntroDone = true;
-          }
-          if (this.deerHasMarigold && this.activeDeerDialogues === deerThanksDialogues) {
-            this.deerThanksDone = true;
-            receivedItem(this, "winterShard", "Winter Shard");
-          }
-          this.deerDialogueActive = false;
           this.updateHUDState && this.updateHUDState();
         }
         return;
