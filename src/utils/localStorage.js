@@ -91,6 +91,7 @@ const gameState = {
   journalState: loadFromLocal("journalState"),
   settings: loadFromLocal("settings"),
   HUDState: loadFromLocal("HUDState"),
+  quests: loadFromLocal("quests"), // <-- Add this line
 };
 
 saveGameStateToDB(nickname, gameState);

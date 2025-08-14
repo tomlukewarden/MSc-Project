@@ -167,6 +167,8 @@ class OpenJournal extends Phaser.Scene {
         currentPage: this.currentPage,
         collectedPlants: this.collectedPlants.map(p => p.key)
       });
+      saveToLocal("quests", quests);
+
       this.scene.stop();
       this.scene.resume("HUDScene");
     });
