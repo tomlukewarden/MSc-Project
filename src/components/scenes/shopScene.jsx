@@ -1,22 +1,18 @@
 import Phaser from 'phaser';
-
 import itemsData from '../../items';
 import { showOption } from '../../dialogue/dialogueUIHelpers';
 import { receivedItem } from '../recievedItem';
 import SeedPouchLogic from '../seedPouchLogic';
-// Ensure global inventoryManager instance
-import { inventoryManager as globalInventoryManager } from "../inventoryManager";
-if (typeof window !== "undefined") {
-  if (!window.inventoryManager) {
-    window.inventoryManager = globalInventoryManager;
-  }
-}
+import globalInventoryManager from '../inventoryManager';
 import quests from '../../quests/quests';
-
+import { saveToLocal } from '../../utils/localStorage';
 
 class ShopScene extends Phaser.Scene {
   constructor() {
     super({ key: 'ShopScene' });
+    
+    // Use the global inventory manager
+    this.inventoryManager = globalInventoryManager;
   }
 
   preload() {
@@ -46,23 +42,21 @@ class ShopScene extends Phaser.Scene {
   }
 
   create() {
-
     this.scene.stop("HUDScene");
- // Stop main theme
-if (this.sound.get('theme1')) {
-  this.sound.stopByKey('theme1');
-}
-alert("If you are struggling to collect shards. Just grab them in the extras tab of the shop! :)");
-// Play shop or end credits music
-this.sound.play('shopTheme', { loop: true, volume: 0.2 });
-// Or for end credits:
+    
+    // Stop main theme
+    if (this.sound.get('theme1')) {
+      this.sound.stopByKey('theme1');
+    }
+    alert("If you are struggling to collect shards. Just grab them in the extras tab of the shop! :)");
+    
+    // Play shop theme music
+    this.sound.play('shopTheme', { loop: true, volume: 0.2 });
 
     const { width, height } = this.scale;
 
     // Main shop background
     this.add.image(width / 2, height / 2, 'shopBackground').setDepth(0).setScale(0.225);
-
-    // --- Coins and coinManager removed ---
 
     // Seeds from itemsData
     const seedItems = itemsData.filter(item => item.type === 'seed').map(item => ({
@@ -112,22 +106,25 @@ this.sound.play('shopTheme', { loop: true, volume: 0.2 });
     const itemBgWidth = 180;
     const itemBgHeight = 100;
 
-    function renderShopItems(tab) {
+    const renderShopItems = (tab) => {
       itemSprites.forEach(s => s.destroy());
       itemSprites = [];
       let tabItems = [];
       if (tab === 'seeds') tabItems = seedItems;
       else if (tab === 'extras') tabItems = extraItems;
+      
       const cols = 3;
       const cellW = 110;
       const cellH = 110;
       const gridStartX = itemAreaX - cellW;
       const gridStartY = itemStartY;
+      
       tabItems.forEach((item, idx) => {
         const col = idx % cols;
         const row = Math.floor(idx / cols);
         const x = gridStartX + col * cellW;
         const y = gridStartY + row * cellH;
+        
         const bg = this.add.rectangle(
           x, y, 90, 90, tab === 'seeds' ? 0x567d46 : 0x222233, 1
         ).setStrokeStyle(2, 0x88ccff).setDepth(1);
@@ -142,17 +139,18 @@ this.sound.play('shopTheme', { loop: true, volume: 0.2 });
           .setDepth(2)
           .setInteractive({ useHandCursor: true });
         itemSprites.push(img);
+        
         const txt = this.add.text(x, y + 22, item.name, {
           fontFamily: "Georgia", fontSize: "14px", color: "#fff"
         }).setOrigin(0.5, 0.5).setDepth(2);
         itemSprites.push(txt);
-       
 
         img.on('pointerover', () => img.setTint(0x88ccff));
         img.on('pointerout', () => img.clearTint());
         img.on('pointerdown', () => {
           this.sound.play('click', { volume: 0.5 });
           let quantity = 1;
+          
           let quantityPrompt = this.add.dom(width / 2, height / 2).createFromHTML(`
             <div style='background:#222;padding:24px;border-radius:12px;'>
               <h2 style='color:#fff;font-family:Georgia;'>Take ${item.name}</h2>
@@ -164,6 +162,7 @@ this.sound.play('shopTheme', { loop: true, volume: 0.2 });
             </div>
           `);
           quantityPrompt.setDepth(1000);
+          
           const qtyInput = quantityPrompt.node.querySelector('#qtyInput');
           const takeBtn = quantityPrompt.node.querySelector('#takeBtn');
           const cancelBtn = quantityPrompt.node.querySelector('#cancelBtn');
@@ -175,8 +174,10 @@ this.sound.play('shopTheme', { loop: true, volume: 0.2 });
               errorMsg.textContent = 'Please enter a valid quantity.';
               return;
             }
-            // No coins required, just take the item
+            
+            // Handle different item types
             if (item.type === 'seed') {
+              // Add to seed pouch
               SeedPouchLogic.addSeed(item, quantity);
               receivedItem(this, item.key, `${item.name} x${quantity}`);
               quantityPrompt.destroy();
@@ -192,23 +193,13 @@ this.sound.play('shopTheme', { loop: true, volume: 0.2 });
                 saveToLocal("quests", quests);
                 console.log("Quest 'Plant your first crop' is now active!");
               }
-            } else if (item.type === 'tool') {
-              for (let i = 0; i < quantity; i++) {
-                if (typeof globalInventoryManager.addItem === 'function') {
-                  globalInventoryManager.addItem({ ...item, color: 0xd2b48c });
-                }
-              }
-              receivedItem(this, item.key, `${item.name} x${quantity}`);
-              quantityPrompt.destroy();
-              this.destroyDialogueUI();
-              showOption(this, `You took ${item.name} x${quantity}!\nCheck your inventory.`, {
-                options: [{ label: "OK", onSelect: () => this.destroyDialogueUI() }]
-              });
             } else {
+              // Add to main inventory using global inventory manager
               for (let i = 0; i < quantity; i++) {
-                if (typeof globalInventoryManager.addItem === 'function') {
-                  globalInventoryManager.addItem({ ...item, color: 0xd2b48c });
-                }
+                this.inventoryManager.addItem({ 
+                  ...item, 
+                  color: 0xd2b48c 
+                });
               }
               receivedItem(this, item.key, `${item.name} x${quantity}`);
               quantityPrompt.destroy();
@@ -218,31 +209,33 @@ this.sound.play('shopTheme', { loop: true, volume: 0.2 });
               });
             }
           };
+          
           cancelBtn.onclick = () => {
             quantityPrompt.destroy();
             this.destroyDialogueUI();
           };
         });
-      }, this);
-    }
+      });
+    };
 
     // Initial render
-    renderShopItems.call(this, currentTab);
+    renderShopItems('seeds');
 
     seedsTab.on('pointerdown', () => {
       currentTab = 'seeds';
       seedsTab.setFillStyle(0x567d46, 0.95);
       extrasTab.setFillStyle(0x222233, 0.95);
-      renderShopItems.call(this, currentTab);
+      renderShopItems(currentTab);
     });
+    
     extrasTab.on('pointerdown', () => {
       currentTab = 'extras';
       seedsTab.setFillStyle(0x222233, 0.95);
       extrasTab.setFillStyle(0x567d46, 0.95);
-      renderShopItems.call(this, currentTab);
+      renderShopItems(currentTab);
     });
 
-    // Back to Menu button
+    // Back to Garden button
     const backBtn = this.add.text(width / 2, height - 60, "Back to Garden", {
       fontFamily: "Georgia",
       fontSize: "24px",

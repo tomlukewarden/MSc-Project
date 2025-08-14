@@ -15,6 +15,8 @@ import itemsData from "../../items";
 import SeedPouchLogic from "../seedPouchLogic";
 import plantData from "../../plantData";
 import quests from "../../quests/quests";
+import globalInventoryManager from "../inventoryManager";
+
 class PersonalGarden extends Phaser.Scene {
   constructor() {
     super("PersonalGarden", { physics: { default: 'arcade', arcade: { debug: true } } });
@@ -23,14 +25,9 @@ class PersonalGarden extends Phaser.Scene {
     this.cols = 5;
     this.plots = [];
     this.currentTool = "hoe";
-    if (typeof window !== "undefined") {
-      if (!window.inventoryManager) {
-        window.inventoryManager = inventoryManager;
-      }
-      this.inventoryManager = window.inventoryManager;
-    } else {
-      this.inventoryManager = inventoryManager;
-    }
+    
+    // Use the global inventory manager
+    this.inventoryManager = globalInventoryManager;
   }
   preload() {
     // Load all required assets for the garden scene
@@ -295,18 +292,8 @@ if (!this.sound.get('theme1')) {
 
     this.physics.add.collider(this.mainChar, this.obstacleGroup);
 
-    const defaultTools = ['hoe', 'wateringCan', 'shovel', 'seeds'];
-    let inventory = this.inventoryManager.getInventory ? this.inventoryManager.getInventory() : this.inventoryManager.inventory;
-    if (!inventory || typeof inventory !== 'object') {
-      inventory = {};
-      this.inventoryManager.inventory = inventory;
-    }
-    if (!Array.isArray(inventory.tools)) inventory.tools = [];
-    defaultTools.forEach(tool => {
-      if (!inventory.tools.includes(tool)) {
-        inventory.tools.push(tool);
-      }
-    });
+    // Initialize default tools using the global manager
+    this.inventoryManager.initializeDefaultTools();
 
     this.add.image(0, 0, "gardenBackground").setOrigin(0).setScale(0.221);
 

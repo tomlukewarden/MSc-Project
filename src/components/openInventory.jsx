@@ -1,6 +1,8 @@
-import InventoryManager from "./inventoryManager";
+import globalInventoryManager from "./inventoryManager";
 import recipieData from "../recipieData";
-export const inventoryManager = new InventoryManager();
+
+// Remove the old inventoryManager export and use the global one
+export const inventoryManager = globalInventoryManager;
 
 class OpenInventory extends Phaser.Scene {
   constructor() {
@@ -84,7 +86,7 @@ class OpenInventory extends Phaser.Scene {
     // Render Inventory
     this.renderItems = () => {
       this.contentContainer.removeAll(true);
-      const items = inventoryManager.getItems();
+      const items = globalInventoryManager.getItems(); // Use global manager
       const cols = 5;
       const cellW = 100;
       const cellH = 110;
@@ -117,7 +119,7 @@ class OpenInventory extends Phaser.Scene {
           const weeCairScene = this.scene.get('WeeCairScene');
           if (weeCairScene) {
             if (weeCairScene.awaitingFoxgloveGive && item.key === "foxglovePlant") {
-              inventoryManager.removeItemByKey("foxglovePlant");
+              globalInventoryManager.removeItemByKey("foxglovePlant");
               weeCairScene.events.emit("foxgloveGiven");
               weeCairScene.awaitingFoxgloveGive = false;
               this.scene.stop();
@@ -128,14 +130,14 @@ class OpenInventory extends Phaser.Scene {
           const greenhouseScene = this.scene.get('GreenhouseScene');
           if (greenhouseScene) {
             if (greenhouseScene.awaitingAloeAfterSunCreamGive && item.key === "aloeAfterSunCream") {
-              inventoryManager.removeItemByKey("aloeAfterSunCream");
+              globalInventoryManager.removeItemByKey("aloeAfterSunCream");
               greenhouseScene.events.emit("aloeAfterSunCreamGiven");
               greenhouseScene.awaitingAloeAfterSunCreamGive = false;
               this.scene.stop();
               return;
             }
             if (greenhouseScene.awaitingLavenderOilGive && item.key === "lavenderOil") {
-              inventoryManager.removeItemByKey("lavenderOil");
+              globalInventoryManager.removeItemByKey("lavenderOil");
               greenhouseScene.events.emit("lavenderOilGiven");
               greenhouseScene.awaitingLavenderOilGive = false;
               this.scene.stop();
@@ -147,28 +149,28 @@ class OpenInventory extends Phaser.Scene {
           const middleGardenScene = this.scene.get('MiddleGardenScene');
           if (middleGardenScene) {
             if (middleGardenScene.awaitingPeriwinkleExtractGive && item.key === "periwinkleExtract") {
-              inventoryManager.removeItemByKey("periwinkleExtract");
+              globalInventoryManager.removeItemByKey("periwinkleExtract");
               middleGardenScene.events.emit("periwinkleExtractGiven");
               middleGardenScene.awaitingPeriwinkleExtractGive = false;
               this.scene.stop();
               return;
             }
             if (middleGardenScene.awaitingMarigoldSalveGive && item.key === "marigoldSalve") {
-              inventoryManager.removeItemByKey("marigoldSalve");
+              globalInventoryManager.removeItemByKey("marigoldSalve");
               middleGardenScene.events.emit("marigoldSalveGiven");
               middleGardenScene.awaitingMarigoldSalveGive = false;
               this.scene.stop();
               return;
             }
             if (middleGardenScene.awaitingGarlicPasteGive && item.key === "garlicPaste") {
-              inventoryManager.removeItemByKey("garlicPaste");
+              globalInventoryManager.removeItemByKey("garlicPaste");
               middleGardenScene.events.emit("garlicPasteGiven");
               middleGardenScene.awaitingGarlicPasteGive = false;
               this.scene.stop();
               return;
             }
             if (middleGardenScene.awaitingThymeInfusedOilGive && item.key === "thymeInfusedOil") {
-              inventoryManager.removeItemByKey("thymeInfusedOil");
+              globalInventoryManager.removeItemByKey("thymeInfusedOil");
               middleGardenScene.events.emit("thymeInfusedOilGiven");
               middleGardenScene.awaitingThymeInfusedOilGive = false;
               this.scene.stop();
@@ -180,14 +182,14 @@ class OpenInventory extends Phaser.Scene {
           const wallGardenScene = this.scene.get('WallGardenScene');
           if (wallGardenScene) {
             if (wallGardenScene.awaitingJasmineTeaGive && item.key === "jasmineTea") {
-              inventoryManager.removeItemByKey("jasmineTea");
+              globalInventoryManager.removeItemByKey("jasmineTea");
               wallGardenScene.events.emit("jasmineTeaGiven");
               wallGardenScene.awaitingJasmineTeaGive = false;
               this.scene.stop();
               return;
             }
             if (wallGardenScene.awaitingWillowBarkTeaGive && item.key === "willowBarkTea") {
-              inventoryManager.removeItemByKey("willowBarkTea");
+              globalInventoryManager.removeItemByKey("willowBarkTea");
               wallGardenScene.events.emit("willowBarkTeaGiven");
               wallGardenScene.awaitingWillowBarkTeaGive = false;
               this.scene.stop();
@@ -249,7 +251,7 @@ class OpenInventory extends Phaser.Scene {
 
         craftBtn.on("pointerdown", () => {
           // Check inventory for required items
-          const items = inventoryManager.getItems();
+          const items = globalInventoryManager.getItems();
           const missing = recipe.ingredients.filter(ingredient => {
             const invItem = items.find(i => i.key === ingredient.key);
             return !invItem || typeof invItem.count !== "number" || invItem.count < ingredient.amount;
@@ -273,10 +275,10 @@ class OpenInventory extends Phaser.Scene {
           }
           // Remove ingredients from inventory
           recipe.ingredients.forEach(ingredient => {
-            inventoryManager.removeItemByKey &&
-              inventoryManager.removeItemByKey(ingredient.key, ingredient.amount);
+            globalInventoryManager.removeItemByKey &&
+              globalInventoryManager.removeItemByKey(ingredient.key, ingredient.amount);
           });
-          inventoryManager.addItem({ key: recipe.result.key, name: recipe.result.name });
+          globalInventoryManager.addItem({ key: recipe.result.key, name: recipe.result.name });
 
           // Show crafted message in-game instead of alert
           const craftedMsg = `Crafted: ${recipe.result.name}`;
@@ -302,7 +304,7 @@ class OpenInventory extends Phaser.Scene {
     };
 
     this.refreshUI();
-    inventoryManager.onChange(() => this.refreshUI());
+    globalInventoryManager.onChange(() => this.refreshUI());
   }
 
   refreshUI() {

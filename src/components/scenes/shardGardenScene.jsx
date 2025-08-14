@@ -4,14 +4,7 @@ import { saveToLocal, loadFromLocal } from "../../utils/localStorage";
 import plantData from "../../plantData";
 import { showDialogue, showOption } from "../../dialogue/dialogueUIHelpers";
 import { shardLogic } from "../shardLogic";
-import { inventoryManager } from "../openInventory";
-// Ensure global inventoryManager instance
-import { inventoryManager as globalInventoryManager } from "../inventoryManager";
-if (typeof window !== "undefined") {
-  if (!window.inventoryManager) {
-    window.inventoryManager = globalInventoryManager;
-  }
-}
+import globalInventoryManager from "../inventoryManager";
 import { addPlantToJournal } from "../journalManager";
 import { receivedItem } from "../recievedItem";
 import globalTimeManager from "../../day/timeManager";
@@ -38,6 +31,9 @@ class ShardGardenScene extends Phaser.Scene {
       winter: false
     };
     this.winDialogueActive = false;
+    
+    // Use the global inventory manager
+    this.inventoryManager = globalInventoryManager;
   }
 
   preload() {
@@ -72,10 +68,10 @@ class ShardGardenScene extends Phaser.Scene {
     this.load.image('dialogueBoxBg', '/assets/ui-items/dialogue.png');
     this.load.image('talk', '/assets/interact/talk.png');
     this.load.image('bush', '/assets/misc/bush.png');
-     this.load.audio("theme1", "/assets/music/main-theme-1.mp3");
-     this.load.audio("option", "/assets/sound-effects/option.mp3");
-     this.load.audio("shardAdd", "/assets/sound-effects/shard.mp3");
-        this.load.image('foxglovePlant', '/assets/plants/foxglove.png');
+    this.load.audio("theme1", "/assets/music/main-theme-1.mp3");
+    this.load.audio("option", "/assets/sound-effects/option.mp3");
+    this.load.audio("shardAdd", "/assets/sound-effects/shard.mp3");
+    this.load.image('foxglovePlant', '/assets/plants/foxglove.png');
     this.load.image('marigoldPlant', '/assets/plants/marigold.PNG');
     this.load.image('jasminePlant', '/assets/plants/jasmine.PNG');
     this.load.image('aloePlant', '/assets/plants/aloe.PNG');
@@ -100,13 +96,12 @@ class ShardGardenScene extends Phaser.Scene {
     let missingKeys = expectedKeys.filter(k => !loadedKeys.includes(k));
     let debugText = `Loaded textures: ${loadedKeys.join(', ')}\nMissing: ${missingKeys.join(', ')}`;
     this.add.text(20, debugY, debugText, { fontSize: '14px', color: missingKeys.length ? '#f00' : '#080', backgroundColor: '#fff', wordWrap: { width: 800 } }).setDepth(-1);
+    
     globalTimeManager.init(this);
     if (!globalTimeManager.startTimestamp) {
       globalTimeManager.start();
     }
-    if (typeof window !== "undefined") {
-      window.inventoryManager = inventoryManager;
-    }
+
     this.scene.launch("HUDScene");
     const { width, height } = this.sys.game.config;
     const scaleFactor = 0.175;
@@ -189,11 +184,11 @@ class ShardGardenScene extends Phaser.Scene {
         seasonImg.on("pointerout", () => seasonImg.clearTint && seasonImg.clearTint());
         seasonImg.on("pointerup", () => {
           const shardKey = season + "Shard";
-          const hasShard = inventoryManager.hasItemByKey && inventoryManager.hasItemByKey(shardKey);
+          const hasShard = this.inventoryManager.hasItemByKey(shardKey);
           if (hasShard) {
             if (this.shardCounts[season] > 0) {
               this.shardCounts[season]--;
-              inventoryManager.removeItemByKey && inventoryManager.removeItemByKey(shardKey);
+              this.inventoryManager.removeItemByKey(shardKey);
 
               // Play shard add sound when a shard is returned
               if (this.sound && typeof this.sound.play === "function") {
@@ -231,7 +226,7 @@ class ShardGardenScene extends Phaser.Scene {
               showDialogue(this, `No ${season} shards left to return!`);
             }
           } else {
-            showDialogue(this, `You don't have a ${season} shard in your inventory.`,  { imageKey: shardKey });
+            showDialogue(this, `You don't have a ${season} shard in your inventory.`, { imageKey: shardKey });
           }
           this.updateHUDState();
         });
@@ -273,7 +268,7 @@ class ShardGardenScene extends Phaser.Scene {
             // Automatically give summer shard after thanks dialogue
             receivedItem(this, "summerShard", "Summer Shard");
             // Always remove periwinkle as a failsafe
-            inventoryManager.removeItemByKey && inventoryManager.removeItemByKey("periwinklePlant");
+            this.inventoryManager.removeItemByKey("periwinklePlant");
           }
           this.moleDialogueActive = false;
           this.updateHUDState && this.updateHUDState();
@@ -550,7 +545,7 @@ class ShardGardenScene extends Phaser.Scene {
                   this.scene.stop("MiniGameScene");
                   this.scene.resume();
 
-                  const alreadyHas = inventoryManager.hasItemByKey && inventoryManager.hasItemByKey(plant.key);
+                  const alreadyHas = this.inventoryManager.hasItemByKey(plant.key);
                   if (!alreadyHas) {
                     addPlantToJournal(plant.key);
                     receivedItem(this, plant.key, plant.name);

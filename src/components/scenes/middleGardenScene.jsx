@@ -1,12 +1,6 @@
 import { createMainChar } from "../../characters/mainChar";
 import plantData from "../../plantData";
-import { inventoryManager } from "../inventoryManager";
-// Ensure global inventoryManager instance
-if (typeof window !== "undefined") {
-  if (!window.inventoryManager) {
-    window.inventoryManager = inventoryManager;
-  }
-}
+import globalInventoryManager from "../inventoryManager";
 import { addPlantToJournal } from "../journalManager";
 import { receivedItem } from "../recievedItem";
 import { saveToLocal, loadFromLocal } from "../../utils/localStorage";
@@ -15,6 +9,7 @@ import { createWolf, wolfIntroDialogues, wolfThanksDialogues } from "../../chara
 import { createMole, moleIntroDialogues, moleThanksDialogues } from "../../characters/mole";
 import { createTurtle, turtleIntroDialogues, turtleThanksDialogues } from "../../characters/turtle";
 import globalTimeManager from "../../day/timeManager";
+import quests from "../../quests/quests";
 
 class MiddleGardenScene extends Phaser.Scene {
   constructor() {
@@ -24,6 +19,9 @@ class MiddleGardenScene extends Phaser.Scene {
     this.dialogueActive = false;
     this.dialogueOnComplete = null;
     this.transitioning = false;
+    
+    // Use the global inventory manager
+    this.inventoryManager = globalInventoryManager;
   }
 
   preload() {
@@ -52,11 +50,13 @@ class MiddleGardenScene extends Phaser.Scene {
     this.load.image('talk', '/assets/ui-items/talk.png');
     this.load.image('summerShard', '/assets/items/summer.png');
     this.load.image('winterShard', '/assets/items/winter.png');
+    this.load.image('springShard', '/assets/items/spring.png');
+    this.load.image('autumnShard', '/assets/items/autumn.png');
     this.load.image('bush', '/assets/misc/bush.png');
     this.load.image('periwinklePlant', '/assets/plants/periwinkle.png');
     this.load.image('marigoldPlant', '/assets/plants/marigold.PNG');
     this.load.image('jasminePlant', '/assets/plants/jasmine.PNG');
-        this.load.image('mole', '/assets/npc/mole/mole.png');
+    this.load.image('mole', '/assets/npc/mole/mole.png');
     this.load.image('moleHappy', '/assets/npc/mole/happy.png');
     this.load.image('turtle', '/assets/npc/turtle/turtle.png');
     this.load.image('turtleHappy', '/assets/npc/turtle/happy.png');
@@ -69,13 +69,36 @@ class MiddleGardenScene extends Phaser.Scene {
       globalTimeManager.start();
     }
     this.transitioning = false;
-    if (typeof window !== "undefined") {
-      window.inventoryManager = inventoryManager;
-    }
+    
     this.scene.launch("HUDScene");
     this.scene.stop("StartScene");
     const { width, height } = this.sys.game.config;
     const scaleFactor = 0.175;
+
+    // --- LOAD STATE FROM LOCAL STORAGE ---
+    const sceneState = loadFromLocal('middleGardenSceneState') || {};
+    // Restore inventory if present
+    if (sceneState.inventory && Array.isArray(sceneState.inventory)) {
+      this.inventoryManager.clear();
+      sceneState.inventory.forEach(item => this.inventoryManager.addItem(item));
+    }
+    // Restore found flags
+    this.garlicFound = !!sceneState.garlicFound;
+    this.thymeFound = !!sceneState.thymeFound;
+    this.marigoldFound = !!sceneState.marigoldFound;
+    this.jasmineFound = !!sceneState.jasmineFound;
+    this.periwinkleFound = !!sceneState.periwinkleFound;
+    // Restore NPC states
+    this.wolfIntroDone = !!sceneState.wolfIntroDone;
+    this.wolfThanksDone = !!sceneState.wolfThanksDone;
+    this.moleIntroDone = !!sceneState.moleIntroDone;
+    this.moleThanksDone = !!sceneState.moleThanksDone;
+    this.turtleIntroDone = !!sceneState.turtleIntroDone;
+    this.turtleThanksDone = !!sceneState.turtleThanksDone;
+    // Restore time of day
+    if (sceneState.timeOfDay) {
+      globalTimeManager.dayCycle.setTimeOfDay(sceneState.timeOfDay);
+    }
 
     // Asset existence check helper
     const safeAddImage = (scene, x, y, key, ...args) => {
@@ -85,6 +108,7 @@ class MiddleGardenScene extends Phaser.Scene {
       }
       return scene.add.image(x, y, key, ...args);
     };
+
     // Background
     safeAddImage(this, width / 2, height / 2, 'finalGardenBackground').setScale(scaleFactor).setDepth(0);
     // Folliage
@@ -107,6 +131,13 @@ class MiddleGardenScene extends Phaser.Scene {
     this.mainChar = createMainChar(this, width / 2, height / 2, scaleFactor, collisionGroup);
     this.mainChar.setDepth(1).setOrigin(0.5, 0.5);
 
+    // --- Talk icon ---
+    const talkIcon = this.add
+      .image(0, 0, "talk")
+      .setScale(0.05)
+      .setVisible(false)
+      .setDepth(11)
+      .setOrigin(0.5);
 
     // --- Mole NPC ---
     this.mole = createMole(this, width / 2 + 200, height / 2 + 100);
@@ -116,6 +147,11 @@ class MiddleGardenScene extends Phaser.Scene {
       .setScale(0.09)
       .setOrigin(-3.5, 2);
 
+    // Set mole texture based on saved state
+    if (this.moleThanksDone && this.textures.exists('moleHappy')) {
+      this.mole.setTexture('moleHappy');
+    }
+
     // --- Turtle NPC ---
     this.turtle = createTurtle(this, width / 2 - 200, height / 2 + 100);
     this.turtle
@@ -124,41 +160,49 @@ class MiddleGardenScene extends Phaser.Scene {
       .setScale(0.12)
       .setOrigin(-0.2, 1.7);
 
-    // Mole talk icon events
-    this.mole.on("pointerover", (pointer) => {
-      talkIcon.setVisible(true);
-      talkIcon.setPosition(pointer.worldX + 32, pointer.worldY);
-    });
-    this.mole.on("pointermove", (pointer) => {
-      talkIcon.setPosition(pointer.worldX + 32, pointer.worldY);
-    });
-    this.mole.on("pointerout", () => {
-      talkIcon.setVisible(false);
-    });
+    // Set turtle texture based on saved state
+    if (this.turtleThanksDone && this.textures.exists('turtleHappy')) {
+      this.turtle.setTexture('turtleHappy');
+    }
 
-    // Turtle talk icon events
-    this.turtle.on("pointerover", (pointer) => {
-      talkIcon.setVisible(true);
-      talkIcon.setPosition(pointer.worldX + 32, pointer.worldY);
-    });
-    this.turtle.on("pointermove", (pointer) => {
-      talkIcon.setPosition(pointer.worldX + 32, pointer.worldY);
-    });
-    this.turtle.on("pointerout", () => {
-      talkIcon.setVisible(false);
+    // --- Wolf NPC ---
+    this.wolf = createWolf(this, width / 2, height / 2 - 120);
+    this.wolf
+      .setInteractive({ useHandCursor: true })
+      .setDepth(10)
+      .setScale(0.15)
+      .setOrigin(0.5, 0.9);
+
+    // Set wolf texture based on saved state
+    if (this.wolfThanksDone && this.textures.exists('wolfHappy')) {
+      this.wolf.setTexture('wolfHappy');
+    }
+
+    // Talk icon events for all NPCs
+    [this.mole, this.turtle, this.wolf].forEach(npc => {
+      npc.on("pointerover", (pointer) => {
+        talkIcon.setVisible(true);
+        talkIcon.setPosition(pointer.worldX + 32, pointer.worldY);
+      });
+      npc.on("pointermove", (pointer) => {
+        talkIcon.setPosition(pointer.worldX + 32, pointer.worldY);
+      });
+      npc.on("pointerout", () => {
+        talkIcon.setVisible(false);
+      });
     });
 
     // --- Mole dialogue and gifting logic ---
     this.moleDialogueActive = false;
     this.moleDialogueIndex = 0;
-    // Change required item to Garlic Paste
-    this.hasGarlicPaste = () => inventoryManager.hasItemByKey && inventoryManager.hasItemByKey("garlicPaste");
+    this.hasGarlicPaste = () => this.inventoryManager.hasItemByKey("garlicPaste");
 
     // Listen for garlicPaste handover event from inventory
     this.events.on("garlicPasteGiven", () => {
       this.awaitingGarlicPasteGive = false;
-      inventoryManager.removeItemByKey && inventoryManager.removeItemByKey("garlicPaste");
-      if (!inventoryManager.hasItemByKey || !inventoryManager.hasItemByKey("garlicPaste")) {
+      this.inventoryManager.removeItemByKey("garlicPaste");
+      
+      if (!this.inventoryManager.hasItemByKey("garlicPaste")) {
         showDialogue(this, "You hand the mole the Garlic Paste...", { imageKey: "mole" });
         this.mole.setTexture && this.mole.setTexture("moleHappy");
         this.time.delayedCall(800, () => {
@@ -182,6 +226,14 @@ class MiddleGardenScene extends Phaser.Scene {
         this.activeMoleDialogues = moleIntroDialogues;
         showDialogue(this, this.activeMoleDialogues[this.moleDialogueIndex], { imageKey: "mole" });
         this.updateHUDState && this.updateHUDState();
+
+        // --- Activate Mole's quest when first meeting ---
+        const moleQuest = quests.find(q => q.title === "Help the Mole");
+        if (moleQuest && !moleQuest.active && !moleQuest.completed) {
+          moleQuest.active = true;
+          saveToLocal("quests", quests);
+          console.log("Quest 'Help the Mole' is now active!");
+        }
         return;
       }
       if (this.moleIntroDone && !this.moleThanksDone && this.hasGarlicPaste()) {
@@ -220,6 +272,33 @@ class MiddleGardenScene extends Phaser.Scene {
         return;
       }
     });
+
+    // --- Turtle dialogue and gifting logic ---
+    this.turtleDialogueActive = false;
+    this.turtleDialogueIndex = 0;
+    this.hasThymeInfusedOil = () => this.inventoryManager.hasItemByKey("thymeInfusedOil");
+
+    // Listen for thymeInfusedOil handover event from inventory
+    this.events.on("thymeInfusedOilGiven", () => {
+      this.awaitingThymeInfusedOilGive = false;
+      this.inventoryManager.removeItemByKey("thymeInfusedOil");
+      
+      if (!this.inventoryManager.hasItemByKey("thymeInfusedOil")) {
+        showDialogue(this, "You hand the turtle the Thyme Infused Oil...", { imageKey: "turtle" });
+        this.turtle.setTexture && this.turtle.setTexture("turtleHappy");
+        this.time.delayedCall(800, () => {
+          this.turtleDialogueActive = true;
+          this.turtleDialogueIndex = 0;
+          this.activeTurtleDialogues = turtleThanksDialogues;
+          showDialogue(this, this.activeTurtleDialogues[this.turtleDialogueIndex], { imageKey: "turtle" });
+          this.updateHUDState && this.updateHUDState();
+        });
+        this.turtleHasThymeInfusedOil = true;
+      } else {
+        showDialogue(this, "You still have the Thyme Infused Oil.", { imageKey: "turtle" });
+      }
+    });
+
     // Turtle click handler
     this.turtle.on("pointerdown", () => {
       if (!this.turtleIntroDone && !this.turtleDialogueActive) {
@@ -228,6 +307,14 @@ class MiddleGardenScene extends Phaser.Scene {
         this.activeTurtleDialogues = turtleIntroDialogues;
         showDialogue(this, this.activeTurtleDialogues[this.turtleDialogueIndex], { imageKey: "turtle" });
         this.updateHUDState && this.updateHUDState();
+
+        // --- Activate Turtle's quest when first meeting ---
+        const turtleQuest = quests.find(q => q.title === "Help the Turtle");
+        if (turtleQuest && !turtleQuest.active && !turtleQuest.completed) {
+          turtleQuest.active = true;
+          saveToLocal("quests", quests);
+          console.log("Quest 'Help the Turtle' is now active!");
+        }
         return;
       }
       if (this.turtleIntroDone && !this.turtleThanksDone && this.hasThymeInfusedOil()) {
@@ -267,45 +354,17 @@ class MiddleGardenScene extends Phaser.Scene {
       }
     });
 
-    // --- Wolf NPC ---
-    this.wolf = createWolf(this, width / 2 + 200, height / 2 + 100);
-    this.wolf
-      .setInteractive({ useHandCursor: true })
-      .setDepth(10)
-      .setScale(0.15)
-      .setOrigin(0.5, 0.9);
-
-    // --- Talk icon ---
-    const talkIcon = this.add
-      .image(0, 0, "talk")
-      .setScale(0.05)
-      .setVisible(false)
-      .setDepth(11)
-      .setOrigin(0.5);
-
-    // Wolf talk icon events
-    this.wolf.on("pointerover", (pointer) => {
-      talkIcon.setVisible(true);
-      talkIcon.setPosition(pointer.worldX + 32, pointer.worldY);
-    });
-    this.wolf.on("pointermove", (pointer) => {
-      talkIcon.setPosition(pointer.worldX + 32, pointer.worldY);
-    });
-    this.wolf.on("pointerout", () => {
-      talkIcon.setVisible(false);
-    });
-
     // --- Wolf dialogue and gifting logic ---
     this.wolfDialogueActive = false;
     this.wolfDialogueIndex = 0;
-    // Change required item to Periwinkle Extract
-    this.hasPeriwinkleExtract = () => inventoryManager.hasItemByKey && inventoryManager.hasItemByKey("periwinkleExtract");
+    this.hasPeriwinkleExtract = () => this.inventoryManager.hasItemByKey("periwinkleExtract");
 
     // Listen for periwinkleExtract handover event from inventory
     this.events.on("periwinkleExtractGiven", () => {
       this.awaitingPeriwinkleExtractGive = false;
-      inventoryManager.removeItemByKey && inventoryManager.removeItemByKey("periwinkleExtract");
-      if (!inventoryManager.hasItemByKey || !inventoryManager.hasItemByKey("periwinkleExtract")) {
+      this.inventoryManager.removeItemByKey("periwinkleExtract");
+      
+      if (!this.inventoryManager.hasItemByKey("periwinkleExtract")) {
         showDialogue(this, "You hand the wolf the Periwinkle Extract...", { imageKey: "wolf" });
         this.wolf.setTexture && this.wolf.setTexture("wolfHappy");
         this.time.delayedCall(800, () => {
@@ -329,6 +388,14 @@ class MiddleGardenScene extends Phaser.Scene {
         this.activeWolfDialogues = wolfIntroDialogues;
         showDialogue(this, this.activeWolfDialogues[this.wolfDialogueIndex], { imageKey: "wolf" });
         this.updateHUDState && this.updateHUDState();
+
+        // --- Activate Wolf's quest when first meeting ---
+        const wolfQuest = quests.find(q => q.title === "Help the Wolf");
+        if (wolfQuest && !wolfQuest.active && !wolfQuest.completed) {
+          wolfQuest.active = true;
+          saveToLocal("quests", quests);
+          console.log("Quest 'Help the Wolf' is now active!");
+        }
         return;
       }
       if (this.wolfIntroDone && !this.wolfThanksDone && this.hasPeriwinkleExtract()) {
@@ -368,7 +435,7 @@ class MiddleGardenScene extends Phaser.Scene {
       }
     });
 
-    // --- Wolf dialogue advance on click ---
+    // --- Global dialogue advance handler ---
     this.input.on("pointerdown", () => {
       if (this.wolfDialogueActive) {
         this.wolfDialogueIndex++;
@@ -384,17 +451,22 @@ class MiddleGardenScene extends Phaser.Scene {
           }
           if (this.wolfHasPeriwinkleExtract && this.activeWolfDialogues === wolfThanksDialogues) {
             this.wolfThanksDone = true;
-            // Automatically give summer shard after thanks dialogue
+            // --- Complete Wolf's quest after thanks dialogue ---
+            const wolfQuest = quests.find(q => q.title === "Help the Wolf");
+            if (wolfQuest) {
+              wolfQuest.active = false;
+              wolfQuest.completed = true;
+              saveToLocal("quests", quests);
+              console.log("Quest 'Help the Wolf' completed!");
+            }
             receivedItem(this, "summerShard", "Summer Shard");
-            // Always remove periwinkleExtract as a failsafe
-            inventoryManager.removeItemByKey && inventoryManager.removeItemByKey("periwinkleExtract");
           }
           this.wolfDialogueActive = false;
           this.updateHUDState && this.updateHUDState();
         }
         return;
       }
-      // Mole dialogue advance
+
       if (this.moleDialogueActive) {
         this.moleDialogueIndex++;
         if (this.activeMoleDialogues && this.moleDialogueIndex < this.activeMoleDialogues.length) {
@@ -409,17 +481,22 @@ class MiddleGardenScene extends Phaser.Scene {
           }
           if (this.moleHasGarlicPaste && this.activeMoleDialogues === moleThanksDialogues) {
             this.moleThanksDone = true;
-            // Automatically give spring shard after thanks dialogue
+            // --- Complete Mole's quest after thanks dialogue ---
+            const moleQuest = quests.find(q => q.title === "Help the Mole");
+            if (moleQuest) {
+              moleQuest.active = false;
+              moleQuest.completed = true;
+              saveToLocal("quests", quests);
+              console.log("Quest 'Help the Mole' completed!");
+            }
             receivedItem(this, "springShard", "Spring Shard");
-            // Always remove garlicPaste as a failsafe
-            inventoryManager.removeItemByKey && inventoryManager.removeItemByKey("garlicPaste");
           }
           this.moleDialogueActive = false;
           this.updateHUDState && this.updateHUDState();
         }
         return;
       }
-      // Turtle dialogue advance
+
       if (this.turtleDialogueActive) {
         this.turtleDialogueIndex++;
         if (this.activeTurtleDialogues && this.turtleDialogueIndex < this.activeTurtleDialogues.length) {
@@ -432,22 +509,33 @@ class MiddleGardenScene extends Phaser.Scene {
           if (!this.turtleIntroDone && this.activeTurtleDialogues === turtleIntroDialogues) {
             this.turtleIntroDone = true;
           }
-          if (this.turtleHasMarigold && this.activeTurtleDialogues === turtleThanksDialogues) {
+          if (this.turtleHasThymeInfusedOil && this.activeTurtleDialogues === turtleThanksDialogues) {
             this.turtleThanksDone = true;
+            // --- Complete Turtle's quest after thanks dialogue ---
+            const turtleQuest = quests.find(q => q.title === "Help the Turtle");
+            if (turtleQuest) {
+              turtleQuest.active = false;
+              turtleQuest.completed = true;
+              saveToLocal("quests", quests);
+              console.log("Quest 'Help the Turtle' completed!");
+            }
             receivedItem(this, "autumnShard", "Autumn Shard");
-            inventoryManager.removeItemByKey && inventoryManager.removeItemByKey("marigoldPlant");
           }
           this.turtleDialogueActive = false;
           this.updateHUDState && this.updateHUDState();
         }
         return;
       }
+
       // Plant dialogue advance
       if (this.dialogueActive && typeof this.dialogueOnComplete === "function") {
         this.dialogueOnComplete();
       }
       this.updateHUDState && this.updateHUDState();
     });
+
+    // --- Setup bushes ---
+    this.setupBushes(width, height);
 
     // --- PERIODIC SAVE TO LOCAL STORAGE ---
     this._saveInterval = setInterval(() => {
@@ -465,24 +553,14 @@ class MiddleGardenScene extends Phaser.Scene {
       clearInterval(this._saveInterval);
       this.transitioning = false;
     });
-
-    // --- LOAD SCENE STATE FROM LOCAL STORAGE ---
-    const sceneState = loadFromLocal('middleGardenSceneState');
-    if (sceneState) {
-      this.wolfThanksDone = !!sceneState.wolfThanksDone;
-      this.deerHasMarigold = !!sceneState.deerHasMarigold;
-      if (sceneState.wolfTexture && this.wolf) this.wolf.setTexture(sceneState.wolfTexture);
-      if (sceneState.deerTexture && this.deer) this.deer.setTexture(sceneState.deerTexture);
-      if (sceneState.timeOfDay) globalTimeManager.dayCycle.setTimeOfDay(sceneState.timeOfDay);
-    }
   }
 
   setupBushes(width, height) {
     const bushPositions = [
-      { x: 100, y: 300 }, 
-      { x: 120, y: 500 }, 
-      { x: 1150, y: 250 }, 
-      { x: 1200, y: 550 }  
+      { x: 100, y: 300 }, // Jasmine
+      { x: 120, y: 500 }, // Marigold
+      { x: 1150, y: 250 }, // Periwinkle
+      { x: 1200, y: 550 }  // Random bush
     ];
     const bushCount = bushPositions.length;
     const jasmineIndex = 0;
@@ -501,6 +579,18 @@ class MiddleGardenScene extends Phaser.Scene {
         if (this.dialogueActive) return;
         this.dialogueActive = true;
         this.updateHUDState && this.updateHUDState();
+
+        // If already dispensed, show empty dialogue
+        if (this.bushDispensed[i]) {
+          showDialogue(this, "This bush is empty!");
+          this.dialogueOnComplete = () => {
+            this.destroyDialogueUI && this.destroyDialogueUI();
+            this.dialogueActive = false;
+            this.updateHUDState && this.updateHUDState();
+            this.dialogueOnComplete = null;
+          };
+          return;
+        }
 
         // Marigold bush
         if (i === marigoldIndex && !this.marigoldFound) {
@@ -535,7 +625,7 @@ class MiddleGardenScene extends Phaser.Scene {
             this.bushDispensed[i] = true;
           }
         }
-        // All other bushes (no coins)
+        // All other bushes
         else {
           showDialogue(this, `You found nothing in the bush this time.`);
           this.dialogueOnComplete = () => {
@@ -568,13 +658,16 @@ class MiddleGardenScene extends Phaser.Scene {
                   this.scene.stop("MiniGameScene");
                   this.scene.resume();
 
-                  // Award plant for winning minigame
-                  receivedItem(this, plant.key, plant.name);
-                  inventoryManager.addItem(plant);
-                  addPlantToJournal(plant.key);
+                  const alreadyHas = this.inventoryManager.hasItemByKey(plant.key);
+                  if (!alreadyHas) {
+                    addPlantToJournal(plant.key);
+                    receivedItem(this, plant.key, plant.name);
+                  }
 
                   showDialogue(this,
-                    `You won the game! The animal reluctantly gives you the ${plant.name} plant.`,
+                    alreadyHas
+                      ? `You already have the ${plant.name} plant.`
+                      : `You won the game! The animal reluctantly gives you the ${plant.name} plant.`,
                     { imageKey: plant.imageKey }
                   );
 
@@ -655,17 +748,18 @@ class MiddleGardenScene extends Phaser.Scene {
 
   saveSceneState() {
     const state = {
-      inventory: inventoryManager.getItems ? inventoryManager.getItems() : [],
+      inventory: this.inventoryManager.getItems(),
       garlicFound: !!this.garlicFound,
       thymeFound: !!this.thymeFound,
+      marigoldFound: !!this.marigoldFound,
+      jasmineFound: !!this.jasmineFound,
+      periwinkleFound: !!this.periwinkleFound,
       wolfIntroDone: !!this.wolfIntroDone,
       wolfThanksDone: !!this.wolfThanksDone,
-      wolfHasPeriwinkle: !!this.wolfHasPeriwinkle,
-      deerIntroDone: !!this.deerIntroDone,
-      deerThanksDone: !!this.deerThanksDone,
-      deerHasMarigold: !!this.deerHasMarigold,
-      wolfTexture: this.wolf ? this.wolf.texture.key : null,
-      deerTexture: this.deer ? this.deer.texture.key : null,
+      moleIntroDone: !!this.moleIntroDone,
+      moleThanksDone: !!this.moleThanksDone,
+      turtleIntroDone: !!this.turtleIntroDone,
+      turtleThanksDone: !!this.turtleThanksDone,
       timeOfDay: globalTimeManager.getCurrentTimeOfDay()
     };
     saveToLocal('middleGardenSceneState', state);
@@ -683,4 +777,5 @@ class MiddleGardenScene extends Phaser.Scene {
     }
   }
 }
+
 export default MiddleGardenScene;
