@@ -1,13 +1,6 @@
 import { Plot } from "../farmingLogic";
 import { createMainChar } from "../../characters/mainChar";
-import { inventoryManager } from "../openInventory";
 import { saveToLocal, loadFromLocal } from "../../utils/localStorage";
-// Ensure global inventoryManager instance
-if (typeof window !== "undefined") {
-  if (!window.inventoryManager) {
-    window.inventoryManager = inventoryManager;
-  }
-}
 import { showDialogue, showOption } from "../../dialogue/dialogueUIHelpers";
 import globalTimeManager from "../../day/timeManager";
 import { receivedItem } from "../recievedItem";
@@ -29,6 +22,7 @@ class PersonalGarden extends Phaser.Scene {
     // Use the global inventory manager
     this.inventoryManager = globalInventoryManager;
   }
+
   preload() {
     // Load all required assets for the garden scene
     const assets = [
@@ -74,7 +68,7 @@ class PersonalGarden extends Phaser.Scene {
       ["craftingBench", "/assets/crafting/bench.png"],
       ["hedgeArch", "/assets/backgrounds/personal/hedgeArchway.png"],
       ["hedgeArchShadow", "/assets/backgrounds/personal/hedgeArchwayShadow.png"],
-      ["plotEmptyImg", "/assets/farming/empty.png"], // Added empty plot image
+      ["plotEmptyImg", "/assets/farming/empty.png"],
       ["plotPreparedImg", "/assets/farming/prepared.PNG"],
       ["plotPlantedImg", "/assets/farming/planted.png"],
       ["plotWateredImg", "/assets/farming/water2.png"],
@@ -95,12 +89,15 @@ class PersonalGarden extends Phaser.Scene {
     if (!globalTimeManager.startTimestamp) {
       globalTimeManager.start();
     }
-if (this.sound.get('shopTheme')) {
-  this.sound.stopByKey('shopTheme');
-}
-if (!this.sound.get('theme1')) {
-  this.sound.play('theme1', { loop: true, volume: 0.2 });
-}
+
+    // Stop shop theme and play main theme
+    if (this.sound.get('shopTheme')) {
+      this.sound.stopByKey('shopTheme');
+    }
+    if (!this.sound.get('theme1')) {
+      this.sound.play('theme1', { loop: true, volume: 0.2 });
+    }
+
     this.dayText = this.add.text(40, 100, `Day: ${globalTimeManager.getDayNumber()}`, {
       fontSize: '20px',
       color: '#ffe066',
@@ -109,11 +106,14 @@ if (!this.sound.get('theme1')) {
       padding: { left: 8, right: 8, top: 4, bottom: 4 }
     }).setOrigin(0, 0).setDepth(99999);
 
-    const tent = this.add.image(700, 100, 'tent');
     const { width, height } = this.sys.game.config;
     this.rows = 3;
     this.cols = 5;
     this.plots = [];
+
+    // --- LOAD SAVED STATE FIRST ---
+    const loadedState = loadFromLocal('personalGardenSceneState');
+    
     const plotSpacing = 80;
     const plotSize = 60;
     const gridWidth = this.cols * plotSpacing;
@@ -121,9 +121,30 @@ if (!this.sound.get('theme1')) {
     const startX = width / 2 - gridWidth / 2 + plotSpacing / 2;
     const startY = height / 2 - gridHeight / 2 + 160;
 
+    // Create plots and restore their state
     for (let row = 0; row < this.rows; row++) {
       for (let col = 0; col < this.cols; col++) {
+        const plotIndex = row * this.cols + col;
         const plot = new Plot();
+        
+        // --- RESTORE PLOT STATE FROM SAVED DATA ---
+        if (loadedState && loadedState.plots && loadedState.plots[plotIndex]) {
+          const savedPlot = loadedState.plots[plotIndex];
+          plot.watered = savedPlot.watered || false;
+          plot.waterCount = savedPlot.waterCount || 0;
+          plot.lastWateredDay = savedPlot.lastWateredDay || 0;
+          plot.seedType = savedPlot.seedType || null;
+          plot.state = savedPlot.state || 'empty';
+          plot.growthStage = savedPlot.growthStage || 0;
+          
+          console.log(`Restored plot ${plotIndex}:`, {
+            state: plot.state,
+            seedType: plot.seedType,
+            waterCount: plot.waterCount,
+            growthStage: plot.growthStage
+          });
+        }
+
         const plotX = startX + col * plotSpacing;
         const plotY = startY + row * plotSpacing;
 
@@ -150,6 +171,7 @@ if (!this.sound.get('theme1')) {
         plot.stageImageSprite = stageImg;
         this.plots.push({ plot, plotRect, plotText, stageImg });
 
+        // Update plot display based on restored state
         this.updatePlotText(plotText, plot);
         this.updatePlotColor(plotRect, plot);
         this.updatePlotStageImage(plot);
@@ -158,14 +180,12 @@ if (!this.sound.get('theme1')) {
         let hoverImg = null;
         plotRect.on('pointerover', () => {
           if (plot.state === 'prepared') {
-            // Show plant image on hover for prepared plot
             if (!hoverImg) {
               hoverImg = this.add.image(plotX, plotY - 32, 'plant')
                 .setScale(0.08)
                 .setDepth(200);
             }
           } else if (plot.state === 'grown') {
-            // Show harvest image on hover for grown plot
             if (!hoverImg) {
               hoverImg = this.add.image(plotX, plotY - 32, 'harvest')
                 .setScale(0.08)
@@ -200,7 +220,7 @@ if (!this.sound.get('theme1')) {
                   this.updatePlotColor(plotRect, plot);
                   this.updatePlotStageImage(plot);
 
-                  // --- Mark "Plant your first crop" quest as complete if this is the first time ---
+                  // Mark "Plant your first crop" quest as complete
                   const cropQuest = quests.find(q => q.title === "Plant your first crop");
                   if (result.success && cropQuest && cropQuest.active && !cropQuest.completed) {
                     cropQuest.active = false;
@@ -235,7 +255,7 @@ if (!this.sound.get('theme1')) {
                     receivedItem(this, plantItem.key, plantItem.name);
                   }
                 }
-                // Automatically reset plot to empty after harvest
+                // Reset plot to empty after harvest
                 if (result.success) {
                   plot.reset();
                   this.updatePlotText(plotText, plot);
@@ -351,15 +371,8 @@ if (!this.sound.get('theme1')) {
       this.scene.bringToTop('CraftUI');
     });
 
-    globalTimeManager.init(this);
-    if (!globalTimeManager.startTimestamp) {
-      globalTimeManager.start();
-    }
-
     this.scene.launch("HUDScene");
     this.scene.bringToTop("HUDScene");
-
-    const loadedState = loadFromLocal('personalGardenSceneState');
 
     const backBtnX = width - 40;
     const backBtnY = height / 2;
@@ -380,6 +393,7 @@ if (!this.sound.get('theme1')) {
 
     backButton.setDepth(10);
 
+    // Restore other saved state
     if (loadedState?.currentTool) this.currentTool = loadedState.currentTool;
     if (loadedState?.timeOfDay) {
       globalTimeManager.dayCycle.setTimeOfDay(loadedState.timeOfDay);
@@ -391,7 +405,7 @@ if (!this.sound.get('theme1')) {
       }
     }
 
-    // Remove the sign image and replace with a button
+    // Shop button
     const shopBtnX = 120;
     const shopBtnY = height - 80;
     const shopButtonBg = this.add.rectangle(shopBtnX, shopBtnY, 140, 50, 0x567d46, 0.95)
@@ -431,10 +445,12 @@ if (!this.sound.get('theme1')) {
 
     this.createToolButtons();
 
+    // Auto-save every 8 seconds
     this._saveInterval = setInterval(() => {
       this.saveSceneState();
     }, 8000);
 
+    // Save on scene shutdown/destroy
     this.events.on('shutdown', () => {
       this.saveSceneState();
       clearInterval(this._saveInterval);
@@ -456,16 +472,16 @@ if (!this.sound.get('theme1')) {
         state: plot.state,
         growthStage: plot.growthStage
       })),
-      inventory: this.inventoryManager.getInventory ? this.inventoryManager.getInventory() : this.inventoryManager.inventory,
+      inventory: this.inventoryManager.getItems(),
       currentTool: this.currentTool,
       timeOfDay: globalTimeManager.getCurrentTimeOfDay(),
       currentDay: globalTimeManager.getDayNumber(),
     };
     saveToLocal('personalGardenSceneState', state);
+    console.log('Personal Garden state saved:', state);
   }
 
   updatePlotText(text, plot) {
-    // Only show state name, not seed type, when seeds are planted
     let display = plot.state.charAt(0).toUpperCase() + plot.state.slice(1);
     if (plot.state !== "planted") {
       if (plot.seedType) display += `\n${plot.seedType}`;
@@ -574,7 +590,7 @@ if (!this.sound.get('theme1')) {
 
     hoeImg.on('pointerdown', () => {
       this.currentTool = 'hoe';
-      this.toolIconSprites.forEach((sprites) => {
+      this.toolIconSprites.forEach((sprite) => {
         sprite.bg.setFillStyle(sprite.key === 'hoe' ? 0x4caf50 : 0x222233, 0.95);
       });
     });
@@ -590,6 +606,18 @@ if (!this.sound.get('theme1')) {
         sprite.bg.setFillStyle(sprite.key === 'shovel' ? 0x4caf50 : 0x222233, 0.95);
       });
     });
+  }
+
+  destroyDialogueUI() {
+    if (this.dialogueBox) {
+      this.dialogueBox.box?.destroy();
+      this.dialogueBox.textObj?.destroy();
+      this.dialogueBox.image?.destroy();
+      if (this.dialogueBox.optionButtons) {
+        this.dialogueBox.optionButtons.forEach((btn) => btn.destroy());
+      }
+      this.dialogueBox = null;
+    }
   }
 }
 
