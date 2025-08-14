@@ -4,6 +4,7 @@ import { showDialogue, destroyDialogueUI, showOption } from '../../dialogue/dial
 import { createMainChar } from '../../characters/mainChar';
 import { saveToLocal, loadFromLocal } from '../../utils/localStorage';
 import plantData from "../../plantData";
+import quests from "../../quests/quests";
 import { addPlantToJournal } from "../journalManager";
 import { receivedItem } from "../recievedItem";
 import { createElephant, elephantIntroDialogues, elephantThanksDialogues } from '../../characters/elephant';
@@ -259,6 +260,14 @@ class WallGardenScene extends Phaser.Scene {
         this.activeElephantDialogues = elephantIntroDialogues;
         showDialogue(this, this.activeElephantDialogues[this.elephantDialogueIndex], { imageKey: "elephant" });
         this.updateHUDState && this.updateHUDState();
+
+        // --- Activate Tia's quest when first meeting ---
+        const tiaQuest = quests.find(q => q.title === "Help Tia");
+        if (tiaQuest && !tiaQuest.active && !tiaQuest.completed) {
+          tiaQuest.active = true;
+          saveToLocal("quests", quests);
+          console.log("Quest 'Help Tia' is now active!");
+        }
         return;
       }
       if (this.elephantIntroDone && !this.elephantThanksDone && this.hasJasmineTea()) {
@@ -315,9 +324,15 @@ class WallGardenScene extends Phaser.Scene {
           }
           if (this.elephantHasJasmineTea && this.activeElephantDialogues === elephantThanksDialogues) {
             this.elephantThanksDone = true;
-            // Automatically give autumn shard after thanks dialogue
+            // --- Complete Tia's quest after thanks dialogue ---
+            const tiaQuest = quests.find(q => q.title === "Help Tia");
+            if (tiaQuest) {
+              tiaQuest.active = false;
+              tiaQuest.completed = true;
+              saveToLocal("quests", quests);
+              console.log("Quest 'Help Tia' completed!");
+            }
             receivedItem(this, "autumnShard", "Autumn Shard");
-            // Always remove jasmineTea as a failsafe
             inventoryManager.removeItemByKey && inventoryManager.removeItemByKey("jasmineTea");
           }
           this.elephantDialogueActive = false;
@@ -325,6 +340,7 @@ class WallGardenScene extends Phaser.Scene {
         }
         return;
       }
+
       // --- Polar Bear dialogue advance on click ---
       if (this.polarBearDialogueActive) {
         this.polarBearDialogueIndex++;
@@ -337,13 +353,26 @@ class WallGardenScene extends Phaser.Scene {
 
           if (!this.polarBearIntroDone && this.activePolarBearDialogues === polarBearIntroDialogues) {
             this.polarBearIntroDone = true;
+            // --- Activate Snowbert's quest when first meeting ---
+            const snowbertQuest = quests.find(q => q.title === "Help Snowbert");
+            if (snowbertQuest && !snowbertQuest.active && !snowbertQuest.completed) {
+              snowbertQuest.active = true;
+              saveToLocal("quests", quests);
+              console.log("Quest 'Help Snowbert' is now active!");
+            }
           }
-          if (this.polarBearHasCream && this.activePolarBearDialogues === polarBearThanksDialogues) {
+          if (this.polarBearHasWillowBarkTea && this.activePolarBearDialogues === polarBearThanksDialogues) {
             this.polarBearThanksDone = true;
-            // Automatically give winter shard after thanks dialogue
+            // --- Complete Snowbert's quest after thanks dialogue ---
+            const snowbertQuest = quests.find(q => q.title === "Help Snowbert");
+            if (snowbertQuest) {
+              snowbertQuest.active = false;
+              snowbertQuest.completed = true;
+              saveToLocal("quests", quests);
+              console.log("Quest 'Help Snowbert' completed!");
+            }
             receivedItem(this, "winterShard", "Winter Shard");
-            // Always remove baseCream as a failsafe
-            inventoryManager.removeItemByKey && inventoryManager.removeItemByKey("baseCream");
+            inventoryManager.removeItemByKey && inventoryManager.removeItemByKey("willowBarkTea");
           }
           this.polarBearDialogueActive = false;
           this.updateHUDState && this.updateHUDState();
