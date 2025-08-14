@@ -15,6 +15,7 @@ if (typeof window !== "undefined") {
 import { addPlantToJournal } from "../journalManager";
 import { receivedItem } from "../recievedItem";
 import globalTimeManager from "../../day/timeManager";
+import quests from "../../quests/quests";
 
 class ShardGardenScene extends Phaser.Scene {
   constructor() {
@@ -202,6 +203,26 @@ class ShardGardenScene extends Phaser.Scene {
               showDialogue(this, `You returned a ${season} shard! (${this.shardCounts[season]} left)`);
               shardLogic(this);
 
+              // --- QUEST LOGIC ---
+              // Activate and complete "Return the first Shard" quest if this is the first shard returned
+              const shardQuest = quests.find(q => q.title === "Return the first Shard");
+              if (shardQuest && shardQuest.active) {
+                shardQuest.active = false;
+                shardQuest.completed = true;
+                saveToLocal("quests", quests);
+                console.log("Quest 'Return the first Shard' completed!");
+              }
+
+              // If all shards for all seasons are returned, activate and complete "Return all Shards" quest
+              const allReturned = Object.values(this.shardCounts).every(count => count === 0);
+              const allShardsQuest = quests.find(q => q.title === "Return all Shards");
+              if (allReturned && allShardsQuest && !allShardsQuest.completed) {
+                allShardsQuest.active = false;
+                allShardsQuest.completed = true;
+                saveToLocal("quests", quests);
+                console.log("Quest 'Return all Shards' completed!");
+              }
+
               // Update pillar sprite to happy if all shards given
               if (this.shardCounts[season] === 0 && this.textures.exists(season + "Happy")) {
                 seasonImg.setTexture(season + "Happy");
@@ -342,6 +363,17 @@ class ShardGardenScene extends Phaser.Scene {
         this.dialogueActive = false;
         this.updateHUDState();
         this.destroyDialogueUI();
+
+        // --- Activate "Return all Shards" quest after first butterfly dialogue ---
+        if (this.dialogueStage === 0) {
+          const allShardsQuest = quests.find(q => q.title === "Return all Shards");
+          if (allShardsQuest && !allShardsQuest.active && !allShardsQuest.completed) {
+            allShardsQuest.active = true;
+            saveToLocal("quests", quests);
+            console.log("Quest 'Return all Shards' is now active!");
+          }
+        }
+
         if (this.dialogueStage < 2) {
           this.dialogueStage++;
           this.setActiveDialogue();

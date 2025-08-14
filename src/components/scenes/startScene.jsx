@@ -40,17 +40,8 @@ class StartScene extends Phaser.Scene {
             .setInteractive();
 
         startButton.on("pointerdown", () => {
-            const savedState = loadFromLocal("personalGardenSceneState");
-            if (savedState) {
-                // Resume game from saved state
-                this.scene.stop("StartScene");
-                this.scene.start("PersonalGarden", { loadedState: savedState });
-                this.scene.launch("HUDScene");
-            } else {
-                // Start new game
-                this.scene.stop("StartScene");
-                this.scene.start("NewGameScene");
-            }
+            // Show popup
+            this.showSavePopup(width, height);
         });
 
         this.add.text(width / 2, height / 1.05, "Made by Thomas Warden | Art by Emma Formosa", {
@@ -62,6 +53,144 @@ class StartScene extends Phaser.Scene {
             fontSize: "16px",
             fill: "#000"
         }).setOrigin(0.5);
+    }
+
+    showSavePopup(width, height) {
+        // Popup background
+        const popupBg = this.add.rectangle(width / 2, height / 2, 400, 250, 0xffffff, 0.95)
+            .setStrokeStyle(2, 0x3a5a40)
+            .setDepth(10);
+
+        // Popup text
+        const popupText = this.add.text(width / 2, height / 2 - 80, "Do you have a current save?", {
+            fontSize: "24px",
+            color: "#3a5a40",
+            fontFamily: "Georgia"
+        }).setOrigin(0.5).setDepth(11);
+
+        // Yes button
+        const yesBtn = this.add.text(width / 2 - 60, height / 2 + 40, "Yes", {
+            fontSize: "28px",
+            backgroundColor: "#3bb273",
+            color: "#fff",
+            padding: { left: 20, right: 20, top: 10, bottom: 10 },
+            fontFamily: "Georgia"
+        }).setOrigin(0.5).setDepth(11).setInteractive({ useHandCursor: true });
+
+        // No button
+        const noBtn = this.add.text(width / 2 + 60, height / 2 + 40, "No", {
+            fontSize: "28px",
+            backgroundColor: "#e05a47",
+            color: "#fff",
+            padding: { left: 20, right: 20, top: 10, bottom: 10 },
+            fontFamily: "Georgia"
+        }).setOrigin(0.5).setDepth(11).setInteractive({ useHandCursor: true });
+
+        // Yes button handler
+        yesBtn.on("pointerdown", () => {
+            // Remove popup
+            popupBg.destroy();
+            popupText.destroy();
+            yesBtn.destroy();
+            noBtn.destroy();
+
+            // Show input fields for nickname and farm name
+            this.showUserInputPopup(width, height);
+        });
+
+        // No button handler
+        noBtn.on("pointerdown", () => {
+            popupBg.destroy();
+            popupText.destroy();
+            yesBtn.destroy();
+            noBtn.destroy();
+            // Start new game
+            this.scene.stop("StartScene");
+            this.scene.start("NewGameScene");
+        });
+    }
+
+    showUserInputPopup(width, height) {
+        // Input background
+        const inputBg = this.add.rectangle(width / 2, height / 2, 400, 300, 0xffffff, 0.98)
+            .setStrokeStyle(2, 0x3a5a40)
+            .setDepth(12);
+
+        // Input text
+        const inputText = this.add.text(width / 2, height / 2 - 100, "Enter your nickname and farm name:", {
+            fontSize: "20px",
+            color: "#3a5a40",
+            fontFamily: "Georgia"
+        }).setOrigin(0.5).setDepth(13);
+
+        // Nickname input
+        const nicknameInput = this.add.dom(width / 2, height / 2 - 30, 'input', {
+            type: 'text',
+            fontSize: '18px',
+            width: '220px',
+            padding: '8px',
+            borderRadius: '6px'
+        }).setDepth(13);
+        nicknameInput.node.placeholder = "Nickname";
+
+        // Farm name input
+        const farmInput = this.add.dom(width / 2, height / 2 + 20, 'input', {
+            type: 'text',
+            fontSize: '18px',
+            width: '220px',
+            padding: '8px',
+            borderRadius: '6px'
+        }).setDepth(13);
+        farmInput.node.placeholder = "Farm Name";
+
+        // Submit button
+        const submitBtn = this.add.text(width / 2, height / 2 + 80, "Continue", {
+            fontSize: "24px",
+            backgroundColor: "#3bb273",
+            color: "#fff",
+            padding: { left: 30, right: 30, top: 10, bottom: 10 },
+            fontFamily: "Georgia"
+        }).setOrigin(0.5).setDepth(13).setInteractive({ useHandCursor: true });
+
+        // Submit handler
+        submitBtn.on("pointerdown", () => {
+            const nickname = nicknameInput.node.value.trim();
+            const farmname = farmInput.node.value.trim();
+
+            if (!nickname || !farmname) {
+                inputText.setText("Please enter both nickname and farm name.");
+                return;
+            }
+
+            fetch(`http://localhost:3000/user?nickname=${nickname}&farmname=${farmname}`)
+              .then(res => res.json())
+              .then(userData => {
+                console.log("Loaded userData:", userData);
+
+                // Save userId and nickname to localStorage
+                localStorage.setItem("userId", userData.id);
+                localStorage.setItem("characterName", userData.nickname);
+
+                // Optionally update lastLogin or active status
+                fetch('http://localhost:3000/user/active', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ id: userData.id, lastLogin: new Date().toISOString() })
+                });
+
+                // Start game with loaded user/gameState
+                this.scene.stop("StartScene");
+                this.scene.start("PersonalGarden", { loadedState: userData.gameState });
+                this.scene.launch("HUDScene");
+
+                // Cleanup popup
+                inputBg.destroy();
+                inputText.destroy();
+                nicknameInput.destroy();
+                farmInput.destroy();
+                submitBtn.destroy();
+              });
+        });
     }
 }
 

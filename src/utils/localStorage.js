@@ -78,11 +78,10 @@ export function saveGameStateToDB(nickname, gameState) {
     .then(data => console.log("Saved!", data))
     .catch(err => console.error("Save error:", err));
 }
-
-// Usage example:
-const nickname = loadFromLocal("characterName");
+const nickname = localStorage.getItem("characterName");
+console.log("Loaded nickname from localStorage:", nickname);
 const gameState = {
-  inventory: loadFromLocal("inventory"),
+  inventory: loadFromLocal("inventoryItems"),
   personalGardenSceneState: loadFromLocal("personalGardenSceneState"),
   middleGardenSceneState: loadFromLocal("middleGardenSceneState"),
   wallGardenSceneState: loadFromLocal("wallGardenSceneState"),
@@ -92,6 +91,7 @@ const gameState = {
   journalState: loadFromLocal("journalState"),
   settings: loadFromLocal("settings"),
   HUDState: loadFromLocal("HUDState"),
+  quests: loadFromLocal("quests"), // <-- Add this line
 };
 
 saveGameStateToDB(nickname, gameState);

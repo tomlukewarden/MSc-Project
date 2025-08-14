@@ -61,7 +61,7 @@ const buddiesData = [
     },
     {
         key: "rabbit",
-        name:"Carrie O’Cake",
+        name:"Carrie Cake",
         imageKey: "rabbitBuddy",
         description:
             "Carrie O’Cake is a playful rabbit who loves to hop around and explore. She is known for her curiosity and her ability to find hidden treats in the garden.",

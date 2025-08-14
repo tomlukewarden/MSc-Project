@@ -14,7 +14,7 @@ import { receivedItem } from "../recievedItem";
 import itemsData from "../../items";
 import SeedPouchLogic from "../seedPouchLogic";
 import plantData from "../../plantData";
-
+import quests from "../../quests/quests";
 class PersonalGarden extends Phaser.Scene {
   constructor() {
     super("PersonalGarden", { physics: { default: 'arcade', arcade: { debug: true } } });
@@ -202,6 +202,15 @@ if (!this.sound.get('theme1')) {
                   this.updatePlotText(plotText, plot);
                   this.updatePlotColor(plotRect, plot);
                   this.updatePlotStageImage(plot);
+
+                  // --- Mark "Plant your first crop" quest as complete if this is the first time ---
+                  const cropQuest = quests.find(q => q.title === "Plant your first crop");
+                  if (result.success && cropQuest && cropQuest.active && !cropQuest.completed) {
+                    cropQuest.active = false;
+                    cropQuest.completed = true;
+                    saveToLocal("quests", quests);
+                    console.log("Quest 'Plant your first crop' completed!");
+                  }
                 }
               });
               break;

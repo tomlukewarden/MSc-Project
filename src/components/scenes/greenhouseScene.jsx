@@ -7,6 +7,7 @@ import { createMainChar } from "../../characters/mainChar";
 import { inventoryManager } from "../openInventory";
 import { receivedItem } from "../recievedItem";
 import globalTimeManager from "../../day/timeManager";
+import quests from "../../quests/quests";
 
 // Ensure global inventoryManager instance
 if (typeof window !== "undefined") {
@@ -292,9 +293,25 @@ class GreenhouseScene extends Phaser.Scene {
 
               if (!this.rabbitIntroDone && this.activeRabbitDialogues === rabbitIntroDialogues) {
                 this.rabbitIntroDone = true;
+                // Activate Carrie Cake's quest
+                const carrieQuest = quests.find(q => q.title === "Help Carrie Cake");
+                if (carrieQuest && !carrieQuest.active && !carrieQuest.completed) {
+                  carrieQuest.active = true;
+                  saveToLocal("quests", quests);
+                  console.log("Quest 'Help Carrie 'O Cake' is now active!");
+                }
               }
+              // After rabbit thanks dialogue
               if (this.rabbitHasLavenderOil && this.activeRabbitDialogues === rabbitThanksDialogues) {
                 this.rabbitThanksDone = true;
+                // Complete Carrie 'O Cake's quest
+                const carrieQuest = quests.find(q => q.title === "Help Carrie 'O Cake");
+                if (carrieQuest) {
+                  carrieQuest.active = false;
+                  carrieQuest.completed = true;
+                  saveToLocal("quests", quests);
+                  console.log("Quest 'Help Carrie 'O Cake' completed!");
+                }
                 receivedItem(this, "autumnShard", "Autumn Shard");
                 inventoryManager.removeItemByKey && inventoryManager.removeItemByKey("lavenderOil");
               }
@@ -315,9 +332,25 @@ class GreenhouseScene extends Phaser.Scene {
               
               if (!this.pigIntroDone && this.activePigDialogues === pigIntroDialogues) {
                 this.pigIntroDone = true;
+                // Activate Chris P Bacon's quest
+                const chrisQuest = quests.find(q => q.title === "Help Chris P. Bacon");
+                if (chrisQuest && !chrisQuest.active && !chrisQuest.completed) {
+                  chrisQuest.active = true;
+                  saveToLocal("quests", quests);
+                  console.log("Quest 'Help Chris P. Bacon' is now active!");
+                }
               }
+              // After pig thanks dialogue
               if (this.pigHasAloeAfterSunCream && this.activePigDialogues === pigThanksDialogues) {
                 this.pigThanksDone = true;
+                // Complete Chris P Bacon's quest
+                const chrisQuest = quests.find(q => q.title === "Help Chris P Bacon");
+                if (chrisQuest) {
+                  chrisQuest.active = false;
+                  chrisQuest.completed = true;
+                  saveToLocal("quests", quests);
+                  console.log("Quest 'Help Chris P Bacon' completed!");
+                }
                 receivedItem(this, "winterShard", "Winter Shard");
                 inventoryManager.removeItemByKey && inventoryManager.removeItemByKey("aloeAfterSunCream");
               }

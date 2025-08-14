@@ -3,6 +3,8 @@ import { getCollectedPlants } from "./journalManager";
 import plantData from "../plantData";
 import recipieData from "../recipieData";
 import buddiesData from "../buddies";
+import quests from "../quests/quests"
+import achievements from "../quests/achievments"
 import { saveToLocal, loadFromLocal } from "../utils/localStorage";
 
 class OpenJournal extends Phaser.Scene {
@@ -90,7 +92,7 @@ class OpenJournal extends Phaser.Scene {
       fontStyle: active ? "bold" : "normal"
     });
 
-    this.plantsTab = this.add.text(width / 2 - 120, tabY, "Plants", tabStyle(this.activeTab === "plants"))
+    this.plantsTab = this.add.text(width / 2 - 240, tabY, "Plants", tabStyle(this.activeTab === "plants"))
       .setOrigin(0.5)
       .setInteractive({ useHandCursor: true })
       .on("pointerdown", () => {
@@ -101,7 +103,7 @@ class OpenJournal extends Phaser.Scene {
         }
       });
 
-    this.recipiesTab = this.add.text(width / 2, tabY, "Recipies", tabStyle(this.activeTab === "recipies"))
+    this.recipiesTab = this.add.text(width / 2 - 120, tabY, "Recipies", tabStyle(this.activeTab === "recipies"))
       .setOrigin(0.5)
       .setInteractive({ useHandCursor: true })
       .on("pointerdown", () => {
@@ -112,12 +114,36 @@ class OpenJournal extends Phaser.Scene {
         }
       });
 
-    this.buddiesTab = this.add.text(width / 2 + 120, tabY, "Buddies", tabStyle(this.activeTab === "buddies"))
+    this.buddiesTab = this.add.text(width / 2, tabY, "Buddies", tabStyle(this.activeTab === "buddies"))
       .setOrigin(0.5)
       .setInteractive({ useHandCursor: true })
       .on("pointerdown", () => {
         if (this.activeTab !== "buddies") {
           this.activeTab = "buddies";
+          this.currentPage = 0;
+          this.renderJournalTab();
+        }
+      });
+
+    // --- New Quest Tab ---
+    this.questsTab = this.add.text(width / 2 + 120, tabY, "Quests", tabStyle(this.activeTab === "quests"))
+      .setOrigin(0.5)
+      .setInteractive({ useHandCursor: true })
+      .on("pointerdown", () => {
+        if (this.activeTab !== "quests") {
+          this.activeTab = "quests";
+          this.currentPage = 0;
+          this.renderJournalTab();
+        }
+      });
+
+    // --- New Achievements Tab ---
+    this.achievementsTab = this.add.text(width / 2 + 240, tabY, "Achievements", tabStyle(this.activeTab === "achievements"))
+      .setOrigin(0.5)
+      .setInteractive({ useHandCursor: true })
+      .on("pointerdown", () => {
+        if (this.activeTab !== "achievements") {
+          this.activeTab = "achievements";
           this.currentPage = 0;
           this.renderJournalTab();
         }
@@ -141,6 +167,8 @@ class OpenJournal extends Phaser.Scene {
         currentPage: this.currentPage,
         collectedPlants: this.collectedPlants.map(p => p.key)
       });
+      saveToLocal("quests", quests);
+
       this.scene.stop();
       this.scene.resume("HUDScene");
     });
@@ -177,6 +205,12 @@ class OpenJournal extends Phaser.Scene {
       } else if (this.activeTab === "buddies" && this.currentPage < buddiesData.length - 1) {
         this.currentPage++;
         this.renderJournalTab();
+      } else if (this.activeTab === "quests" && this.currentPage < quests.length - 1) {
+        this.currentPage++;
+        this.renderJournalTab();
+      } else if (this.activeTab === "achievements" && this.currentPage < achievements.length - 1) {
+        this.currentPage++;
+        this.renderJournalTab();
       }
     });
     this.nextBtn.on("pointerdown", () => {
@@ -187,6 +221,12 @@ class OpenJournal extends Phaser.Scene {
         this.currentPage++;
         this.renderJournalTab();
       } else if (this.activeTab === "buddies" && this.currentPage < buddiesData.length - 1) {
+        this.currentPage++;
+        this.renderJournalTab();
+      } else if (this.activeTab === "quests" && this.currentPage < quests.length - 1) {
+        this.currentPage++;
+        this.renderJournalTab();
+      } else if (this.activeTab === "achievements" && this.currentPage < achievements.length - 1) {
         this.currentPage++;
         this.renderJournalTab();
       }
@@ -221,6 +261,10 @@ class OpenJournal extends Phaser.Scene {
     if (this.buddyImage && !this.buddyImage.destroyed) this.buddyImage.destroy();
     if (this.buddyName && !this.buddyName.destroyed) this.buddyName.destroy();
     if (this.buddyDesc && !this.buddyDesc.destroyed) this.buddyDesc.destroy();
+    if (this.questTitle && !this.questTitle.destroyed) this.questTitle.destroy();
+    if (this.questDesc && !this.questDesc.destroyed) this.questDesc.destroy();
+    if (this.achievementTitle && !this.achievementTitle.destroyed) this.achievementTitle.destroy();
+    if (this.achievementDesc && !this.achievementDesc.destroyed) this.achievementDesc.destroy();
 
     // Update tab styles
     const tabStyle = (active) => ({
@@ -234,6 +278,8 @@ class OpenJournal extends Phaser.Scene {
     this.plantsTab.setStyle(tabStyle(this.activeTab === "plants"));
     this.recipiesTab.setStyle(tabStyle(this.activeTab === "recipies"));
     this.buddiesTab.setStyle(tabStyle(this.activeTab === "buddies"));
+    this.questsTab.setStyle(tabStyle(this.activeTab === "quests"));
+    this.achievementsTab.setStyle(tabStyle(this.activeTab === "achievements"));
 
     if (this.activeTab === "plants") {
       this.renderPlantPage();
@@ -241,6 +287,10 @@ class OpenJournal extends Phaser.Scene {
       this.renderRecipePage();
     } else if (this.activeTab === "buddies") {
       this.renderBuddyPage();
+    } else if (this.activeTab === "quests") {
+      this.renderQuestPage();
+    } else if (this.activeTab === "achievements") {
+      this.renderAchievementsPage();
     }
   }
 
@@ -477,6 +527,128 @@ class OpenJournal extends Phaser.Scene {
     // Enable/disable buttons
     if (showNav) {
       this.nextBtn.setAlpha(this.currentPage < buddiesData.length - 1 ? 1 : 0.4);
+      this.prevBtn.setAlpha(this.currentPage > 0 ? 1 : 0.4);
+    }
+  }
+
+  // --- New Quest Page Renderer ---
+  renderQuestPage() {
+    const { width, height } = this.sys.game.config;
+
+    // Remove previous quest display if any
+    if (this.questTitle && !this.questTitle.destroyed) this.questTitle.destroy();
+    if (this.questDesc && !this.questDesc.destroyed) this.questDesc.destroy();
+    if (this.pageNumText && !this.pageNumText.destroyed) this.pageNumText.destroy();
+    if (this.completedTitle && !this.completedTitle.destroyed) this.completedTitle.destroy();
+    if (this.completedList && !this.completedList.destroyed) this.completedList.destroy();
+
+    // Filter active and completed quests
+    const activeQuests = quests.filter(q => q.active);
+    const completedQuests = quests.filter(q => q.completed);
+
+    // Show active quest (if any)
+    const quest = activeQuests[this.currentPage];
+    if (!quest) {
+      this.questTitle = this.add.text(width / 2, height / 2, "No active quests.", {
+        fontFamily: "Georgia",
+        fontSize: "24px",
+        color: "#2d4739"
+      }).setOrigin(0.5);
+    } else {
+      this.questTitle = this.add.text(width / 2, height / 2 - 40, quest.title, {
+        fontFamily: "Georgia",
+        fontSize: "32px",
+        color: "#2d4739"
+      }).setOrigin(0.5);
+
+      this.questDesc = this.add.text(width / 2, height / 2 + 10, quest.description, {
+        fontFamily: "Georgia",
+        fontSize: "20px",
+        color: "#444",
+        wordWrap: { width: 400 }
+      }).setOrigin(0.5);
+
+      this.pageNumText = this.add.text(width / 2, 580, `Page ${this.currentPage + 1} of ${activeQuests.length}`, {
+        fontFamily: "Georgia",
+        fontSize: "18px",
+        color: "#3e2f1c"
+      }).setOrigin(0.5);
+    }
+
+    // Show completed quests below
+    if (completedQuests.length > 0) {
+      this.completedTitle = this.add.text(width / 2, height - 180, "Completed Quests:", {
+        fontFamily: "Georgia",
+        fontSize: "22px",
+        color: "#567d46"
+      }).setOrigin(0.5);
+
+      const completedText = completedQuests.map(q => `• ${q.title}`).join('\n');
+      this.completedList = this.add.text(width / 2, height - 150, completedText, {
+        fontFamily: "Georgia",
+        fontSize: "18px",
+        color: "#888",
+        wordWrap: { width: 400 }
+      }).setOrigin(0.5);
+    }
+
+    // Show/hide buttons based on number of active quests
+    const showNav = activeQuests.length > 1;
+    this.nextBtn.setVisible(showNav);
+    this.nextBtnBg.setVisible(showNav);
+    this.prevBtn.setVisible(showNav);
+    this.prevBtnBg.setVisible(showNav);
+    if (showNav) {
+      this.nextBtn.setAlpha(this.currentPage < activeQuests.length - 1 ? 1 : 0.4);
+      this.prevBtn.setAlpha(this.currentPage > 0 ? 1 : 0.4);
+    }
+  }
+
+  // --- New Achievements Page Renderer ---
+  renderAchievementsPage() {
+    const { width, height } = this.sys.game.config;
+    // Remove previous achievement display if any
+    if (this.achievementTitle && !this.achievementTitle.destroyed) this.achievementTitle.destroy();
+    if (this.achievementDesc && !this.achievementDesc.destroyed) this.achievementDesc.destroy();
+    if (this.pageNumText && !this.pageNumText.destroyed) this.pageNumText.destroy();
+
+    const achievement = achievements[this.currentPage];
+    if (!achievement) {
+      this.achievementTitle = this.add.text(width / 2, height / 2, "No achievements yet.", {
+        fontFamily: "Georgia",
+        fontSize: "24px",
+        color: "#2d4739"
+      }).setOrigin(0.5);
+      return;
+    }
+
+    this.achievementTitle = this.add.text(width / 2, height / 2 - 40, achievement.title, {
+      fontFamily: "Georgia",
+      fontSize: "32px",
+      color: "#2d4739"
+    }).setOrigin(0.5);
+
+    this.achievementDesc = this.add.text(width / 2, height / 2 + 10, achievement.description, {
+      fontFamily: "Georgia",
+      fontSize: "20px",
+      color: "#444",
+      wordWrap: { width: 400 }
+    }).setOrigin(0.5);
+
+    this.pageNumText = this.add.text(width / 2, 580, `Page ${this.currentPage + 1} of ${achievements.length}`, {
+      fontFamily: "Georgia",
+      fontSize: "18px",
+      color: "#3e2f1c"
+    }).setOrigin(0.5);
+
+    // Show/hide buttons based on number of achievements
+    const showNav = achievements.length > 1;
+    this.nextBtn.setVisible(showNav);
+    this.nextBtnBg.setVisible(showNav);
+    this.prevBtn.setVisible(showNav);
+    this.prevBtnBg.setVisible(showNav);
+    if (showNav) {
+      this.nextBtn.setAlpha(this.currentPage < achievements.length - 1 ? 1 : 0.4);
       this.prevBtn.setAlpha(this.currentPage > 0 ? 1 : 0.4);
     }
   }
