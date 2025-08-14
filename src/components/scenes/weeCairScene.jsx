@@ -264,6 +264,14 @@ class WeeCairScene extends Phaser.Scene {
             console.log("Quest 'Help Paula Nator' completed!");
           }
 
+          // Activate "Return the first Shard" quest
+          const shardQuest = quests.find(q => q.title === "Return the first Shard");
+          if (shardQuest && !shardQuest.active && !shardQuest.completed) {
+            shardQuest.active = true;
+            saveToLocal("quests", quests);
+            console.log("Quest 'Return the first Shard' is now active!");
+          }
+
           // Existing spring shard logic
           if (!this.springShardReceived) {
             receivedItem(this, "springShard", "Spring Shard");

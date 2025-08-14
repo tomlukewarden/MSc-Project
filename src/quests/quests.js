@@ -24,7 +24,7 @@ const quests = [
     {
         id: 3,
         title: "Return the first Shard",
-        description: "Return the first Shard to the Season Pillars.",
+        description: "Talk to the Mona, she will take you to the pillars to return the first Shard.",
         active: false,
         completed: false
     },

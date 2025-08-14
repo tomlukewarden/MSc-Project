@@ -11,8 +11,8 @@ if (typeof window !== "undefined") {
     window.inventoryManager = globalInventoryManager;
   }
 }
+import quests from '../../quests/quests';
 
-import { saveToLocal, loadFromLocal } from "../../utils/localStorage";
 
 class ShopScene extends Phaser.Scene {
   constructor() {
@@ -184,6 +184,14 @@ this.sound.play('shopTheme', { loop: true, volume: 0.2 });
               showOption(this, `You took ${item.name} x${quantity}!\nCheck your seed pouch.`, {
                 options: [{ label: "OK", onSelect: () => this.destroyDialogueUI() }]
               });
+
+              // --- Activate "Plant your first crop" quest if not already active or completed ---
+              const cropQuest = quests.find(q => q.title === "Plant your first crop");
+              if (cropQuest && !cropQuest.active && !cropQuest.completed) {
+                cropQuest.active = true;
+                saveToLocal("quests", quests);
+                console.log("Quest 'Plant your first crop' is now active!");
+              }
             } else if (item.type === 'tool') {
               for (let i = 0; i < quantity; i++) {
                 if (typeof globalInventoryManager.addItem === 'function') {
