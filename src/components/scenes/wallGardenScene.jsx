@@ -9,9 +9,9 @@ import { addPlantToJournal } from "../journalManager";
 import { receivedItem } from "../recievedItem";
 import { createElephant, elephantIntroDialogues, elephantThanksDialogues } from '../../characters/elephant';
 import { createPolarBear, polarBearIntroDialogues, polarBearThanksDialogues } from '../../characters/polar';
-import { createDeer, deerIntroDialogues, deerThanksDialogues } from '../../characters/deer';
+import {createDeer, deerIntroDialogues, deerThanksDialogues} from '../../characters/deer';
 import globalTimeManager from "../../day/timeManager";
-import globalInventoryManager from "../inventoryManager";
+
 
 class WallGardenScene extends Phaser.Scene {
   constructor() {
@@ -22,13 +22,6 @@ class WallGardenScene extends Phaser.Scene {
     this.dialogueOnComplete = null;
     this.mainChar = null;
     this.transitioning = false;
-    
-    // Initialize found flags
-    this.garlicFound = false;
-    this.thymeFound = false;
-    
-    // Use the global inventory manager
-    this.inventoryManager = globalInventoryManager;
   }
 
   preload() {
@@ -39,24 +32,25 @@ class WallGardenScene extends Phaser.Scene {
     this.load.image('wallGardenBackground', '/assets/backgrounds/wallGarden/wallGarden.png');
     this.load.image('butterfly', '/assets/npc/butterfly/front-butterfly.png');
     this.load.image("defaultFront", "/assets/char/default/front-default.png");
-    this.load.image("defaultBack", "/assets/char/default/back-default.png");
-    this.load.image("defaultLeft", "/assets/char/default/left-default.png");
-    this.load.image("defaultRight", "/assets/char/default/right-default.png");
-    this.load.image("defaultFrontWalk1", "/assets/char/default/front-step-1.PNG");
-    this.load.image("defaultFrontWalk2", "/assets/char/default/front-step-2.PNG");
-    this.load.image("defaultBackWalk1", "/assets/char/default/back-step-1.PNG");
-    this.load.image("defaultBackWalk2", "/assets/char/default/back-step-2.PNG");
-    this.load.image("defaultLeftWalk1", "/assets/char/default/left-step-1.PNG");
-    this.load.image("defaultLeftWalk2", "/assets/char/default/left-step-2.PNG");
-    this.load.image("defaultRightWalk1", "/assets/char/default/right-step-1.PNG");
-    this.load.image("defaultRightWalk2", "/assets/char/default/right-step-2.PNG");
-    this.load.image('deer', '/assets/npc/deer/deer.png')
+        this.load.image("defaultBack", "/assets/char/default/back-default.png");
+        this.load.image("defaultLeft", "/assets/char/default/left-default.png");
+        this.load.image("defaultRight", "/assets/char/default/right-default.png");
+        this.load.image("defaultFrontWalk1", "/assets/char/default/front-step-1.PNG");
+        this.load.image("defaultFrontWalk2", "/assets/char/default/front-step-2.PNG");
+        this.load.image("defaultBackWalk1", "/assets/char/default/back-step-1.PNG");
+        this.load.image("defaultBackWalk2", "/assets/char/default/back-step-2.PNG");
+        this.load.image("defaultLeftWalk1", "/assets/char/default/left-step-1.PNG");
+        this.load.image("defaultLeftWalk2", "/assets/char/default/left-step-2.PNG");
+        this.load.image("defaultRightWalk1", "/assets/char/default/right-step-1.PNG");
+        this.load.image("defaultRightWalk2", "/assets/char/default/right-step-2.PNG");
+           this.load.image('deer', '/assets/npc/deer/deer.png')
     this.load.image('deerHappy', '/assets/npc/deer/happy.png')
     this.load.audio('click', '/assets/sound-effects/click.mp3');
     this.load.image('talk', '/assets/interact/talk.png');
     this.load.image("springShard", "/assets/items/spring.png");
     this.load.audio("sparkle", "/assets/sound-effects/sparkle.mp3");
     this.load.image('butterflyHappy', '/assets/npc/butterfly/happy-butterfly-dio.png');
+    this.load.audio('click', '/assets/sound-effects/click.mp3');
     this.load.image('dialogueBoxBg', '/assets/ui-items/dialogue.png');
     this.load.image('bush', '/assets/misc/bush.png');
     this.load.image('elephant', '/assets/npc/elephant/elephant.png');
@@ -68,7 +62,7 @@ class WallGardenScene extends Phaser.Scene {
     this.load.image("aloePlant", "/assets/plants/aloe.PNG");
     this.load.image('aloeAfterSunCream', '/assets/crafting/creamRemedy.png');
     this.load.audio("option", "/assets/sound-effects/option.mp3");
-    this.load.image('foxglovePlant', '/assets/plants/foxglove.png');
+       this.load.image('foxglovePlant', '/assets/plants/foxglove.png');
     this.load.image('marigoldPlant', '/assets/plants/marigold.PNG');
     this.load.image('jasminePlant', '/assets/plants/jasmine.PNG');
     this.load.image('aloePlant', '/assets/plants/aloe.PNG');
@@ -77,7 +71,6 @@ class WallGardenScene extends Phaser.Scene {
     this.load.image('garlicPlant', '/assets/plants/garlic.PNG');
     this.load.image('thymePlant', '/assets/plants/thyme.PNG');
     this.load.image('willowPlant', '/assets/plants/willow.PNG');
-    this.load.image('winterShard', '/assets/items/winter.png');
   }
 
   create() {
@@ -93,8 +86,7 @@ class WallGardenScene extends Phaser.Scene {
     let debugText = `Loaded textures: ${loadedKeys.join(', ')}\nMissing: ${missingKeys.join(', ')}`;
     this.add.text(20, debugY, debugText, { fontSize: '14px', color: missingKeys.length ? '#f00' : '#080', backgroundColor: '#fff', wordWrap: { width: 800 } }).setDepth(-1);
     this.transitioning = false;
-
-    // --- Personal Garden Button ---
+    // --- Personal Garden Button (above bushes) ---
     const btnX = 220;
     const btnY = 300;
     const btnWidth = 180;
@@ -142,95 +134,72 @@ class WallGardenScene extends Phaser.Scene {
   if (!globalTimeManager.startTimestamp) {
     globalTimeManager.start();
   }
-
+  
+    if (typeof window !== "undefined") {
+      window.inventoryManager = inventoryManager;
+    }
     this.scene.launch('HUDScene');
     const { width, height } = this.sys.game.config;
     const scaleFactor = 0.175;
 
     // --- LOAD STATE FROM LOCAL STORAGE ---
     const sceneState = loadFromLocal('wallGardenSceneState') || {};
-    // Restore inventory if present
+    // Restore inventory if present (assumes inventoryManager is imported)
     if (sceneState.inventory && Array.isArray(sceneState.inventory)) {
-      this.inventoryManager.clear();
-      sceneState.inventory.forEach(item => this.inventoryManager.addItem(item));
+      inventoryManager.clear();
+      sceneState.inventory.forEach(item => inventoryManager.addItem(item));
     }
-    
-    // Restore found flags
-    this.garlicFound = !!sceneState.garlicFound;
-    this.thymeFound = !!sceneState.thymeFound;
-    
-    // Restore NPC states
-    this.elephantIntroDone = !!sceneState.elephantIntroDone;
-    this.elephantThanksDone = !!sceneState.elephantThanksDone;
-    this.polarBearIntroDone = !!sceneState.polarBearIntroDone;
-    this.polarBearThanksDone = !!sceneState.polarBearThanksDone;
-    this.deerIntroDone = !!sceneState.deerIntroDone;
-    this.deerThanksDone = !!sceneState.deerThanksDone;
-    
-    // Restore dialogue state
+    // Restore periwinkleFound (for bush logic)
+    let periwinkleFound = !!sceneState.periwinkleFound;
+    // Restore butterfly dialogue state
     this.butterflyDialogueIndex = sceneState.butterflyDialogueIndex || 0;
     this.butterflyDialogueActive = !!sceneState.butterflyDialogueActive;
     this.dialogueActive = !!sceneState.dialogueActive;
-    
-    // Restore bush dispensed state
-    this.bushDispensed = sceneState.bushDispensed || [false, false, false, false];
-    
     // Restore time of day
     if (sceneState.timeOfDay) {
       globalTimeManager.dayCycle.setTimeOfDay(sceneState.timeOfDay);
     }
 
-    console.log('Loaded state:', {
-      garlicFound: this.garlicFound,
-      thymeFound: this.thymeFound,
-      bushDispensed: this.bushDispensed
-    });
+    // --- Restore dialogue UI if needed ---
+    // Only restore if dialogue was active when leaving
+    if (this.butterflyDialogueActive) {
+      showDialogue(this, butterflyIntroDialogues[this.butterflyDialogueIndex], { imageKey: "butterflyHappy" });
+      this.dialogueOnComplete = () => {
+        this.butterflyDialogueIndex++;
+        if (this.butterflyDialogueIndex < butterflyIntroDialogues.length) {
+          showDialogue(this, butterflyIntroDialogues[this.butterflyDialogueIndex], { imageKey: "butterflyHappy" });
+        } else {
+          showOption(this, "Would you like to move on?", {
+            imageKey: "butterfly",
+            options: [
+              {
+                text: "Yes",
+                callback: () => {
+                  this.destroyDialogueUI();
+                  this.butterflyDialogueActive = false;
+                  this.saveSceneState(periwinkleFound);
+                  this.scene.start("ShardGardenScene");
+                }
+              },
+              {
+                text: "No",
+                callback: () => {
+                  showDialogue(this, "Take your time and explore! Talk to me again when you're ready to move on.", { imageKey: "butterflyHappy" });
+                  this.dialogueOnComplete = () => {
+                    this.destroyDialogueUI();
+                    this.butterflyDialogueActive = false;
+                    this.saveSceneState(periwinkleFound);
+                  };
+                }
+              }
+            ]
+          });
+        }
+      };
+    }
 
-    // --- Talk icon ---
-    const talkIcon = this.add
-      .image(0, 0, "talk")
-      .setScale(0.05)
-      .setVisible(false)
-      .setDepth(110)
-      .setOrigin(0.5);
+      // --- Elephant NPC ---
 
-    // --- Create all NPCs and set up their interactions ---
-    this.createNPCs(width, height, talkIcon);
-
-    // --- SINGLE dialogue advance handler ---
-    this.setupDialogueHandler();
-
-    // --- Map and background ---
-    this.setupMapAndBackground(width, height, scaleFactor);
-
-    // --- Main Character ---
-    this.mainChar = createMainChar(this, width / 2, height / 2, scaleFactor, this.collisionGroup);
-    this.mainChar.setDepth(10).setOrigin(1, -5);
-
-    // --- Butterfly NPC ---
-    this.setupButterfly(width, height, talkIcon);
-
-    // --- Bushes ---
-    this.setupBushes(width, height);
-
-    // --- PERIODIC SAVE TO LOCAL STORAGE ---
-    this._saveInterval = setInterval(() => {
-      this.saveSceneState();
-    }, 8000);
-
-    this.events.on('shutdown', () => {
-      this.saveSceneState();
-      clearInterval(this._saveInterval);
-      this.transitioning = false;
-    });
-    this.events.on('destroy', () => {
-      this.saveSceneState();
-      clearInterval(this._saveInterval);
-      this.transitioning = false;
-    });
-  }
-
-  createNPCs(width, height, talkIcon) {
     // --- Elephant NPC ---
     this.elephant = createElephant(this, width / 2 + 200, height / 2 + 100);
     this.elephant
@@ -238,11 +207,6 @@ class WallGardenScene extends Phaser.Scene {
       .setDepth(10)
       .setScale(0.1)
       .setOrigin(0.5, 0.9);
-
-    // Set elephant texture based on saved state
-    if (this.elephantThanksDone && this.textures.exists('elephantHappy')) {
-      this.elephant.setTexture('elephantHappy');
-    }
 
     // Elephant talk icon events
     this.elephant.on("pointerover", (pointer) => {
@@ -259,14 +223,23 @@ class WallGardenScene extends Phaser.Scene {
     // --- Elephant dialogue and gifting logic ---
     this.elephantDialogueActive = false;
     this.elephantDialogueIndex = 0;
-    this.hasJasmineTea = () => this.inventoryManager.hasItemByKey("jasmineTea");
+    // Change required item to Jasmine Tea
+    this.hasJasmineTea = () => inventoryManager.hasItemByKey && inventoryManager.hasItemByKey("jasmineTea");
 
     // Listen for jasmineTea handover event from inventory
     this.events.on("jasmineTeaGiven", () => {
       this.awaitingJasmineTeaGive = false;
-      this.inventoryManager.removeItemByKey("jasmineTea");
-      
-      if (!this.inventoryManager.hasItemByKey("jasmineTea")) {
+      // Remove ALL jasmineTea items from inventory as a failsafe
+      if (typeof inventoryManager.getItems === "function" && typeof inventoryManager.removeItemByKey === "function") {
+        let items = inventoryManager.getItems();
+        let teaCount = items.filter(item => item.key === "jasmineTea").length;
+        for (let i = 0; i < teaCount; i++) {
+          inventoryManager.removeItemByKey("jasmineTea");
+        }
+      }
+      const items = typeof inventoryManager.getItems === "function" ? inventoryManager.getItems() : [];
+      const hasJasmineTea = items.some(item => item.key === "jasmineTea");
+      if (!hasJasmineTea) {
         showDialogue(this, "You hand the elephant the Jasmine Tea...", { imageKey: "elephant" });
         this.elephant.setTexture && this.elephant.setTexture("elephantHappy");
         this.time.delayedCall(800, () => {
@@ -310,6 +283,7 @@ class WallGardenScene extends Phaser.Scene {
                 this.hasMadeJasmineTeaChoice = true;
                 this.destroyDialogueUI();
                 this.dialogueActive = true;
+                // Set flag to await jasmineTea handover
                 this.awaitingJasmineTeaGive = true;
                 this.scene.launch("OpenInventory");
               }
@@ -362,6 +336,7 @@ class WallGardenScene extends Phaser.Scene {
               console.log("Quest 'Help Tia' completed!");
             }
             receivedItem(this, "autumnShard", "Autumn Shard");
+            inventoryManager.removeItemByKey && inventoryManager.removeItemByKey("jasmineTea");
           }
           this.elephantDialogueActive = false;
           this.updateHUDState && this.updateHUDState();
@@ -400,6 +375,7 @@ class WallGardenScene extends Phaser.Scene {
               console.log("Quest 'Help Snowbert' completed!");
             }
             receivedItem(this, "winterShard", "Winter Shard");
+            inventoryManager.removeItemByKey && inventoryManager.removeItemByKey("willowBarkTea");
           }
           this.polarBearDialogueActive = false;
           this.updateHUDState && this.updateHUDState();
@@ -435,14 +411,23 @@ class WallGardenScene extends Phaser.Scene {
     // --- Polar Bear dialogue and gifting logic ---
     this.polarBearDialogueActive = false;
     this.polarBearDialogueIndex = 0;
-    this.hasWillowBarkTea = () => this.inventoryManager.hasItemByKey("willowBarkTea");
+    // Change required item to Willow Bark Tea
+    this.hasWillowBarkTea = () => inventoryManager.hasItemByKey && inventoryManager.hasItemByKey("willowBarkTea");
 
     // Listen for willowBarkTea handover event from inventory
     this.events.on("willowBarkTeaGiven", () => {
       this.awaitingWillowBarkTeaGive = false;
-      this.inventoryManager.removeItemByKey("willowBarkTea");
-      
-      if (!this.inventoryManager.hasItemByKey("willowBarkTea")) {
+      // Remove ALL willowBarkTea items from inventory as a failsafe
+      if (typeof inventoryManager.getItems === "function" && typeof inventoryManager.removeItemByKey === "function") {
+        let items = inventoryManager.getItems();
+        let teaCount = items.filter(item => item.key === "willowBarkTea").length;
+        for (let i = 0; i < teaCount; i++) {
+          inventoryManager.removeItemByKey("willowBarkTea");
+        }
+      }
+      const items = typeof inventoryManager.getItems === "function" ? inventoryManager.getItems() : [];
+      const hasWillowBarkTea = items.some(item => item.key === "willowBarkTea");
+      if (!hasWillowBarkTea) {
         showDialogue(this, "You hand the polar bear the Willow Bark Tea...", { imageKey: "polarBear" });
         this.polarBear.setTexture && this.polarBear.setTexture("polarBearHappy");
         this.time.delayedCall(800, () => {
@@ -478,6 +463,7 @@ class WallGardenScene extends Phaser.Scene {
                 this.hasMadeWillowBarkTeaChoice = true;
                 this.destroyDialogueUI();
                 this.dialogueActive = true;
+                // Set flag to await willowBarkTea handover
                 this.awaitingWillowBarkTeaGive = true;
                 this.scene.launch("OpenInventory");
               }
@@ -528,14 +514,22 @@ class WallGardenScene extends Phaser.Scene {
     // --- Deer dialogue and gifting logic ---
     this.deerDialogueActive = false;
     this.deerDialogueIndex = 0;
-    this.hasMarigoldSalve = () => this.inventoryManager.hasItemByKey("marigoldSalve");
+    this.hasMarigoldSalve = () => inventoryManager.hasItemByKey && inventoryManager.hasItemByKey("marigoldSalve");
 
     // Listen for marigoldSalve handover event from inventory
     this.events.on("marigoldSalveGiven", () => {
       this.awaitingMarigoldSalveGive = false;
-      this.inventoryManager.removeItemByKey("marigoldSalve");
-      
-      if (!this.inventoryManager.hasItemByKey("marigoldSalve")) {
+      // Remove ALL marigoldSalve items from inventory as a failsafe
+      if (typeof inventoryManager.getItems === "function" && typeof inventoryManager.removeItemByKey === "function") {
+        let items = inventoryManager.getItems();
+        let salveCount = items.filter(item => item.key === "marigoldSalve").length;
+        for (let i = 0; i < salveCount; i++) {
+          inventoryManager.removeItemByKey("marigoldSalve");
+        }
+      }
+      const items = typeof inventoryManager.getItems === "function" ? inventoryManager.getItems() : [];
+      const hasMarigoldSalve = items.some(item => item.key === "marigoldSalve");
+      if (!hasMarigoldSalve) {
         showDialogue(this, "You hand the deer the Marigold Salve...", { imageKey: "deer" });
         this.deer.setTexture && this.deer.setTexture("deerHappy");
         this.time.delayedCall(800, () => {
@@ -579,6 +573,7 @@ class WallGardenScene extends Phaser.Scene {
                 this.hasMadeMarigoldSalveChoice = true;
                 this.destroyDialogueUI();
                 this.dialogueActive = true;
+                // Set flag to await marigoldSalve handover
                 this.awaitingMarigoldSalveGive = true;
                 this.scene.launch("OpenInventory");
               }
@@ -606,74 +601,8 @@ class WallGardenScene extends Phaser.Scene {
       }
     });
 
-    // --- Global dialogue advance handler ---
+    // Deer dialogue advance on click
     this.input.on("pointerdown", () => {
-      this.sound.play("click");
-
-      // Handle elephant dialogue
-      if (this.elephantDialogueActive) {
-        this.elephantDialogueIndex++;
-        if (this.activeElephantDialogues && this.elephantDialogueIndex < this.activeElephantDialogues.length) {
-          showDialogue(this, this.activeElephantDialogues[this.elephantDialogueIndex], { imageKey: "elephant" });
-        } else {
-          this.destroyDialogueUI();
-          this.dialogueActive = false;
-          this.updateHUDState();
-
-          if (!this.elephantIntroDone && this.activeElephantDialogues === elephantIntroDialogues) {
-            this.elephantIntroDone = true;
-          }
-          if (this.elephantHasJasmineTea && this.activeElephantDialogues === elephantThanksDialogues) {
-            this.elephantThanksDone = true;
-            const tiaQuest = quests.find(q => q.title === "Help Tia");
-            if (tiaQuest) {
-              tiaQuest.active = false;
-              tiaQuest.completed = true;
-              saveToLocal("quests", quests);
-            }
-            receivedItem(this, "autumnShard", "Autumn Shard");
-          }
-          this.elephantDialogueActive = false;
-          this.updateHUDState();
-        }
-        return;
-      }
-
-      // Handle polar bear dialogue
-      if (this.polarBearDialogueActive) {
-        this.polarBearDialogueIndex++;
-        if (this.activePolarBearDialogues && this.polarBearDialogueIndex < this.activePolarBearDialogues.length) {
-          showDialogue(this, this.activePolarBearDialogues[this.polarBearDialogueIndex], { imageKey: "polarBear" });
-        } else {
-          this.destroyDialogueUI();
-          this.dialogueActive = false;
-          this.updateHUDState();
-
-          if (!this.polarBearIntroDone && this.activePolarBearDialogues === polarBearIntroDialogues) {
-            this.polarBearIntroDone = true;
-            const snowbertQuest = quests.find(q => q.title === "Help Snowbert");
-            if (snowbertQuest && !snowbertQuest.active && !snowbertQuest.completed) {
-              snowbertQuest.active = true;
-              saveToLocal("quests", quests);
-            }
-          }
-          if (this.polarBearHasWillowBarkTea && this.activePolarBearDialogues === polarBearThanksDialogues) {
-            this.polarBearThanksDone = true;
-            const snowbertQuest = quests.find(q => q.title === "Help Snowbert");
-            if (snowbertQuest) {
-              snowbertQuest.active = false;
-              snowbertQuest.completed = true;
-              saveToLocal("quests", quests);
-            }
-            receivedItem(this, "winterShard", "Winter Shard");
-          }
-          this.polarBearDialogueActive = false;
-          this.updateHUDState();
-        }
-        return;
-      }
-
-      // Handle deer dialogue
       if (this.deerDialogueActive) {
         this.deerDialogueIndex++;
         if (this.activeDeerDialogues && this.deerDialogueIndex < this.activeDeerDialogues.length) {
@@ -681,41 +610,189 @@ class WallGardenScene extends Phaser.Scene {
         } else {
           this.destroyDialogueUI();
           this.dialogueActive = false;
-          this.updateHUDState();
+          this.updateHUDState && this.updateHUDState();
 
           if (!this.deerIntroDone && this.activeDeerDialogues === deerIntroDialogues) {
             this.deerIntroDone = true;
           }
           if (this.deerHasMarigoldSalve && this.activeDeerDialogues === deerThanksDialogues) {
             this.deerThanksDone = true;
+            // --- Complete Elkton John's quest after thanks dialogue ---
             const deerQuest = quests.find(q => q.title === "Help Elkton John");
             if (deerQuest) {
               deerQuest.active = false;
               deerQuest.completed = true;
               saveToLocal("quests", quests);
+              console.log("Quest 'Help Elkton John' completed!");
             }
             receivedItem(this, "springShard", "Spring Shard");
+            inventoryManager.removeItemByKey && inventoryManager.removeItemByKey("marigoldSalve");
           }
           this.deerDialogueActive = false;
-          this.updateHUDState();
+          this.updateHUDState && this.updateHUDState();
         }
         return;
       }
+    });
 
-      // Handle butterfly dialogue
-      if (this.butterflyDialogueActive && typeof this.dialogueOnComplete === "function") {
-        this.dialogueOnComplete();
-        return;
+    // --- Map and background ---
+    const map = this.make.tilemap({ key: "wallGardenMap" });
+    // Asset existence check helper
+    const safeAddImage = (scene, x, y, key, ...args) => {
+      if (!scene.textures.exists(key)) {
+        // Show warning in console and on screen
+        console.warn(`Image asset missing: ${key}`);
+        scene.add.text(x, y, `Missing: ${key}`, { fontSize: '16px', color: '#f00', backgroundColor: '#fff' }).setOrigin(0.5).setDepth(999);
+        return null;
       }
+      return scene.add.image(x, y, key, ...args);
+    };
+    safeAddImage(this, width / 2, height / 2, "wallGardenBackground").setScale(scaleFactor).setDepth(0);
+    safeAddImage(this, width / 2, height / 2, "wall1").setScale(scaleFactor).setDepth(9);
+    safeAddImage(this, width / 2, height / 2, "wall2").setScale(scaleFactor).setDepth(103);
+    safeAddImage(this, width / 2, height / 2, "trees").setScale(scaleFactor).setDepth(10);
 
-      // Handle plant dialogue advance
+    // --- Collision objects from the object layer ---
+    const collisionGroup = this.physics.add.staticGroup();
+    const collisionObjects = map.getObjectLayer && map.getObjectLayer("wall-garden-collision");
+    const xOffset = -160;
+    const yOffset = 0;
+
+    if (collisionObjects && collisionObjects.objects) {
+      collisionObjects.objects.forEach((obj) => {
+        const hasCollisionProp = obj.properties && obj.properties.some(
+          (prop) => prop.name === "collision" && prop.value === true
+        );
+        if (!hasCollisionProp) return;
+
+        const solid = this.add.rectangle(
+          (obj.x + obj.width / 2) * scaleFactor + xOffset,
+          (obj.y + obj.height / 2) * scaleFactor + yOffset,
+          obj.width * scaleFactor,
+          obj.height * scaleFactor,
+          0xff0000,
+          0.3
+        );
+        this.physics.add.existing(solid, true);
+        collisionGroup.add(solid);
+      });
+    }
+
+    // --- Main Character ---
+    this.mainChar = createMainChar(this, width / 2, height / 2, scaleFactor, collisionGroup);
+    this.mainChar.setDepth(10).setOrigin(1, -5);
+
+    // --- Butterfly NPC ---
+    this.butterfly = createButterfly(this, width / 2 + 100, height / 2 - 50);
+    this.butterfly.setDepth(20).setScale(0.09).setInteractive();
+
+    // --- Talk icon ---
+    const talkIcon = this.add
+      .image(0, 0, "talk")
+      .setScale(0.05)
+      .setVisible(false)
+      .setDepth(110)
+      .setOrigin(0.5);
+
+    // --- Talk icon hover logic ---
+    this.butterfly.on("pointerover", (pointer) => {
+      talkIcon.setVisible(true);
+      talkIcon.setPosition(pointer.worldX + 32, pointer.worldY);
+    });
+    this.butterfly.on("pointermove", (pointer) => {
+      talkIcon.setPosition(pointer.worldX + 32, pointer.worldY);
+    });
+    this.butterfly.on("pointerout", () => {
+      talkIcon.setVisible(false);
+    });
+
+    this.butterflyDialogueIndex = 0;
+    this.butterflyDialogueActive = false;
+
+    this.butterfly.on("pointerdown", () => {
+      if (this.butterflyDialogueActive) return;
+      this.butterflyDialogueActive = true;
+      // Do not reset index if restoring
+      if (!this.dialogueBox) this.butterflyDialogueIndex = 0;
+      showDialogue(this, butterflyIntroDialogues[this.butterflyDialogueIndex], { imageKey: "butterflyHappy" });
+      this.dialogueOnComplete = () => {
+        this.butterflyDialogueIndex++;
+        if (this.butterflyDialogueIndex < butterflyIntroDialogues.length) {
+          showDialogue(this, butterflyIntroDialogues[this.butterflyDialogueIndex], { imageKey: "butterflyHappy" });
+        } else {
+          showOption(this, "Would you like to move on?", {
+            imageKey: "butterfly",
+            options: [
+              {
+                text: "Yes",
+                callback: () => {
+                  this.destroyDialogueUI();
+                  this.butterflyDialogueActive = false;
+                  this.scene.start("LoaderScene", {
+                    nextSceneKey: "ShardGardenScene",
+                    nextSceneData: {}
+                  });
+                }
+              },
+              {
+                text: "No",
+                callback: () => {
+                  showDialogue(this, "Take your time and explore! Talk to me again when you're ready to move on.", { imageKey: "butterflyHappy" });
+                  this.dialogueOnComplete = () => {
+                    this.destroyDialogueUI();
+                    this.butterflyDialogueActive = false;
+                    this.dialogueActive = false;
+                    this.updateHUDState();
+                    this.dialogueOnComplete = null;
+                  };
+                }
+              }
+            ]
+          });
+        }
+      };
+    });
+
+    // --- Placeholder bushes: random rectangles ---
+    this.setupBushes(width, height, periwinkleFound);
+
+    this.input.on("pointerdown", () => {
+      this.sound.play("click");
+      // Only advance/close if a dialogue is active and a completion callback is set
       if (this.dialogueActive && typeof this.dialogueOnComplete === "function") {
         this.dialogueOnComplete();
-        return;
       }
-
-      this.updateHUDState();
     });
+
+    // --- PERIODIC SAVE TO LOCAL STORAGE ---
+    this._saveInterval = setInterval(() => {
+      this.saveSceneState(periwinkleFound);
+    }, 8000);
+
+    // Save on shutdown/stop
+    this.events.on('shutdown', () => {
+      this.saveSceneState(periwinkleFound);
+      clearInterval(this._saveInterval);
+      this.transitioning = false;
+    });
+    this.events.on('destroy', () => {
+      this.saveSceneState(periwinkleFound);
+      clearInterval(this._saveInterval);
+      this.transitioning = false;
+    });
+  }
+
+  // Save relevant state to localStorage
+  saveSceneState(periwinkleFound) {
+    const state = {
+      inventory: inventoryManager.getItems ? inventoryManager.getItems() : [],
+      periwinkleFound: !!periwinkleFound,
+      butterflyDialogueIndex: this.butterflyDialogueIndex,
+      butterflyDialogueActive: !!this.butterflyDialogueActive,
+      dialogueActive: !!this.dialogueActive,
+      timeOfDay: globalTimeManager.getCurrentTimeOfDay()
+    };
+    saveToLocal('wallGardenSceneState', state);
   }
 
   setupBushes(width, height) {
@@ -728,83 +805,59 @@ class WallGardenScene extends Phaser.Scene {
     const bushCount = bushPositions.length;
     const garlicIndex = 0;
     const thymeIndex = 1;
-    
-    // Initialize bushDispensed if not already done
-    if (!this.bushDispensed || this.bushDispensed.length !== bushCount) {
-      this.bushDispensed = Array(bushCount).fill(false);
-    }
-
-    console.log('Setting up bushes with state:', this.bushDispensed);
+    // Track dispensed state for each bush
+    this.bushDispensed = this.bushDispensed || Array(bushCount).fill(false);
 
     for (let i = 0; i < bushCount; i++) {
       const { x, y } = bushPositions[i];
+      // Asset existence check for bush
       const bush = this.textures.exists('bush')
         ? this.add.image(x, y, 'bush').setScale(0.05).setDepth(1).setInteractive({ useHandCursor: true })
         : this.add.text(x, y, 'Missing: bush', { fontSize: '16px', color: '#f00', backgroundColor: '#fff' }).setOrigin(0.5).setDepth(999);
 
       bush.on("pointerdown", () => {
-        console.log(`Bush ${i} clicked. Dispensed: ${this.bushDispensed[i]}, GarlicFound: ${this.garlicFound}, ThymeFound: ${this.thymeFound}`);
-        
-        if (this.dialogueActive) {
-          console.log('Dialogue already active, ignoring bush click');
-          return;
-        }
-        
         this.sound.play("click");
+        if (this.dialogueActive) return;
         this.dialogueActive = true;
-        this.updateHUDState();
+        this.updateHUDState && this.updateHUDState();
 
-        // Check if bush is already dispensed
+        // If already dispensed, show empty dialogue
         if (this.bushDispensed[i]) {
-          console.log(`Bush ${i} is already dispensed`);
           showDialogue(this, "This bush is empty!");
           this.dialogueOnComplete = () => {
-            this.destroyDialogueUI();
+            this.destroyDialogueUI && this.destroyDialogueUI();
             this.dialogueActive = false;
-            this.updateHUDState();
+            this.updateHUDState && this.updateHUDState();
             this.dialogueOnComplete = null;
           };
           return;
         }
 
         if (i === garlicIndex && !this.garlicFound) {
-          console.log('Showing garlic minigame');
           const garlic = plantData.find(p => p.key === "garlicPlant");
           if (garlic) {
-            this.showPlantMinigame(garlic, "garlicFound", i);
+            this.showPlantMinigame(garlic, "garlicFound");
+            this.bushDispensed[i] = true;
           } else {
             this.showPlantMissing();
             this.bushDispensed[i] = true;
           }
         }
         else if (i === thymeIndex && !this.thymeFound) {
-          console.log('Showing thyme minigame');
           const thyme = plantData.find(p => p.key === "thymePlant");
           if (thyme) {
-            this.showPlantMinigame(thyme, "thymeFound", i);
+            this.showPlantMinigame(thyme, "thymeFound");
+            this.bushDispensed[i] = true;
           } else {
             this.showPlantMissing();
             this.bushDispensed[i] = true;
           }
         }
-        else {
-          console.log(`Bush ${i} is empty or plant already found`);
-          showDialogue(this, `You found nothing in the bush this time.`);
-          this.dialogueOnComplete = () => {
-            this.destroyDialogueUI();
-            this.dialogueActive = false;
-            this.updateHUDState();
-            this.dialogueOnComplete = null;
-          };
-          this.bushDispensed[i] = true;
-        }
       });
     }
   }
 
-  showPlantMinigame(plant, foundFlag, bushIndex) {
-    console.log(`Showing plant minigame for ${plant.name}, bush ${bushIndex}`);
-    
+  showPlantMinigame(plant, foundFlag) {
     showOption(
       this,
       `You found a ${plant.name} plant! \n But a cheeky animal is trying to steal it!`,
@@ -814,27 +867,17 @@ class WallGardenScene extends Phaser.Scene {
           {
             label: "Play a game to win it!",
             callback: () => {
-              console.log(`Launching minigame for ${plant.name}`);
-              this.destroyDialogueUI();
+              this.destroyDialogueUI && this.destroyDialogueUI();
               this.dialogueActive = false;
-              this.updateHUDState();
+              this.updateHUDState && this.updateHUDState();
               this.dialogueOnComplete = null;
-              
               this.scene.launch("MiniGameScene", {
                 onWin: () => {
-                  console.log(`Won minigame for ${plant.name}`);
                   this.scene.stop("MiniGameScene");
                   this.scene.resume();
 
-                  const alreadyHas = this.inventoryManager.hasItemByKey(plant.key);
+                  const alreadyHas = inventoryManager.hasItemByKey && inventoryManager.hasItemByKey(plant.key);
                   if (!alreadyHas) {
-                    this.inventoryManager.addItem({
-                      key: plant.key,
-                      name: plant.name,
-                      imageKey: plant.imageKey,
-                      type: 'plant',
-                      color: 0x4caf50
-                    });
                     addPlantToJournal(plant.key);
                     receivedItem(this, plant.key, plant.name);
                   }
@@ -842,7 +885,7 @@ class WallGardenScene extends Phaser.Scene {
                   showDialogue(this,
                     alreadyHas
                       ? `You already have the ${plant.name} plant.`
-                      : `You won the game! The animal reluctantly gives you the ${plant.name} plant.`, {
+                      : `You won the game! The animal reluctantly \n gives you the ${plant.name} plant.`, {
                         imageKey: plant.imageKey
                       }
                   );
@@ -850,31 +893,10 @@ class WallGardenScene extends Phaser.Scene {
                   this[foundFlag] = true;
                   this.dialogueActive = true;
 
-                  // ONLY mark bush as dispensed after successful win
-                  if (bushIndex !== undefined) {
-                    this.bushDispensed[bushIndex] = true;
-                    console.log(`Bush ${bushIndex} marked as dispensed`);
-                  }
-
                   this.dialogueOnComplete = () => {
                     this.destroyDialogueUI();
                     this.dialogueActive = false;
-                    this.updateHUDState();
-                    this.dialogueOnComplete = null;
-                  };
-                },
-                onLose: () => {
-                  console.log(`Lost minigame for ${plant.name}`);
-                  this.scene.stop("MiniGameScene");
-                  this.scene.resume();
-                  
-                  showDialogue(this, `You lost the game! The animal ran away with the ${plant.name} plant. \nMaybe you can find another one in a different bush...`);
-                  
-                  this.dialogueActive = true;
-                  this.dialogueOnComplete = () => {
-                    this.destroyDialogueUI();
-                    this.dialogueActive = false;
-                    this.updateHUDState();
+                    this.updateHUDState && this.updateHUDState();
                     this.dialogueOnComplete = null;
                   };
                 }
@@ -885,9 +907,9 @@ class WallGardenScene extends Phaser.Scene {
           {
             label: "Try again later",
             callback: () => {
-              this.destroyDialogueUI();
+              this.destroyDialogueUI && this.destroyDialogueUI();
               this.dialogueActive = false;
-              this.updateHUDState();
+              this.updateHUDState && this.updateHUDState();
               this.dialogueOnComplete = null;
             }
           }

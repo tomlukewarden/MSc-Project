@@ -7,7 +7,7 @@ import GreenhouseScene from "./scenes/greenhouseScene";
 import WeeCairScene from "./scenes/weeCairScene";
 import StartScene from "./scenes/startScene";
 import ShopScene from "./scenes/shopScene";
-import Menu from "./scenes/menuScene";
+// import Menu from "./scenes/menuScene";
 import OpenInventory from "./openInventory";
 import OpenSettings from "./openSettings";
 import WallGardenScene from "./scenes/wallGardenScene";
@@ -65,7 +65,7 @@ function GameCanvas() {
       },
   canvas: canvasRef.current,
   scene: [
-    Menu,
+    // Menu,
     StartScene,
     ShopScene,
     WeeCairScene,
