@@ -38,10 +38,10 @@ class GreenhouseScene extends Phaser.Scene {
         this.load.image('dialogueBoxBg', '/assets/ui-items/dialogue.png');
         this.load.image("autumnShard", "/assets/items/autumn.png");
         this.load.image("winterShard", "/assets/items/winter.png");
-        this.load.image('rabbit', '/assets/npc/rabbit/rabbit.png');
-        this.load.image('rabbitHappy', '/assets/npc/rabbit/happy.png');
-        this.load.image("pig", "/assets/npc/pig/pig.png");
-        this.load.image("pigHappy", "/assets/npc/pig/happy.png");
+        this.load.image('rabbit', '/assets/npc/rabbit/rabbit.PNG');
+        this.load.image('rabbitHappy', '/assets/npc/rabbit/happy.PNG');
+        this.load.image("pig", "/assets/npc/pig/pig.PNG");
+        this.load.image("pigHappy", "/assets/npc/pig/happy.PNG");
         this.load.image('talk', '/assets/interact/talk.png');
         this.load.audio("option", "/assets/sound-effects/option.mp3");
         this.load.image('lavenderOil', '/assets/crafting/lavenderOil.png');
