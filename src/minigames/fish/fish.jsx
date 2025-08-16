@@ -10,6 +10,10 @@ class FishGameScene extends Phaser.Scene {
         this.lineSpeed = 300;
         this.fishSpeed = 150;
         this.dropSpeed = 400;
+        
+        // Store callbacks persistently
+        this.storedOnWin = null;
+        this.storedOnLose = null;
     }
 
     preload() {
@@ -35,12 +39,19 @@ class FishGameScene extends Phaser.Scene {
         if (this.scene.settings && this.scene.settings.data) {
             if (typeof this.scene.settings.data.onWin === "function") {
                 this.onWin = this.scene.settings.data.onWin;
-                console.log("[FishGameScene] onWin callback received from scene data.");
+                this.storedOnWin = this.scene.settings.data.onWin; // Store permanently
+                console.log("[FishGameScene] onWin callback received and stored");
             }
             if (typeof this.scene.settings.data.onLose === "function") {
                 this.onLose = this.scene.settings.data.onLose;
-                console.log("[FishGameScene] onLose callback received from scene data.");
+                this.storedOnLose = this.scene.settings.data.onLose; // Store permanently
+                console.log("[FishGameScene] onLose callback received and stored");
             }
+        } else if (this.storedOnWin || this.storedOnLose) {
+            // Restore from stored callbacks (for restarts)
+            this.onWin = this.storedOnWin;
+            this.onLose = this.storedOnLose;
+            console.log("[FishGameScene] Callbacks restored from storage");
         } else {
             console.log("[FishGameScene] No callbacks found in scene data.");
         }
@@ -304,7 +315,7 @@ class FishGameScene extends Phaser.Scene {
         const loseText = this.add.text(width / 2, height / 2, `Game Over!\nYou caught a bad fish!\nFinal Score: ${this.score}`, {
             fontSize: "32px",
             color: "#ff0000",
-            fontFamily: "Georgia",
+            font: "Georgia",
             align: "center",
             stroke: "#000",
             strokeThickness: 3
@@ -344,8 +355,8 @@ class FishGameScene extends Phaser.Scene {
         }).setOrigin(0.5);
         
         restartBtn.on("pointerdown", () => {
-            console.log("[FishGameScene] Restart button clicked");
-            this.scene.restart();
+            console.log("[FishGameScene] Restart button clicked - callbacks will be restored from storage");
+            this.scene.restart(); // Simple restart - callbacks are stored in class properties
         });
     }
 }
