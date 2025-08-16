@@ -125,38 +125,21 @@ class WeeCairScene extends Phaser.Scene {
           
           console.log(`Collision rect ${index} - Position: (${rectX}, ${rectY}), Size: ${rectWidth}x${rectHeight}`);
           
-          // Create visible collision rectangle with outline only
+          // Create invisible collision rectangle
           const collisionRect = this.add.rectangle(
             rectX,
             rectY,
             rectWidth,
             rectHeight,
-            0x000000, // Black fill (will be made transparent)
-            0 // Completely transparent fill
+            0x000000, // Color doesn't matter since it's invisible
+            0 // Completely transparent
           );
-          
-          // Add red outline to make collision boundaries visible
-          collisionRect.setStrokeStyle(3, 0xff0000); // Red outline, 3px thick
-          collisionRect.setDepth(10000); // Bring to front for visibility
           
           // Enable physics on the collision rectangle
           this.physics.add.existing(collisionRect, true);
           collisionGroup.add(collisionRect);
           
-          // Add debug text with collision info
-          this.add.text(
-            rectX - rectWidth/2,
-            rectY - rectHeight/2 - 25,
-            `WeeCair Collision ${index}\n${rectWidth.toFixed(0)}x${rectHeight.toFixed(0)}`,
-            { 
-              fontSize: '10px', 
-              color: '#ffffff', 
-              backgroundColor: '#ff0000',
-              padding: { left: 3, right: 3, top: 2, bottom: 2 }
-            }
-          ).setDepth(10001);
-          
-          console.log(`Successfully created collision rectangle ${index}`);
+          console.log(`Successfully created invisible collision rectangle ${index}`);
         }
       });
     } else {

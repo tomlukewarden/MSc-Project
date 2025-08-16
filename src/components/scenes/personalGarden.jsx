@@ -172,37 +172,20 @@ class PersonalGarden extends Phaser.Scene {
           
           console.log(`Collision rect ${index} - Position: (${rectX}, ${rectY}), Size: ${rectWidth}x${rectHeight}`);
           
-          // Create VERY VISIBLE collision rectangle
+          // Create invisible collision rectangle
           const collisionRect = this.add.rectangle(
             rectX,
             rectY,
             rectWidth,
             rectHeight,
-            0xff0000, // Bright red
-            0.5 // Semi-transparent so you can see through
+            0x000000, // Color doesn't matter since it's invisible
+            0 // Completely transparent
           );
-          
-          // Add thick border
-          collisionRect.setStrokeStyle(4, 0xffff00); // Yellow border
-          collisionRect.setDepth(10000); // Bring to front
           
           this.physics.add.existing(collisionRect, true);
           this.obstacleGroup.add(collisionRect);
           
-          // Add debug text with object info (also offset)
-          this.add.text(
-            rectX - rectWidth/2,
-            rectY - rectHeight/2 - 30,
-            `Collision ${index}\n${rectWidth.toFixed(0)}x${rectHeight.toFixed(0)}\nAt: ${rectX.toFixed(0)}, ${rectY.toFixed(0)}`,
-            { 
-              fontSize: '12px', 
-              color: '#ffffff', 
-              backgroundColor: '#000000',
-              padding: { left: 4, right: 4, top: 2, bottom: 2 }
-            }
-          ).setDepth(10001);
-          
-          console.log(`Successfully created collision rectangle ${index}`);
+          console.log(`Successfully created invisible collision rectangle ${index}`);
         }
       });
     } else {

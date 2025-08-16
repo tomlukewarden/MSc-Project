@@ -78,6 +78,7 @@ class WallGardenScene extends Phaser.Scene {
     this.load.image("elephantDialogueHappy", "/assets/npc/dialogue/elephantHappy.png");
     this.load.image("elephantDialogueSad", "/assets/npc/dialogue/elephantSad.png");
     this.load.image("winterShard", "/assets/items/winter.png");
+    this.load.tilemapTiledJSON("wallGardenMap", "/assets/maps/wallGardenMap.json");
   }
 
   create() {
@@ -691,50 +692,132 @@ class WallGardenScene extends Phaser.Scene {
 
     // --- Map and background ---
     const map = this.make.tilemap({ key: "wallGardenMap" });
+    console.log('WallGarden tilemap created:', map);
+    
     // Asset existence check helper
     const safeAddImage = (scene, x, y, key, ...args) => {
       if (!scene.textures.exists(key)) {
-        // Show warning in console and on screen
         console.warn(`Image asset missing: ${key}`);
         scene.add.text(x, y, `Missing: ${key}`, { fontSize: '16px', color: '#f00', backgroundColor: '#fff' }).setOrigin(0.5).setDepth(999);
         return null;
       }
       return scene.add.image(x, y, key, ...args);
     };
+    
     safeAddImage(this, width / 2, height / 2, "wallGardenBackground").setScale(scaleFactor).setDepth(0);
     safeAddImage(this, width / 2, height / 2, "wall1").setScale(scaleFactor).setDepth(9);
     safeAddImage(this, width / 2, height / 2, "wall2").setScale(scaleFactor).setDepth(103);
     safeAddImage(this, width / 2, height / 2, "trees").setScale(scaleFactor).setDepth(10);
 
-    // --- Collision objects from the object layer ---
+    // --- Create tilemap collision system ---
+    console.log('Creating WallGarden tilemap collision system...');
+    
+    // Create collision group
     const collisionGroup = this.physics.add.staticGroup();
-    const collisionObjects = map.getObjectLayer && map.getObjectLayer("wall-garden-collision");
-    const xOffset = -160;
-    const yOffset = 0;
 
-    if (collisionObjects && collisionObjects.objects) {
-      collisionObjects.objects.forEach((obj) => {
-        const hasCollisionProp = obj.properties && obj.properties.some(
-          (prop) => prop.name === "collision" && prop.value === true
-        );
-        if (!hasCollisionProp) return;
+    // Handle collision objects from the tilemap
+    const objectLayer = map.getObjectLayer('Object Layer 1');
+    console.log('Object Layer 1 found:', objectLayer);
 
-        const solid = this.add.rectangle(
-          (obj.x + obj.width / 2) * scaleFactor + xOffset,
-          (obj.y + obj.height / 2) * scaleFactor + yOffset,
-          obj.width * scaleFactor,
-          obj.height * scaleFactor,
-          0xff0000,
-          0.3
+    // Collision scale and offset for positioning
+    const collisionScale = 0.175; // Match your scaleFactor
+    const tilemapOffsetX = -190; // Your existing offset
+    const tilemapOffsetY = 30;
+
+    if (objectLayer) {
+      console.log(`Found ${objectLayer.objects.length} objects in Object Layer 1`);
+      
+      objectLayer.objects.forEach((obj, index) => {
+        console.log(`Object ${index}:`, {
+          x: obj.x,
+          y: obj.y,
+          width: obj.width,
+          height: obj.height,
+          name: obj.name,
+          properties: obj.properties
+        });
+        
+        // Check for collision property
+        const hasCollision = obj.properties && obj.properties.find(prop => 
+          (prop.name === 'collision' && prop.value === true) ||
+          (prop.name === 'collisions' && prop.value === true) ||
+          obj.name === 'wall-garden-collision'
         );
-        this.physics.add.existing(solid, true);
-        collisionGroup.add(solid);
+        
+        console.log(`Object ${index} has collision:`, !!hasCollision);
+        
+        if (hasCollision || obj.name === 'wall-garden-collision') {
+          console.log(`Creating collision rectangle for object ${index}`);
+          
+          // Calculate position and size with scale factor and offset
+          const rectX = (obj.x * collisionScale) + (obj.width * collisionScale) / 2 + tilemapOffsetX;
+          const rectY = (obj.y * collisionScale) + (obj.height * collisionScale) / 2 + tilemapOffsetY;
+          const rectWidth = obj.width * collisionScale;
+          const rectHeight = obj.height * collisionScale;
+          
+          console.log(`Collision rect ${index} - Position: (${rectX}, ${rectY}), Size: ${rectWidth}x${rectHeight}`);
+          
+          // Create invisible collision rectangle (no visual elements)
+          const collisionRect = this.add.rectangle(
+            rectX,
+            rectY,
+            rectWidth,
+            rectHeight,
+            0x000000, // Color doesn't matter since it's invisible
+            0 // Completely transparent
+          );
+          
+          // Enable physics on the collision rectangle
+          this.physics.add.existing(collisionRect, true);
+          collisionGroup.add(collisionRect);
+          
+          console.log(`Successfully created invisible collision rectangle ${index}`);
+        }
+      });
+    } else {
+      console.log('No Object Layer 1 found. Available object layers:');
+      if (map.objects) {
+        map.objects.forEach((layer, index) => {
+          console.log(`Object layer ${index}:`, layer.name || 'unnamed');
+        });
+      } else {
+        console.log('No object layers found in tilemap');
+      }
+      
+      // Fallback: create basic invisible collision rectangles
+      console.log('Using fallback collision system');
+      const fallbackCollisions = [
+        { x: width * 0.1, y: height * 0.1, width: width * 0.8, height: 50 }, // Top wall
+        { x: width * 0.1, y: height * 0.9, width: width * 0.8, height: 50 }, // Bottom wall
+        { x: 50, y: height * 0.1, width: 50, height: height * 0.8 }, // Left wall
+        { x: width - 50, y: height * 0.1, width: 50, height: height * 0.8 } // Right wall
+      ];
+      
+      fallbackCollisions.forEach((collision, index) => {
+        const collisionRect = this.add.rectangle(
+          collision.x,
+          collision.y,
+          collision.width,
+          collision.height,
+          0x000000,
+          0 // Completely transparent
+        );
+        
+        this.physics.add.existing(collisionRect, true);
+        collisionGroup.add(collisionRect);
       });
     }
 
-    // --- Main Character ---
+    // --- Main Character with collision ---
     this.mainChar = createMainChar(this, width / 2, height / 2, scaleFactor, collisionGroup);
     this.mainChar.setDepth(10).setOrigin(1, -5);
+
+    // Enable collision between character and collision group
+    this.physics.add.collider(this.mainChar, collisionGroup);
+
+    // Enable Phaser's physics debug rendering (optional - uncomment to see physics bodies)
+    // this.physics.world.createDebugGraphic();
+    // this.physics.world.debugGraphic.setDepth(9999);
 
     // --- Butterfly NPC ---
     this.butterfly = createButterfly(this, width / 2 + 100, height / 2 - 50);

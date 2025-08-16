@@ -173,38 +173,21 @@ class MiddleGardenScene extends Phaser.Scene {
           
           console.log(`Collision rect ${index} - Position: (${rectX}, ${rectY}), Size: ${rectWidth}x${rectHeight}`);
           
-          // Create visible collision rectangle with outline only
+          // Create invisible collision rectangle
           const collisionRect = this.add.rectangle(
             rectX,
             rectY,
             rectWidth,
             rectHeight,
-            0x000000, // Black fill (will be made transparent)
-            0 // Completely transparent fill
+            0x000000, // Color doesn't matter since it's invisible
+            0 // Completely transparent
           );
-          
-          // Add colored outline to make collision boundaries visible
-          collisionRect.setStrokeStyle(3, 0xff0000); // Red outline, 3px thick
-          collisionRect.setDepth(10000); // Bring to front for visibility
           
           // Enable physics on the collision rectangle
           this.physics.add.existing(collisionRect, true);
           collisionGroup.add(collisionRect);
           
-          // Add debug text with collision info
-          this.add.text(
-            rectX - rectWidth/2,
-            rectY - rectHeight/2 - 25,
-            `Collision ${index}\n${rectWidth.toFixed(0)}x${rectHeight.toFixed(0)}`,
-            { 
-              fontSize: '10px', 
-              color: '#ffffff', 
-              backgroundColor: '#ff0000',
-              padding: { left: 3, right: 3, top: 2, bottom: 2 }
-            }
-          ).setDepth(10001);
-          
-          console.log(`Successfully created collision rectangle ${index}`);
+          console.log(`Successfully created invisible collision rectangle ${index}`);
         }
       });
     } else {
@@ -218,32 +201,17 @@ class MiddleGardenScene extends Phaser.Scene {
       }
     }
 
-    // --- Add folliage2 collision (existing collision) ---
+    // --- Add invisible folliage2 collision ---
     const folliage2Rect = this.add.rectangle(
       width / 2,
       height / 2,
       folliage2Img.width * scaleFactor,
       folliage2Img.height * scaleFactor,
       0x000000,
-      0 // Transparent fill
+      0 // Completely transparent
     );
-    folliage2Rect.setStrokeStyle(3, 0x00ff00); // Green outline for folliage collision
-    folliage2Rect.setDepth(10000);
     this.physics.add.existing(folliage2Rect, true);
     collisionGroup.add(folliage2Rect);
-
-    // Add debug text for folliage collision
-    this.add.text(
-      width / 2 - (folliage2Img.width * scaleFactor) / 2,
-      height / 2 - (folliage2Img.height * scaleFactor) / 2 - 25,
-      `Folliage Collision\n${(folliage2Img.width * scaleFactor).toFixed(0)}x${(folliage2Img.height * scaleFactor).toFixed(0)}`,
-      { 
-        fontSize: '10px', 
-        color: '#ffffff', 
-        backgroundColor: '#00ff00',
-        padding: { left: 3, right: 3, top: 2, bottom: 2 }
-      }
-    ).setDepth(10001);
 
     // Create main character with collision
     this.mainChar = createMainChar(this, width / 2, height / 2, scaleFactor, collisionGroup);
