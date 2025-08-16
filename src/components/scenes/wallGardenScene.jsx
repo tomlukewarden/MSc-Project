@@ -49,7 +49,7 @@ class WallGardenScene extends Phaser.Scene {
     this.load.image('talk', '/assets/interact/talk.png');
     this.load.image("springShard", "/assets/items/spring.png");
     this.load.audio("sparkle", "/assets/sound-effects/sparkle.mp3");
-    this.load.image('butterflyHappy', '/assets/npc/butterfly/happy-butterfly-dio.png');
+    this.load.image('butterflyHappy', '/assets/npc/dialogue/butterflyHappy.png');
     this.load.audio('click', '/assets/sound-effects/click.mp3');
     this.load.image('dialogueBoxBg', '/assets/ui-items/dialogue.png');
     this.load.image('bush', '/assets/misc/bush.png');
@@ -71,6 +71,13 @@ class WallGardenScene extends Phaser.Scene {
     this.load.image('garlicPlant', '/assets/plants/garlic.PNG');
     this.load.image('thymePlant', '/assets/plants/thyme.PNG');
     this.load.image('willowPlant', '/assets/plants/willow.PNG');
+    this.load.image("polarDialogueHappy", "/assets/npc/dialogue/polarHappy.png")
+    this.load.image("polarDialogueSad", "/assets/npc/dialogue/polarSad.png");
+    this.load.image("deerDialogueHappy", "/assets/npc/dialogue/deerHappy.png");
+    this.load.image("deerDialogueSad", "/assets/npc/dialogue/deerSad.png");
+    this.load.image("elephantDialogueHappy", "/assets/npc/dialogue/elephantHappy.png");
+    this.load.image("elephantDialogueSad", "/assets/npc/dialogue/elephantSad.png");
+    this.load.image("winterShard", "/assets/items/winter.png");
   }
 
   create() {
@@ -170,7 +177,7 @@ class WallGardenScene extends Phaser.Scene {
           showDialogue(this, butterflyIntroDialogues[this.butterflyDialogueIndex], { imageKey: "butterflyHappy" });
         } else {
           showOption(this, "Would you like to move on?", {
-            imageKey: "butterfly",
+            imageKey: "butterflyHappy",
             options: [
               {
                 text: "Yes",
@@ -197,6 +204,14 @@ class WallGardenScene extends Phaser.Scene {
         }
       };
     }
+
+    // --- Talk icon ---
+    const talkIcon = this.add
+      .image(0, 0, "talk")
+      .setScale(0.05)
+      .setVisible(false)
+      .setDepth(110)
+      .setOrigin(0.5);
 
       // --- Elephant NPC ---
 
@@ -240,18 +255,18 @@ class WallGardenScene extends Phaser.Scene {
       const items = typeof inventoryManager.getItems === "function" ? inventoryManager.getItems() : [];
       const hasJasmineTea = items.some(item => item.key === "jasmineTea");
       if (!hasJasmineTea) {
-        showDialogue(this, "You hand the elephant the Jasmine Tea...", { imageKey: "elephant" });
+        showDialogue(this, "You hand the elephant the Jasmine Tea...", { imageKey: "elephantDialogueHappy" });
         this.elephant.setTexture && this.elephant.setTexture("elephantHappy");
         this.time.delayedCall(800, () => {
           this.elephantDialogueActive = true;
           this.elephantDialogueIndex = 0;
           this.activeElephantDialogues = elephantThanksDialogues;
-          showDialogue(this, this.activeElephantDialogues[this.elephantDialogueIndex], { imageKey: "elephant" });
+          showDialogue(this, this.activeElephantDialogues[this.elephantDialogueIndex], { imageKey: "elephantDialogueHappy" });
           this.updateHUDState && this.updateHUDState();
         });
         this.elephantHasJasmineTea = true;
       } else {
-        showDialogue(this, "You still have the Jasmine Tea.", { imageKey: "elephant" });
+        showDialogue(this, "You still have the Jasmine Tea.", { imageKey: "elephantDialogueSad" });
       }
     });
 
@@ -261,7 +276,7 @@ class WallGardenScene extends Phaser.Scene {
         this.elephantDialogueActive = true;
         this.elephantDialogueIndex = 0;
         this.activeElephantDialogues = elephantIntroDialogues;
-        showDialogue(this, this.activeElephantDialogues[this.elephantDialogueIndex], { imageKey: "elephant" });
+        showDialogue(this, this.activeElephantDialogues[this.elephantDialogueIndex], { imageKey: "elephantDialogueSad" });
         this.updateHUDState && this.updateHUDState();
 
         // --- Activate Tia's quest when first meeting ---
@@ -274,8 +289,8 @@ class WallGardenScene extends Phaser.Scene {
         return;
       }
       if (this.elephantIntroDone && !this.elephantThanksDone && this.hasJasmineTea()) {
-        showOption(this, "Give the elephant the Jasmine Tea?", {
-          imageKey: "elephant",
+        showOption(this, "Give the Tia the Jasmine Tea?", {
+          imageKey: "elephantDialogueSad",
           options: [
             {
               label: "Yes",
@@ -293,7 +308,7 @@ class WallGardenScene extends Phaser.Scene {
               onSelect: () => {
                 this.destroyDialogueUI();
                 this.dialogueActive = true;
-                showDialogue(this, "You decide to hold off for now.", { imageKey: "elephant" });
+                showDialogue(this, "You decide to hold off for now.", { imageKey: "elephantDialogueSad" });
               }
             }
           ]
@@ -301,7 +316,7 @@ class WallGardenScene extends Phaser.Scene {
         return;
       }
       if (this.elephantIntroDone && !this.elephantThanksDone && !this.hasJasmineTea()) {
-        showDialogue(this, "The elephant looks at you expectantly. Maybe you need to find something for them...", { imageKey: "elephant" });
+        showDialogue(this, "The elephant looks at you expectantly. Maybe you need to find something for them...", { imageKey: "elephantDialogueSad" });
         this.time.delayedCall(1800, () => {
           this.destroyDialogueUI();
           this.dialogueActive = false;
@@ -316,7 +331,9 @@ class WallGardenScene extends Phaser.Scene {
       if (this.elephantDialogueActive) {
         this.elephantDialogueIndex++;
         if (this.activeElephantDialogues && this.elephantDialogueIndex < this.activeElephantDialogues.length) {
-          showDialogue(this, this.activeElephantDialogues[this.elephantDialogueIndex], { imageKey: "elephant" });
+          showDialogue(this, this.activeElephantDialogues[this.elephantDialogueIndex], { 
+            imageKey: this.activeElephantDialogues === elephantThanksDialogues ? "elephantDialogueHappy" : "elephantDialogueSad" 
+          });
         } else {
           this.destroyDialogueUI();
           this.dialogueActive = false;
@@ -348,7 +365,9 @@ class WallGardenScene extends Phaser.Scene {
       if (this.polarBearDialogueActive) {
         this.polarBearDialogueIndex++;
         if (this.activePolarBearDialogues && this.polarBearDialogueIndex < this.activePolarBearDialogues.length) {
-          showDialogue(this, this.activePolarBearDialogues[this.polarBearDialogueIndex], { imageKey: "polarBear" });
+          showDialogue(this, this.activePolarBearDialogues[this.polarBearDialogueIndex], { 
+            imageKey: this.activePolarBearDialogues === polarBearThanksDialogues ? "polarDialogueHappy" : "polarDialogueSad" 
+          });
         } else {
           this.destroyDialogueUI();
           this.dialogueActive = false;
@@ -382,6 +401,41 @@ class WallGardenScene extends Phaser.Scene {
         }
         return;
       }
+
+      // --- Deer dialogue advance on click ---
+      if (this.deerDialogueActive) {
+        this.deerDialogueIndex++;
+        if (this.activeDeerDialogues && this.deerDialogueIndex < this.activeDeerDialogues.length) {
+          showDialogue(this, this.activeDeerDialogues[this.deerDialogueIndex], { 
+            imageKey: this.activeDeerDialogues === deerThanksDialogues ? "deerDialogueHappy" : "deerDialogueSad" 
+          });
+        } else {
+          this.destroyDialogueUI();
+          this.dialogueActive = false;
+          this.updateHUDState && this.updateHUDState();
+
+          if (!this.deerIntroDone && this.activeDeerDialogues === deerIntroDialogues) {
+            this.deerIntroDone = true;
+          }
+          if (this.deerHasMarigoldSalve && this.activeDeerDialogues === deerThanksDialogues) {
+            this.deerThanksDone = true;
+            // --- Complete Elkton John's quest after thanks dialogue ---
+            const deerQuest = quests.find(q => q.title === "Help Elkton John");
+            if (deerQuest) {
+              deerQuest.active = false;
+              deerQuest.completed = true;
+              saveToLocal("quests", quests);
+              console.log("Quest 'Help Elkton John' completed!");
+            }
+            receivedItem(this, "springShard", "Spring Shard");
+            inventoryManager.removeItemByKey && inventoryManager.removeItemByKey("marigoldSalve");
+          }
+          this.deerDialogueActive = false;
+          this.updateHUDState && this.updateHUDState();
+        }
+        return;
+      }
+
       if (this.dialogueActive && typeof this.dialogueOnComplete === "function") {
         this.dialogueOnComplete();
       }
@@ -428,18 +482,18 @@ class WallGardenScene extends Phaser.Scene {
       const items = typeof inventoryManager.getItems === "function" ? inventoryManager.getItems() : [];
       const hasWillowBarkTea = items.some(item => item.key === "willowBarkTea");
       if (!hasWillowBarkTea) {
-        showDialogue(this, "You hand the polar bear the Willow Bark Tea...", { imageKey: "polarBear" });
+        showDialogue(this, "You hand the polar bear the Willow Bark Tea...", { imageKey: "polarDialogueHappy" });
         this.polarBear.setTexture && this.polarBear.setTexture("polarBearHappy");
         this.time.delayedCall(800, () => {
           this.polarBearDialogueActive = true;
           this.polarBearDialogueIndex = 0;
           this.activePolarBearDialogues = polarBearThanksDialogues;
-          showDialogue(this, this.activePolarBearDialogues[this.polarBearDialogueIndex], { imageKey: "polarBear" });
+          showDialogue(this, this.activePolarBearDialogues[this.polarBearDialogueIndex], { imageKey: "polarDialogueHappy" });
           this.updateHUDState && this.updateHUDState();
         });
         this.polarBearHasWillowBarkTea = true;
       } else {
-        showDialogue(this, "You still have the Willow Bark Tea.", { imageKey: "polarBear" });
+        showDialogue(this, "You still have the Willow Bark Tea.", { imageKey: "polarDialogueSad" });
       }
     });
 
@@ -449,13 +503,13 @@ class WallGardenScene extends Phaser.Scene {
         this.polarBearDialogueActive = true;
         this.polarBearDialogueIndex = 0;
         this.activePolarBearDialogues = polarBearIntroDialogues;
-        showDialogue(this, this.activePolarBearDialogues[this.polarBearDialogueIndex], { imageKey: "polarBear" });
+        showDialogue(this, this.activePolarBearDialogues[this.polarBearDialogueIndex], { imageKey: "polarDialogueSad" });
         this.updateHUDState && this.updateHUDState();
         return;
       }
       if (this.polarBearIntroDone && !this.polarBearThanksDone && this.hasWillowBarkTea()) {
         showOption(this, "Give the polar bear the Willow Bark Tea?", {
-          imageKey: "polarBear",
+          imageKey: "polarDialogueSad",
           options: [
             {
               label: "Yes",
@@ -473,7 +527,7 @@ class WallGardenScene extends Phaser.Scene {
               onSelect: () => {
                 this.destroyDialogueUI();
                 this.dialogueActive = true;
-                showDialogue(this, "You decide to hold off for now.", { imageKey: "polarBear" });
+                showDialogue(this, "You decide to hold off for now.", { imageKey: "polarDialogueSad" });
               }
             }
           ]
@@ -481,7 +535,7 @@ class WallGardenScene extends Phaser.Scene {
         return;
       }
       if (this.polarBearIntroDone && !this.polarBearThanksDone && !this.hasWillowBarkTea()) {
-        showDialogue(this, "The polar bear looks at you expectantly. Maybe you need to find something for them...", { imageKey: "polarBear" });
+        showDialogue(this, "The polar bear looks at you expectantly. Maybe you need to find something for them...", { imageKey: "polarDialogueSad" });
         this.time.delayedCall(1800, () => {
           this.destroyDialogueUI();
           this.dialogueActive = false;
@@ -530,18 +584,18 @@ class WallGardenScene extends Phaser.Scene {
       const items = typeof inventoryManager.getItems === "function" ? inventoryManager.getItems() : [];
       const hasMarigoldSalve = items.some(item => item.key === "marigoldSalve");
       if (!hasMarigoldSalve) {
-        showDialogue(this, "You hand the deer the Marigold Salve...", { imageKey: "deer" });
+        showDialogue(this, "You hand the deer the Marigold Salve...", { imageKey: "deerDialogueHappy" });
         this.deer.setTexture && this.deer.setTexture("deerHappy");
         this.time.delayedCall(800, () => {
           this.deerDialogueActive = true;
           this.deerDialogueIndex = 0;
           this.activeDeerDialogues = deerThanksDialogues;
-          showDialogue(this, this.activeDeerDialogues[this.deerDialogueIndex], { imageKey: "deer" });
+          showDialogue(this, this.activeDeerDialogues[this.deerDialogueIndex], { imageKey: "deerDialogueHappy" });
           this.updateHUDState && this.updateHUDState();
         });
         this.deerHasMarigoldSalve = true;
       } else {
-        showDialogue(this, "You still have the Marigold Salve.", { imageKey: "deer" });
+        showDialogue(this, "You still have the Marigold Salve.", { imageKey: "deerDialogueSad" });
       }
     });
 
@@ -551,7 +605,7 @@ class WallGardenScene extends Phaser.Scene {
         this.deerDialogueActive = true;
         this.deerDialogueIndex = 0;
         this.activeDeerDialogues = deerIntroDialogues;
-        showDialogue(this, this.activeDeerDialogues[this.deerDialogueIndex], { imageKey: "deer" });
+        showDialogue(this, this.activeDeerDialogues[this.deerDialogueIndex], { imageKey: "deerDialogueSad" });
         this.updateHUDState && this.updateHUDState();
 
         // --- Activate Elkton John's quest when first meeting ---
@@ -565,7 +619,7 @@ class WallGardenScene extends Phaser.Scene {
       }
       if (this.deerIntroDone && !this.deerThanksDone && this.hasMarigoldSalve()) {
         showOption(this, "Give the deer the Marigold Salve?", {
-          imageKey: "deer",
+          imageKey: "deerDialogueSad",
           options: [
             {
               label: "Yes",
@@ -583,7 +637,7 @@ class WallGardenScene extends Phaser.Scene {
               onSelect: () => {
                 this.destroyDialogueUI();
                 this.dialogueActive = true;
-                showDialogue(this, "You decide to hold off for now.", { imageKey: "deer" });
+                showDialogue(this, "You decide to hold off for now.", { imageKey: "deerDialogueSad" });
               }
             }
           ]
@@ -591,7 +645,7 @@ class WallGardenScene extends Phaser.Scene {
         return;
       }
       if (this.deerIntroDone && !this.deerThanksDone && !this.hasMarigoldSalve()) {
-        showDialogue(this, "The deer looks at you expectantly. Maybe you need to find something for them...", { imageKey: "deer" });
+        showDialogue(this, "The deer looks at you expectantly. Maybe you need to find something for them...", { imageKey: "deerDialogueSad" });
         this.time.delayedCall(1800, () => {
           this.destroyDialogueUI();
           this.dialogueActive = false;
@@ -686,14 +740,6 @@ class WallGardenScene extends Phaser.Scene {
     this.butterfly = createButterfly(this, width / 2 + 100, height / 2 - 50);
     this.butterfly.setDepth(20).setScale(0.09).setInteractive();
 
-    // --- Talk icon ---
-    const talkIcon = this.add
-      .image(0, 0, "talk")
-      .setScale(0.05)
-      .setVisible(false)
-      .setDepth(110)
-      .setOrigin(0.5);
-
     // --- Talk icon hover logic ---
     this.butterfly.on("pointerover", (pointer) => {
       talkIcon.setVisible(true);
@@ -721,7 +767,7 @@ class WallGardenScene extends Phaser.Scene {
           showDialogue(this, butterflyIntroDialogues[this.butterflyDialogueIndex], { imageKey: "butterflyHappy" });
         } else {
           showOption(this, "Would you like to move on?", {
-            imageKey: "butterfly",
+            imageKey: "butterflyHappy",
             options: [
               {
                 text: "Yes",

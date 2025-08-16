@@ -61,8 +61,8 @@ class ShardGardenScene extends Phaser.Scene {
     this.load.image('winterHappy', '/assets/backgrounds/shardGarden/winter/happy.png');
     this.load.image('autumn', '/assets/backgrounds/shardGarden/autumn/sad.png');
     this.load.image('winter', '/assets/backgrounds/shardGarden/winter/sad.png');
-    this.load.image('butterflyHappy', '/assets/npc/butterfly/happy-butterfly-dio.png');
-    this.load.image('butterflySad', '/assets/npc/butterfly/sad-butterfly-dio.PNG');
+    this.load.image('butterflyHappy', '/assets/npc/dialogue/butterflyHappy.png');
+    this.load.image('butterflySad', '/assets/npc/dialogue/butterflySad.png');
     this.load.audio('sparkle', '/assets/sound-effects/sparkle.mp3');
     this.load.audio('click', '/assets/sound-effects/click.mp3');
     this.load.image('dialogueBoxBg', '/assets/ui-items/dialogue.png');

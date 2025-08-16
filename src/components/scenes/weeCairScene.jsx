@@ -49,11 +49,12 @@ class WeeCairScene extends Phaser.Scene {
     this.load.image("defaultRightWalk1", "/assets/char/default/right-step-1.PNG");
     this.load.image("defaultRightWalk2", "/assets/char/default/right-step-2.PNG");
     this.load.image("fairy", "/assets/npc/fairy/fairy.png");
-    this.load.image("fairySad", "/assets/npc/fairy/fairy-sad.PNG");
-    this.load.image("fairyHappy", "/assets/npc/fairy/fairy-happy.PNG");
-    this.load.image("fairyConfused", "/assets/npc/fairy/fairy-aaaa.PNG");
+    this.load.image("fairySad", "/assets/npc/dialogue/fairySad.PNG");
+    this.load.image("fairyHappy", "/assets/npc/dialogue/fairyHappy.PNG");
     this.load.image("bee", "/assets/npc/bee/bee-sad.png");
     this.load.image("beeHappy", "/assets/npc/bee/bee-happy.png");
+    this.load.image("beeDialogueSad", "/assets/npc/dialogue/beeSad.png");
+    this.load.image("beeDialogueHappy", "/assets/npc/dialogue/beeHappy.png");
     this.load.image("talk", "/assets/interact/talk.png");
     this.load.image("foxglovePlant", "/assets/plants/foxglove.png");
     this.load.image("springShard", "/assets/items/spring.png");
@@ -132,12 +133,12 @@ class WeeCairScene extends Phaser.Scene {
       });
     });
 
-    // --- Dialogue sequence ---
+    // --- Dialogue sequence with proper bee images ---
     this.dialogueSequence = [
       { lines: fairyIntroDialogues, imageKey: "fairySad" },
-      { lines: beeIntroDialogues, imageKey: "bee" },
+      { lines: beeIntroDialogues, imageKey: "beeDialogueSad" }, 
       { lines: fairyHelpDialogues, imageKey: "fairySad" },
-      { lines: beeThanksDialogues, imageKey: "beeHappy" },
+      { lines: beeThanksDialogues, imageKey: "beeDialogueHappy" }, 
       { lines: fairyGoodbyeDialogues, imageKey: "fairyHappy" }
     ];
     this.currentSet = 0;
@@ -182,7 +183,7 @@ class WeeCairScene extends Phaser.Scene {
         this.dialogueActive = true;
         this.updateHUDState();
         showOption(this, "Give Paula the Foxglove?", {
-          imageKey: "bee",
+          imageKey: "beeDialogueSad", // Use appropriate bee dialogue image
           options: [
             {
               label: "Yes",
@@ -203,7 +204,7 @@ class WeeCairScene extends Phaser.Scene {
                 destroyDialogueUI(this);
                 this.dialogueActive = true;
                 showDialogue(this, "You decide to hold off for now.", {
-                  imageKey: "bee"
+                  imageKey: "beeDialogueSad" // Use appropriate bee dialogue image
                 });
               }
             }
@@ -212,7 +213,7 @@ class WeeCairScene extends Phaser.Scene {
         return;
       }
 
-      if (!this.dialogueActive && (currentImage === "bee" || currentImage === "beeHappy")) {
+      if (!this.dialogueActive && (currentImage === "beeDialogueSad" || currentImage === "beeDialogueHappy")) {
         this.currentNPC = bee;
         this.startDialogueSequence();
       }
@@ -363,15 +364,15 @@ class WeeCairScene extends Phaser.Scene {
       // Use global inventory manager to check and remove foxglove
       if (!this.inventoryManager.hasItemByKey("foxglovePlant")) {
         this.foxglovePlantReceived = false;
-        // Show handover dialogue
-        showDialogue(this, "You hand her the plant...", { imageKey: "bee" });
+        // Show handover dialogue with proper bee image
+        showDialogue(this, "You hand her the plant...", { imageKey: "beeDialogueHappy" });
         
         this.time.delayedCall(800, () => {
           this.currentSet = this.dialogueSequence.findIndex(
             (set) => set.lines === beeThanksDialogues
           );
           this.activeDialogue = beeThanksDialogues;
-          this.activeImageKey = "bee";
+          this.activeImageKey = "beeDialogueHappy"; // Use proper bee dialogue image
           this.currentDialogueIndex = 0;
           this.dialogueActive = true;
           this.updateHUDState();
@@ -380,8 +381,8 @@ class WeeCairScene extends Phaser.Scene {
           });
         });
       } else {
-        // If foxglove still present, do not continue
-        showDialogue(this, "You still have the foxglove.", { imageKey: "bee" });
+        // If foxglove still present, do not continue - use sad bee image
+        showDialogue(this, "You still have the foxglove.", { imageKey: "beeDialogueSad" });
       }
     });
 

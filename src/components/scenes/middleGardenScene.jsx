@@ -61,6 +61,12 @@ class MiddleGardenScene extends Phaser.Scene {
     this.load.image('turtle', '/assets/npc/turtle/turtle.png');
     this.load.image('turtleHappy', '/assets/npc/turtle/happy.png');
     this.load.audio("option", "/assets/sound-effects/option.mp3");
+    this.load.image("turtleDialogueHappy", "/assets/npc/dialogue/turtleHappy.png");
+    this.load.image("turtleDialogueSad", "/assets/npc/dialogue/turtleSad.png");
+    this.load.image("moleDialogueHappy", "/assets/npc/dialogue/moleHappy.png");
+    this.load.image("moleDialogueSad", "/assets/npc/dialogue/moleSad.png");
+    this.load.image("wolfDialogueHappy", "/assets/npc/dialogue/wolfHappy.png");
+    this.load.image("wolfDialogueSad", "/assets/npc/dialogue/wolfSad.png");
   }
 
   create() {
@@ -203,18 +209,18 @@ class MiddleGardenScene extends Phaser.Scene {
       this.inventoryManager.removeItemByKey("garlicPaste");
       
       if (!this.inventoryManager.hasItemByKey("garlicPaste")) {
-        showDialogue(this, "You hand the mole the Garlic Paste...", { imageKey: "mole" });
+        showDialogue(this, "You hand the mole the Garlic Paste...", { imageKey: "moleDialogueHappy" });
         this.mole.setTexture && this.mole.setTexture("moleHappy");
         this.time.delayedCall(800, () => {
           this.moleDialogueActive = true;
           this.moleDialogueIndex = 0;
           this.activeMoleDialogues = moleThanksDialogues;
-          showDialogue(this, this.activeMoleDialogues[this.moleDialogueIndex], { imageKey: "mole" });
+          showDialogue(this, this.activeMoleDialogues[this.moleDialogueIndex], { imageKey: "moleDialogueHappy" });
           this.updateHUDState && this.updateHUDState();
         });
         this.moleHasGarlicPaste = true;
       } else {
-        showDialogue(this, "You still have the Garlic Paste.", { imageKey: "mole" });
+        showDialogue(this, "You still have the Garlic Paste.", { imageKey: "moleDialogueSad" });
       }
     });
 
@@ -224,7 +230,7 @@ class MiddleGardenScene extends Phaser.Scene {
         this.moleDialogueActive = true;
         this.moleDialogueIndex = 0;
         this.activeMoleDialogues = moleIntroDialogues;
-        showDialogue(this, this.activeMoleDialogues[this.moleDialogueIndex], { imageKey: "mole" });
+        showDialogue(this, this.activeMoleDialogues[this.moleDialogueIndex], { imageKey: "moleDialogueSad" });
         this.updateHUDState && this.updateHUDState();
 
         // --- Activate Mole's quest when first meeting ---
@@ -238,7 +244,7 @@ class MiddleGardenScene extends Phaser.Scene {
       }
       if (this.moleIntroDone && !this.moleThanksDone && this.hasGarlicPaste()) {
         showOption(this, "Give the mole the Garlic Paste?", {
-          imageKey: "mole",
+          imageKey: "moleDialogueSad",
           options: [
             {
               label: "Yes",
@@ -255,7 +261,7 @@ class MiddleGardenScene extends Phaser.Scene {
               onSelect: () => {
                 this.destroyDialogueUI();
                 this.dialogueActive = true;
-                showDialogue(this, "You decide to hold off for now.", { imageKey: "mole" });
+                showDialogue(this, "You decide to hold off for now.", { imageKey: "moleDialogueSad" });
               }
             }
           ]
@@ -263,7 +269,7 @@ class MiddleGardenScene extends Phaser.Scene {
         return;
       }
       if (this.moleIntroDone && !this.moleThanksDone && !this.hasGarlicPaste()) {
-        showDialogue(this, "The mole looks at you expectantly. Maybe you need to find something for them?", { imageKey: "mole" });
+        showDialogue(this, "The mole looks at you expectantly. Maybe you need to find something for them?", { imageKey: "moleDialogueSad" });
         this.time.delayedCall(1800, () => {
           this.destroyDialogueUI();
           this.dialogueActive = false;
@@ -284,18 +290,18 @@ class MiddleGardenScene extends Phaser.Scene {
       this.inventoryManager.removeItemByKey("thymeInfusedOil");
       
       if (!this.inventoryManager.hasItemByKey("thymeInfusedOil")) {
-        showDialogue(this, "You hand the turtle the Thyme Infused Oil...", { imageKey: "turtle" });
+        showDialogue(this, "You hand the turtle the Thyme Infused Oil...", { imageKey: "turtleDialogueHappy" });
         this.turtle.setTexture && this.turtle.setTexture("turtleHappy");
         this.time.delayedCall(800, () => {
           this.turtleDialogueActive = true;
           this.turtleDialogueIndex = 0;
           this.activeTurtleDialogues = turtleThanksDialogues;
-          showDialogue(this, this.activeTurtleDialogues[this.turtleDialogueIndex], { imageKey: "turtle" });
+          showDialogue(this, this.activeTurtleDialogues[this.turtleDialogueIndex], { imageKey: "turtleDialogueHappy" });
           this.updateHUDState && this.updateHUDState();
         });
         this.turtleHasThymeInfusedOil = true;
       } else {
-        showDialogue(this, "You still have the Thyme Infused Oil.", { imageKey: "turtle" });
+        showDialogue(this, "You still have the Thyme Infused Oil.", { imageKey: "turtleDialogueSad" });
       }
     });
 
@@ -305,7 +311,7 @@ class MiddleGardenScene extends Phaser.Scene {
         this.turtleDialogueActive = true;
         this.turtleDialogueIndex = 0;
         this.activeTurtleDialogues = turtleIntroDialogues;
-        showDialogue(this, this.activeTurtleDialogues[this.turtleDialogueIndex], { imageKey: "turtle" });
+        showDialogue(this, this.activeTurtleDialogues[this.turtleDialogueIndex], { imageKey: "turtleDialogueSad" });
         this.updateHUDState && this.updateHUDState();
 
         // --- Activate Turtle's quest when first meeting ---
@@ -319,7 +325,7 @@ class MiddleGardenScene extends Phaser.Scene {
       }
       if (this.turtleIntroDone && !this.turtleThanksDone && this.hasThymeInfusedOil()) {
         showOption(this, "Give the turtle the Thyme Infused Oil?", {
-          imageKey: "turtle",
+          imageKey: "turtleDialogueSad",
           options: [
             {
               label: "Yes",
@@ -336,7 +342,7 @@ class MiddleGardenScene extends Phaser.Scene {
               onSelect: () => {
                 this.destroyDialogueUI();
                 this.dialogueActive = true;
-                showDialogue(this, "You decide to hold off for now.", { imageKey: "turtle" });
+                showDialogue(this, "You decide to hold off for now.", { imageKey: "turtleDialogueSad" });
               }
             }
           ]
@@ -344,7 +350,7 @@ class MiddleGardenScene extends Phaser.Scene {
         return;
       }
       if (this.turtleIntroDone && !this.turtleThanksDone && !this.hasThymeInfusedOil()) {
-        showDialogue(this, "The turtle looks at you expectantly. Maybe you need to find something for them...", { imageKey: "turtle" });
+        showDialogue(this, "The turtle looks at you expectantly. Maybe you need to find something for them...", { imageKey: "turtleDialogueSad" });
         this.time.delayedCall(1800, () => {
           this.destroyDialogueUI();
           this.dialogueActive = false;
@@ -365,18 +371,18 @@ class MiddleGardenScene extends Phaser.Scene {
       this.inventoryManager.removeItemByKey("periwinkleExtract");
       
       if (!this.inventoryManager.hasItemByKey("periwinkleExtract")) {
-        showDialogue(this, "You hand the wolf the Periwinkle Extract...", { imageKey: "wolf" });
+        showDialogue(this, "You hand the wolf the Periwinkle Extract...", { imageKey: "wolfDialogueHappy" });
         this.wolf.setTexture && this.wolf.setTexture("wolfHappy");
         this.time.delayedCall(800, () => {
           this.wolfDialogueActive = true;
           this.wolfDialogueIndex = 0;
           this.activeWolfDialogues = wolfThanksDialogues;
-          showDialogue(this, this.activeWolfDialogues[this.wolfDialogueIndex], { imageKey: "wolf" });
+          showDialogue(this, this.activeWolfDialogues[this.wolfDialogueIndex], { imageKey: "wolfDialogueHappy" });
           this.updateHUDState && this.updateHUDState();
         });
         this.wolfHasPeriwinkleExtract = true;
       } else {
-        showDialogue(this, "You still have the Periwinkle Extract.", { imageKey: "wolf" });
+        showDialogue(this, "You still have the Periwinkle Extract.", { imageKey: "wolfDialogueSad" });
       }
     });
 
@@ -386,7 +392,7 @@ class MiddleGardenScene extends Phaser.Scene {
         this.wolfDialogueActive = true;
         this.wolfDialogueIndex = 0;
         this.activeWolfDialogues = wolfIntroDialogues;
-        showDialogue(this, this.activeWolfDialogues[this.wolfDialogueIndex], { imageKey: "wolf" });
+        showDialogue(this, this.activeWolfDialogues[this.wolfDialogueIndex], { imageKey: "wolfDialogueSad" });
         this.updateHUDState && this.updateHUDState();
 
         // --- Activate Wolf's quest when first meeting ---
@@ -400,7 +406,7 @@ class MiddleGardenScene extends Phaser.Scene {
       }
       if (this.wolfIntroDone && !this.wolfThanksDone && this.hasPeriwinkleExtract()) {
         showOption(this, "Give the wolf the Periwinkle Extract?", {
-          imageKey: "wolf",
+          imageKey: "wolfDialogueSad",
           options: [
             {
               label: "Yes",
@@ -417,7 +423,7 @@ class MiddleGardenScene extends Phaser.Scene {
               onSelect: () => {
                 this.destroyDialogueUI();
                 this.dialogueActive = true;
-                showDialogue(this, "You decide to hold off for now.", { imageKey: "wolf" });
+                showDialogue(this, "You decide to hold off for now.", { imageKey: "wolfDialogueSad" });
               }
             }
           ]
@@ -425,7 +431,7 @@ class MiddleGardenScene extends Phaser.Scene {
         return;
       }
       if (this.wolfIntroDone && !this.wolfThanksDone && !this.hasPeriwinkleExtract()) {
-        showDialogue(this, "The wolf looks at you expectantly. Maybe you need to find something for them?", { imageKey: "wolf" });
+        showDialogue(this, "The wolf looks at you expectantly. Maybe you need to find something for them?", { imageKey: "wolfDialogueSad" });
         this.time.delayedCall(1800, () => {
           this.destroyDialogueUI();
           this.dialogueActive = false;
@@ -440,7 +446,9 @@ class MiddleGardenScene extends Phaser.Scene {
       if (this.wolfDialogueActive) {
         this.wolfDialogueIndex++;
         if (this.activeWolfDialogues && this.wolfDialogueIndex < this.activeWolfDialogues.length) {
-          showDialogue(this, this.activeWolfDialogues[this.wolfDialogueIndex], { imageKey: "wolf" });
+          showDialogue(this, this.activeWolfDialogues[this.wolfDialogueIndex], { 
+            imageKey: this.activeWolfDialogues === wolfThanksDialogues ? "wolfDialogueHappy" : "wolfDialogueSad" 
+          });
         } else {
           this.destroyDialogueUI();
           this.dialogueActive = false;
@@ -470,7 +478,9 @@ class MiddleGardenScene extends Phaser.Scene {
       if (this.moleDialogueActive) {
         this.moleDialogueIndex++;
         if (this.activeMoleDialogues && this.moleDialogueIndex < this.activeMoleDialogues.length) {
-          showDialogue(this, this.activeMoleDialogues[this.moleDialogueIndex], { imageKey: "mole" });
+          showDialogue(this, this.activeMoleDialogues[this.moleDialogueIndex], { 
+            imageKey: this.activeMoleDialogues === moleThanksDialogues ? "moleDialogueHappy" : "moleDialogueSad" 
+          });
         } else {
           this.destroyDialogueUI();
           this.dialogueActive = false;
@@ -500,7 +510,9 @@ class MiddleGardenScene extends Phaser.Scene {
       if (this.turtleDialogueActive) {
         this.turtleDialogueIndex++;
         if (this.activeTurtleDialogues && this.turtleDialogueIndex < this.activeTurtleDialogues.length) {
-          showDialogue(this, this.activeTurtleDialogues[this.turtleDialogueIndex], { imageKey: "turtle" });
+          showDialogue(this, this.activeTurtleDialogues[this.turtleDialogueIndex], { 
+            imageKey: this.activeTurtleDialogues === turtleThanksDialogues ? "turtleDialogueHappy" : "turtleDialogueSad" 
+          });
         } else {
           this.destroyDialogueUI();
           this.dialogueActive = false;
