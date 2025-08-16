@@ -12,7 +12,7 @@ import globalInventoryManager from "../inventoryManager";
 
 class PersonalGarden extends Phaser.Scene {
   constructor() {
-    super("PersonalGarden", { physics: { default: 'arcade', arcade: { debug: true } } });
+    super("PersonalGarden", { physics: { default: 'arcade', arcade: { debug: false } } }); 
     this.plotSize = 64;
     this.rows = 3;
     this.cols = 5;
@@ -82,6 +82,7 @@ class PersonalGarden extends Phaser.Scene {
     this.load.audio("water", "/assets/sound-effects/water.mp3");
     this.load.audio("harvest", "/assets/sound-effects/harvest.mp3");
     this.load.audio("option", "/assets/sound-effects/option.mp3");
+    this.load.tilemapTiledJSON("personalGardenMap", "/assets/maps/personalGarden.json");
   }
 
   create() {
@@ -107,6 +108,101 @@ class PersonalGarden extends Phaser.Scene {
     }).setOrigin(0, 0).setDepth(99999);
 
     const { width, height } = this.sys.game.config;
+    const scaleFactor = 0.14;
+
+    // Create the tilemap with extensive debugging
+    console.log('Creating tilemap...');
+    this.map = this.make.tilemap({ key: 'personalGardenMap' });
+    
+    // Create obstacle group first
+    this.obstacleGroup = this.physics.add.staticGroup();
+    
+ 
+    this.map.layers.forEach((layer, index) => {
+      console.log(`Layer ${index}:`, layer);
+      if (layer.tilemapLayer) {
+        layer.tilemapLayer.setScale(scaleFactor);
+      }
+    });
+
+    // Handle collision objects from the tilemap with detailed debugging
+    console.log('Looking for object layers...');
+    console.log('Available object layers:', this.map.objects);
+    
+    const objectLayer = this.map.getObjectLayer('Object Layer 1');
+    console.log('Object Layer 1 found:', objectLayer);
+    
+
+    const tilemapOffsetX = 8;
+    const tilemapOffsetY = 0;
+    
+    const collisionScale = 0.22; 
+    
+    if (objectLayer) {
+      console.log(`Found ${objectLayer.objects.length} objects in layer`);
+      
+      objectLayer.objects.forEach((obj, index) => {
+        console.log(`Object ${index}:`, {
+          x: obj.x,
+          y: obj.y,
+          width: obj.width,
+          height: obj.height,
+          properties: obj.properties,
+          type: obj.type,
+          name: obj.name
+        });
+        
+        // Check for collision property (try multiple ways)
+        const hasCollision = obj.properties && obj.properties.find(prop => 
+          (prop.name === 'collisions' && prop.value === true) ||
+          (prop.name === 'collision' && prop.value === true) ||
+          prop.name === 'collides'
+        );
+        
+        console.log(`Object ${index} has collision:`, !!hasCollision);
+        
+        if (hasCollision || obj.type === 'collision' || obj.name === 'collision') {
+          console.log(`Creating collision rectangle for object ${index}`);
+          
+          // Use collision scale instead of the tiny scaleFactor
+          const rectX = (obj.x * collisionScale) + (obj.width * collisionScale) / 2 + tilemapOffsetX;
+          const rectY = (obj.y * collisionScale) + (obj.height * collisionScale) / 2 + tilemapOffsetY;
+          const rectWidth = obj.width * collisionScale;
+          const rectHeight = obj.height * collisionScale;
+          
+          console.log(`Collision rect ${index} - Position: (${rectX}, ${rectY}), Size: ${rectWidth}x${rectHeight}`);
+          
+          // Create invisible collision rectangle
+          const collisionRect = this.add.rectangle(
+            rectX,
+            rectY,
+            rectWidth,
+            rectHeight,
+            0x000000, // Color doesn't matter since it's invisible
+            0 // Completely transparent
+          );
+          
+          this.physics.add.existing(collisionRect, true);
+          this.obstacleGroup.add(collisionRect);
+          
+          console.log(`Successfully created invisible collision rectangle ${index}`);
+        }
+      });
+    } else {
+      console.log('No Object Layer 1 found. Available object layers:');
+      if (this.map.objects) {
+        this.map.objects.forEach((layer, index) => {
+          console.log(`Object layer ${index}:`, layer.name || 'unnamed');
+        });
+      } else {
+        console.log('No object layers found in tilemap');
+      }
+    }
+
+    // Remove physics debug rendering
+    // this.physics.world.createDebugGraphic();
+    // this.physics.world.debugGraphic.setDepth(9999);
+
     this.rows = 3;
     this.cols = 5;
     this.plots = [];
@@ -279,30 +375,29 @@ class PersonalGarden extends Phaser.Scene {
       }
     }
 
-    // --- COLLISION GROUPS SETUP ---
-    this.obstacleGroup = this.physics.add.staticGroup();
-    this.plots.forEach(({ plotRect }) => {
-      this.obstacleGroup.add(plotRect);
-    });
-
-    const scaleFactor = 0.14;
+    // Add static environment objects to obstacle group
     const fenceImg = this.add.image(0, 0, "fence").setOrigin(0).setScale(scaleFactor).setDepth(10);
-    this.obstacleGroup.add(fenceImg);
+    // Removed: this.physics.add.existing(fenceImg, true);
+    // Removed: this.obstacleGroup.add(fenceImg);
 
     const archScale = 0.2;
     const archWidth = this.textures.exists('hedgeArch') ? this.textures.get('hedgeArch').getSourceImage().width * archScale : 180;
     const archHeight = this.textures.exists('hedgeArch') ? this.textures.get('hedgeArch').getSourceImage().height * archScale : 220;
     const archX = startX + gridWidth + archWidth / 2 - 40;
     const archY = startY + gridHeight / 2 - 120;
+    
     const shadowArch = this.add.image(archX, archY + archHeight * 0.18, "hedgeArchShadow")
       .setOrigin(0.5)
       .setScale(archScale)
       .setDepth(archY + 1);
+      
     const archway = this.add.image(archX, archY + archHeight * 0.18, "hedgeArch")
       .setOrigin(0.5)
       .setScale(archScale)
       .setDepth(archY + 2);
-    this.obstacleGroup.add(archway);
+    
+    // Removed: this.physics.add.existing(archway, true);
+    // Removed: this.obstacleGroup.add(archway);
 
     const charStartX = startX + gridWidth / 2;
     const charStartY = startY + gridHeight / 2;
@@ -310,6 +405,7 @@ class PersonalGarden extends Phaser.Scene {
     this.mainChar = createMainChar(this, charStartX, charStartY, scaleFactor, this.obstacleGroup);
     this.mainChar.setDepth(101).setOrigin(0.5, 0.5);
 
+    // Only collide with tilemap collision objects
     this.physics.add.collider(this.mainChar, this.obstacleGroup);
 
     // Initialize default tools using the global manager
@@ -318,46 +414,9 @@ class PersonalGarden extends Phaser.Scene {
     this.add.image(0, 0, "gardenBackground").setOrigin(0).setScale(0.221);
 
     const tentImg = this.add.image(0, 0, "tent").setOrigin(0).setScale(scaleFactor).setDepth(5);
+    // Removed: No collision for tent
 
-    const tentTriangleX = tentImg.x + tentImg.displayWidth / 2;
-    const tentTriangleY = tentImg.y + 60;
-    const triangleSize = 32;
-    const triangle = this.add.triangle(
-      tentTriangleX,
-      tentTriangleY,
-      0, triangleSize,
-      triangleSize / 2, 0,
-      triangleSize, triangleSize,
-      0xffe066
-    ).setDepth(10)
-      .setInteractive({ useHandCursor: true });
-
-    const nextDayText = this.add.text(tentTriangleX, tentTriangleY - 24, "Next Day", {
-      fontFamily: "Georgia",
-      fontSize: "16px",
-      color: "#fff",
-      backgroundColor: "#222",
-      padding: { left: 8, right: 8, top: 4, bottom: 4 }
-    }).setOrigin(0.5).setDepth(11).setAlpha(0);
-
-    triangle.on("pointerover", () => nextDayText.setAlpha(1));
-    triangle.on("pointerout", () => nextDayText.setAlpha(0));
-    triangle.on("pointerdown", () => {
-      this.scene.pause();
-      this.scene.launch("DayEndScene", { day: globalTimeManager.getDayNumber() });
-      this.scene.get("DayEndScene").events.once("dayEnded", () => {
-        globalTimeManager.nextDay();
-        this.plots.forEach(({ plot }) => {
-          plot.watered = false;
-        });
-        if (this.dayText) {
-          this.dayText.setText(`Day: ${globalTimeManager.getDayNumber()}`);
-        }
-        this.scene.resume();
-      });
-    });
-
-    this.add.image(0, 0, "fence").setOrigin(0).setScale(scaleFactor).setDepth(200);
+    // ...rest of your existing code for tent interaction, crafting bench, etc...
 
     const benchX = 420;
     const benchY = 180;
@@ -365,6 +424,7 @@ class PersonalGarden extends Phaser.Scene {
       .setScale(0.07)
       .setInteractive({ useHandCursor: true })
       .setDepth(20);
+    // Removed: No collision for crafting bench - only tilemap collisions
 
     craftingBenchImg.on("pointerdown", () => {
       this.scene.launch('CraftUI');

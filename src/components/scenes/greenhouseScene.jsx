@@ -46,6 +46,7 @@ class GreenhouseScene extends Phaser.Scene {
         this.load.audio("option", "/assets/sound-effects/option.mp3");
         this.load.image('lavenderOil', '/assets/crafting/lavenderOil.png');
         this.load.image('aloeAfterSunCream', '/assets/crafting/creamRemedy.png');
+        this.load.tilemapTiledJSON("greenhouseMap", "/assets/maps/greenhouseMap.json");
     }
 
     create() {
@@ -83,6 +84,109 @@ class GreenhouseScene extends Phaser.Scene {
 
         this.add.image(width / 2, height / 2, "greenhouseBackground").setScale(scaleFactor);
 
+        // --- Create tilemap collision system ---
+        console.log('Creating Greenhouse tilemap collision system...');
+        const map = this.make.tilemap({ key: "greenhouseMap" });
+        console.log('Greenhouse tilemap created:', map);
+        
+        // Create collision group
+        const collisionGroup = this.physics.add.staticGroup();
+
+        // Handle collision objects from the tilemap
+        const objectLayer = map.getObjectLayer('Object Layer 1');
+        console.log('Object Layer 1 found:', objectLayer);
+
+        // Collision scale and offset for positioning
+        const collisionScale = 0.175; // Match your scaleFactor
+        const tilemapOffsetX = -150; // Adjust as needed
+        const tilemapOffsetY = 30; // Adjust as needed
+
+        if (objectLayer) {
+            console.log(`Found ${objectLayer.objects.length} objects in Object Layer 1`);
+            
+            objectLayer.objects.forEach((obj, index) => {
+                console.log(`Object ${index}:`, {
+                    x: obj.x,
+                    y: obj.y,
+                    width: obj.width,
+                    height: obj.height,
+                    name: obj.name,
+                    properties: obj.properties
+                });
+                
+                // Check for collision property
+                const hasCollision = obj.properties && obj.properties.find(prop => 
+                    (prop.name === 'collision' && prop.value === true) ||
+                    (prop.name === 'collisions' && prop.value === true) ||
+                    obj.name === 'greenhouse-collision'
+                );
+                
+                console.log(`Object ${index} has collision:`, !!hasCollision);
+                
+                if (hasCollision || obj.name === 'greenhouse-collision') {
+                    console.log(`Creating collision rectangle for object ${index}`);
+                    
+                    // Calculate position and size with scale factor and offset
+                    const rectX = (obj.x * collisionScale) + (obj.width * collisionScale) / 2 + tilemapOffsetX;
+                    const rectY = (obj.y * collisionScale) + (obj.height * collisionScale) / 2 + tilemapOffsetY;
+                    const rectWidth = obj.width * collisionScale;
+                    const rectHeight = obj.height * collisionScale;
+                    
+                    console.log(`Collision rect ${index} - Position: (${rectX}, ${rectY}), Size: ${rectWidth}x${rectHeight}`);
+                    
+                    // Create invisible collision rectangle
+                    const collisionRect = this.add.rectangle(
+                        rectX,
+                        rectY,
+                        rectWidth,
+                        rectHeight,
+                        0x000000, // Color doesn't matter since it's invisible
+                        0 // Completely transparent
+                    );
+                    
+                    // Enable physics on the collision rectangle
+                    this.physics.add.existing(collisionRect, true);
+                    collisionGroup.add(collisionRect);
+                    
+                    console.log(`Successfully created invisible collision rectangle ${index}`);
+                }
+            });
+        } else {
+            console.log('No Object Layer 1 found. Available object layers:');
+            if (map.objects) {
+                map.objects.forEach((layer, index) => {
+                    console.log(`Object layer ${index}:`, layer.name || 'unnamed');
+                });
+            } else {
+                console.log('No object layers found in tilemap');
+            }
+            
+            // Fallback: create basic invisible collision rectangles
+            console.log('Using fallback collision system');
+            const fallbackCollisions = [
+                { x: 0, y: height / 2, width: 10, height: height }, // Left wall
+                { x: width, y: height / 2, width: 10, height: height }, // Right wall
+                { x: width / 2, y: 0, width: width, height: 10 }, // Top wall
+                { x: width / 2, y: height, width: width, height: 10 } // Bottom wall
+            ];
+            
+            fallbackCollisions.forEach((collision, index) => {
+                const collisionRect = this.add.rectangle(
+                    collision.x,
+                    collision.y,
+                    collision.width,
+                    collision.height,
+                    0x000000,
+                    0 // Completely transparent
+                );
+                
+                this.physics.add.existing(collisionRect, true);
+                collisionGroup.add(collisionRect);
+                
+                console.log(`Created fallback collision ${index}`);
+            });
+        }
+
         // --- Talk icon ---
         const talkIcon = this.add
             .image(0, 0, "talk")
@@ -91,14 +195,11 @@ class GreenhouseScene extends Phaser.Scene {
             .setDepth(11)
             .setOrigin(0.5);
 
-        // --- Collision objects (example: invisible wall at left edge) ---
-        const collisionGroup = this.physics.add.staticGroup();
-        const leftWall = this.add.rectangle(0, height / 2, 10, height, 0x000000, 0);
-        this.physics.add.existing(leftWall, true);
-        collisionGroup.add(leftWall);
-
-        // Spawn player at center to avoid immediate right edge transition
+        // Spawn player at center to avoid immediate edge transitions
         this.mainChar = createMainChar(this, width / 2, height / 2, scaleFactor, collisionGroup);
+
+        // Enable collision between character and collision group
+        this.physics.add.collider(this.mainChar, collisionGroup);
 
         // --- Rabbit NPC ---
         this.rabbit = createRabbit(this, width / 2 + 200, height / 2 + 100);

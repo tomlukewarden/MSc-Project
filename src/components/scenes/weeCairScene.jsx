@@ -77,25 +77,80 @@ class WeeCairScene extends Phaser.Scene {
     const scaleFactor = 0.175;
     this.add.image(width / 2, height / 2, "weeCairBackground").setScale(scaleFactor);
 
+    // --- Create tilemap collision system ---
+    console.log('Creating WeeCair tilemap collision system...');
     const map = this.make.tilemap({ key: "weeCairMap" });
-    const collisionObjects = map.getObjectLayer("wee-cair-collisions");
+    console.log('WeeCair tilemap created:', map);
 
-    const xOffset = -160;
-    const yOffset = 0;
-
+    // Create collision group
     const collisionGroup = this.physics.add.staticGroup();
 
+    // Handle collision objects from the tilemap
+    const collisionObjects = map.getObjectLayer("wee-cair-collisions");
+    console.log('wee-cair-collisions layer found:', collisionObjects);
+
+    // Collision scale and offset for positioning
+    const collisionScale = 0.175; // Match the background scale
+    const tilemapOffsetX = -160; // Match your existing offset
+    const tilemapOffsetY = 0;
+
     if (collisionObjects) {
-      collisionObjects.objects.forEach((obj) => {
-        const solid = this.physics.add
-          .staticImage(
-            (obj.x + obj.width / 2) * scaleFactor + xOffset,
-            (obj.y + obj.height / 2) * scaleFactor + yOffset
-          )
-          .setSize(obj.width * scaleFactor, obj.height * scaleFactor)
-          .setOrigin(0.5);
-        collisionGroup.add(solid);
+      console.log(`Found ${collisionObjects.objects.length} collision objects in wee-cair-collisions layer`);
+      
+      collisionObjects.objects.forEach((obj, index) => {
+        console.log(`Collision object ${index}:`, {
+          x: obj.x,
+          y: obj.y,
+          width: obj.width,
+          height: obj.height,
+          properties: obj.properties
+        });
+        
+        // Check for collision property
+        const hasCollision = obj.properties && obj.properties.find(prop => 
+          (prop.name === 'collision' && prop.value === true) ||
+          (prop.name === 'collisions' && prop.value === true)
+        );
+        
+        console.log(`Collision object ${index} has collision:`, !!hasCollision);
+        
+        if (hasCollision) {
+          console.log(`Creating collision rectangle for object ${index}`);
+          
+          // Calculate position and size with scale factor and offset
+          const rectX = (obj.x * collisionScale) + (obj.width * collisionScale) / 2 + tilemapOffsetX;
+          const rectY = (obj.y * collisionScale) + (obj.height * collisionScale) / 2 + tilemapOffsetY;
+          const rectWidth = obj.width * collisionScale;
+          const rectHeight = obj.height * collisionScale;
+          
+          console.log(`Collision rect ${index} - Position: (${rectX}, ${rectY}), Size: ${rectWidth}x${rectHeight}`);
+          
+          // Create invisible collision rectangle
+          const collisionRect = this.add.rectangle(
+            rectX,
+            rectY,
+            rectWidth,
+            rectHeight,
+            0x000000, // Color doesn't matter since it's invisible
+            0 // Completely transparent
+          );
+          
+          // Enable physics on the collision rectangle
+          this.physics.add.existing(collisionRect, true);
+          collisionGroup.add(collisionRect);
+          
+          console.log(`Successfully created invisible collision rectangle ${index}`);
+        }
       });
+    } else {
+      console.log('No wee-cair-collisions layer found. Available object layers:');
+      if (map.objects) {
+        map.objects.forEach((layer, index) => {
+          console.log(`Object layer ${index}:`, layer.name || 'unnamed');
+        });
+      } else {
+        console.log('No object layers found in tilemap');
+      }
     }
 
     // Pass collisionGroup to createMainChar
@@ -132,6 +187,13 @@ class WeeCairScene extends Phaser.Scene {
         talkIcon.setVisible(false);
       });
     });
+
+    // Enable collision between character and collision group
+    this.physics.add.collider(char, collisionGroup);
+
+    // Enable Phaser's physics debug rendering (optional)
+    this.physics.world.createDebugGraphic();
+    this.physics.world.debugGraphic.setDepth(9999);
 
     // --- Dialogue sequence with proper bee images ---
     this.dialogueSequence = [

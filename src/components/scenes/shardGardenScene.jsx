@@ -12,7 +12,7 @@ import quests from "../../quests/quests";
 
 class ShardGardenScene extends Phaser.Scene {
   constructor() {
-    super({ key: 'ShardGardenScene', physics: { default: 'arcade', arcade: { debug: false } } });
+    super({ key: 'ShardGardenScene', physics: { default: 'arcade', arcade: { debug: true} } });
     this.dialogueActive = false;
     this.dialogueBox = null;
     this.dialogueStage = 0;
@@ -31,6 +31,9 @@ class ShardGardenScene extends Phaser.Scene {
       winter: false
     };
     this.winDialogueActive = false;
+    this.garlicFound = false;
+    this.thymeFound = false;
+    this.transitioning = false;
     
     // Use the global inventory manager
     this.inventoryManager = globalInventoryManager;
@@ -80,9 +83,12 @@ class ShardGardenScene extends Phaser.Scene {
     this.load.image('garlicPlant', '/assets/plants/garlic.PNG');
     this.load.image('thymePlant', '/assets/plants/thyme.PNG');
     this.load.image('willowPlant', '/assets/plants/willow.PNG');
+    this.load.tilemapTiledJSON("shardGardenMap", "/assets/maps/shardGarden.json");
   }
 
   create() {
+    this.transitioning = false;
+    
     // DEBUG: Show all loaded texture keys and highlight missing ones
     const debugY = 30;
     const loadedKeys = this.textures.getTextureKeys();
@@ -118,6 +124,12 @@ class ShardGardenScene extends Phaser.Scene {
     if (sceneState.dialogueStage !== undefined) {
       this.dialogueStage = sceneState.dialogueStage;
     }
+    if (sceneState.garlicFound !== undefined) {
+      this.garlicFound = sceneState.garlicFound;
+    }
+    if (sceneState.thymeFound !== undefined) {
+      this.thymeFound = sceneState.thymeFound;
+    }
     this.dialogueActive = !!sceneState.dialogueActive;
     this.activeDialogueIndex = sceneState.activeDialogueIndex || 0;
     // Restore time of day
@@ -129,25 +141,126 @@ class ShardGardenScene extends Phaser.Scene {
     const safeAddImage = (scene, x, y, key, ...args) => {
       if (!scene.textures.exists(key)) {
         console.warn(`Image asset missing: ${key}`);
+        return scene.add.text(x, y, `Missing: ${key}`, { fontSize: '16px', color: '#f00', backgroundColor: '#fff' }).setOrigin(0.5).setDepth(999);
       }
       return scene.add.image(x, y, key, ...args);
     };
+    
     safeAddImage(this, width / 2, height / 2, "shardBackground").setScale(scaleFactor);
     const foliageImg = safeAddImage(this, width / 2, height / 2, "folliage").setScale(scaleFactor);
 
+    // --- Create tilemap collision system ---
+    console.log('Creating ShardGarden tilemap collision system...');
+    
+    // Create collision group
     const collisionGroup = this.physics.add.staticGroup();
+    
+    // Try to load the tilemap
+    try {
+      const map = this.make.tilemap({ key: "shardGardenMap" });
+      console.log('ShardGarden tilemap created:', map);
 
-    const foliageRect = this.add.rectangle(
-      width / 2,
-      height / 2,
-      foliageImg.width * scaleFactor,
-      foliageImg.height * scaleFactor,
-      0x00ff00,
-      0.2
-    ).setDepth(1);
-    this.physics.add.existing(foliageRect, true);
-    collisionGroup.add(foliageRect);
+      // Handle collision objects from the tilemap
+      const objectLayer = map.getObjectLayer('Object Layer 1');
+      console.log('Object Layer 1 found:', objectLayer);
 
+      // Collision scale and offset for positioning
+      const collisionScale = 0.175; // Match your scaleFactor
+      const tilemapOffsetX = -150; // Adjust as needed
+      const tilemapOffsetY = 0; // Adjust as needed
+
+      if (objectLayer) {
+          console.log(`Found ${objectLayer.objects.length} objects in Object Layer 1`);
+          
+          objectLayer.objects.forEach((obj, index) => {
+              console.log(`Object ${index}:`, {
+                  x: obj.x,
+                  y: obj.y,
+                  width: obj.width,
+                  height: obj.height,
+                  name: obj.name,
+                  properties: obj.properties
+              });
+              
+              // Check for collision property
+              const hasCollision = obj.properties && obj.properties.find(prop => 
+                  (prop.name === 'collision' && prop.value === true) ||
+                  (prop.name === 'collisions' && prop.value === true) ||
+                  obj.name === 'shard-garden-collision'
+              );
+              
+              console.log(`Object ${index} has collision:`, !!hasCollision);
+              
+              if (hasCollision || obj.name === 'shard-garden-collision') {
+                  console.log(`Creating collision rectangle for object ${index}`);
+                  
+                  // Calculate position and size with scale factor and offset
+                  const rectX = (obj.x * collisionScale) + (obj.width * collisionScale) / 2 + tilemapOffsetX;
+                  const rectY = (obj.y * collisionScale) + (obj.height * collisionScale) / 2 + tilemapOffsetY;
+                  const rectWidth = obj.width * collisionScale;
+                  const rectHeight = obj.height * collisionScale;
+                  
+                  console.log(`Collision rect ${index} - Position: (${rectX}, ${rectY}), Size: ${rectWidth}x${rectHeight}`);
+                  
+                  // Create invisible collision rectangle
+                  const collisionRect = this.add.rectangle(
+                      rectX,
+                      rectY,
+                      rectWidth,
+                      rectHeight,
+                      0x000000, // Color doesn't matter since it's invisible
+                      0 // Completely transparent
+                  );
+                  
+                  // Enable physics on the collision rectangle
+                  this.physics.add.existing(collisionRect, true);
+                  collisionGroup.add(collisionRect);
+                  
+                  console.log(`Successfully created invisible collision rectangle ${index}`);
+              }
+          });
+      } else {
+          console.log('No Object Layer 1 found in tilemap, using fallback');
+          this.createFallbackCollisions(collisionGroup, width, height);
+      }
+    } catch (error) {
+      console.log('Failed to load tilemap, using fallback:', error);
+      this.createFallbackCollisions(collisionGroup, width, height);
+    }
+
+    // --- Add visible folliage collision ---
+    if (foliageImg && foliageImg.width && foliageImg.height) {
+      const foliageRect = this.add.rectangle(
+        width / 2,
+        height / 2,
+        foliageImg.width * scaleFactor,
+        foliageImg.height * scaleFactor,
+        0x000000, // Black fill
+        0.3 // Semi-transparent fill
+      );
+      
+      // Add blue outline for folliage collision
+      foliageRect.setStrokeStyle(3, 0x0066ff); // Blue outline, 3px thick
+      foliageRect.setDepth(10000);
+      
+      this.physics.add.existing(foliageRect, true);
+      collisionGroup.add(foliageRect);
+      
+      // Add debug text for folliage collision
+      this.add.text(
+        width / 2 - (foliageImg.width * scaleFactor) / 2,
+        height / 2 - (foliageImg.height * scaleFactor) / 2 - 25,
+        `Folliage Collision\n${(foliageImg.width * scaleFactor).toFixed(0)}x${(foliageImg.height * scaleFactor).toFixed(0)}`,
+        { 
+          fontSize: '10px', 
+          color: '#ffffff', 
+          backgroundColor: '#0066ff',
+          padding: { left: 3, right: 3, top: 2, bottom: 2 }
+        }
+      ).setDepth(10001);
+    }
+
+    // --- Season pillars setup ---
     const seasons = ['spring', 'summer', 'autumn', 'winter'];
     const seasonScale = 0.09;
     const spacing = 800 * scaleFactor;
@@ -183,58 +296,19 @@ class ShardGardenScene extends Phaser.Scene {
         seasonImg.on("pointerover", () => seasonImg.setTint && seasonImg.setTint(0x88ccff));
         seasonImg.on("pointerout", () => seasonImg.clearTint && seasonImg.clearTint());
         seasonImg.on("pointerup", () => {
-          const shardKey = season + "Shard";
-          const hasShard = this.inventoryManager.hasItemByKey(shardKey);
-          if (hasShard) {
-            if (this.shardCounts[season] > 0) {
-              this.shardCounts[season]--;
-              this.inventoryManager.removeItemByKey(shardKey);
-
-              // Play shard add sound when a shard is returned
-              if (this.sound && typeof this.sound.play === "function") {
-                this.sound.play("shardAdd", { volume: 0.7 });
-              }
-
-              showDialogue(this, `You returned a ${season} shard! (${this.shardCounts[season]} left)`);
-              shardLogic(this);
-
-              // --- QUEST LOGIC ---
-              // Activate and complete "Return the first Shard" quest if this is the first shard returned
-              const shardQuest = quests.find(q => q.title === "Return the first Shard");
-              if (shardQuest && shardQuest.active) {
-                shardQuest.active = false;
-                shardQuest.completed = true;
-                saveToLocal("quests", quests);
-                console.log("Quest 'Return the first Shard' completed!");
-              }
-
-              // If all shards for all seasons are returned, activate and complete "Return all Shards" quest
-              const allReturned = Object.values(this.shardCounts).every(count => count === 0);
-              const allShardsQuest = quests.find(q => q.title === "Return all Shards");
-              if (allReturned && allShardsQuest && !allShardsQuest.completed) {
-                allShardsQuest.active = false;
-                allShardsQuest.completed = true;
-                saveToLocal("quests", quests);
-                console.log("Quest 'Return all Shards' completed!");
-              }
-
-              // Update pillar sprite to happy if all shards given
-              if (this.shardCounts[season] === 0 && this.textures.exists(season + "Happy")) {
-                seasonImg.setTexture(season + "Happy");
-              }
-            } else {
-              showDialogue(this, `No ${season} shards left to return!`);
-            }
-          } else {
-            showDialogue(this, `You don't have a ${season} shard in your inventory.`, { imageKey: shardKey });
-          }
-          this.updateHUDState();
+          this.handleShardReturn(season, seasonImg);
         });
       }
     });
 
+    // --- Create main character ---
     this.mainChar = createMainChar(this, width / 2, height / 2, scaleFactor, collisionGroup);
     this.mainChar.setDepth(10).setOrigin(0.5, 0.5);
+
+    // Enable collision between character and collision group
+    this.physics.add.collider(this.mainChar, collisionGroup);
+
+    // --- Create butterfly ---
     const butterfly = createButterfly(this, width / 2, height / 2);
     butterfly.setScale(0.09).setOrigin(-2, 0.3).setDepth(20).setInteractive();
 
@@ -245,84 +319,121 @@ class ShardGardenScene extends Phaser.Scene {
       .setDepth(110)
       .setOrigin(0.5);
 
+    // --- Butterfly interaction ---
+    this.setupButterflyInteraction(butterfly, talkIcon);
 
-    // --- Bushes/Flowerbeds logic ---
+    // --- Setup bushes ---
     this.setupBushes(width, height);
 
-    // --- Mole and Turtle dialogue advance ---
-    this.input.on("pointerdown", () => {
-      if (this.moleDialogueActive) {
-        this.moleDialogueIndex++;
-        if (this.activeMoleDialogues && this.moleDialogueIndex < this.activeMoleDialogues.length) {
-          showDialogue(this, this.activeMoleDialogues[this.moleDialogueIndex], { imageKey: "mole" });
-        } else {
-          this.destroyDialogueUI();
-          this.dialogueActive = false;
-          this.updateHUDState && this.updateHUDState();
+    // --- Input handling ---
+    this.setupInputHandling();
 
-          if (!this.moleIntroDone && this.activeMoleDialogues === moleIntroDialogues) {
-            this.moleIntroDone = true;
+    // --- Save system ---
+    this.setupSaveSystem();
+  }
+
+  createFallbackCollisions(collisionGroup, width, height) {
+    console.log('Using fallback collision system');
+    const fallbackCollisions = [
+      { x: 0, y: height / 2, width: 20, height: height }, // Left wall
+      { x: width, y: height / 2, width: 20, height: height }, // Right wall
+      { x: width / 2, y: 0, width: width, height: 20 }, // Top wall
+      { x: width / 2, y: height, width: width, height: 20 } // Bottom wall
+    ];
+    
+    fallbackCollisions.forEach((collision, index) => {
+        // Create visible fallback collision rectangle with green outline
+        const collisionRect = this.add.rectangle(
+            collision.x,
+            collision.y,
+            collision.width,
+            collision.height,
+            0x000000,
+            0.3 // Semi-transparent fill
+        );
+        
+        // Add green outline for fallback collisions
+        collisionRect.setStrokeStyle(3, 0x00ff00); // Green outline, 3px thick
+        collisionRect.setDepth(10000);
+        
+        this.physics.add.existing(collisionRect, true);
+        collisionGroup.add(collisionRect);
+        
+        // Add debug text for fallback collisions
+        this.add.text(
+          collision.x - collision.width/2,
+          collision.y - collision.height/2 - 25,
+          `Fallback Collision ${index}\n${collision.width}x${collision.height}`,
+          { 
+            fontSize: '10px', 
+            color: '#ffffff', 
+            backgroundColor: '#00ff00',
+            padding: { left: 3, right: 3, top: 2, bottom: 2 }
           }
-          if (this.moleHasPeriwinkle && this.activeMoleDialogues === moleThanksDialogues) {
-            this.moleThanksDone = true;
-            // Automatically give summer shard after thanks dialogue
-            receivedItem(this, "summerShard", "Summer Shard");
-            // Always remove periwinkle as a failsafe
-            this.inventoryManager.removeItemByKey("periwinklePlant");
-          }
-          this.moleDialogueActive = false;
-          this.updateHUDState && this.updateHUDState();
+        ).setDepth(10001);
+        
+        console.log(`Created visible fallback collision ${index}`);
+    });
+  }
+
+  handleShardReturn(season, seasonImg) {
+    const shardKey = season + "Shard";
+    const hasShard = this.inventoryManager.hasItemByKey(shardKey);
+    
+    if (hasShard) {
+      if (this.shardCounts[season] > 0) {
+        this.shardCounts[season]--;
+        this.inventoryManager.removeItemByKey(shardKey);
+
+        // Play shard add sound when a shard is returned
+        if (this.sound && typeof this.sound.play === "function") {
+          this.sound.play("shardAdd", { volume: 0.7 });
         }
-        return;
-      }
-      if (this.turtleDialogueActive) {
-        this.turtleDialogueIndex++;
-        if (this.activeTurtleDialogues && this.turtleDialogueIndex < this.activeTurtleDialogues.length) {
-          showDialogue(this, this.activeTurtleDialogues[this.turtleDialogueIndex], { imageKey: "turtle" });
-        } else {
-          this.destroyDialogueUI();
-          this.dialogueActive = false;
-          this.updateHUDState && this.updateHUDState();
 
-          if (!this.turtleIntroDone && this.activeTurtleDialogues === turtleIntroDialogues) {
-            this.turtleIntroDone = true;
-          }
-          if (this.turtleHasMarigold && this.activeTurtleDialogues === turtleThanksDialogues) {
-            this.turtleThanksDone = true;
-            // Automatically give winter shard after thanks dialogue
-            receivedItem(this, "winterShard", "Winter Shard");
-          }
-          this.turtleDialogueActive = false;
-          this.updateHUDState && this.updateHUDState();
+        showDialogue(this, `You returned a ${season} shard! (${this.shardCounts[season]} left)`);
+        
+        if (typeof shardLogic === 'function') {
+          shardLogic(this);
         }
-        return;
+
+        // --- QUEST LOGIC ---
+        this.handleQuestLogic();
+
+        // Update pillar sprite to happy if all shards given
+        if (this.shardCounts[season] === 0 && this.textures.exists(season + "Happy")) {
+          seasonImg.setTexture(season + "Happy");
+        }
+      } else {
+        showDialogue(this, `No ${season} shards left to return!`);
       }
-      // Plant dialogue advance
-      if (this.dialogueActive && typeof this.dialogueOnComplete === "function") {
-        this.dialogueOnComplete();
-      }
-      // Always update HUD after any dialogue completes
-      this.updateHUDState && this.updateHUDState();
-    });
+    } else {
+      showDialogue(this, `You don't have a ${season} shard in your inventory.`, { imageKey: shardKey });
+    }
+    this.updateHUDState();
+  }
 
-    // --- PERIODIC SAVE TO LOCAL STORAGE ---
-    this._saveInterval = setInterval(() => {
-      this.saveSceneState();
-    }, 8000);
+  handleQuestLogic() {
+    // Activate and complete "Return the first Shard" quest if this is the first shard returned
+    const shardQuest = quests.find(q => q.title === "Return the first Shard");
+    if (shardQuest && shardQuest.active) {
+      shardQuest.active = false;
+      shardQuest.completed = true;
+      saveToLocal("quests", quests);
+      console.log("Quest 'Return the first Shard' completed!");
+    }
 
-    // Save on shutdown/stop
-    this.events.on('shutdown', () => {
-      this.saveSceneState();
-      clearInterval(this._saveInterval);
-      this.transitioning = false;
-    });
-    this.events.on('destroy', () => {
-      this.saveSceneState();
-      clearInterval(this._saveInterval);
-      this.transitioning = false;
-    });
+    // If all shards for all seasons are returned, activate and complete "Return all Shards" quest
+    const allReturned = Object.values(this.shardCounts).every(count => count === 0);
+    const allShardsQuest = quests.find(q => q.title === "Return all Shards");
+    if (allReturned && allShardsQuest && !allShardsQuest.completed) {
+      allShardsQuest.active = false;
+      allShardsQuest.completed = true;
+      saveToLocal("quests", quests);
+      console.log("Quest 'Return all Shards' completed!");
+    }
+  }
 
-    // --- Butterfly dialogue logic ---
+  setupButterflyInteraction(butterfly, talkIcon) {
     butterfly.on("pointerover", (pointer) => {
       talkIcon.setVisible(true);
       talkIcon.setPosition(pointer.worldX + 32, pointer.worldY);
@@ -343,18 +454,23 @@ class ShardGardenScene extends Phaser.Scene {
       showDialogue(this, this.activeDialogue[this.activeDialogueIndex], { imageKey: "butterflySad" });
       this.updateHUDState();
     });
+  }
 
+  setupInputHandling() {
     // Play click sound on any pointerdown for butterfly dialogue
     this.input.on("pointerdown", (pointer, currentlyOver) => {
-      this.sound.play("click");
-      if (currentlyOver && currentlyOver.includes(butterfly)) return;
+      if (this.sound && this.sound.play) {
+        this.sound.play("click");
+      }
+      
       if (!this.dialogueActive) return;
       if (this.dialogueBox?.optionButtons?.length > 0) return;
+      
       this.activeDialogueIndex++;
       if (this.activeDialogueIndex < this.activeDialogue.length) {
         showDialogue(this, this.activeDialogue[this.activeDialogueIndex], { imageKey: "butterflySad" });
       } else {
-        // Dialogue finished, ask if player wants to move on
+        // Dialogue finished
         this.dialogueActive = false;
         this.updateHUDState();
         this.destroyDialogueUI();
@@ -378,45 +494,30 @@ class ShardGardenScene extends Phaser.Scene {
         }
       }
     });
+  }
 
-    // Add move on question method
-    this.showMoveOnQuestion = () => {
-      showOption(this, "Would you like to move on?", {
-        imageKey: "butterfly",
-        options: [
-          {
-            text: "Yes",
-            callback: () => {
-              this.destroyDialogueUI();
-              // Remove butterfly from scene
-              if (butterfly && butterfly.destroy) {
-                butterfly.destroy();
-              }
-              // Optionally, set a flag so butterfly logic is skipped if you return to this scene
-              this.butterflyRemoved = true;
-              this.scene.start("PersonalGarden");
-            }
-          },
-          {
-            text: "No",
-            callback: () => {
-              this.dialogueOnComplete = () => {
-                this.destroyDialogueUI();
-                this.dialogueActive = false;
-                this.updateHUDState();
-                this.dialogueOnComplete = null;
-              };
-              // Ensure HUD reappears immediately
-              this.dialogueActive = false;
-              this.updateHUDState();
-            }
-          }
-        ]
-      });
-    };
+  setupSaveSystem() {
+    // --- PERIODIC SAVE TO LOCAL STORAGE ---
+    this._saveInterval = setInterval(() => {
+      this.saveSceneState();
+    }, 8000);
 
-    // Add bushes with garlic and thyme only (removed coins)
-    this.setupBushes(width, height);
+    // Save on shutdown/stop
+    this.events.on('shutdown', () => {
+      this.saveSceneState();
+      if (this._saveInterval) {
+        clearInterval(this._saveInterval);
+      }
+      this.transitioning = false;
+    });
+    
+    this.events.on('destroy', () => {
+      this.saveSceneState();
+      if (this._saveInterval) {
+        clearInterval(this._saveInterval);
+      }
+      this.transitioning = false;
+    });
   }
 
   saveSceneState() {
@@ -426,7 +527,9 @@ class ShardGardenScene extends Phaser.Scene {
       dialogueStage: this.dialogueStage,
       dialogueActive: !!this.dialogueActive,
       activeDialogueIndex: this.activeDialogueIndex,
-      timeOfDay: globalTimeManager.getCurrentTimeOfDay()
+      timeOfDay: globalTimeManager.getCurrentTimeOfDay(),
+      garlicFound: this.garlicFound,
+      thymeFound: this.thymeFound
     };
     saveToLocal('shardGardenSceneState', state);
   }
@@ -474,6 +577,7 @@ class ShardGardenScene extends Phaser.Scene {
     const bushCount = bushPositions.length;
     const garlicIndex = 0;
     const thymeIndex = 1;
+    
     // Track dispensed state for each bush
     this.bushDispensed = this.bushDispensed || Array(bushCount).fill(false);
 
@@ -485,18 +589,20 @@ class ShardGardenScene extends Phaser.Scene {
         : this.add.text(x, y, 'Missing: bush', { fontSize: '16px', color: '#f00', backgroundColor: '#fff' }).setOrigin(0.5).setDepth(999);
 
       bush.on("pointerdown", () => {
-        this.sound.play("click");
+        if (this.sound && this.sound.play) {
+          this.sound.play("click");
+        }
         if (this.dialogueActive) return;
         this.dialogueActive = true;
-        this.updateHUDState && this.updateHUDState();
+        this.updateHUDState();
 
         // If already dispensed, show empty dialogue
         if (this.bushDispensed[i]) {
           showDialogue(this, "This bush is empty!");
           this.dialogueOnComplete = () => {
-            this.destroyDialogueUI && this.destroyDialogueUI();
+            this.destroyDialogueUI();
             this.dialogueActive = false;
-            this.updateHUDState && this.updateHUDState();
+            this.updateHUDState();
             this.dialogueOnComplete = null;
           };
           return;
@@ -534,11 +640,11 @@ class ShardGardenScene extends Phaser.Scene {
         imageKey: plant.imageKey,
         options: [
           {
-            label: "Play a game to win it!",
+            text: "Play a game to win it!",
             callback: () => {
-              this.destroyDialogueUI && this.destroyDialogueUI();
+              this.destroyDialogueUI();
               this.dialogueActive = false;
-              this.updateHUDState && this.updateHUDState();
+              this.updateHUDState();
               this.dialogueOnComplete = null;
               this.scene.launch("MiniGameScene", {
                 onWin: () => {
@@ -565,7 +671,7 @@ class ShardGardenScene extends Phaser.Scene {
                   this.dialogueOnComplete = () => {
                     this.destroyDialogueUI();
                     this.dialogueActive = false;
-                    this.updateHUDState && this.updateHUDState();
+                    this.updateHUDState();
                     this.dialogueOnComplete = null;
                   };
                 }
@@ -574,11 +680,11 @@ class ShardGardenScene extends Phaser.Scene {
             }
           },
           {
-            label: "Try again later",
+            text: "Try again later",
             callback: () => {
-              this.destroyDialogueUI && this.destroyDialogueUI();
+              this.destroyDialogueUI();
               this.dialogueActive = false;
-              this.updateHUDState && this.updateHUDState();
+              this.updateHUDState();
               this.dialogueOnComplete = null;
             }
           }
@@ -590,11 +696,41 @@ class ShardGardenScene extends Phaser.Scene {
   showPlantMissing() {
     showDialogue(this, "You found a rare plant, but its data is missing!", {});
     this.dialogueOnComplete = () => {
-      this.destroyDialogueUI && this.destroyDialogueUI();
+      this.destroyDialogueUI();
       this.dialogueActive = false;
-      this.updateHUDState && this.updateHUDState();
+      this.updateHUDState();
       this.dialogueOnComplete = null;
     };
+  }
+
+  showMoveOnQuestion() {
+    showOption(this, "Would you like to move on?", {
+      imageKey: "butterfly",
+      options: [
+        {
+          text: "Yes",
+          callback: () => {
+            this.destroyDialogueUI();
+            this.transitioning = true;
+            this.scene.start("PersonalGarden");
+          }
+        },
+        {
+          text: "No",
+          callback: () => {
+            this.dialogueOnComplete = () => {
+              this.destroyDialogueUI();
+              this.dialogueActive = false;
+              this.updateHUDState();
+              this.dialogueOnComplete = null;
+            };
+            // Ensure HUD reappears immediately
+            this.dialogueActive = false;
+            this.updateHUDState();
+          }
+        }
+      ]
+    });
   }
 }
 
