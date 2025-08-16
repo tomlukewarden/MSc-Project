@@ -24,6 +24,7 @@ export function loadTimeOfDay() {
     return null;
   }
 }
+
 /**
  * @param {string} key
  * @param {object} data
@@ -65,6 +66,140 @@ export function removeFromLocal(key) {
   }
 }
 
+/**
+ * Wipe all game data from localStorage
+ * @param {boolean} confirmWipe - Safety check to prevent accidental wipes
+ * @returns {boolean} - Success status
+ */
+export function wipeAllGameData(confirmWipe = false) {
+  if (!confirmWipe) {
+    console.warn("wipeAllGameData() called without confirmation. Pass true to confirm.");
+    return false;
+  }
+
+  const gameDataKeys = [
+    'inventory',
+    'personalGardenSceneState',
+    'middleGardenSceneState', 
+    'wallGardenSceneState',
+    'shardGardenSceneState',
+    'greenhouseSceneState',
+    'timeOfDay',
+    'journalState',
+    'settings',
+    'HUDState',
+    'quests',
+    'characterName'
+  ];
+
+  let successCount = 0;
+  let failCount = 0;
+
+  console.log("🗑️ Starting complete game data wipe...");
+
+  gameDataKeys.forEach(key => {
+    try {
+      localStorage.removeItem(key);
+      console.log(`✅ Removed: ${key}`);
+      successCount++;
+    } catch (e) {
+      console.error(`❌ Failed to remove ${key}:`, e);
+      failCount++;
+    }
+  });
+
+  // Also clear any scene-specific minigame data that might exist
+  const additionalKeys = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key && (key.includes('Scene') || key.includes('minigame') || key.includes('bush'))) {
+      additionalKeys.push(key);
+    }
+  }
+
+  additionalKeys.forEach(key => {
+    try {
+      localStorage.removeItem(key);
+      console.log(`✅ Removed additional: ${key}`);
+      successCount++;
+    } catch (e) {
+      console.error(`❌ Failed to remove additional ${key}:`, e);
+      failCount++;
+    }
+  });
+
+  console.log(`🧹 Wipe complete! Success: ${successCount}, Failed: ${failCount}`);
+  
+  return failCount === 0;
+}
+
+/**
+ * Wipe specific scene data only
+ * @param {string} sceneName - Name of the scene to wipe
+ * @param {boolean} confirmWipe - Safety check
+ * @returns {boolean} - Success status
+ */
+export function wipeSceneData(sceneName, confirmWipe = false) {
+  if (!confirmWipe) {
+    console.warn(`wipeSceneData("${sceneName}") called without confirmation. Pass true to confirm.`);
+    return false;
+  }
+
+  const sceneKey = `${sceneName}SceneState`;
+  
+  try {
+    localStorage.removeItem(sceneKey);
+    console.log(`✅ Wiped scene data: ${sceneKey}`);
+    return true;
+  } catch (e) {
+    console.error(`❌ Failed to wipe scene data ${sceneKey}:`, e);
+    return false;
+  }
+}
+
+/**
+ * Get current game data size in localStorage
+ * @returns {object} - Statistics about stored data
+ */
+export function getGameDataStats() {
+  const gameDataKeys = [
+    'inventory',
+    'personalGardenSceneState',
+    'middleGardenSceneState', 
+    'wallGardenSceneState',
+    'shardGardenSceneState',
+    'greenhouseSceneState',
+    'timeOfDay',
+    'journalState',
+    'settings',
+    'HUDState',
+    'quests',
+    'characterName'
+  ];
+
+  const stats = {
+    totalKeys: 0,
+    totalSize: 0,
+    keyDetails: {}
+  };
+
+  gameDataKeys.forEach(key => {
+    const data = localStorage.getItem(key);
+    if (data) {
+      stats.totalKeys++;
+      stats.totalSize += data.length;
+      stats.keyDetails[key] = {
+        size: data.length,
+        sizeKB: (data.length / 1024).toFixed(2)
+      };
+    }
+  });
+
+  stats.totalSizeKB = (stats.totalSize / 1024).toFixed(2);
+  
+  return stats;
+}
+
 export function saveGameStateToDB(nickname, gameState) {
   fetch('http://localhost:3000/save', {
     method: 'POST',
@@ -78,20 +213,24 @@ export function saveGameStateToDB(nickname, gameState) {
     .then(data => console.log("Saved!", data))
     .catch(err => console.error("Save error:", err));
 }
-const nickname = localStorage.getItem("characterName");
-console.log("Loaded nickname from localStorage:", nickname);
-const gameState = {
-  inventory: loadFromLocal("inventory"), 
-  personalGardenSceneState: loadFromLocal("personalGardenSceneState"),
-  middleGardenSceneState: loadFromLocal("middleGardenSceneState"),
-  wallGardenSceneState: loadFromLocal("wallGardenSceneState"),
-  shardGardenSceneState: loadFromLocal("shardGardenSceneState"),
-  greenhouseSceneState: loadFromLocal("greenhouseSceneState"),
-  timeOfDay: loadFromLocal("timeOfDay"),
-  journalState: loadFromLocal("journalState"),
-  settings: loadFromLocal("settings"),
-  HUDState: loadFromLocal("HUDState"),
-  quests: loadFromLocal("quests"),
-};
 
-saveGameStateToDB(nickname, gameState);
+// Only run this auto-save code if not being imported as a module
+if (typeof window !== 'undefined' && window.location) {
+  const nickname = localStorage.getItem("characterName");
+  console.log("Loaded nickname from localStorage:", nickname);
+  const gameState = {
+    inventory: loadFromLocal("inventory"), 
+    personalGardenSceneState: loadFromLocal("personalGardenSceneState"),
+    middleGardenSceneState: loadFromLocal("middleGardenSceneState"),
+    wallGardenSceneState: loadFromLocal("wallGardenSceneState"),
+    shardGardenSceneState: loadFromLocal("shardGardenSceneState"),
+    greenhouseSceneState: loadFromLocal("greenhouseSceneState"),
+    timeOfDay: loadFromLocal("timeOfDay"),
+    journalState: loadFromLocal("journalState"),
+    settings: loadFromLocal("settings"),
+    HUDState: loadFromLocal("HUDState"),
+    quests: loadFromLocal("quests"),
+  };
+
+  saveGameStateToDB(nickname, gameState);
+}

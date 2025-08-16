@@ -32,6 +32,8 @@ import ForagingTutorial from "../tutorials/foragingTutorial";
 import CraftingTutorial from "../tutorials/craftingTutorial";
 import Tutorial from "../tutorials/tutorial";
 import CreditsScene from "./scenes/credits";
+import FlowerCatchTutorial from "../minigames/flower-catch/flowerCatchTutorial";
+import FlowerCatchGame from "../minigames/flower-catch/flowerCatchGame";
 
 function GameCanvas() {
     const canvasRef = useRef(null);
@@ -96,6 +98,8 @@ function GameCanvas() {
     CraftingTutorial,
     Tutorial,
     CreditsScene,
+    FlowerCatchTutorial,
+    FlowerCatchGame
   ]
 };
 
