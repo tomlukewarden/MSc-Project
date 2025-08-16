@@ -12,7 +12,7 @@ import globalInventoryManager from "../inventoryManager";
 
 class PersonalGarden extends Phaser.Scene {
   constructor() {
-    super("PersonalGarden", { physics: { default: 'arcade', arcade: { debug: true } } }); // Keep debug: true
+    super("PersonalGarden", { physics: { default: 'arcade', arcade: { debug: false } } }); 
     this.plotSize = 64;
     this.rows = 3;
     this.cols = 5;

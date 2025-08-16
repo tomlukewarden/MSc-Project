@@ -67,6 +67,7 @@ class MiddleGardenScene extends Phaser.Scene {
     this.load.image("moleDialogueSad", "/assets/npc/dialogue/moleSad.png");
     this.load.image("wolfDialogueHappy", "/assets/npc/dialogue/wolfHappy.png");
     this.load.image("wolfDialogueSad", "/assets/npc/dialogue/wolfSad.png");
+    this.load.tilemapTiledJSON('middleGardenMap', '/assets/maps/middleGarden.json');
   }
 
   create() {
@@ -121,21 +122,139 @@ class MiddleGardenScene extends Phaser.Scene {
     safeAddImage(this, width / 2, height / 2, 'folliage1').setScale(scaleFactor).setDepth(1);
     const folliage2Img = safeAddImage(this, width / 2, height / 2, 'folliage2').setScale(scaleFactor).setDepth(2);
 
-    // --- Collision for folliage2 ---
+    // --- Create tilemap collision system ---
+    console.log('Creating tilemap collision system...');
+    this.map = this.make.tilemap({ key: 'middleGardenMap' });
+    console.log('Tilemap created:', this.map);
+
+    // Create collision group
     const collisionGroup = this.physics.add.staticGroup();
+
+    // Handle collision objects from the tilemap
+    const objectLayer = this.map.getObjectLayer('Object Layer 1');
+    console.log('Object Layer 1 found:', objectLayer);
+
+    // Collision scale and offset for positioning
+    const collisionScale = 0.175;
+    const tilemapOffsetX = -175;
+    const tilemapOffsetY = 20;
+
+    if (objectLayer) {
+      console.log(`Found ${objectLayer.objects.length} objects in layer`);
+      
+      objectLayer.objects.forEach((obj, index) => {
+        console.log(`Object ${index}:`, {
+          x: obj.x,
+          y: obj.y,
+          width: obj.width,
+          height: obj.height,
+          properties: obj.properties,
+          type: obj.type,
+          name: obj.name
+        });
+        
+        // Check for collision property
+        const hasCollision = obj.properties && obj.properties.find(prop => 
+          (prop.name === 'collisions' && prop.value === true) ||
+          (prop.name === 'collision' && prop.value === true) ||
+          prop.name === 'collides'
+        );
+        
+        console.log(`Object ${index} has collision:`, !!hasCollision);
+        
+        if (hasCollision || obj.type === 'collision' || obj.name === 'collision') {
+          console.log(`Creating collision rectangle for object ${index}`);
+          
+          // Calculate position and size with scale factor
+          const rectX = (obj.x * collisionScale) + (obj.width * collisionScale) / 2 + tilemapOffsetX;
+          const rectY = (obj.y * collisionScale) + (obj.height * collisionScale) / 2 + tilemapOffsetY;
+          const rectWidth = obj.width * collisionScale;
+          const rectHeight = obj.height * collisionScale;
+          
+          console.log(`Collision rect ${index} - Position: (${rectX}, ${rectY}), Size: ${rectWidth}x${rectHeight}`);
+          
+          // Create visible collision rectangle with outline only
+          const collisionRect = this.add.rectangle(
+            rectX,
+            rectY,
+            rectWidth,
+            rectHeight,
+            0x000000, // Black fill (will be made transparent)
+            0 // Completely transparent fill
+          );
+          
+          // Add colored outline to make collision boundaries visible
+          collisionRect.setStrokeStyle(3, 0xff0000); // Red outline, 3px thick
+          collisionRect.setDepth(10000); // Bring to front for visibility
+          
+          // Enable physics on the collision rectangle
+          this.physics.add.existing(collisionRect, true);
+          collisionGroup.add(collisionRect);
+          
+          // Add debug text with collision info
+          this.add.text(
+            rectX - rectWidth/2,
+            rectY - rectHeight/2 - 25,
+            `Collision ${index}\n${rectWidth.toFixed(0)}x${rectHeight.toFixed(0)}`,
+            { 
+              fontSize: '10px', 
+              color: '#ffffff', 
+              backgroundColor: '#ff0000',
+              padding: { left: 3, right: 3, top: 2, bottom: 2 }
+            }
+          ).setDepth(10001);
+          
+          console.log(`Successfully created collision rectangle ${index}`);
+        }
+      });
+    } else {
+      console.log('No Object Layer 1 found. Available object layers:');
+      if (this.map.objects) {
+        this.map.objects.forEach((layer, index) => {
+          console.log(`Object layer ${index}:`, layer.name || 'unnamed');
+        });
+      } else {
+        console.log('No object layers found in tilemap');
+      }
+    }
+
+    // --- Add folliage2 collision (existing collision) ---
     const folliage2Rect = this.add.rectangle(
       width / 2,
       height / 2,
       folliage2Img.width * scaleFactor,
       folliage2Img.height * scaleFactor,
-      0x00ff00, 
-      0 
-    ).setDepth(2); 
+      0x000000,
+      0 // Transparent fill
+    );
+    folliage2Rect.setStrokeStyle(3, 0x00ff00); // Green outline for folliage collision
+    folliage2Rect.setDepth(10000);
     this.physics.add.existing(folliage2Rect, true);
     collisionGroup.add(folliage2Rect);
 
+    // Add debug text for folliage collision
+    this.add.text(
+      width / 2 - (folliage2Img.width * scaleFactor) / 2,
+      height / 2 - (folliage2Img.height * scaleFactor) / 2 - 25,
+      `Folliage Collision\n${(folliage2Img.width * scaleFactor).toFixed(0)}x${(folliage2Img.height * scaleFactor).toFixed(0)}`,
+      { 
+        fontSize: '10px', 
+        color: '#ffffff', 
+        backgroundColor: '#00ff00',
+        padding: { left: 3, right: 3, top: 2, bottom: 2 }
+      }
+    ).setDepth(10001);
+
+    // Create main character with collision
     this.mainChar = createMainChar(this, width / 2, height / 2, scaleFactor, collisionGroup);
     this.mainChar.setDepth(1).setOrigin(0.5, 0.5);
+
+    // Enable collision between character and collision group
+    this.physics.add.collider(this.mainChar, collisionGroup);
+
+    // Enable Phaser's physics debug rendering (optional)
+    this.physics.world.createDebugGraphic();
+    this.physics.world.debugGraphic.setDepth(9999);
 
     // --- Talk icon ---
     const talkIcon = this.add
