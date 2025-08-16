@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import { saveToLocal, loadFromLocal, removeFromLocal } from "../utils/localStorage";
+import { saveToLocal, wipeAllGameData } from "../utils/localStorage";
 
 class OpenSettings extends Phaser.Scene {
   constructor() {
@@ -94,6 +94,50 @@ class OpenSettings extends Phaser.Scene {
     });
     };
 
+    // Helper to save wiped state to database
+    const saveWipedStateToDB = async (nickname) => {
+      const wipedGameState = {
+        inventory: [],
+        personalGardenSceneState: null,
+        middleGardenSceneState: null,
+        wallGardenSceneState: null,
+        shardGardenSceneState: null,
+        greenhouseSceneState: null,
+        timeOfDay: "morning",
+        journalState: null,
+        settings: null,
+        HUDState: null,
+        quests: [],
+        characterName: nickname,
+        wipedAt: new Date().toISOString(),
+        action: "GAME_RESET"
+      };
+
+      try {
+        console.log("💾 Saving wiped game state to database...");
+        const response = await fetch('http://localhost:3000/save', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            nickname: nickname,
+            gameState: wipedGameState
+          })
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          console.log("✅ Wiped game state saved to database:", data);
+          return true;
+        } else {
+          console.error("❌ Failed to save wiped state to database:", response.status);
+          return false;
+        }
+      } catch (error) {
+        console.error("❌ Database save error:", error);
+        return false;
+      }
+    };
+
     // Save button
     const saveBtn = this.add.text(width / 2 - 100, height / 2 + 140, "Save", {
       fontFamily: "Georgia",
@@ -183,47 +227,97 @@ class OpenSettings extends Phaser.Scene {
           padding: { left: 18, right: 18, top: 8, bottom: 8 }
         }).setOrigin(0.5).setDepth(32).setInteractive({ useHandCursor: true });
 
-        yesBtn.on("pointerdown", () => {
-          // Remove all relevant state keys
-          removeFromLocal("botanistSave");
-          removeFromLocal("coins");
-          removeFromLocal("personalGardenSceneState");
-          removeFromLocal("middleGardenSceneState");
-          removeFromLocal("wallGardenSceneState");
-          removeFromLocal("shardGardenSceneState");
-          removeFromLocal("greenhouseSceneState");
-          removeFromLocal("timeOfDay");
-          removeFromLocal("journalState");
-          removeFromLocal("inventory");
-          removeFromLocal("settings");
-          removeFromLocal("HUDState");
-          removeFromLocal("OpenJournal");
-          removeFromLocal("OpenInventory");
-          // Reset in-memory inventory
-          if (window.inventoryManager) {
-            window.inventoryManager.clear && window.inventoryManager.clear();
-            // Or, if your InventoryManager uses an array:
-            window.inventoryManager.items = [];
-            window.inventoryManager.emitChange && window.inventoryManager.emitChange();
+        yesBtn.on("pointerdown", async () => {
+          console.log("🗑️ Clear Save button clicked - starting data wipe...");
+          
+          // Get character name before wiping
+          const characterName = localStorage.getItem("characterName") || "Unknown";
+          console.log(`📝 Character name before wipe: ${characterName}`);
+          
+          // Use the comprehensive wipeAllGameData function
+          const wipeSuccess = wipeAllGameData(true);
+          
+          if (wipeSuccess) {
+            console.log("✅ All game data successfully wiped!");
+            
+            // Save wiped state to database
+            const dbSaveSuccess = await saveWipedStateToDB(characterName);
+            
+            if (dbSaveSuccess) {
+              console.log("✅ Wiped state saved to database!");
+              showTempMessage("✅ All save data cleared & saved to DB! Restarting...", height / 2 + 140);
+            } else {
+              console.warn("⚠️ Local data cleared but database save failed");
+              showTempMessage("✅ Local data cleared! (DB save failed)", height / 2 + 140);
+            }
+            
+            // Clear in-memory inventory manager
+            if (window.inventoryManager) {
+              if (window.inventoryManager.clear) {
+                window.inventoryManager.clear();
+              } else if (window.inventoryManager.items) {
+                window.inventoryManager.items = [];
+              }
+              if (window.inventoryManager.emitChange) {
+                window.inventoryManager.emitChange();
+              }
+            }
+            
+            // Clear Phaser registry data
+            this.registry.set("coins", 0);
+            this.registry.set("inventory", []);
+            this.registry.set("timeOfDay", "morning");
+            
+          } else {
+            console.error("❌ Some data failed to clear!");
+            showTempMessage("⚠️ Some data may not have cleared properly", height / 2 + 140);
           }
 
+          // Clean up confirmation dialog
           confirmBg.destroy();
           confirmText.destroy();
           yesBtn.destroy();
           noBtn.destroy();
-          showTempMessage("All save data cleared! Restarting...", height / 2 + 140);
-          this.time.delayedCall(1200, () => {
-            this.scene.stop();
-            this.scene.get("HUDScene")?.scene?.stop();
-            this.scene.get("PersonalGarden")?.scene?.stop();
-            this.scene.get("MiddleGardenScene")?.scene?.stop();
-            this.scene.get("WallGardenScene")?.scene?.stop();
-            this.scene.get("ShardGardenScene")?.scene?.stop();
-            this.scene.get("GreenhouseScene")?.scene?.stop();
+          
+          // Restart the game after a delay
+          this.time.delayedCall(2000, () => {
+            console.log("🔄 Restarting game...");
+            
+            // Stop all active scenes
+            const sceneManager = this.scene.manager;
+            const scenesToStop = [
+              "OpenSettings",
+              "HUDScene", 
+              "PersonalGarden",
+              "MiddleGardenScene", 
+              "WallGardenScene",
+              "ShardGardenScene",
+              "GreenhouseScene",
+              "OpenJournal",
+              "OpenInventory",
+              "MiniGameScene",
+              "XOTutorialScene",
+              "XOGameScene",
+              "FishTutorialScene",
+              "FishGameScene",
+              "FlowerCatchTutorial",
+              "FlowerCatchGame"
+            ];
+            
+            scenesToStop.forEach(sceneKey => {
+              if (sceneManager.isActive(sceneKey) || sceneManager.isPaused(sceneKey)) {
+                console.log(`Stopping scene: ${sceneKey}`);
+                this.scene.stop(sceneKey);
+              }
+            });
+            
+            // Start fresh with the start scene
             this.scene.start("StartScene");
           });
         });
+
         noBtn.on("pointerdown", () => {
+          console.log("Clear save cancelled by user");
           confirmBg.destroy();
           confirmText.destroy();
           yesBtn.destroy();

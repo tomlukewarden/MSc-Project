@@ -1,13 +1,15 @@
 import Phaser from "phaser";
 
 class FishGameScene extends Phaser.Scene {
-
     constructor() {
         super("FishGameScene");
         this.score = 0;
         this.catches = 0;
         this.maxCatches = 10;
         this.gameOver = false;
+        this.lineSpeed = 300;
+        this.fishSpeed = 150;
+        this.dropSpeed = 400;
     }
 
     preload() {
@@ -22,276 +24,329 @@ class FishGameScene extends Phaser.Scene {
     }
 
     create() {
+        this.scene.sleep("HUDScene");
+        
+        // Reset game state every time scene is created
+        this.resetGameState();
+        
         const { width, height } = this.sys.game.config;
-        // Reset all game state variables
+        
+        // Get callbacks from scene data
+        if (this.scene.settings && this.scene.settings.data) {
+            if (typeof this.scene.settings.data.onWin === "function") {
+                this.onWin = this.scene.settings.data.onWin;
+                console.log("[FishGameScene] onWin callback received from scene data.");
+            }
+            if (typeof this.scene.settings.data.onLose === "function") {
+                this.onLose = this.scene.settings.data.onLose;
+                console.log("[FishGameScene] onLose callback received from scene data.");
+            }
+        } else {
+            console.log("[FishGameScene] No callbacks found in scene data.");
+        }
+        
+        // Background
+        this.add.image(width / 2, height / 2, "waterBackground").setDisplaySize(width, height);
+        
+        // Create fishing line (vertical line from top)
+        this.fishingLine = this.add.rectangle(width / 2, 50, 4, 100, 0x8B4513);
+        this.fishingLine.setOrigin(0.5, 0);
+        
+        // Create hook at end of line
+        this.hook = this.add.circle(width / 2, 150, 8, 0x666666);
+        
+        // UI Elements
+        this.scoreText = this.add.text(20, 20, `Score: ${this.score}`, {
+            fontSize: "24px",
+            color: "#fff",
+            fontFamily: "Georgia",
+            stroke: "#000",
+            strokeThickness: 2
+        });
+        
+        this.catchText = this.add.text(20, 60, `Catches: ${this.catches}/${this.maxCatches}`, {
+            fontSize: "24px",
+            color: "#fff",
+            fontFamily: "Georgia",
+            stroke: "#000",
+            strokeThickness: 2
+        });
+        
+        this.instructionText = this.add.text(width / 2, height - 50, "Use ← → arrows to move, Click to drop line", {
+            fontSize: "20px",
+            color: "#fff",
+            fontFamily: "Georgia",
+            stroke: "#000",
+            strokeThickness: 2
+        }).setOrigin(0.5);
+        
+        // Game state
+        this.lineDropping = false;
+        this.fishes = this.add.group();
+        
+        // Controls
+        this.cursors = this.input.keyboard.createCursorKeys();
+        this.input.on('pointerdown', () => this.dropLine());
+        
+        // Start spawning fish
+        this.fishSpawnTimer = this.time.addEvent({
+            delay: 2000,
+            callback: this.spawnFish,
+            callbackScope: this,
+            loop: true
+        });
+        
+        console.log("[FishGameScene] Game started");
+    }
+
+    resetGameState() {
         this.score = 0;
         this.catches = 0;
         this.gameOver = false;
         this.lineDropping = false;
-        this.gameStarted = true;
-        // Remove any lingering groups or objects
-        if (this.fishGroup && this.fishGroup.children) this.fishGroup.clear(true, true);
-        if (this.graphics) this.graphics.clear();
-        if (this.hookPhysics) this.hookPhysics.destroy();
-        if (this.restartGroup && this.restartGroup.children) this.restartGroup.clear(true, true);
-        // Get onWin callback from scene data if provided
-        if (this.scene.settings && this.scene.settings.data && typeof this.scene.settings.data.onWin === "function") {
-            this.onWin = this.scene.settings.data.onWin;
-            console.log("[FishGameScene] onWin callback received from scene data.");
-        } else {
-      
-            this.onWin = () => {
-                // Example: award coins and close minigame
-                if (this.registry) {
-                    let coins = this.registry.get('coins') || 0;
-                    this.registry.set('coins', coins + 10);
-                }
-                if (this.scene && typeof this.scene.stop === 'function') {
-                    this.scene.stop('FishGameScene');
-                    this.scene.stop('MiniGameScene');
-                }
-                // Optionally show a message or transition
-                console.log('[FishGameScene] Default onWin: awarded coins and closed minigame.');
-            };
-            console.log("[FishGameScene] No onWin callback found in scene data. Using default.");
-        }
-        this.startFishingGame();
-    }
-
-    startFishingGame() {
-        const { width, height } = this.sys.game.config;
-         this.add.image(width / 2, height / 2, "waterBackground")
-            .setDisplaySize(width, height)
-            .setDepth(0);
-            
-        this.scoreText = this.add.text(40, 40, "Score: 0", { fontSize: "32px", color: "#fff", fontFamily: "Georgia" });
-        this.catchesText = this.add.text(40, 80, "Catches: 0/10", { fontSize: "24px", color: "#fff", fontFamily: "Georgia" });
-        this.lineY = 120;
-        this.lineX = width / 2;
-        this.lineDropping = false;
-        this.graphics = this.add.graphics();
-        this.hookRadius = 32;
-        this.hookY = this.lineY;
-        // Recreate hookPhysics on restart
-        if (this.hookPhysics) {
-            this.hookPhysics.destroy();
-        }
-        this.hookPhysics = this.physics.add.sprite(this.lineX, this.lineY, null);
-        this.hookPhysics.body.setCircle(this.hookRadius);
-        this.hookPhysics.body.setAllowGravity(false);
-        this.hookPhysics.body.setImmovable(true);
-        this.hookPhysics.setVisible(false);
-        this.cursors = this.input.keyboard.createCursorKeys();
-        this.input.on('pointerdown', () => this.dropLine());
-        this.fishGroup = this.physics.add.group();
-        this.spawnFishTimer = this.time.addEvent({ delay: 1200, callback: this.spawnFish, callbackScope: this, loop: true });
-        // Only create animations if they don't already exist
-        if (!this.anims.exists("roundFishAnim")) {
-            this.anims.create({
-                key: "roundFishAnim",
-                frames: [
-                    { key: "roundFish1" },
-                    { key: "roundFish2" }
-                ],
-                frameRate: 4,
-                repeat: -1
-            });
-        }
-        if (!this.anims.exists("pointyFishAnim")) {
-            this.anims.create({
-                key: "pointyFishAnim",
-                frames: [
-                    { key: "pointyFish1" },
-                    { key: "pointyFish2" }
-                ],
-                frameRate: 4,
-                repeat: -1
-            });
-        }
-        if (!this.anims.exists("badFishAnim")) {
-            this.anims.create({
-                key: "badFishAnim",
-                frames: [
-                    { key: "badFish1" },
-                    { key: "badFish2" }
-                ],
-                frameRate: 4,
-                repeat: -1
-            });
-        }
-        this.physics.add.overlap(this.hookPhysics, this.fishGroup, this.catchFish, null, this);
+        
+        console.log("[FishGameScene] Game state reset");
     }
 
     update() {
-        const { width, height } = this.sys.game.config;
-        if (this.gameOver || !this.cursors) return;
-
+        if (this.gameOver) return;
+        
+        const { width } = this.sys.game.config;
+        
+        // Move fishing line left/right
         if (!this.lineDropping) {
-            if (this.cursors.left && this.cursors.left.isDown) {
-                this.lineX -= 10;
-            } else if (this.cursors.right && this.cursors.right.isDown) {
-                this.lineX += 10;
+            if (this.cursors.left.isDown && this.fishingLine.x > 50) {
+                this.fishingLine.x -= this.lineSpeed * this.game.loop.delta / 1000;
+                this.hook.x = this.fishingLine.x;
             }
-            this.lineX = Phaser.Math.Clamp(this.lineX, 80, width - 80);
-            this.lineY = 120;
+            if (this.cursors.right.isDown && this.fishingLine.x < width - 50) {
+                this.fishingLine.x += this.lineSpeed * this.game.loop.delta / 1000;
+                this.hook.x = this.fishingLine.x;
+            }
         }
-
+        
+        // Drop line animation
         if (this.lineDropping) {
-            this.lineY += 16;
-            if (this.lineY > height - 120) {
+            this.hook.y += this.dropSpeed * this.game.loop.delta / 1000;
+            this.fishingLine.displayHeight = this.hook.y - 50;
+            
+            // Check for fish collisions
+            this.fishes.children.entries.forEach(fish => {
+                if (Phaser.Geom.Rectangle.Overlaps(this.hook.getBounds(), fish.getBounds())) {
+                    this.catchFish(fish);
+                }
+            });
+            
+            // Reset line if it goes too far down
+            if (this.hook.y > this.sys.game.config.height - 100) {
                 this.resetLine();
             }
         }
-
-        this.graphics.clear();
-        this.graphics.lineStyle(10, 0x000000, 1);
-        this.graphics.beginPath();
-        this.graphics.moveTo(this.lineX, 120);
-        this.graphics.lineTo(this.lineX, this.lineY);
-        this.graphics.strokePath();
-        this.graphics.closePath();
-        this.graphics.fillStyle(0xffffff, 1);
-        this.graphics.fillCircle(this.lineX, this.lineY + this.hookRadius, this.hookRadius);
-
-        this.hookPhysics.setPosition(this.lineX, this.lineY + this.hookRadius);
-        this.hookPhysics.body.updateFromGameObject();
-
-        // Move fish every frame
-        this.moveFish();
-    }
-
-    dropLine() {
-        if (this.lineDropping || this.gameOver) return;
-        this.lineDropping = true;
-        this.lineY = 60;
-    }
-
-    resetLine() {
-        this.lineDropping = false;
-        this.lineY = 60;
-    }
-
-    spawnFish() {
-        if (this.gameOver) return;
-
-        const { width, height } = this.sys.game.config;
-        const fishTypes = ["roundFish", "pointyFish", "badFish"];
-        const type = Phaser.Utils.Array.GetRandom(fishTypes);
-
-        // Clamp y so fish are always visible
-        const minY = 120;
-        const maxY = height - 80;
-        const y = Phaser.Math.Between(minY, maxY);
-        const startX = width + 50; // Always spawn off right edge
-        const direction = -1; // Always move left
-        const speed = Phaser.Math.Between(2, 4); // pixels per frame
-
-        let animKey, texKey;
-        if (type === "roundFish") {
-            animKey = "roundFishAnim";
-            texKey = "roundFish1";
-        } else if (type === "pointyFish") {
-            animKey = "pointyFishAnim";
-            texKey = "pointyFish1";
-        } else {
-            animKey = "badFishAnim";
-            texKey = "badFish1";
-        }
-
-        const fish = this.physics.add.sprite(startX, y, texKey);
-        fish.setScale(0.09); // Smaller fish
-        fish.setData("type", type);
-        fish.setData("direction", direction);
-        fish.setData("speed", speed);
-        fish.anims.play(animKey);
-        fish.setCollideWorldBounds(false);
-        // fish.flipX removed; use default orientation
-
-        this.fishGroup.add(fish);
-    }
-
-    moveFish() {
-        const { width } = this.sys.game.config;
-
-        this.fishGroup.children.iterate(fish => {
-            if (fish) {
-                const direction = fish.getData("direction");
-                const speed = fish.getData("speed");
-
-                fish.x += speed * direction;
-
-                // Remove fish once it's fully off-screen
-                if ((direction === 1 && fish.x > width + 60) || (direction === -1 && fish.x < -60)) {
-                    fish.destroy();
-                }
+        
+        // Move fish
+        this.fishes.children.entries.forEach(fish => {
+            fish.x += fish.direction * this.fishSpeed * this.game.loop.delta / 1000;
+            
+            // Remove fish that go off screen
+            if (fish.x < -100 || fish.x > width + 100) {
+                fish.destroy();
             }
         });
     }
 
-    catchFish(hook, fish) {
-        if (this.lineDropping && !this.gameOver) {
-            const type = fish.getData("type");
-            let points = 0;
-            console.log(`[FishGameScene] catchFish called. Type: ${type}, catches: ${this.catches}, score: ${this.score}`);
-            if (type === "badFish") {
-                this.endGame(false);
-                fish.destroy();
-                return;
-            } else if (type === "roundFish" || type === "pointyFish") {
-                points = 10;
-            }
+    dropLine() {
+        if (!this.lineDropping && !this.gameOver) {
+            this.lineDropping = true;
+            console.log("[FishGameScene] Line dropped");
+        }
+    }
+
+    resetLine() {
+        this.lineDropping = false;
+        this.hook.y = 150;
+        this.fishingLine.displayHeight = 100;
+        console.log("[FishGameScene] Line reset");
+    }
+
+    spawnFish() {
+        if (this.gameOver) return;
+        
+        const { width, height } = this.sys.game.config;
+        
+        // Fish types: good fish (round, pointy) and bad fish
+        const fishTypes = [
+            { key: "roundFish1", type: "good", points: 10 },
+            { key: "roundFish2", type: "good", points: 10 },
+            { key: "pointyFish1", type: "good", points: 15 },
+            { key: "pointyFish2", type: "good", points: 15 },
+            { key: "badFish1", type: "bad", points: 0 },
+            { key: "badFish2", type: "bad", points: 0 }
+        ];
+        
+        const fishType = fishTypes[Math.floor(Math.random() * fishTypes.length)];
+        const side = Math.random() < 0.5 ? 'left' : 'right';
+        
+        const x = side === 'left' ? -50 : width + 50;
+        const y = height / 2 + Math.random() * (height / 3);
+        
+        const fish = this.add.image(x, y, fishType.key);
+        fish.setScale(0.08); // Made fish smaller (was 0.15)
+        fish.fishType = fishType.type;
+        fish.points = fishType.points;
+        fish.direction = side === 'left' ? 1 : -1;
+        
+        // Invert fish horizontally based on direction
+        if (fish.direction === 1) {
+            // Moving left to right - flip horizontally
+            fish.setFlipX(true);
+        } else {
+            // Moving right to left - keep original orientation
+            fish.setFlipX(false);
+        }
+        
+        this.fishes.add(fish);
+        
+        console.log(`[FishGameScene] Spawned ${fishType.type} fish`);
+    }
+
+    catchFish(fish) {
+        const fishType = fish.fishType;
+        const points = fish.points;
+        
+        console.log(`[FishGameScene] Caught ${fishType} fish for ${points} points`);
+        
+        if (fishType === "good") {
             this.score += points;
-            this.catches += 1;
-            this.scoreText.setText("Score: " + this.score);
-            this.catchesText.setText("Catches: " + this.catches + "/" + this.maxCatches);
-            fish.destroy();
-            this.resetLine();
+            this.catches++;
+            
+            // Show points gained
+            const pointsText = this.add.text(fish.x, fish.y, `+${points}`, {
+                fontSize: "20px",
+                color: "#00ff00",
+                fontFamily: "Georgia",
+                stroke: "#000",
+                strokeThickness: 2
+            }).setOrigin(0.5);
+            
+            this.tweens.add({
+                targets: pointsText,
+                y: pointsText.y - 50,
+                alpha: 0,
+                duration: 1000,
+                onComplete: () => pointsText.destroy()
+            });
+            
+            // Check win condition
             if (this.catches >= this.maxCatches) {
-                this.endGame(true);
+                this.gameWin();
             }
+            
+        } else {
+            // Bad fish caught - game over
+            this.gameLose();
+        }
+        
+        // Update UI
+        this.scoreText.setText(`Score: ${this.score}`);
+        this.catchText.setText(`Catches: ${this.catches}/${this.maxCatches}`);
+        
+        // Remove fish and reset line
+        fish.destroy();
+        this.resetLine();
+    }
+
+    gameWin() {
+        this.gameOver = true;
+        this.fishSpawnTimer.destroy();
+        
+        // Stop line if dropping
+        this.lineDropping = false;
+        
+        // Show win message
+        const { width, height } = this.sys.game.config;
+        
+        const winText = this.add.text(width / 2, height / 2, `You Win!\nCaught ${this.maxCatches} fish!\nFinal Score: ${this.score}`, {
+            fontSize: "32px",
+            color: "#00ff00",
+            fontFamily: "Georgia",
+            align: "center",
+            stroke: "#000",
+            strokeThickness: 3
+        }).setOrigin(0.5);
+        
+        console.log("[FishGameScene] Player won!");
+        
+        // Call onWin callback after delay
+        if (this.onWin) {
+            console.log("[FishGameScene] Calling onWin callback...");
+            this.time.delayedCall(2000, () => {
+                this.onWin();
+                this.scene.stop();
+            });
+        } else {
+            console.warn("[FishGameScene] onWin callback is missing!");
+            this.time.delayedCall(2000, () => {
+                this.scene.stop();
+            });
+        }
+    }
+
+    gameLose() {
+        this.gameOver = true;
+        this.fishSpawnTimer.destroy();
+        
+        // Stop line if dropping
+        this.lineDropping = false;
+        
+        // Show lose message
+        const { width, height } = this.sys.game.config;
+        
+        const loseText = this.add.text(width / 2, height / 2, `Game Over!\nYou caught a bad fish!\nFinal Score: ${this.score}`, {
+            fontSize: "32px",
+            color: "#ff0000",
+            fontFamily: "Georgia",
+            align: "center",
+            stroke: "#000",
+            strokeThickness: 3
+        }).setOrigin(0.5);
+        
+        // Show restart button
+        this.showRestartButton();
+        
+        console.log("[FishGameScene] Player lost!");
+        
+        // Call onLose callback after delay
+        if (this.onLose) {
+            console.log("[FishGameScene] Calling onLose callback...");
+            this.time.delayedCall(2000, () => {
+                this.onLose();
+                this.scene.stop();
+            });
+        } else {
+            console.warn("[FishGameScene] onLose callback is missing!");
+            this.time.delayedCall(2000, () => {
+                this.scene.stop();
+            });
         }
     }
 
     showRestartButton() {
         const { width, height } = this.sys.game.config;
-        // Remove previous restart button if it exists
-        if (this.restartGroup) {
-            this.restartGroup.clear(true, true);
-        }
-        this.restartGroup = this.add.group();
-        const button = this.add.rectangle(width / 2, height - 80, 220, 60, 0x1976d2, 1)
+        
+        const restartBtn = this.add.rectangle(width / 2, height - 80, 220, 60, 0x1976d2, 1)
             .setStrokeStyle(2, 0x333)
             .setInteractive({ useHandCursor: true });
-        const buttonText = this.add.text(width / 2, height - 80, "Restart Minigame", {
+            
+        const restartText = this.add.text(width / 2, height - 80, "Try Again", {
             fontSize: "26px",
             color: "#fff",
             fontFamily: "Georgia"
         }).setOrigin(0.5);
-
-        this.restartGroup.addMultiple([button, buttonText]);
-        button.on("pointerdown", () => {
-            this.scene.stop("FishGameScene");
-            this.scene.start("FishTutorialScene");
+        
+        restartBtn.on("pointerdown", () => {
+            console.log("[FishGameScene] Restart button clicked");
+            this.scene.restart();
         });
-    }
-    endGame(win) {
-        this.gameOver = true;
-        this.spawnFishTimer.remove(false);
-        let msg = win ? "You win! Final score: " + this.score : "Game Over! You caught a bad fish.";
-        this.add.text(400, 300, msg, { fontSize: "32px", color: "#ffe066", backgroundColor: "#222" }).setOrigin(0.5);
-
-        if (win) {
-            console.log("[FishGameScene] WIN detected.");
-            if (this.onWin) {
-                console.log("[FishGameScene] Calling onWin callback...");
-                this.onWin();
-            } else {
-                console.warn("[FishGameScene] onWin callback is missing!");
-            }
-            // No alerts here
-        } else {
-            this.showRestartButton();
-        }
     }
 }
 

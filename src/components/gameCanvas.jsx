@@ -7,7 +7,7 @@ import GreenhouseScene from "./scenes/greenhouseScene";
 import WeeCairScene from "./scenes/weeCairScene";
 import StartScene from "./scenes/startScene";
 import ShopScene from "./scenes/shopScene";
-import Menu from "./scenes/menuScene";
+// import Menu from "./scenes/menuScene";
 import OpenInventory from "./openInventory";
 import OpenSettings from "./openSettings";
 import WallGardenScene from "./scenes/wallGardenScene";
@@ -32,6 +32,8 @@ import ForagingTutorial from "../tutorials/foragingTutorial";
 import CraftingTutorial from "../tutorials/craftingTutorial";
 import Tutorial from "../tutorials/tutorial";
 import CreditsScene from "./scenes/credits";
+import FlowerCatchTutorial from "../minigames/flower-catch/flowerCatchTutorial";
+import FlowerCatchGame from "../minigames/flower-catch/flowerCatchGame";
 
 function GameCanvas() {
     const canvasRef = useRef(null);
@@ -65,7 +67,7 @@ function GameCanvas() {
       },
   canvas: canvasRef.current,
   scene: [
-    Menu,
+    // Menu,
     StartScene,
     ShopScene,
     WeeCairScene,
@@ -96,6 +98,8 @@ function GameCanvas() {
     CraftingTutorial,
     Tutorial,
     CreditsScene,
+    FlowerCatchTutorial,
+    FlowerCatchGame
   ]
 };
 

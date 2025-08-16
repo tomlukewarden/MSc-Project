@@ -1,9 +1,6 @@
 // Ensure global inventoryManager instance
-if (typeof window !== "undefined") {
-  if (!window.inventoryManager) {
-    window.inventoryManager = inventoryManager;
-  }
-}
+import globalInventoryManager from "../inventoryManager";
+
 import Phaser from "phaser";
 import quests from "../../quests/quests";
 import { showDialogue, showOption, destroyDialogueUI } from "../../dialogue/dialogueUIHelpers";
@@ -18,14 +15,11 @@ import {
   fairyHelpDialogues,
   fairyGoodbyeDialogues
 } from "../../characters/fairy";
-// Removed CoinManager import
 import { saveToLocal, loadFromLocal } from "../../utils/localStorage";
 import { createMainChar } from "../../characters/mainChar";
 import { receivedItem } from "../../components/recievedItem";
 import {addPlantToJournal} from "../journalManager";
-import {inventoryManager} from "../inventoryManager";
 
-// Removed coinManager instance
 
 class WeeCairScene extends Phaser.Scene {
   constructor() {
@@ -33,6 +27,9 @@ class WeeCairScene extends Phaser.Scene {
       key: "WeeCairScene",
       physics: { default: "arcade", arcade: { debug: false } }
     });
+    
+    // Use the global inventory manager
+    this.inventoryManager = globalInventoryManager;
   }
 
   preload() {
@@ -358,15 +355,17 @@ class WeeCairScene extends Phaser.Scene {
       this.handleResize(gameSize);
     });
 
+    // --- Updated foxglove handover event ---
     this.events.on("foxgloveGiven", () => {
       this.awaitingFoxgloveGive = false;
       this.hasMadeFoxgloveChoice = true;
-      // Confirm foxglove is removed from inventory
-      if (!inventoryManager.hasItem || !inventoryManager.hasItem("foxglovePlant")) {
+      
+      // Use global inventory manager to check and remove foxglove
+      if (!this.inventoryManager.hasItemByKey("foxglovePlant")) {
         this.foxglovePlantReceived = false;
         // Show handover dialogue
         showDialogue(this, "You hand her the plant...", { imageKey: "bee" });
-        // Removed coinManager.add and coin saving
+        
         this.time.delayedCall(800, () => {
           this.currentSet = this.dialogueSequence.findIndex(
             (set) => set.lines === beeThanksDialogues

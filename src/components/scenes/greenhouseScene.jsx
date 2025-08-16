@@ -4,23 +4,19 @@ import { createPig, pigIntroDialogues, pigThanksDialogues } from "../../characte
 import { showDialogue, showOption, destroyDialogueUI } from "../../dialogue/dialogueUIHelpers";
 import { saveToLocal, loadFromLocal } from "../../utils/localStorage";
 import { createMainChar } from "../../characters/mainChar";
-import { inventoryManager } from "../openInventory";
+import globalInventoryManager from "../inventoryManager";
 import { receivedItem } from "../recievedItem";
 import globalTimeManager from "../../day/timeManager";
 import quests from "../../quests/quests";
-
-// Ensure global inventoryManager instance
-if (typeof window !== "undefined") {
-  if (!window.inventoryManager) {
-    window.inventoryManager = inventoryManager;
-  }
-}
 
 class GreenhouseScene extends Phaser.Scene {
     constructor() {
         super({ key: "GreenhouseScene", physics: { default: "arcade", arcade: { debug: false } } });
         this.dialogueActive = false;
         this.dialogueBox = null;
+        
+        // Use the global inventory manager
+        this.inventoryManager = globalInventoryManager;
     }
 
     preload() {
@@ -41,11 +37,15 @@ class GreenhouseScene extends Phaser.Scene {
         this.load.audio("sparkle", "/assets/sound-effects/sparkle.mp3");
         this.load.image('dialogueBoxBg', '/assets/ui-items/dialogue.png');
         this.load.image("autumnShard", "/assets/items/autumn.png");
+        this.load.image("winterShard", "/assets/items/winter.png");
         this.load.image('rabbit', '/assets/npc/rabbit/rabbit.png');
         this.load.image('rabbitHappy', '/assets/npc/rabbit/happy.png');
         this.load.image("pig", "/assets/npc/pig/pig.png");
         this.load.image("pigHappy", "/assets/npc/pig/happy.png");
+        this.load.image('talk', '/assets/interact/talk.png');
         this.load.audio("option", "/assets/sound-effects/option.mp3");
+        this.load.image('lavenderOil', '/assets/crafting/lavenderOil.png');
+        this.load.image('aloeAfterSunCream', '/assets/crafting/creamRemedy.png');
     }
 
     create() {
@@ -54,18 +54,24 @@ class GreenhouseScene extends Phaser.Scene {
         if (!globalTimeManager.startTimestamp) {
             globalTimeManager.start();
         }
+
         // --- LOAD STATE FROM LOCAL STORAGE ---
         const sceneState = loadFromLocal('greenhouseSceneState') || {};
-        // Restore inventory
-        if (sceneState.inventory) {
-            if (window.inventoryManager && window.inventoryManager.setItems) {
-                window.inventoryManager.setItems(sceneState.inventory);
-            }
+        // Restore inventory if present
+        if (sceneState.inventory && Array.isArray(sceneState.inventory)) {
+            this.inventoryManager.clear();
+            sceneState.inventory.forEach(item => this.inventoryManager.addItem(item));
         }
+        // Restore NPC states
+        this.rabbitIntroDone = !!sceneState.rabbitIntroDone;
+        this.rabbitThanksDone = !!sceneState.rabbitThanksDone;
+        this.pigIntroDone = !!sceneState.pigIntroDone;
+        this.pigThanksDone = !!sceneState.pigThanksDone;
         // Restore time of day
         if (sceneState.timeOfDay) {
             globalTimeManager.dayCycle.setTimeOfDay(sceneState.timeOfDay);
         }
+
         this.scene.stop("OpenJournal");
         this.scene.stop("WeeCairScene");
         this.scene.stop("StartScene");
@@ -102,6 +108,11 @@ class GreenhouseScene extends Phaser.Scene {
           .setScale(0.1)
           .setOrigin(0.2, 3.2);
 
+        // Set rabbit texture based on saved state
+        if (this.rabbitThanksDone && this.textures.exists('rabbitHappy')) {
+            this.rabbit.setTexture('rabbitHappy');
+        }
+
         // --- Pig NPC ---
         this.pig = createPig(this, width / 2 - 200, height / 2 + 100);
         this.pig
@@ -109,6 +120,11 @@ class GreenhouseScene extends Phaser.Scene {
           .setDepth(1)
           .setScale(0.12)
           .setOrigin(2, 1.7);
+
+        // Set pig texture based on saved state
+        if (this.pigThanksDone && this.textures.exists('pigHappy')) {
+            this.pig.setTexture('pigHappy');
+        }
 
         // --- Talk icon events ---
         this.rabbit.on("pointerover", (pointer) => {
@@ -136,14 +152,14 @@ class GreenhouseScene extends Phaser.Scene {
         // --- Rabbit dialogue and gifting logic ---
         this.rabbitDialogueActive = false;
         this.rabbitDialogueIndex = 0;
-        // Change required item to Lavender Oil
-        this.hasLavenderOil = () => inventoryManager.hasItemByKey && inventoryManager.hasItemByKey("lavenderOil");
+        this.hasLavenderOil = () => this.inventoryManager.hasItemByKey("lavenderOil");
 
         // Listen for lavenderOil handover event from inventory
         this.events.on("lavenderOilGiven", () => {
           this.awaitingLavenderOilGive = false;
-          inventoryManager.removeItemByKey && inventoryManager.removeItemByKey("lavenderOil");
-          if (!inventoryManager.hasItemByKey || !inventoryManager.hasItemByKey("lavenderOil")) {
+          this.inventoryManager.removeItemByKey("lavenderOil");
+          
+          if (!this.inventoryManager.hasItemByKey("lavenderOil")) {
             showDialogue(this, "You hand the rabbit the Lavender Oil...", { imageKey: "rabbit" });
             this.rabbit.setTexture && this.rabbit.setTexture("rabbitHappy");
             this.time.delayedCall(800, () => {
@@ -167,6 +183,14 @@ class GreenhouseScene extends Phaser.Scene {
             this.activeRabbitDialogues = rabbitIntroDialogues;
             showDialogue(this, this.activeRabbitDialogues[this.rabbitDialogueIndex], { imageKey: "rabbit" });
             this.updateHUDState && this.updateHUDState();
+
+            // --- Activate Carrie Cake's quest when first meeting ---
+            const carrieQuest = quests.find(q => q.title === "Help Carrie Cake");
+            if (carrieQuest && !carrieQuest.active && !carrieQuest.completed) {
+              carrieQuest.active = true;
+              saveToLocal("quests", quests);
+              console.log("Quest 'Help Carrie Cake' is now active!");
+            }
             return;
           }
           if (this.rabbitIntroDone && !this.rabbitThanksDone && this.hasLavenderOil()) {
@@ -205,17 +229,18 @@ class GreenhouseScene extends Phaser.Scene {
             return;
           }
         });
+
         // --- Pig dialogue and gifting logic ---
         this.pigDialogueActive = false;
         this.pigDialogueIndex = 0;
-        // Change required item to Aloe After-Sun Cream
-        this.hasAloeAfterSunCream = () => inventoryManager.hasItemByKey && inventoryManager.hasItemByKey("aloeAfterSunCream");
+        this.hasAloeAfterSunCream = () => this.inventoryManager.hasItemByKey("aloeAfterSunCream");
 
         // Listen for aloeAfterSunCream handover event from inventory
         this.events.on("aloeAfterSunCreamGiven", () => {
           this.awaitingAloeAfterSunCreamGive = false;
-          inventoryManager.removeItemByKey && inventoryManager.removeItemByKey("aloeAfterSunCream");
-          if (!inventoryManager.hasItemByKey || !inventoryManager.hasItemByKey("aloeAfterSunCream")) {
+          this.inventoryManager.removeItemByKey("aloeAfterSunCream");
+          
+          if (!this.inventoryManager.hasItemByKey("aloeAfterSunCream")) {
             showDialogue(this, "You hand the pig the Aloe After-Sun Cream...", { imageKey: "pig" });
             this.pig.setTexture && this.pig.setTexture("pigHappy");
             this.time.delayedCall(800, () => {
@@ -239,6 +264,14 @@ class GreenhouseScene extends Phaser.Scene {
             this.activePigDialogues = pigIntroDialogues;
             showDialogue(this, this.activePigDialogues[this.pigDialogueIndex], { imageKey: "pig" });
             this.updateHUDState && this.updateHUDState();
+
+            // --- Activate Chris P. Bacon's quest when first meeting ---
+            const chrisQuest = quests.find(q => q.title === "Help Chris P. Bacon");
+            if (chrisQuest && !chrisQuest.active && !chrisQuest.completed) {
+              chrisQuest.active = true;
+              saveToLocal("quests", quests);
+              console.log("Quest 'Help Chris P. Bacon' is now active!");
+            }
             return;
           }
           if (this.pigIntroDone && !this.pigThanksDone && this.hasAloeAfterSunCream()) {
@@ -293,27 +326,19 @@ class GreenhouseScene extends Phaser.Scene {
 
               if (!this.rabbitIntroDone && this.activeRabbitDialogues === rabbitIntroDialogues) {
                 this.rabbitIntroDone = true;
-                // Activate Carrie Cake's quest
-                const carrieQuest = quests.find(q => q.title === "Help Carrie Cake");
-                if (carrieQuest && !carrieQuest.active && !carrieQuest.completed) {
-                  carrieQuest.active = true;
-                  saveToLocal("quests", quests);
-                  console.log("Quest 'Help Carrie 'O Cake' is now active!");
-                }
               }
               // After rabbit thanks dialogue
               if (this.rabbitHasLavenderOil && this.activeRabbitDialogues === rabbitThanksDialogues) {
                 this.rabbitThanksDone = true;
-                // Complete Carrie 'O Cake's quest
-                const carrieQuest = quests.find(q => q.title === "Help Carrie 'O Cake");
+                // Complete Carrie Cake's quest
+                const carrieQuest = quests.find(q => q.title === "Help Carrie Cake");
                 if (carrieQuest) {
                   carrieQuest.active = false;
                   carrieQuest.completed = true;
                   saveToLocal("quests", quests);
-                  console.log("Quest 'Help Carrie 'O Cake' completed!");
+                  console.log("Quest 'Help Carrie Cake' completed!");
                 }
                 receivedItem(this, "autumnShard", "Autumn Shard");
-                inventoryManager.removeItemByKey && inventoryManager.removeItemByKey("lavenderOil");
               }
               this.rabbitDialogueActive = false;
               this.updateHUDState && this.updateHUDState();
@@ -332,27 +357,19 @@ class GreenhouseScene extends Phaser.Scene {
               
               if (!this.pigIntroDone && this.activePigDialogues === pigIntroDialogues) {
                 this.pigIntroDone = true;
-                // Activate Chris P Bacon's quest
-                const chrisQuest = quests.find(q => q.title === "Help Chris P. Bacon");
-                if (chrisQuest && !chrisQuest.active && !chrisQuest.completed) {
-                  chrisQuest.active = true;
-                  saveToLocal("quests", quests);
-                  console.log("Quest 'Help Chris P. Bacon' is now active!");
-                }
               }
               // After pig thanks dialogue
               if (this.pigHasAloeAfterSunCream && this.activePigDialogues === pigThanksDialogues) {
                 this.pigThanksDone = true;
-                // Complete Chris P Bacon's quest
-                const chrisQuest = quests.find(q => q.title === "Help Chris P Bacon");
+                // Complete Chris P. Bacon's quest
+                const chrisQuest = quests.find(q => q.title === "Help Chris P. Bacon");
                 if (chrisQuest) {
                   chrisQuest.active = false;
                   chrisQuest.completed = true;
                   saveToLocal("quests", quests);
-                  console.log("Quest 'Help Chris P Bacon' completed!");
+                  console.log("Quest 'Help Chris P. Bacon' completed!");
                 }
                 receivedItem(this, "winterShard", "Winter Shard");
-                inventoryManager.removeItemByKey && inventoryManager.removeItemByKey("aloeAfterSunCream");
               }
               this.pigDialogueActive = false;
               this.updateHUDState && this.updateHUDState();
@@ -382,21 +399,16 @@ class GreenhouseScene extends Phaser.Scene {
           clearInterval(this._saveInterval);
           this.transitioning = false;
         });
-
-        if (sceneState) {
-          this.pigThanksDone = !!sceneState.pigThanksDone;
-          this.rabbitHasPeriwinkle = !!sceneState.rabbitHasPeriwinkle;
-          if (sceneState.rabbitTexture && this.rabbit) this.rabbit.setTexture(sceneState.rabbitTexture);
-          if (sceneState.pigTexture && this.pig) this.pig.setTexture(sceneState.pigTexture);
-          if (sceneState.timeOfDay) globalTimeManager.dayCycle.setTimeOfDay(sceneState.timeOfDay);
-        }
     }
 
     // Save relevant state to localStorage
     saveSceneState() {
-        // Save inventory and time of day only
         const state = {
-            inventory: (window.inventoryManager && window.inventoryManager.getItems) ? window.inventoryManager.getItems() : [],
+            inventory: this.inventoryManager.getItems(),
+            rabbitIntroDone: !!this.rabbitIntroDone,
+            rabbitThanksDone: !!this.rabbitThanksDone,
+            pigIntroDone: !!this.pigIntroDone,
+            pigThanksDone: !!this.pigThanksDone,
             timeOfDay: globalTimeManager.getCurrentTimeOfDay()
         };
         saveToLocal('greenhouseSceneState', state);
@@ -425,17 +437,18 @@ class GreenhouseScene extends Phaser.Scene {
             }
         }
     }
+
     destroyDialogueUI() {
-    if (this.dialogueBox) {
-      this.dialogueBox.box?.destroy();
-      this.dialogueBox.textObj?.destroy();
-      this.dialogueBox.image?.destroy();
-      if (this.dialogueBox.optionButtons) {
-        this.dialogueBox.optionButtons.forEach((btn) => btn.destroy());
-      }
-      this.dialogueBox = null;
+        if (this.dialogueBox) {
+            this.dialogueBox.box?.destroy();
+            this.dialogueBox.textObj?.destroy();
+            this.dialogueBox.image?.destroy();
+            if (this.dialogueBox.optionButtons) {
+                this.dialogueBox.optionButtons.forEach((btn) => btn.destroy());
+            }
+            this.dialogueBox = null;
+        }
     }
-  }
 }
 
 export default GreenhouseScene;

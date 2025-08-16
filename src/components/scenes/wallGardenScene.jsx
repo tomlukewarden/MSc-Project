@@ -790,74 +790,161 @@ class WallGardenScene extends Phaser.Scene {
       butterflyDialogueIndex: this.butterflyDialogueIndex,
       butterflyDialogueActive: !!this.butterflyDialogueActive,
       dialogueActive: !!this.dialogueActive,
-      timeOfDay: globalTimeManager.getCurrentTimeOfDay()
+      timeOfDay: globalTimeManager.getCurrentTimeOfDay(),
+      bushDispensed: this.bushDispensed || [false, false, false, false],
+      garlicFound: !!this.garlicFound,
+      thymeFound: !!this.thymeFound
     };
     saveToLocal('wallGardenSceneState', state);
+    console.log('Saved state:', state);
   }
 
   setupBushes(width, height) {
-    const bushPositions = [
-      { x: 180, y: 600 }, // Garlic
-      { x: 300, y: 400 }, // Thyme
-      { x: 400, y: 500 }, // Random bush 1
-      { x: 500, y: 550 }, // Random bush 2
-    ];
-    const bushCount = bushPositions.length;
-    const garlicIndex = 0;
-    const thymeIndex = 1;
-    // Track dispensed state for each bush
-    this.bushDispensed = this.bushDispensed || Array(bushCount).fill(false);
+    // Initialize bush dispensed state from saved data or default
+    const sceneState = loadFromLocal('wallGardenSceneState') || {};
+    this.bushDispensed = sceneState.bushDispensed || [false, false, false, false];
+    this.garlicFound = !!sceneState.garlicFound;
+    this.thymeFound = !!sceneState.thymeFound;
 
-    for (let i = 0; i < bushCount; i++) {
-      const { x, y } = bushPositions[i];
-      // Asset existence check for bush
-      const bush = this.textures.exists('bush')
-        ? this.add.image(x, y, 'bush').setScale(0.05).setDepth(1).setInteractive({ useHandCursor: true })
-        : this.add.text(x, y, 'Missing: bush', { fontSize: '16px', color: '#f00', backgroundColor: '#fff' }).setOrigin(0.5).setDepth(999);
-
-      bush.on("pointerdown", () => {
-        this.sound.play("click");
-        if (this.dialogueActive) return;
-        this.dialogueActive = true;
-        this.updateHUDState && this.updateHUDState();
-
-        // If already dispensed, show empty dialogue
-        if (this.bushDispensed[i]) {
-          showDialogue(this, "This bush is empty!");
-          this.dialogueOnComplete = () => {
-            this.destroyDialogueUI && this.destroyDialogueUI();
-            this.dialogueActive = false;
-            this.updateHUDState && this.updateHUDState();
-            this.dialogueOnComplete = null;
-          };
-          return;
-        }
-
-        if (i === garlicIndex && !this.garlicFound) {
-          const garlic = plantData.find(p => p.key === "garlicPlant");
-          if (garlic) {
-            this.showPlantMinigame(garlic, "garlicFound");
-            this.bushDispensed[i] = true;
-          } else {
-            this.showPlantMissing();
-            this.bushDispensed[i] = true;
-          }
-        }
-        else if (i === thymeIndex && !this.thymeFound) {
-          const thyme = plantData.find(p => p.key === "thymePlant");
-          if (thyme) {
-            this.showPlantMinigame(thyme, "thymeFound");
-            this.bushDispensed[i] = true;
-          } else {
-            this.showPlantMissing();
-            this.bushDispensed[i] = true;
-          }
-        }
-      });
-    }
+    // Set up each bush separately
+    this.setupGarlicBush(180, 600, 0);
+    this.setupThymeBush(300, 400, 1);
+    this.setupRandomBush(400, 500, 2);
+    this.setupRandomBush(500, 550, 3);
   }
 
-  showPlantMinigame(plant, foundFlag) {
+  setupGarlicBush(x, y, bushIndex) {
+    const bush = this.textures.exists('bush')
+      ? this.add.image(x, y, 'bush').setScale(0.05).setDepth(1).setInteractive({ useHandCursor: true })
+      : this.add.text(x, y, 'Missing: bush', { fontSize: '16px', color: '#f00', backgroundColor: '#fff' }).setOrigin(0.5).setDepth(999);
+
+    bush.on("pointerdown", () => {
+      this.sound.play("click");
+      if (this.dialogueActive) return;
+      this.dialogueActive = true;
+      this.updateHUDState && this.updateHUDState();
+
+      console.log(`Garlic bush clicked. Dispensed: ${this.bushDispensed[bushIndex]}, Found: ${this.garlicFound}`);
+
+      // If already dispensed, show empty dialogue
+      if (this.bushDispensed[bushIndex]) {
+        showDialogue(this, "This bush is empty!");
+        this.dialogueOnComplete = () => {
+          this.destroyDialogueUI && this.destroyDialogueUI();
+          this.dialogueActive = false;
+          this.updateHUDState && this.updateHUDState();
+          this.dialogueOnComplete = null;
+        };
+        return;
+      }
+
+      // Check if garlic already found
+      if (this.garlicFound) {
+        showDialogue(this, "You already found the garlic from this area.");
+        this.dialogueOnComplete = () => {
+          this.destroyDialogueUI && this.destroyDialogueUI();
+          this.dialogueActive = false;
+          this.updateHUDState && this.updateHUDState();
+          this.dialogueOnComplete = null;
+        };
+        return;
+      }
+
+      const garlic = plantData.find(p => p.key === "garlicPlant");
+      if (garlic) {
+        this.showPlantMinigame(garlic, "garlicFound", bushIndex);
+      } else {
+        this.showPlantMissing();
+        this.bushDispensed[bushIndex] = true;
+      }
+    });
+  }
+
+  setupThymeBush(x, y, bushIndex) {
+    const bush = this.textures.exists('bush')
+      ? this.add.image(x, y, 'bush').setScale(0.05).setDepth(1).setInteractive({ useHandCursor: true })
+      : this.add.text(x, y, 'Missing: bush', { fontSize: '16px', color: '#f00', backgroundColor: '#fff' }).setOrigin(0.5).setDepth(999);
+
+    bush.on("pointerdown", () => {
+      this.sound.play("click");
+      if (this.dialogueActive) return;
+      this.dialogueActive = true;
+      this.updateHUDState && this.updateHUDState();
+
+      console.log(`Thyme bush clicked. Dispensed: ${this.bushDispensed[bushIndex]}, Found: ${this.thymeFound}`);
+
+      // If already dispensed, show empty dialogue
+      if (this.bushDispensed[bushIndex]) {
+        showDialogue(this, "This bush is empty!");
+        this.dialogueOnComplete = () => {
+          this.destroyDialogueUI && this.destroyDialogueUI();
+          this.dialogueActive = false;
+          this.updateHUDState && this.updateHUDState();
+          this.dialogueOnComplete = null;
+        };
+        return;
+      }
+
+      // Check if thyme already found
+      if (this.thymeFound) {
+        showDialogue(this, "You already found the thyme from this area.");
+        this.dialogueOnComplete = () => {
+          this.destroyDialogueUI && this.destroyDialogueUI();
+          this.dialogueActive = false;
+          this.updateHUDState && this.updateHUDState();
+          this.dialogueOnComplete = null;
+        };
+        return;
+      }
+
+      const thyme = plantData.find(p => p.key === "thymePlant");
+      if (thyme) {
+        this.showPlantMinigame(thyme, "thymeFound", bushIndex);
+      } else {
+        this.showPlantMissing();
+        this.bushDispensed[bushIndex] = true;
+      }
+    });
+  }
+
+  setupRandomBush(x, y, bushIndex) {
+    const bush = this.textures.exists('bush')
+      ? this.add.image(x, y, 'bush').setScale(0.05).setDepth(1).setInteractive({ useHandCursor: true })
+      : this.add.text(x, y, 'Missing: bush', { fontSize: '16px', color: '#f00', backgroundColor: '#fff' }).setOrigin(0.5).setDepth(999);
+
+    bush.on("pointerdown", () => {
+      this.sound.play("click");
+      if (this.dialogueActive) return;
+      this.dialogueActive = true;
+      this.updateHUDState && this.updateHUDState();
+
+      console.log(`Random bush ${bushIndex} clicked. Dispensed: ${this.bushDispensed[bushIndex]}`);
+
+      // If already dispensed, show empty dialogue
+      if (this.bushDispensed[bushIndex]) {
+        showDialogue(this, "This bush is empty!");
+        this.dialogueOnComplete = () => {
+          this.destroyDialogueUI && this.destroyDialogueUI();
+          this.dialogueActive = false;
+          this.updateHUDState && this.updateHUDState();
+          this.dialogueOnComplete = null;
+        };
+        return;
+      }
+
+      // Random bushes are empty
+      showDialogue(this, "You found nothing in this bush.");
+      this.dialogueOnComplete = () => {
+        this.destroyDialogueUI && this.destroyDialogueUI();
+        this.dialogueActive = false;
+        this.updateHUDState && this.updateHUDState();
+        this.dialogueOnComplete = null;
+      };
+      this.bushDispensed[bushIndex] = true; // Mark as dispensed after checking
+    });
+  }
+
+  showPlantMinigame(plant, foundFlag, bushIndex) {
     showOption(
       this,
       `You found a ${plant.name} plant! \n But a cheeky animal is trying to steal it!`,
@@ -871,37 +958,76 @@ class WallGardenScene extends Phaser.Scene {
               this.dialogueActive = false;
               this.updateHUDState && this.updateHUDState();
               this.dialogueOnComplete = null;
-              this.scene.launch("MiniGameScene", {
-                onWin: () => {
-                  this.scene.stop("MiniGameScene");
-                  this.scene.resume();
-
-                  const alreadyHas = inventoryManager.hasItemByKey && inventoryManager.hasItemByKey(plant.key);
-                  if (!alreadyHas) {
-                    addPlantToJournal(plant.key);
-                    receivedItem(this, plant.key, plant.name);
-                  }
-
-                  showDialogue(this,
-                    alreadyHas
-                      ? `You already have the ${plant.name} plant.`
-                      : `You won the game! The animal reluctantly \n gives you the ${plant.name} plant.`, {
-                        imageKey: plant.imageKey
-                      }
-                  );
-
-                  this[foundFlag] = true;
-                  this.dialogueActive = true;
-
-                  this.dialogueOnComplete = () => {
-                    this.destroyDialogueUI();
-                    this.dialogueActive = false;
-                    this.updateHUDState && this.updateHUDState();
-                    this.dialogueOnComplete = null;
-                  };
+              
+              console.log(`Launching minigame for ${plant.name}, bush ${bushIndex}`);
+              
+              // Stop any existing minigame scenes before launching new one
+              const sceneManager = this.scene.manager;
+              const minigameScenes = ["MiniGameScene", "XOTutorialScene", "XOGameScene"];
+              
+              minigameScenes.forEach(sceneKey => {
+                if (sceneManager.isActive(sceneKey) || sceneManager.isPaused(sceneKey)) {
+                  console.log(`[WallGardenScene] Stopping existing scene: ${sceneKey}`);
+                  this.scene.stop(sceneKey);
                 }
               });
-              this.scene.pause();
+              
+              // Small delay to ensure cleanup, then launch fresh minigame
+              this.time.delayedCall(200, () => {
+                this.scene.launch("MiniGameScene", {
+                  onWin: () => {
+                    console.log(`Won minigame for ${plant.name}`);
+                    this.scene.resume();
+
+                    const alreadyHas = inventoryManager.hasItemByKey && inventoryManager.hasItemByKey(plant.key);
+                    if (!alreadyHas) {
+                      addPlantToJournal(plant.key);
+                      receivedItem(this, plant.key, plant.name);
+                    }
+
+                    showDialogue(this,
+                      alreadyHas
+                        ? `You already have the ${plant.name} plant.`
+                        : `You won the game! The animal reluctantly \n gives you the ${plant.name} plant.`, {
+                          imageKey: plant.imageKey
+                        }
+                    );
+
+                    this[foundFlag] = true;
+                    this.dialogueActive = true;
+
+                    // ONLY mark bush as dispensed after successful win
+                    if (bushIndex !== undefined) {
+                      this.bushDispensed[bushIndex] = true;
+                      console.log(`Bush ${bushIndex} marked as dispensed after win`);
+                    }
+
+                    this.dialogueOnComplete = () => {
+                      this.destroyDialogueUI();
+                      this.dialogueActive = false;
+                      this.updateHUDState && this.updateHUDState();
+                      this.dialogueOnComplete = null;
+                    };
+                  },
+                  onLose: () => {
+                    console.log(`Lost minigame for ${plant.name}`);
+                    this.scene.resume();
+                    
+                    showDialogue(this, `You lost the game! The animal ran away with the ${plant.name} plant. \nTry clicking the bush again to find another one!`);
+                    
+                    this.dialogueActive = true;
+                    this.dialogueOnComplete = () => {
+                      this.destroyDialogueUI();
+                      this.dialogueActive = false;
+                      this.updateHUDState && this.updateHUDState();
+                      this.dialogueOnComplete = null;
+                    };
+                    // DON'T mark bush as dispensed - bush remains clickable
+                    console.log(`Bush ${bushIndex} remains clickable after loss`);
+                  }
+                });
+                this.scene.pause();
+              });
             }
           },
           {
@@ -911,6 +1037,7 @@ class WallGardenScene extends Phaser.Scene {
               this.dialogueActive = false;
               this.updateHUDState && this.updateHUDState();
               this.dialogueOnComplete = null;
+              // DON'T mark bush as dispensed - player can try again
             }
           }
         ],
