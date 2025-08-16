@@ -220,9 +220,6 @@ class MiddleGardenScene extends Phaser.Scene {
     // Enable collision between character and collision group
     this.physics.add.collider(this.mainChar, collisionGroup);
 
-    // Enable Phaser's physics debug rendering (optional)
-    this.physics.world.createDebugGraphic();
-    this.physics.world.debugGraphic.setDepth(9999);
 
     // --- Talk icon ---
     const talkIcon = this.add
