@@ -80,6 +80,7 @@ class OpenJournal extends Phaser.Scene {
     this.load.image("winterShard", "/assets/items/winter.png");
 
     // Quest-specific images
+    this.load.image("hoeIcon","/assets/tools/hoe.png" )
     this.load.image("questGeneral", "/assets/ui-items/quest.png"); // Generic quest icon
 
     // Optionally, load all plant images here if not already loaded elsewhere
