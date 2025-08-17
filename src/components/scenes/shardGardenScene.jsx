@@ -12,7 +12,7 @@ import quests from "../../quests/quests";
 
 class ShardGardenScene extends Phaser.Scene {
   constructor() {
-    super({ key: 'ShardGardenScene', physics: { default: 'arcade', arcade: { debug: true} } });
+    super({ key: 'ShardGardenScene', physics: { default: 'arcade', arcade: { debug: false} } });
     this.dialogueActive = false;
     this.dialogueBox = null;
     this.dialogueStage = 0;
@@ -228,36 +228,19 @@ class ShardGardenScene extends Phaser.Scene {
       this.createFallbackCollisions(collisionGroup, width, height);
     }
 
-    // --- Add visible folliage collision ---
+    // --- Add invisible folliage collision ---
     if (foliageImg && foliageImg.width && foliageImg.height) {
       const foliageRect = this.add.rectangle(
         width / 2,
         height / 2,
         foliageImg.width * scaleFactor,
         foliageImg.height * scaleFactor,
-        0x000000, // Black fill
-        0.3 // Semi-transparent fill
+        0x000000, // Color doesn't matter since it's invisible
+        0 // Completely transparent
       );
-      
-      // Add blue outline for folliage collision
-      foliageRect.setStrokeStyle(3, 0x0066ff); // Blue outline, 3px thick
-      foliageRect.setDepth(10000);
       
       this.physics.add.existing(foliageRect, true);
       collisionGroup.add(foliageRect);
-      
-      // Add debug text for folliage collision
-      this.add.text(
-        width / 2 - (foliageImg.width * scaleFactor) / 2,
-        height / 2 - (foliageImg.height * scaleFactor) / 2 - 25,
-        `Folliage Collision\n${(foliageImg.width * scaleFactor).toFixed(0)}x${(foliageImg.height * scaleFactor).toFixed(0)}`,
-        { 
-          fontSize: '10px', 
-          color: '#ffffff', 
-          backgroundColor: '#0066ff',
-          padding: { left: 3, right: 3, top: 2, bottom: 2 }
-        }
-      ).setDepth(10001);
     }
 
     // --- Season pillars setup ---
