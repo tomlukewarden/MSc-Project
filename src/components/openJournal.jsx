@@ -727,52 +727,81 @@ class OpenJournal extends Phaser.Scene {
 
   // Helper method to determine quest image
   getQuestImageKey(quest) {
+    // FIRST: Check if quest has a predefined imageKey and use it
+    if (quest.imageKey) {
+      // Handle completion status conversion for buddy images
+      if (quest.imageKey.endsWith("Sad") && quest.completed) {
+        // Convert sad to buddy version when completed
+        const buddyVersion = quest.imageKey.replace("Sad", "Buddy");
+        if (this.textures.exists(buddyVersion)) {
+          return buddyVersion;
+        }
+      } else if (quest.imageKey.endsWith("Buddy") && !quest.completed) {
+        // Convert buddy to sad version when not completed
+        const sadVersion = quest.imageKey.replace("Buddy", "Sad");
+        if (this.textures.exists(sadVersion)) {
+          return sadVersion;
+        }
+      }
+      
+      // If texture exists, use the defined imageKey as-is
+      if (this.textures.exists(quest.imageKey)) {
+        return quest.imageKey;
+      }
+    }
+
+    // FALLBACK: If no imageKey defined or texture doesn't exist, use keyword detection
     const title = quest.title.toLowerCase();
+    const description = quest.description.toLowerCase();
     
-    // Shard quests - use butterfly (since butterfly gives shard quests)
-    if (title.includes("shard")) {
-      return quest.completed ? "butterflyBuddy" : "butterflySad";
-    }
-    
-    // Plant collection quests
-    if (title.includes("plant") || title.includes("herb") || title.includes("collect")) {
-      return quest.completed ? "fairyBuddy" : "fairySad";
-    }
-    
-    // Bee/pollination quests
-    if (title.includes("bee") || title.includes("pollination") || title.includes("honey")) {
+    // Check if quest involves specific buddies by name in title or description
+    if (title.includes("paula nator") || description.includes("paula nator")) {
       return quest.completed ? "beeBuddy" : "beeSad";
     }
-    
-    // Crafting quests
-    if (title.includes("craft") || title.includes("recipe") || title.includes("remedy")) {
+    if (title.includes("mona") || description.includes("mona")) {
+      return quest.completed ? "butterflyBuddy" : "butterflySad";
+    }
+    if (title.includes("flora") || description.includes("flora")) {
+      return quest.completed ? "fairyBuddy" : "fairySad";
+    }
+    if (title.includes("tia") || description.includes("tia")) {
       return quest.completed ? "elephantBuddy" : "elephantSad";
     }
-    
-    // Animal/NPC related quests
-    if (title.includes("wolf")) {
+    if (title.includes("fang drescher") || description.includes("fang drescher")) {
       return quest.completed ? "wolfBuddy" : "wolfSad";
     }
-    if (title.includes("turtle")) {
-      return quest.completed ? "turtleBuddy" : "turtleSad";
-    }
-    if (title.includes("mole")) {
-      return quest.completed ? "moleBuddy" : "moleSad";
-    }
-    if (title.includes("rabbit")) {
-      return quest.completed ? "rabbitBuddy" : "rabbitSad";
-    }
-    if (title.includes("pig")) {
-      return quest.completed ? "pigBuddy" : "pigSad";
-    }
-    if (title.includes("deer")) {
+    if (title.includes("elkton john") || description.includes("elkton john")) {
       return quest.completed ? "deerBuddy" : "deerSad";
     }
-    if (title.includes("polar") || title.includes("bear")) {
+    if (title.includes("chris p. bacon") || description.includes("chris p. bacon")) {
+      return quest.completed ? "pigBuddy" : "pigSad";
+    }
+    if (title.includes("murtle") || description.includes("murtle")) {
+      return quest.completed ? "turtleBuddy" : "turtleSad";
+    }
+    if (title.includes("carrie cake") || description.includes("carrie cake")) {
+      return quest.completed ? "rabbitBuddy" : "rabbitSad";
+    }
+    if (title.includes("digmund freud") || description.includes("digmund freud")) {
+      return quest.completed ? "moleBuddy" : "moleSad";
+    }
+    if (title.includes("snowbert") || description.includes("snowbert")) {
       return quest.completed ? "polarBearBuddy" : "polarBearSad";
     }
     
-    // Garden/farming quests
+    // Type-based fallbacks
+    if (title.includes("shard")) {
+      return quest.completed ? "butterflyBuddy" : "butterflySad";
+    }
+    if (title.includes("plant") || title.includes("herb") || title.includes("collect")) {
+      return quest.completed ? "fairyBuddy" : "fairySad";
+    }
+    if (title.includes("bee") || title.includes("pollination") || title.includes("honey")) {
+      return quest.completed ? "beeBuddy" : "beeSad";
+    }
+    if (title.includes("craft") || title.includes("recipe") || title.includes("remedy")) {
+      return quest.completed ? "elephantBuddy" : "elephantSad";
+    }
     if (title.includes("garden") || title.includes("farm") || title.includes("grow")) {
       return quest.completed ? "fairyBuddy" : "fairySad";
     }
