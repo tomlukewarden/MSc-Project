@@ -92,6 +92,9 @@ class PersonalGarden extends Phaser.Scene {
   }
 
   create() {
+    // Load achievement progress
+    this.loadAchievementProgress();
+
     globalTimeManager.init(this);
     if (!globalTimeManager.startTimestamp) {
       globalTimeManager.start();
@@ -112,6 +115,31 @@ class PersonalGarden extends Phaser.Scene {
       backgroundColor: '#222',
       padding: { left: 8, right: 8, top: 4, bottom: 4 }
     }).setOrigin(0, 0).setDepth(99999);
+
+    // Add the triangle button for advancing to next day
+    const triangleButton = this.add.triangle(40 + 120, 100 + 15, 0, 20, 15, 0, 30, 20, 0x4caf50)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(99999)
+      .setScale(0.6);
+
+    triangleButton.on('pointerdown', () => {
+      globalTimeManager.advanceDay();
+      this.dayText.setText(`Day: ${globalTimeManager.getDayNumber()}`);
+      
+      // Update all plots for new day
+      this.plots.forEach(({ plot }) => {
+        plot.updateForNewDay(globalTimeManager.getDayNumber());
+      });
+      
+      // Refresh plot displays
+      this.plots.forEach(({ plot, plotText, plotRect }) => {
+        this.updatePlotText(plotText, plot);
+        this.updatePlotColor(plotRect, plot);
+        this.updatePlotStageImage(plot);
+      });
+      
+      console.log(`Advanced to day ${globalTimeManager.getDayNumber()}`);
+    });
 
     const { width, height } = this.sys.game.config;
     const scaleFactor = 0.14;
