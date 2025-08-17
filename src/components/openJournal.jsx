@@ -81,7 +81,7 @@ class OpenJournal extends Phaser.Scene {
 
     // Quest-specific images
     this.load.image("hoeIcon","/assets/tools/hoe.png" )
-    this.load.image("questGeneral", "/assets/ui-items/quest.png"); // Generic quest icon
+    this.load.image("questGeneral", "/assets/misc/questGeneral.png"); // Generic quest icon
 
     // Optionally, load all plant images here if not already loaded elsewhere
     plantData.forEach(plant => {

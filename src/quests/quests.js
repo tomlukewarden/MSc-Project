@@ -1,18 +1,19 @@
 import buddiesData from "../buddies";
 
 const quests = [
-    {    id: 0,
+    {
+        id: 0,
         title: "Welcome to the Gardens",
         description: "Go and talk to your fairy friend to get started.",
         active: true,
         completed: false,
-        imageKey: "fairyBuddy"
+        imageKey: "fairySad" // Will show fairyBuddy when completed
     },
     {
         id: 1,
         title: "Help Paula Nator",
         description: "Give Paula Nator a plant to help her out.",
-        imageKey: "beeBuddy",
+        imageKey: "beeSad", // Will show beeBuddy when completed
         active: false,
         completed: false
     },
@@ -22,7 +23,7 @@ const quests = [
         description: "Hoe the ground and plant your first crop. Remember to water it daily for 3 days!",
         active: false,
         completed: false,
-        imageKey: "hoeIcon"
+        imageKey: "hoeIcon" // Generic tool, no sad/happy version
     },
     {
         id: 3,
@@ -30,20 +31,23 @@ const quests = [
         description: "Talk to the Mona, she will take you to the pillars to return the first Shard.",
         active: false,
         completed: false,
-        imageKey: "springShard"
+        imageKey: "butterflySad" // Will show butterflyBuddy when completed (Mona is the butterfly)
     },
     {
         id: 4,
-        title:"Return all Shards",
+        title: "Return all Shards",
         description: "Return all Shards to the Season Pillars.",
-       active: false,
+        active: false,
         completed: false,
-        imageKey: "winterShard"
+        imageKey: "butterflySad" // Will show butterflyBuddy when completed
     }
 ];
 
 // Add a quest for each buddy
 buddiesData.forEach((buddy, idx) => {
+    // Determine the sad version of the buddy's imageKey
+    let sadImageKey = buddy.imageKey.replace("Buddy", "Sad");
+    
     quests.push({
         id: quests.length + 1,
         title: `Help ${buddy.name}`,
@@ -51,7 +55,7 @@ buddiesData.forEach((buddy, idx) => {
         active: false,
         buddy: idx,
         completed: false,
-        imageKey: buddy.imageKey
+        imageKey: sadImageKey // Will show buddy.imageKey when completed
     });
 });
 
