@@ -83,6 +83,9 @@ class OpenJournal extends Phaser.Scene {
     this.load.image("hoeIcon","/assets/tools/hoe.png" )
     this.load.image("questGeneral", "/assets/misc/questGeneral.png"); // Generic quest icon
 
+
+    this.load.image("star", "public/assets/misc/Star.png"); 
+
     // Optionally, load all plant images here if not already loaded elsewhere
     plantData.forEach(plant => {
       if (plant.imageKey) {
@@ -725,6 +728,147 @@ class OpenJournal extends Phaser.Scene {
     }
   }
 
+  // --- Achievements Page Renderer (matching quest layout exactly) ---
+  renderAchievementsPage() {
+    const { width, height } = this.sys.game.config;
+
+    // Remove previous achievement display if any
+    if (this.achievementImage && !this.achievementImage.destroyed) this.achievementImage.destroy();
+    if (this.achievementTitle && !this.achievementTitle.destroyed) this.achievementTitle.destroy();
+    if (this.achievementDesc && !this.achievementDesc.destroyed) this.achievementDesc.destroy();
+    if (this.achievementStatus && !this.achievementStatus.destroyed) this.achievementStatus.destroy();
+    if (this.pageNumText && !this.pageNumText.destroyed) this.pageNumText.destroy();
+    if (this.completedAchievementsTitle && !this.completedAchievementsTitle.destroyed) this.completedAchievementsTitle.destroy();
+    if (this.completedAchievementsList && !this.completedAchievementsList.destroyed) this.completedAchievementsList.destroy();
+
+    // Filter achievements
+    const completedAchievements = achievements.filter(a => a.completed);
+    const incompleteAchievements = achievements.filter(a => !a.completed);
+    const allAchievements = [...incompleteAchievements, ...completedAchievements];
+
+    // --- LEFT SIDE: Completed Achievements Checklist (same as quests) ---
+    if (completedAchievements.length > 0) {
+      this.completedAchievementsTitle = this.add.text(width / 2 - 220, 200, "🏆 Earned Achievements:", {
+        fontFamily: "Georgia",
+        fontSize: "18px",
+        color: "#d4851f",
+        fontStyle: "bold"
+      });
+
+      const checklistText = completedAchievements.map(a => `🏆 ${a.title}`).join('\n');
+      this.completedAchievementsList = this.add.text(width / 2 - 220, 230, checklistText, {
+        fontFamily: "Georgia",
+        fontSize: "14px",
+        color: "#d4851f",
+        wordWrap: { width: 240 },
+        lineSpacing: 5
+      });
+    } else {
+      this.completedAchievementsTitle = this.add.text(width / 2 - 220, 250, "No achievements earned yet.", {
+        fontFamily: "Georgia",
+        fontSize: "16px",
+        color: "#888",
+        fontStyle: "italic"
+      });
+    }
+
+    // --- RIGHT SIDE: Current Achievement Display (same positioning as quests) ---
+    const achievement = allAchievements[this.currentPage];
+    
+    if (!achievement) {
+      this.achievementTitle = this.add.text(width / 2 + 180, height / 2, "No achievements available.", {
+        fontFamily: "Georgia",
+        fontSize: "24px",
+        color: "#2d4739"
+      }).setOrigin(0.5);
+      return;
+    }
+
+    // Determine achievement image based on type and status
+    let achievementImageKey = this.getAchievementImageKey(achievement);
+
+    // Achievement image (same position as quest image)
+    const imageX = width / 2 + 100;
+    const imageY = height / 2 - 20;
+    
+    if (achievementImageKey && this.textures.exists(achievementImageKey)) {
+      this.achievementImage = this.add.image(imageX, imageY, achievementImageKey)
+        .setDisplaySize(160, 160)
+        .setDepth(2);
+      
+      // Add visual effect for completed achievements
+      if (achievement.completed) {
+        this.achievementImage.setTint(0xffd700); // Golden tint for completed
+      } else {
+        this.achievementImage.setTint(0x888888); // Gray tint for incomplete
+      }
+    } else {
+      // Fallback to generic achievement icon
+      if (this.textures.exists("questGeneral")) {
+        this.achievementImage = this.add.image(imageX, imageY, "questGeneral")
+          .setDisplaySize(100, 100)
+          .setDepth(2)
+          .setTint(achievement.completed ? 0xffd700 : 0x888888);
+      }
+    }
+
+    // Achievement title (moved to the left)
+    this.achievementTitle = this.add.text(imageX + 80, imageY - 80, achievement.title, {
+      fontFamily: "Georgia",
+      fontSize: "22px",
+      color: achievement.completed ? "#d4851f" : "#888",
+      fontStyle: "bold",
+      wordWrap: { width: 180 }
+    });
+
+    // Achievement description (moved to the left)
+    this.achievementDesc = this.add.text(imageX + 80, imageY - 20, achievement.description, {
+      fontFamily: "Georgia",
+      fontSize: "15px",
+      color: "#444",
+      wordWrap: { width: 180 },
+      lineSpacing: 3
+    });
+
+    // Achievement status (moved to the left)
+    let statusText = "";
+    let statusColor = "#444";
+    if (achievement.completed) {
+      statusText = "🏆 EARNED";
+      statusColor = "#d4851f";
+    } else {
+      statusText = "⚫ LOCKED";
+      statusColor = "#888";
+    }
+
+    this.achievementStatus = this.add.text(imageX + 80, imageY + 60, statusText, {
+      fontFamily: "Georgia",
+      fontSize: "13px",
+      color: statusColor,
+      fontStyle: "bold",
+      backgroundColor: statusColor === "#d4851f" ? "#fff8e1" : "#f5f5f5",
+      padding: { left: 8, right: 8, top: 4, bottom: 4 }
+    });
+
+    // Page number (same as quests)
+    this.pageNumText = this.add.text(width / 2, 580, `Achievement ${this.currentPage + 1} of ${allAchievements.length}`, {
+      fontFamily: "Georgia",
+      fontSize: "18px",
+      color: "#3e2f1c"
+    }).setOrigin(0.5);
+
+    // Show/hide buttons based on number of achievements (same logic as quests)
+    const showNav = allAchievements.length > 1;
+    this.nextBtn.setVisible(showNav);
+    this.nextBtnBg.setVisible(showNav);
+    this.prevBtn.setVisible(showNav);
+    this.prevBtnBg.setVisible(showNav);
+    if (showNav) {
+      this.nextBtn.setAlpha(this.currentPage < allAchievements.length - 1 ? 1 : 0.4);
+      this.prevBtn.setAlpha(this.currentPage > 0 ? 1 : 0.4);
+    }
+  }
+
   // Helper method to determine quest image
   getQuestImageKey(quest) {
     // FIRST: Check if quest has a predefined imageKey and use it
@@ -808,6 +952,22 @@ class OpenJournal extends Phaser.Scene {
     
     // Default fallback
     return quest.completed ? "questGeneral" : "butterflySad";
+  }
+
+  // Helper method to determine achievement image
+  getAchievementImageKey(achievement) {
+    // FIRST: Check if achievement has a predefined imageKey and use it
+    if (achievement.imageKey) {
+      // If texture exists, use the defined imageKey as-is
+      if (this.textures.exists(achievement.imageKey)) {
+        return achievement.imageKey;
+      }
+    }
+
+    // FALLBACK: Use keyword detection based on achievement title/description
+    const title = achievement.title.toLowerCase();
+    const description = achievement.description.toLowerCase();
+
   }
 }
 export default OpenJournal;
