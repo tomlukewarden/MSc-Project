@@ -33,24 +33,24 @@ class OpenInventory extends Phaser.Scene {
   create() {
     const { width, height } = this.sys.game.config;
 
-    // Background
+    // Background (increased size)
     this.add.image(width / 2, height / 2, "inventoryBackground")
-      .setDisplaySize(600, 500)
+      .setDisplaySize(800, 600) // Increased from 600x500
       .setDepth(105);
 
     // Title
-    this.titleText = this.add.text(width / 2, height / 2 - 220, "Inventory", {
+    this.titleText = this.add.text(width / 2, height / 2 - 270, "Inventory", { // Adjusted Y position
       fontFamily: "Georgia",
       fontSize: "38px",
       color: "#fff"
     }).setOrigin(0.5).setDepth(106);
 
-    // Tabs
-    const invTab = this.add.text(width / 2 - 220, height / 2 + 180, "Inventory", {
+    // Tabs (adjusted Y position)
+    const invTab = this.add.text(width / 2 - 220, height / 2 + 230, "Inventory", {
       fontFamily: "Georgia", fontSize: "20px", color: "#fff", backgroundColor: "#a33", padding: { left: 12, right: 12, top: 6, bottom: 6 }
     }).setDepth(107).setInteractive({ useHandCursor: true });
 
-    const craftTab = this.add.text(width / 2 - 80, height / 2 + 180, "Crafting", {
+    const craftTab = this.add.text(width / 2 - 80, height / 2 + 230, "Crafting", {
       fontFamily: "Georgia", fontSize: "20px", color: "#fff", backgroundColor: "#3e2f1c", padding: { left: 12, right: 12, top: 6, bottom: 6 }
     }).setDepth(107).setInteractive({ useHandCursor: true });
 
@@ -67,8 +67,8 @@ class OpenInventory extends Phaser.Scene {
       this.refreshUI();
     });
 
-    // Exit button
-    const exitBtn = this.add.text(width / 2 + 260, height / 2 - 220, "Exit", {
+    // Exit button (adjusted position)
+    const exitBtn = this.add.text(width / 2 + 360, height / 2 - 270, "Exit", {
       fontFamily: "Georgia",
       fontSize: "18px",
       color: "#fff",
@@ -202,16 +202,16 @@ class OpenInventory extends Phaser.Scene {
       });
     };
 
-    // Render Crafting (all recipes, always clickable)
+    // Render Crafting (simplified with bigger squares)
     this.renderCrafting = () => {
       this.contentContainer.removeAll(true);
       const recipes = recipieData;
       const cols = 3;
-      const cellW = 140;
-      const cellH = 100;
+      const cellW = 200; // Increased from 140
+      const cellH = 150; // Increased from 100
       const gridW = cols * cellW;
       const startX = width / 2 - gridW / 2 + cellW / 2;
-      const startY = height / 2 - 120;
+      const startY = height / 2 - 150;
 
       recipes.forEach((recipe, idx) => {
         const col = idx % cols;
@@ -219,37 +219,38 @@ class OpenInventory extends Phaser.Scene {
         const x = startX + col * cellW;
         const y = startY + row * cellH;
 
-        // Recipe background
+        // Recipe background (bigger)
         const bg = this.add.rectangle(x, y, cellW - 10, cellH - 10, 0x3e2f1c)
           .setStrokeStyle(2, 0xa33)
           .setInteractive({ useHandCursor: true });
 
-        // Recipe image
+        // Recipe image (larger and centered)
         let img = null;
         if (recipe.result && recipe.result.imageKey && this.textures.exists(recipe.result.imageKey)) {
-          img = this.add.image(x - 30, y, recipe.result.imageKey).setDisplaySize(40, 40);
+          img = this.add.image(x, y - 40, recipe.result.imageKey).setDisplaySize(60, 60); // Larger image, centered
         }
 
-        // Recipe name
-        const nameText = this.add.text(x + 20, y - 20, recipe.result.name, {
-          fontFamily: "Georgia", fontSize: "14px", color: "#fff"
-        }).setOrigin(0, 0.5);
-
-        // Ingredients
-        const ingredientsText = this.add.text(x + 20, y + 10,
-          "Needs: " + recipe.ingredients.map(i => `${i.amount}x ${i.key}`).join(", "),
-          { fontFamily: "Georgia", fontSize: "11px", color: "#ffb" }).setOrigin(0, 0.5);
-
-        // Craft button
-        const craftBtn = this.add.text(x + 20, y + 32, "Craft", {
-          fontFamily: "Georgia",
-          fontSize: "13px",
+        // Recipe name (centered below image)
+        const nameText = this.add.text(x, y - 5, recipe.result.name, {
+          fontFamily: "Georgia", 
+          fontSize: "16px", // Slightly larger
           color: "#fff",
-          backgroundColor: "#222",
-          padding: { left: 6, right: 6, top: 2, bottom: 2 }
-        }).setInteractive({ useHandCursor: true });
+          align: "center"
+        }).setOrigin(0.5);
 
-        craftBtn.on("pointerdown", () => {
+        // Ingredients (centered below name)
+        const ingredientsText = this.add.text(x, y + 20,
+          recipe.ingredients.map(i => `${i.amount}x ${i.key}`).join("\n"), // Multi-line for better readability
+          { 
+            fontFamily: "Georgia", 
+            fontSize: "12px", 
+            color: "#ffb",
+            align: "center",
+            lineSpacing: 2
+          }).setOrigin(0.5);
+
+        // Craft functionality on background click
+        bg.on("pointerdown", () => {
           // Check inventory for required items
           const items = globalInventoryManager.getItems();
           const missing = recipe.ingredients.filter(ingredient => {
@@ -257,9 +258,9 @@ class OpenInventory extends Phaser.Scene {
             return !invItem || typeof invItem.count !== "number" || invItem.count < ingredient.amount;
           });
           if (missing.length > 0) {
-            // Show missing items message in-game instead of alert
+            // Show missing items message
             const msg = "Not enough items to craft!\nMissing: " + missing.map(i => `${i.amount}x ${i.key}`).join(", ");
-            this.add.text(width / 2, height / 2 + 200, msg, {
+            this.add.text(width / 2, height / 2 + 250, msg, {
               fontFamily: "Georgia",
               fontSize: "16px",
               color: "#fff",
@@ -280,9 +281,9 @@ class OpenInventory extends Phaser.Scene {
           });
           globalInventoryManager.addItem({ key: recipe.result.key, name: recipe.result.name });
 
-          // Show crafted message in-game instead of alert
+          // Show crafted message
           const craftedMsg = `Crafted: ${recipe.result.name}`;
-          this.add.text(width / 2, height / 2 + 200, craftedMsg, {
+          this.add.text(width / 2, height / 2 + 250, craftedMsg, {
             fontFamily: "Georgia",
             fontSize: "16px",
             color: "#fff",
@@ -297,7 +298,7 @@ class OpenInventory extends Phaser.Scene {
           this.refreshUI();
         });
 
-        const objectsToAdd = [bg, nameText, ingredientsText, craftBtn];
+        const objectsToAdd = [bg, nameText, ingredientsText];
         if (img) objectsToAdd.push(img);
         this.contentContainer.add(objectsToAdd);
       });
