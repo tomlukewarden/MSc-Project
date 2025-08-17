@@ -277,22 +277,8 @@ class OpenJournal extends Phaser.Scene {
   }
 
   renderJournalTab() {
-    // Remove previous content
-    if (this.plantImage && !this.plantImage.destroyed) this.plantImage.destroy();
-    if (this.plantName && !this.plantName.destroyed) this.plantName.destroy();
-    if (this.plantMedicinal && !this.plantMedicinal.destroyed) this.plantMedicinal.destroy();
-    if (this.pageNumText && !this.pageNumText.destroyed) this.pageNumText.destroy();
-    if (this.recipeImage && !this.recipeImage.destroyed) this.recipeImage.destroy();
-    if (this.recipeName && !this.recipeName.destroyed) this.recipeName.destroy();
-    if (this.recipeIngredients && !this.recipeIngredients.destroyed) this.recipeIngredients.destroy();
-    if (this.recipeDescription && !this.recipeDescription.destroyed) this.recipeDescription.destroy();
-    if (this.buddyImage && !this.buddyImage.destroyed) this.buddyImage.destroy();
-    if (this.buddyName && !this.buddyName.destroyed) this.buddyName.destroy();
-    if (this.buddyDesc && !this.buddyDesc.destroyed) this.buddyDesc.destroy();
-    if (this.questTitle && !this.questTitle.destroyed) this.questTitle.destroy();
-    if (this.questDesc && !this.questDesc.destroyed) this.questDesc.destroy();
-    if (this.achievementTitle && !this.achievementTitle.destroyed) this.achievementTitle.destroy();
-    if (this.achievementDesc && !this.achievementDesc.destroyed) this.achievementDesc.destroy();
+    // Remove ALL previous content for ALL tabs
+    this.destroyAllTabContent();
 
     // Update tab styles
     const tabStyle = (active) => ({
@@ -322,253 +308,33 @@ class OpenJournal extends Phaser.Scene {
     }
   }
 
-  renderPlantPage() {
-    // Remove previous plant display if any
+  // Updated method to destroy all tab content
+  destroyAllTabContent() {
+    // Plants tab content (updated with new elements)
     if (this.plantImage && !this.plantImage.destroyed) this.plantImage.destroy();
     if (this.plantName && !this.plantName.destroyed) this.plantName.destroy();
     if (this.plantMedicinal && !this.plantMedicinal.destroyed) this.plantMedicinal.destroy();
-    if (this.pageNumText && !this.pageNumText.destroyed) this.pageNumText.destroy();
-    if (this.recipeImages && Array.isArray(this.recipeImages)) {
-      this.recipeImages.forEach(img => { if (img && !img.destroyed) img.destroy(); });
-    }
+    if (this.plantUsedInTitle && !this.plantUsedInTitle.destroyed) this.plantUsedInTitle.destroy();
+    if (this.plantUsedInList && !this.plantUsedInList.destroyed) this.plantUsedInList.destroy();
 
-    // Clean up on shutdown/destroy
-    this.events.on('shutdown', () => {
-      if (this.plantImage && !this.plantImage.destroyed) this.plantImage.destroy();
-      if (this.plantName && !this.plantName.destroyed) this.plantName.destroy();
-      if (this.plantMedicinal && !this.plantMedicinal.destroyed) this.plantMedicinal.destroy();
-      if (this.pageNumText && !this.pageNumText.destroyed) this.pageNumText.destroy();
-    });
-
-    this.events.on('destroy', () => {
-      if (this.plantImage && !this.plantImage.destroyed) this.plantImage.destroy();
-      if (this.plantName && !this.plantName.destroyed) this.plantName.destroy();
-      if (this.plantMedicinal && !this.plantMedicinal.destroyed) this.plantMedicinal.destroy();
-      if (this.pageNumText && !this.pageNumText.destroyed) this.pageNumText.destroy();
-      
-    });
-
-    const { width, height } = this.sys.game.config;
-    const plant = this.collectedPlants[this.currentPage];
-
-    if (!plant) {
-      this.plantName = this.add.text(width / 2, height / 2, "No plants collected yet.", {
-        fontFamily: "Georgia",
-        fontSize: "24px",
-        color: "#2d4739"
-      }).setOrigin(0.5);
-      return;
-    }
-
-    // Plant image
-    if (plant.imageKey && this.textures.exists(plant.imageKey)) {
-      this.plantImage = this.add.image(width / 2 - 180, height / 2, plant.imageKey)
-        .setDisplaySize(200, 200)
-        .setDepth(2);
-    }
-
-    // Plant name
-    this.plantName = this.add.text(width / 2 + 40, height / 2 - 40, plant.name, {
-      fontFamily: "Georgia",
-      fontSize: "32px",
-      color: "#2d4739"
-    });
-
-    // Medicinal properties
-    this.plantMedicinal = this.add.text(width / 2 + 40, height / 2 + 10, plant.medicinal || "No info.", {
-      fontFamily: "Georgia",
-      fontSize: "20px",
-      color: "#444",
-      wordWrap: { width: 260 }
-    });
-  
-
-    // Page number
-    this.pageNumText = this.add.text(width / 2, 580, `Page ${this.currentPage + 1} of ${this.collectedPlants.length}`, {
-      fontFamily: "Georgia",
-      fontSize: "18px",
-      color: "#3e2f1c"
-    }).setOrigin(0.5);
-
-    // Show/hide buttons based on number of plants
-    const showNav = this.collectedPlants.length > 1;
-    this.nextBtn.setVisible(showNav);
-    this.nextBtnBg.setVisible(showNav);
-    this.prevBtn.setVisible(showNav);
-    this.prevBtnBg.setVisible(showNav);
-    // Enable/disable buttons
-    if (showNav) {
-      this.nextBtn.setAlpha(this.currentPage < this.collectedPlants.length - 1 ? 1 : 0.4);
-      this.prevBtn.setAlpha(this.currentPage > 0 ? 1 : 0.4);
-    }
-  }
-
-  renderRecipePage() {
-    // Remove previous recipe display if any
+    // Recipes tab content (updated with new elements)
     if (this.recipeImage && !this.recipeImage.destroyed) this.recipeImage.destroy();
     if (this.recipeName && !this.recipeName.destroyed) this.recipeName.destroy();
-    if (this.recipeIngredients && !this.recipeIngredients.destroyed) this.recipeIngredients.destroy();
     if (this.recipeDescription && !this.recipeDescription.destroyed) this.recipeDescription.destroy();
-    if (this.pageNumText && !this.pageNumText.destroyed) this.pageNumText.destroy();
+    if (this.recipeIngredientsTitle && !this.recipeIngredientsTitle.destroyed) this.recipeIngredientsTitle.destroy();
+    if (this.recipeIngredients && !this.recipeIngredients.destroyed) this.recipeIngredients.destroy();
 
-    const { width, height } = this.sys.game.config;
-    const recipe = recipieData[this.currentPage];
-
-    if (!recipe) {
-      this.recipeName = this.add.text(width / 2, height / 2, "No recipes available.", {
-        fontFamily: "Georgia",
-        fontSize: "24px",
-        color: "#2d4739"
-      }).setOrigin(0.5);
-      return;
-    }
-
-    // Recipe image
-    if (recipe.imageKey && this.textures.exists(recipe.imageKey)) {
-      this.recipeImage = this.add.image(width / 2 - 180, height / 2, recipe.imageKey)
-        .setDisplaySize(200, 200)
-        .setDepth(2);
-    }
-
-    // Recipe name
-    this.recipeName = this.add.text(width / 2 + 40, height / 2 - 40, recipe.name, {
-      fontFamily: "Georgia",
-      fontSize: "32px",
-      color: "#2d4739"
-    });
-
-
-
-    // Helper to get readable name from key
-    const getDisplayName = (key) => {
-      const plant = plantData.find(p => p.key === key);
-      if (plant && plant.name) return plant.name;
-      // Fallback: prettify key (only strip 'Plant' at the end)
-      let name = key
-        .replace(/([A-Z])/g, ' $1')
-        .replace(/^(.)/, (m) => m.toUpperCase())
-        .replace(/ Plant$/i, '')
-        .replace(/_/g, ' ')
-        .replace(/\s+/g, ' ')
-        .trim();
-      // If name is empty, fallback to key
-      if (!name) name = key;
-      return name;
-    };
-
-    // Render all ingredients, one per line
-    let ingredientsText = "";
-    if (Array.isArray(recipe.ingredients) && recipe.ingredients.length > 0) {
-      ingredientsText = recipe.ingredients.map(i => `${getDisplayName(i.key)} x${i.amount}`).join('\n');
-    } else {
-      ingredientsText = "No ingredients.";
-    }
-    this.recipeIngredients = this.add.text(width / 2 + 40, height / 2 + 10, ingredientsText, {
-      fontFamily: "Georgia",
-      fontSize: "20px",
-      color: "#444",
-      wordWrap: { width: 260 }
-    });
-
-    // Description
-    this.recipeDescription = this.add.text(width / 2 + 40, height / 2 + 80, recipe.description || "", {
-      fontFamily: "Georgia",
-      fontSize: "18px",
-      color: "#567d46",
-      wordWrap: { width: 260 }
-    });
-
-    // Page number
-    this.pageNumText = this.add.text(width / 2, 580, `Page ${this.currentPage + 1} of ${recipieData.length}`, {
-      fontFamily: "Georgia",
-      fontSize: "18px",
-      color: "#3e2f1c"
-    }).setOrigin(0.5);
-
-    // Show/hide buttons based on number of recipes
-    const showNav = recipieData.length > 1;
-    this.nextBtn.setVisible(showNav);
-    this.nextBtnBg.setVisible(showNav);
-    this.prevBtn.setVisible(showNav); 
-    this.prevBtnBg.setVisible(showNav);
-    // Enable/disable buttons
-    if (showNav) {
-      this.nextBtn.setAlpha(this.currentPage < recipieData.length - 1 ? 1 : 0.4);
-      this.prevBtn.setAlpha(this.currentPage > 0 ? 1 : 0.4);
-    }
-  }
-
-  renderBuddyPage() {
-    // Remove previous buddy display if any
+    // Buddies tab content (updated with new elements)
     if (this.buddyImage && !this.buddyImage.destroyed) this.buddyImage.destroy();
     if (this.buddyName && !this.buddyName.destroyed) this.buddyName.destroy();
     if (this.buddyDesc && !this.buddyDesc.destroyed) this.buddyDesc.destroy();
-    if (this.pageNumText && !this.pageNumText.destroyed) this.pageNumText.destroy();
+    if (this.buddyStatus && !this.buddyStatus.destroyed) this.buddyStatus.destroy();
 
-    const { width, height } = this.sys.game.config;
-    const buddy = buddiesData[this.currentPage];
-
-    if (!buddy) {
-      this.buddyName = this.add.text(width / 2, height / 2, "No buddies found.", {
-        fontFamily: "Georgia",
-        fontSize: "24px",
-        color: "#2d4739"
-      }).setOrigin(0.5);
-      return;
-    }
-
-    // Buddy image
-    if (buddy.imageKey && this.textures.exists(buddy.imageKey)) {
-      this.buddyImage = this.add.image(width / 2 - 180, height / 2, buddy.imageKey)
-        .setDisplaySize(200, 200) 
-        .setDepth(2);
-    }
-
-    // Buddy name
-    this.buddyName = this.add.text(width / 2 + 40, height / 2 - 40, buddy.name, {
-      fontFamily: "Georgia",
-      fontSize: "32px",
-      color: "#2d4739"
-    });
-
-    // Buddy description
-    this.buddyDesc = this.add.text(width / 2 + 40, height / 2 + 10, buddy.description || "No info.", {
-      fontFamily: "Georgia",
-      fontSize: "20px",
-      color: "#444",
-      wordWrap: { width: 260 }
-    });
-
-    // Page number
-    this.pageNumText = this.add.text(width / 2, 580, `Page ${this.currentPage + 1} of ${buddiesData.length}`, {
-      fontFamily: "Georgia",
-      fontSize: "18px",
-      color: "#3e2f1c"
-    }).setOrigin(0.5);
-
-    // Show/hide buttons based on number of buddies
-    const showNav = buddiesData.length > 1;
-    this.nextBtn.setVisible(showNav);
-    this.nextBtnBg.setVisible(showNav);
-    this.prevBtn.setVisible(showNav);
-    this.prevBtnBg.setVisible(showNav);
-    // Enable/disable buttons
-    if (showNav) {
-      this.nextBtn.setAlpha(this.currentPage < buddiesData.length - 1 ? 1 : 0.4);
-      this.prevBtn.setAlpha(this.currentPage > 0 ? 1 : 0.4);
-    }
-  }
-
-  // --- New Quest Page Renderer ---
-  renderQuestPage() {
-    const { width, height } = this.sys.game.config;
-
-    // Remove previous quest display if any
+    // Quests tab content
     if (this.questImage && !this.questImage.destroyed) this.questImage.destroy();
     if (this.questTitle && !this.questTitle.destroyed) this.questTitle.destroy();
     if (this.questDesc && !this.questDesc.destroyed) this.questDesc.destroy();
     if (this.questStatus && !this.questStatus.destroyed) this.questStatus.destroy();
-    if (this.pageNumText && !this.pageNumText.destroyed) this.pageNumText.destroy();
     if (this.completedTitle && !this.completedTitle.destroyed) this.completedTitle.destroy();
     if (this.completedList && !this.completedList.destroyed) this.completedList.destroy();
     if (this.shardImages && Array.isArray(this.shardImages)) {
@@ -576,12 +342,34 @@ class OpenJournal extends Phaser.Scene {
       this.shardImages = [];
     }
 
+    // Achievements tab content
+    if (this.achievementImage && !this.achievementImage.destroyed) this.achievementImage.destroy();
+    if (this.achievementTitle && !this.achievementTitle.destroyed) this.achievementTitle.destroy();
+    if (this.achievementDesc && !this.achievementDesc.destroyed) this.achievementDesc.destroy();
+    if (this.achievementStatus && !this.achievementStatus.destroyed) this.achievementStatus.destroy();
+    if (this.completedAchievementsTitle && !this.completedAchievementsTitle.destroyed) this.completedAchievementsTitle.destroy();
+    if (this.completedAchievementsList && !this.completedAchievementsList.destroyed) this.completedAchievementsList.destroy();
+
+    // Page number (shared across tabs)
+    if (this.pageNumText && !this.pageNumText.destroyed) this.pageNumText.destroy();
+
+    // Recipe images array (if exists)
+    if (this.recipeImages && Array.isArray(this.recipeImages)) {
+      this.recipeImages.forEach(img => { if (img && !img.destroyed) img.destroy(); });
+      this.recipeImages = [];
+    }
+  }
+
+  // --- Updated Quest Page Renderer with proper cleanup ---
+  renderQuestPage() {
+    const { width, height } = this.sys.game.config;
+
     // Filter quests
     const activeQuests = quests.filter(q => q.active && !q.completed);
     const completedQuests = quests.filter(q => q.completed);
     const allQuests = [...activeQuests, ...completedQuests];
 
-    // --- LEFT SIDE: Completed Quests Checklist (moved more to center) ---
+    // --- LEFT SIDE: Completed Quests Checklist ---
     if (completedQuests.length > 0) {
       this.completedTitle = this.add.text(width / 2 - 220, 200, "✓ Completed Quests:", {
         fontFamily: "Georgia",
@@ -622,7 +410,7 @@ class OpenJournal extends Phaser.Scene {
     // Determine quest image based on quest type and status
     let questImageKey = this.getQuestImageKey(quest);
 
-    // Quest image (moved more to the right)
+    // Quest image
     const imageX = width / 2 + 100;
     const imageY = height / 2 - 20;
     
@@ -631,7 +419,6 @@ class OpenJournal extends Phaser.Scene {
         .setDisplaySize(160, 160)
         .setDepth(2);
     } else {
-      // Fallback to generic quest icon
       if (this.textures.exists("questGeneral")) {
         this.questImage = this.add.image(imageX, imageY, "questGeneral")
           .setDisplaySize(160, 160)
@@ -639,7 +426,7 @@ class OpenJournal extends Phaser.Scene {
       }
     }
 
-    // Quest title (further right, above image)
+    // Quest title
     this.questTitle = this.add.text(imageX + 110, imageY - 80, quest.title, {
       fontFamily: "Georgia",
       fontSize: "22px",
@@ -648,7 +435,7 @@ class OpenJournal extends Phaser.Scene {
       wordWrap: { width: 180 }
     });
 
-    // Quest description (further right, next to image)
+    // Quest description
     this.questDesc = this.add.text(imageX + 110, imageY - 40, quest.description, {
       fontFamily: "Georgia",
       fontSize: "15px",
@@ -657,7 +444,7 @@ class OpenJournal extends Phaser.Scene {
       lineSpacing: 3
     });
 
-    // Quest status (further right, below description)
+    // Quest status
     let statusText = "";
     let statusColor = "#444";
     if (quest.completed) {
@@ -680,14 +467,13 @@ class OpenJournal extends Phaser.Scene {
       padding: { left: 8, right: 8, top: 4, bottom: 4 }
     });
 
-    // Special handling for shard quests - show all 4 shards below image
+    // Special handling for shard quests
     if (quest.title.toLowerCase().includes("shard")) {
       this.shardImages = [];
       const shardKeys = ["springShard", "summerShard", "autumnShard", "winterShard"];
       const shardStartX = imageX - 60;
       const shardStartY = imageY + 100;
       
-      // Add shard title
       this.add.text(shardStartX, shardStartY - 20, "Seasonal Shards:", {
         fontFamily: "Georgia",
         fontSize: "12px",
@@ -716,7 +502,7 @@ class OpenJournal extends Phaser.Scene {
       color: "#3e2f1c"
     }).setOrigin(0.5);
 
-    // Show/hide buttons based on number of quests
+    // Navigation buttons
     const showNav = allQuests.length > 1;
     this.nextBtn.setVisible(showNav);
     this.nextBtnBg.setVisible(showNav);
@@ -728,25 +514,16 @@ class OpenJournal extends Phaser.Scene {
     }
   }
 
-  // --- Achievements Page Renderer (matching quest layout exactly) ---
+  // --- Updated Achievements Page Renderer with proper cleanup ---
   renderAchievementsPage() {
     const { width, height } = this.sys.game.config;
-
-    // Remove previous achievement display if any
-    if (this.achievementImage && !this.achievementImage.destroyed) this.achievementImage.destroy();
-    if (this.achievementTitle && !this.achievementTitle.destroyed) this.achievementTitle.destroy();
-    if (this.achievementDesc && !this.achievementDesc.destroyed) this.achievementDesc.destroy();
-    if (this.achievementStatus && !this.achievementStatus.destroyed) this.achievementStatus.destroy();
-    if (this.pageNumText && !this.pageNumText.destroyed) this.pageNumText.destroy();
-    if (this.completedAchievementsTitle && !this.completedAchievementsTitle.destroyed) this.completedAchievementsTitle.destroy();
-    if (this.completedAchievementsList && !this.completedAchievementsList.destroyed) this.completedAchievementsList.destroy();
 
     // Filter achievements
     const completedAchievements = achievements.filter(a => a.completed);
     const incompleteAchievements = achievements.filter(a => !a.completed);
     const allAchievements = [...incompleteAchievements, ...completedAchievements];
 
-    // --- LEFT SIDE: Completed Achievements Checklist (same as quests) ---
+    // --- LEFT SIDE: Completed Achievements Checklist ---
     if (completedAchievements.length > 0) {
       this.completedAchievementsTitle = this.add.text(width / 2 - 220, 200, "🏆 Earned Achievements:", {
         fontFamily: "Georgia",
@@ -772,11 +549,11 @@ class OpenJournal extends Phaser.Scene {
       });
     }
 
-    // --- RIGHT SIDE: Current Achievement Display (same positioning as quests) ---
+    // --- RIGHT SIDE: Current Achievement Display ---
     const achievement = allAchievements[this.currentPage];
     
     if (!achievement) {
-      this.achievementTitle = this.add.text(width / 2 + 180, height / 2, "No achievements available.", {
+      this.achievementTitle = this.add.text(width / 2 + 150, height / 2, "No achievements available.", {
         fontFamily: "Georgia",
         fontSize: "24px",
         color: "#2d4739"
@@ -784,10 +561,10 @@ class OpenJournal extends Phaser.Scene {
       return;
     }
 
-    // Determine achievement image based on type and status
+    // Determine achievement image
     let achievementImageKey = this.getAchievementImageKey(achievement);
 
-    // Achievement image (same position as quest image)
+    // Achievement image
     const imageX = width / 2 + 100;
     const imageY = height / 2 - 20;
     
@@ -796,23 +573,21 @@ class OpenJournal extends Phaser.Scene {
         .setDisplaySize(160, 160)
         .setDepth(2);
       
-      // Add visual effect for completed achievements
       if (achievement.completed) {
         this.achievementImage.setTint(0xffd700); // Golden tint for completed
       } else {
         this.achievementImage.setTint(0x888888); // Gray tint for incomplete
       }
     } else {
-      // Fallback to generic achievement icon
       if (this.textures.exists("questGeneral")) {
         this.achievementImage = this.add.image(imageX, imageY, "questGeneral")
-          .setDisplaySize(100, 100)
+          .setDisplaySize(160, 160)
           .setDepth(2)
           .setTint(achievement.completed ? 0xffd700 : 0x888888);
       }
     }
 
-    // Achievement title (moved to the left)
+    // Achievement title
     this.achievementTitle = this.add.text(imageX + 80, imageY - 80, achievement.title, {
       fontFamily: "Georgia",
       fontSize: "22px",
@@ -821,7 +596,7 @@ class OpenJournal extends Phaser.Scene {
       wordWrap: { width: 180 }
     });
 
-    // Achievement description (moved to the left)
+    // Achievement description
     this.achievementDesc = this.add.text(imageX + 80, imageY - 20, achievement.description, {
       fontFamily: "Georgia",
       fontSize: "15px",
@@ -830,7 +605,7 @@ class OpenJournal extends Phaser.Scene {
       lineSpacing: 3
     });
 
-    // Achievement status (moved to the left)
+    // Achievement status
     let statusText = "";
     let statusColor = "#444";
     if (achievement.completed) {
@@ -850,14 +625,14 @@ class OpenJournal extends Phaser.Scene {
       padding: { left: 8, right: 8, top: 4, bottom: 4 }
     });
 
-    // Page number (same as quests)
+    // Page number
     this.pageNumText = this.add.text(width / 2, 580, `Achievement ${this.currentPage + 1} of ${allAchievements.length}`, {
       fontFamily: "Georgia",
       fontSize: "18px",
       color: "#3e2f1c"
     }).setOrigin(0.5);
 
-    // Show/hide buttons based on number of achievements (same logic as quests)
+    // Navigation buttons
     const showNav = allAchievements.length > 1;
     this.nextBtn.setVisible(showNav);
     this.nextBtnBg.setVisible(showNav);
@@ -967,7 +742,298 @@ class OpenJournal extends Phaser.Scene {
     // FALLBACK: Use keyword detection based on achievement title/description
     const title = achievement.title.toLowerCase();
     const description = achievement.description.toLowerCase();
+    
+    // Achievement type-based image selection
+    if (title.includes("first steps") || title.includes("quest")) {
+      return achievement.completed ? "questGeneral" : "questGeneral";
+    }
+    if (title.includes("green thumb") || title.includes("grow") || title.includes("plant")) {
+      return achievement.completed ? "hoeIcon" : "hoeIcon";
+    }
+    if (title.includes("shard collector") || title.includes("shard")) {
+      return achievement.completed ? "springShard" : "springShard";
+    }
+    if (title.includes("seasoned adventurer") || title.includes("all quests")) {
+      return achievement.completed ? "butterflyBuddy" : "butterflySad";
+    }
+    if (title.includes("buddy helper") || title.includes("help") || title.includes("buddies")) {
+      return achievement.completed ? "fairyBuddy" : "fairySad";
+    }
+    if (title.includes("master gardener") || title.includes("every type")) {
+      return achievement.completed ? "garlicPlant" : "garlicPlant";
+    }
+    if (title.includes("community builder") || title.includes("interact") || title.includes("npc")) {
+      return achievement.completed ? "beeBuddy" : "beeSad";
+    }
+    if (title.includes("master of your craft") || title.includes("craft")) {
+      return achievement.completed ? "elephantBuddy" : "elephantSad";
+    }
+    
+    // Default fallback
+    return achievement.completed ? "star" : "questGeneral";
+  }
 
+  // --- Plant Page Renderer (Updated Two-Column Layout) ---
+  renderPlantPage() {
+    const { width, height } = this.sys.game.config;
+    
+    if (this.collectedPlants.length === 0) {
+      this.plantName = this.add.text(width / 2, height / 2, "No plants collected yet.", {
+        fontFamily: "Georgia",
+        fontSize: "24px",
+        color: "#2d4739"
+      }).setOrigin(0.5);
+      return;
+    }
+
+    const plant = this.collectedPlants[this.currentPage];
+    if (!plant) return;
+
+    // --- LEFT SIDE: Plant Image ---
+    const imageX = width / 2 - 150;
+    const imageY = height / 2;
+    
+    if (plant.imageKey && this.textures.exists(plant.imageKey)) {
+      this.plantImage = this.add.image(imageX, imageY, plant.imageKey)
+        .setDisplaySize(200, 200)
+        .setDepth(2);
+    }
+
+    // --- RIGHT SIDE: Plant Information ---
+  const textX = imageX + 200;
+    const textStartY = imageY - 60;
+
+    // Plant name
+    this.plantName = this.add.text(textX, textStartY, plant.name, {
+      fontFamily: "Georgia",
+      fontSize: "28px",
+      color: "#2d4739",
+      fontStyle: "bold",
+      wordWrap: { width: 280 }
+    });
+
+    // Plant medicinal properties
+    this.plantMedicinal = this.add.text(textX, textStartY + 50, plant.medicinal || "No medicinal properties recorded.", {
+      fontFamily: "Georgia",
+      fontSize: "16px",
+      color: "#444",
+      wordWrap: { width: 280 },
+      lineSpacing: 3
+    });
+
+    // Find recipes that use this plant
+    const recipesUsingPlant = recipieData.filter(recipe => 
+      recipe.ingredients.some(ingredient => 
+        ingredient.key === plant.key || ingredient.key === plant.name
+      )
+    );
+
+    // "Used in" section
+    if (recipesUsingPlant.length > 0) {
+      this.plantUsedInTitle = this.add.text(textX, textStartY + 170, "Used in Recipes:", {
+        fontFamily: "Georgia",
+        fontSize: "18px",
+        color: "#567d46",
+        fontStyle: "bold"
+      });
+
+      const recipeNames = recipesUsingPlant.map(recipe => `• ${recipe.result.name}`).join('\n');
+      this.plantUsedInList = this.add.text(textX, textStartY + 190, recipeNames, {
+        fontFamily: "Georgia",
+        fontSize: "14px",
+        color: "#567d46",
+        wordWrap: { width: 280 },
+        lineSpacing: 2
+      });
+    } else {
+      this.plantUsedInTitle = this.add.text(textX, textStartY + 190, "Not used in any known recipes.", {
+        fontFamily: "Georgia",
+        fontSize: "16px",
+        color: "#888",
+        fontStyle: "italic"
+      });
+    }
+
+    // Page number
+    this.pageNumText = this.add.text(width / 2, 580, `Plant ${this.currentPage + 1} of ${this.collectedPlants.length}`, {
+      fontFamily: "Georgia",
+      fontSize: "18px",
+      color: "#3e2f1c"
+    }).setOrigin(0.5);
+
+    // Navigation buttons
+    const showNav = this.collectedPlants.length > 1;
+    this.nextBtn.setVisible(showNav);
+    this.nextBtnBg.setVisible(showNav);
+    this.prevBtn.setVisible(showNav);
+    this.prevBtnBg.setVisible(showNav);
+    if (showNav) {
+      this.nextBtn.setAlpha(this.currentPage < this.collectedPlants.length - 1 ? 1 : 0.4);
+      this.prevBtn.setAlpha(this.currentPage > 0 ? 1 : 0.4);
+    }
+  }
+
+  // --- Recipe Page Renderer (Updated Two-Column Layout) ---
+  renderRecipePage() {
+    const { width, height } = this.sys.game.config;
+    
+    if (recipieData.length === 0) {
+      this.recipeName = this.add.text(width / 2, height / 2, "No recipes available.", {
+        fontFamily: "Georgia",
+        fontSize: "24px",
+        color: "#2d4739"
+      }).setOrigin(0.5);
+      return;
+    }
+
+    const recipe = recipieData[this.currentPage];
+    if (!recipe) return;
+
+    // --- LEFT SIDE: Recipe Image and Title ---
+    const imageX = width / 2 - 150;
+    const imageY = height / 2 - 20;
+    
+    if (recipe.result && recipe.result.imageKey && this.textures.exists(recipe.result.imageKey)) {
+      this.recipeImage = this.add.image(imageX, imageY, recipe.result.imageKey)
+        .setDisplaySize(160, 160)
+        .setDepth(2);
+    }
+
+    // Recipe name (below image, on left side)
+    this.recipeName = this.add.text(imageX, imageY + 100, recipe.result.name, {
+      fontFamily: "Georgia",
+      fontSize: "22px",
+      color: "#2d4739",
+      fontStyle: "bold",
+      wordWrap: { width: 200 },
+      align: "center"
+    }).setOrigin(0.5);
+
+    // --- RIGHT SIDE: Recipe Information ---
+     const textX = imageX + 200;
+    const textStartY = imageY - 60;
+
+    // Recipe description
+    this.recipeDescription = this.add.text(textX, textStartY, recipe.description || "A crafted remedy.", {
+      fontFamily: "Georgia",
+      fontSize: "16px",
+      color: "#444",
+      wordWrap: { width: 280 },
+      lineSpacing: 3
+    });
+
+    // Ingredients section
+    this.recipeIngredientsTitle = this.add.text(textX, textStartY + 80, "Ingredients:", {
+      fontFamily: "Georgia",
+      fontSize: "18px",
+      color: "#567d46",
+      fontStyle: "bold"
+    });
+
+    const ingredientsText = recipe.ingredients.map(i => `• ${i.amount}x ${i.key}`).join('\n');
+    this.recipeIngredients = this.add.text(textX, textStartY + 110, ingredientsText, {
+      fontFamily: "Georgia",
+      fontSize: "14px",
+      color: "#567d46",
+      wordWrap: { width: 280 },
+      lineSpacing: 2
+    });
+
+    // Page number
+    this.pageNumText = this.add.text(width / 2, 580, `Recipe ${this.currentPage + 1} of ${recipieData.length}`, {
+      fontFamily: "Georgia",
+      fontSize: "18px",
+      color: "#3e2f1c"
+    }).setOrigin(0.5);
+
+    // Navigation buttons
+    const showNav = recipieData.length > 1;
+    this.nextBtn.setVisible(showNav);
+    this.nextBtnBg.setVisible(showNav);
+    this.prevBtn.setVisible(showNav);
+    this.prevBtnBg.setVisible(showNav);
+    if (showNav) {
+      this.nextBtn.setAlpha(this.currentPage < recipieData.length - 1 ? 1 : 0.4);
+      this.prevBtn.setAlpha(this.currentPage > 0 ? 1 : 0.4);
+    }
+  }
+
+  // --- Buddy Page Renderer (Updated Two-Column Layout) ---
+  renderBuddyPage() {
+    const { width, height } = this.sys.game.config;
+    
+    if (buddiesData.length === 0) {
+      this.buddyName = this.add.text(width / 2, height / 2, "No buddies available.", {
+        fontFamily: "Georgia",
+        fontSize: "24px",
+        color: "#2d4739"
+      }).setOrigin(0.5);
+      return;
+    }
+
+    const buddy = buddiesData[this.currentPage];
+    if (!buddy) return;
+
+    // --- LEFT SIDE: Buddy Image and Name ---
+    const imageX = width / 2 - 150;
+    const imageY = height / 2 - 20;
+    
+    if (buddy.imageKey && this.textures.exists(buddy.imageKey)) {
+      this.buddyImage = this.add.image(imageX, imageY, buddy.imageKey)
+        .setDisplaySize(160, 160)
+        .setDepth(2);
+    }
+
+    // Buddy name (below image, on left side)
+    this.buddyName = this.add.text(imageX, imageY + 100, buddy.name, {
+      fontFamily: "Georgia",
+      fontSize: "24px",
+      color: "#2d4739",
+      fontStyle: "bold",
+      wordWrap: { width: 200 },
+      align: "center"
+    }).setOrigin(0.5);
+
+    // --- RIGHT SIDE: Buddy Information ---
+    const textX = imageX + 200;
+    const textStartY = imageY - 60;
+
+    // Buddy description
+    this.buddyDesc = this.add.text(textX, textStartY, buddy.description || "A friendly companion from the garden.", {
+      fontFamily: "Georgia",
+      fontSize: "16px",
+      color: "#444",
+      wordWrap: { width: 280 },
+      lineSpacing: 3
+    });
+
+    // Optional: Add buddy status or additional info
+    if (buddy.status || buddy.location) {
+      this.buddyStatus = this.add.text(textX, textStartY + 150, `Location: ${buddy.location || "Garden"}`, {
+        fontFamily: "Georgia",
+        fontSize: "14px",
+        color: "#567d46",
+        fontStyle: "italic"
+      });
+    }
+
+    // Page number
+    this.pageNumText = this.add.text(width / 2, 580, `Buddy ${this.currentPage + 1} of ${buddiesData.length}`, {
+      fontFamily: "Georgia",
+      fontSize: "18px",
+      color: "#3e2f1c"
+    }).setOrigin(0.5);
+
+    // Navigation buttons
+    const showNav = buddiesData.length > 1;
+    this.nextBtn.setVisible(showNav);
+    this.nextBtnBg.setVisible(showNav);
+    this.prevBtn.setVisible(showNav);
+    this.prevBtnBg.setVisible(showNav);
+    if (showNav) {
+      this.nextBtn.setAlpha(this.currentPage < buddiesData.length - 1 ? 1 : 0.4);
+      this.prevBtn.setAlpha(this.currentPage > 0 ? 1 : 0.4);
+    }
   }
 }
 export default OpenJournal;
