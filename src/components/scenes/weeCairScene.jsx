@@ -3,6 +3,7 @@ import globalInventoryManager from "../inventoryManager";
 
 import Phaser from "phaser";
 import quests from "../../quests/quests";
+import achievements from "../../quests/achievments";
 import { showDialogue, showOption, destroyDialogueUI } from "../../dialogue/dialogueUIHelpers";
 import {
   createBee,
@@ -64,6 +65,7 @@ class WeeCairScene extends Phaser.Scene {
     this.load.image('dialogueBoxBg', '/assets/ui-items/dialogue.png');
     this.load.image("craftingBench", "/assets/crafting/bench.png");
     this.load.audio("option", "/assets/sound-effects/option.mp3");
+    this.load.image("star", "/assets/misc/Star.png")
   }
 
   create() {
@@ -302,6 +304,14 @@ class WeeCairScene extends Phaser.Scene {
             welcomeQuest.completed = true;
             saveToLocal("quests", quests); // Optionally persist
             console.log("Quest 'Welcome to the Gardens' completed!");
+            
+            // Complete "First Steps" achievement
+            const firstStepsAchievement = achievements.find(a => a.title === "First Steps");
+            if (firstStepsAchievement && !firstStepsAchievement.completed) {
+              firstStepsAchievement.completed = true;
+              saveToLocal("achievements", achievements);
+              console.log("Achievement 'First Steps' completed!");
+            }
           }
 
           // Activate "Help Paula Nator" quest
@@ -337,6 +347,14 @@ class WeeCairScene extends Phaser.Scene {
             receivedItem(this, "springShard", "Spring Shard");
             addPlantToJournal("springShard");
             this.springShardReceived = true;
+            
+            // Complete "Shard Collector" achievement
+            const shardCollectorAchievement = achievements.find(a => a.title === "Shard Collector");
+            if (shardCollectorAchievement && !shardCollectorAchievement.completed) {
+              shardCollectorAchievement.completed = true;
+              saveToLocal("achievements", achievements);
+              console.log("Achievement 'Shard Collector' completed!");
+            }
 
             this.time.delayedCall(1000, () => {
               this.activeDialogue = fairyGoodbyeDialogues;
