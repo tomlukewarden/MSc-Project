@@ -1,6 +1,6 @@
 
 import './App.css'
-import GameCanvas from './components/gameCanvas'
+import GameCanvas from './gameCanvas'
 function App() {
   return (
     <>

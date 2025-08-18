@@ -1,4 +1,4 @@
-import { inventoryManager } from "./scenes/UIOverlayScenes/openInventory"; 
+import { inventoryManager } from "../components/scenes/UIOverlayScenes/openInventory"; 
 
 export function receivedItem(scene, itemKey, itemName, options = {}) {
   console.log("receivedItem called", itemKey, itemName);

@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import { getCollectedPlants } from "./journalManager";
+import { getCollectedPlants } from "../../../stateManagers/journalManager";
 import plantData from "../../../gameData/plantData";
 import recipieData from "../../../gameData/recipieData";
 import buddiesData from "../../../gameData/buddies";

@@ -3,14 +3,14 @@ import { createButterfly, butterflyIntroDialogues } from '../../../characters/bu
 import { showDialogue, destroyDialogueUI, showOption } from '../../../dialogue/dialogueUIHelpers';
 import { createMainChar } from '../../../characters/mainChar';
 import { saveToLocal, loadFromLocal } from '../../../utils/localStorage';
-import plantData from "../../../plantData";
-import quests from "../../../quests/quests";
-import { addPlantToJournal } from "../journalManager";
-import { receivedItem } from "../../recievedItem";
+import plantData from "../../../gameData/plantData";
+import quests from "../../../gameData/quests";
+import { addPlantToJournal } from "../../../stateManagers/inventoryManager";
+import { receivedItem } from "../../../logicHandlers/recievedItem";
 import { createElephant, elephantIntroDialogues, elephantThanksDialogues } from '../../../characters/elephant';
 import { createPolarBear, polarBearIntroDialogues, polarBearThanksDialogues } from '../../../characters/polar';
 import {createDeer, deerIntroDialogues, deerThanksDialogues} from '../../../characters/deer';
-import globalTimeManager from "../../day/timeManager";
+import globalTimeManager from "../../../stateManagers/timeManager";
 
 
 class WallGardenScene extends Phaser.Scene {

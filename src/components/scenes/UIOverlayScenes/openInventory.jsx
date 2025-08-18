@@ -1,4 +1,4 @@
-import globalInventoryManager from "./inventoryManager";
+import globalInventoryManager from "../../../stateManagers/inventoryManager";
 import recipieData from "../../../gameData/recipieData";
 import achievements from "../../../gameData/achievments";
 import { saveToLocal } from "../../../utils/localStorage";

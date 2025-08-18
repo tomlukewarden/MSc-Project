@@ -1,5 +1,5 @@
 // Ensure global inventoryManager instance
-import globalInventoryManager from "../inventoryManager";
+import globalInventoryManager from "../../../stateManagers/inventoryManager"; 
 
 import Phaser from "phaser";
 import { showDialogue, showOption, destroyDialogueUI } from "../../../dialogue/dialogueUIHelpers";
@@ -16,10 +16,10 @@ import {
 } from "../../../characters/fairy";
 import { saveToLocal, loadFromLocal } from "../../../utils/localStorage";
 import { createMainChar } from "../../../characters/mainChar";
-import { receivedItem } from "../../recievedItem";
-import {addPlantToJournal} from "../journalManager";
-import quests from "../../../quests/quests";
-import achievements from "../../../quests/achievments";
+import { receivedItem } from "../../../logicHandlers/recievedItem";
+import {addPlantToJournal} from "../../../stateManagers/journalManager";
+import quests from "../../../gameData/quests";
+import achievements from "../../../gameData/achievments";
 
 class WeeCairScene extends Phaser.Scene {
   constructor() {

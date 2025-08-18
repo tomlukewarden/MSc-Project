@@ -4,10 +4,10 @@ import { createPig, pigIntroDialogues, pigThanksDialogues } from "../../../chara
 import { showDialogue, showOption, destroyDialogueUI } from "../../../dialogue/dialogueUIHelpers";
 import { saveToLocal, loadFromLocal } from "../../../utils/localStorage";
 import { createMainChar } from "../../../characters/mainChar";
-import globalInventoryManager from "../inventoryManager";
-import { receivedItem } from "../../recievedItem";
-import globalTimeManager from "../../day/timeManager";
-import quests from "../../../quests/quests";
+import globalInventoryManager from "../../../stateManagers/inventoryManager";
+import { receivedItem } from "../../../logicHandlers/recievedItem";
+import globalTimeManager from "../../../stateManagers/timeManager";
+import quests from "../../../gameData/quests";
 
 class GreenhouseScene extends Phaser.Scene {
     constructor() {

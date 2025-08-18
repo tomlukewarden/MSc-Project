@@ -1,6 +1,6 @@
 import Phaser from "phaser";
-import { inventoryManager } from "./openInventory";
-import globalTimeManager from "../day/timeManager";
+import { inventoryManager } from "../../../stateManagers/inventoryManager";
+import globalTimeManager from "../../../stateManagers/timeManager";
 
 class HUDScene extends Phaser.Scene {
   constructor() {

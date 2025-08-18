@@ -1,4 +1,4 @@
-import globalTimeManager from "../../day/timeManager";
+
 
 class DayEndScene extends Phaser.Scene {
   constructor() {

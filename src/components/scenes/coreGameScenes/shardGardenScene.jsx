@@ -1,15 +1,15 @@
 import { createButterfly, butterflyPillarDialogues, butterflyShardDialogues, butterflyGoodbyeDialogues } from "../../../characters/butterfly";
 import { createMainChar } from "../../../characters/mainChar";
 import { saveToLocal, loadFromLocal } from "../../../utils/localStorage";
-import plantData from "../../../plantData";
+import plantData from "../../../gameData/plantData";
 import { showDialogue, showOption } from "../../../dialogue/dialogueUIHelpers";
-import { shardLogic } from "../../shardLogic";
-import globalInventoryManager from "../inventoryManager";
-import { addPlantToJournal } from "../journalManager";
-import { receivedItem } from "../../recievedItem";
-import globalTimeManager from "../../day/timeManager";
-import quests from "../../../quests/quests";
-import achievements from "../../../quests/achievments";
+import { shardLogic } from "../../../logicHandlers/shardLogic";
+import globalInventoryManager from "../../../stateManagers/inventoryManager";
+import { addPlantToJournal } from "../../../stateManagers/journalManager";
+import { receivedItem } from "../../../logicHandlers/recievedItem";
+import globalTimeManager from "../../../stateManagers/timeManager";
+import quests from "../../../gameData/quests";
+import achievements from "../../../gameData/achievments";
 
 class ShardGardenScene extends Phaser.Scene {
   constructor() {
@@ -598,42 +598,6 @@ class ShardGardenScene extends Phaser.Scene {
     }
   }
 
-  // Update the handleQuestLogic method to also check buddy helper achievement
-  handleQuestLogic() {
-    // Activate and complete "Return the first Shard" quest if this is the first shard returned
-    const shardQuest = quests.find(q => q.title === "Return the first Shard");
-    if (shardQuest && shardQuest.active) {
-      shardQuest.active = false;
-      shardQuest.completed = true;
-      saveToLocal("quests", quests);
-      console.log("Quest 'Return the first Shard' completed!");
-      
-      // Check buddy helper achievement after completing quests
-      this.checkBuddyHelperAchievement();
-    }
-
-    // If all shards for all seasons are returned, activate and complete "Return all Shards" quest
-    const allReturned = Object.values(this.shardCounts).every(count => count === 0);
-    const allShardsQuest = quests.find(q => q.title === "Return all Shards");
-    if (allReturned && allShardsQuest && !allShardsQuest.completed) {
-      allShardsQuest.active = false;
-      allShardsQuest.completed = true;
-      saveToLocal("quests", quests);
-      console.log("Quest 'Return all Shards' completed!");
-
-      // Complete "Seasoned Adventurer" achievement when all shards are returned
-      const seasonedAdventurerAchievement = achievements.find(a => a.title === "Seasoned Adventurer");
-      if (seasonedAdventurerAchievement && !seasonedAdventurerAchievement.completed) {
-        seasonedAdventurerAchievement.completed = true;
-        saveToLocal("achievements", achievements);
-        console.log("Achievement 'Seasoned Adventurer' completed!");
-      }
-      
-      // Check buddy helper achievement
-      this.checkBuddyHelperAchievement();
-    }
-  }
-
   update() {
     const rightEdge = this.sys.game.config.width - 50;
     const leftEdge = 50;
@@ -731,79 +695,6 @@ class ShardGardenScene extends Phaser.Scene {
       });
     }
   }
-
-  showPlantMinigame(plant, foundFlag) {
-    showOption(
-      this,
-      `You found a ${plant.name} plant! \n But a cheeky animal is trying to steal it!`,
-      {
-        imageKey: plant.imageKey,
-        options: [
-          {
-            text: "Play a game to win it!",
-            callback: () => {
-              this.destroyDialogueUI();
-              this.dialogueActive = false;
-              this.updateHUDState();
-              this.dialogueOnComplete = null;
-              this.scene.launch("MiniGameScene", {
-                onWin: () => {
-                  this.scene.stop("MiniGameScene");
-                  this.scene.resume();
-
-                  const alreadyHas = this.inventoryManager.hasItemByKey(plant.key);
-                  if (!alreadyHas) {
-                    addPlantToJournal(plant.key);
-                    receivedItem(this, plant.key, plant.name);
-
-                    // Complete "Green Thumb" achievement when first plant is collected
-                    const greenThumbAchievement = achievements.find(a => a.title === "Green Thumb");
-                    if (greenThumbAchievement && !greenThumbAchievement.completed) {
-                      greenThumbAchievement.completed = true;
-                      saveToLocal("achievements", achievements);
-                      console.log("Achievement 'Green Thumb' completed!");
-                    }
-
-                    // Check if all plants have been collected for "Master Gardener" achievement
-                    this.checkMasterGardenerAchievement();
-                  }
-
-                  showDialogue(this,
-                    alreadyHas
-                      ? `You already have the ${plant.name} plant.`
-                      : `You won the game! The animal reluctantly \n gives you the ${plant.name} plant.`, {
-                        imageKey: plant.imageKey
-                      }
-                  );
-
-                  this[foundFlag] = true;
-                  this.dialogueActive = true;
-
-                  this.dialogueOnComplete = () => {
-                    this.destroyDialogueUI();
-                    this.dialogueActive = false;
-                    this.updateHUDState();
-                    this.dialogueOnComplete = null;
-                  };
-                }
-              });
-              this.scene.pause();
-            }
-          },
-          {
-            text: "Try again later",
-            callback: () => {
-              this.destroyDialogueUI();
-              this.dialogueActive = false;
-              this.updateHUDState();
-              this.dialogueOnComplete = null;
-            }
-          }
-        ]
-      }
-    );
-  }
-
   showPlantMissing() {
     showDialogue(this, "You found a rare plant, but its data is missing!", {});
     this.dialogueOnComplete = () => {

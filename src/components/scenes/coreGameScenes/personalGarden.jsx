@@ -1,15 +1,14 @@
-import { Plot } from "../../farmingLogic";
+import { Plot } from "../../../logicHandlers/farmingLogic";
 import { createMainChar } from "../../../characters/mainChar";
 import { saveToLocal, loadFromLocal } from "../../../utils/localStorage";
 import { showDialogue, showOption } from "../../../dialogue/dialogueUIHelpers";
-import globalTimeManager from "../../day/timeManager";
-import { receivedItem } from "../../recievedItem";
-import itemsData from "../../../items";
-import SeedPouchLogic from "../../seedPouchLogic";
-import plantData from "../../../plantData";
-import quests from "../../../quests/quests";
-import achievements from "../../../quests/achievments";
-import globalInventoryManager from "../inventoryManager";
+import globalTimeManager from "../../../stateManagers/timeManager";
+import { receivedItem } from "../../../logicHandlers/recievedItem";
+import itemsData from "../../../gameData/items";
+import plantData from "../../../gameData/plantData";
+import quests from "../../../gameData/quests";
+import achievements from "../../../gameData/achievments";
+import globalInventoryManager from "../../../stateManagers/inventoryManager";
 
 class PersonalGarden extends Phaser.Scene {
   constructor() {

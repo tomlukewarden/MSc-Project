@@ -1,10 +1,10 @@
 import Phaser from 'phaser';
-import itemsData from '../../../items';
+import itemsData from '../../../gameData/items';
 import { showOption } from '../../../dialogue/dialogueUIHelpers';
-import { receivedItem } from '../../recievedItem';
-import SeedPouchLogic from '../../seedPouchLogic';
-import globalInventoryManager from '../inventoryManager';
-import quests from '../../../quests/quests';
+import { receivedItem } from '../../../logicHandlers/recievedItem';
+import SeedPouchLogic from '../../../logicHandlers/seedPouchLogic';
+import globalInventoryManager from '../../../stateManagers/inventoryManager';
+import quests from '../../../gameData/quests';
 import { saveToLocal } from '../../../utils/localStorage';
 
 class ShopScene extends Phaser.Scene {
