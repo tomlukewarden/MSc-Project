@@ -9,11 +9,11 @@ const itemsData = [
     type: "plant"
   },
   {
-    id: "aloeVeraPlant",
-    key: "aloeVeraPlant",
+    id: "aloePlant",
+    key: "aloePlant",
     name: "Aloe Vera Plant",
     description: "A harvested aloe vera plant.",
-    imageKey: "aloeVeraPlant",
+    imageKey: "aloePlant",
     type: "plant"
   },
   {

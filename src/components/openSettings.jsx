@@ -1,16 +1,26 @@
 import Phaser from "phaser";
-import { saveToLocal, wipeAllGameData } from "../utils/localStorage";
+import { saveToLocal, loadFromLocal, wipeAllGameData } from "../utils/localStorage";
 
 class OpenSettings extends Phaser.Scene {
   constructor() {
     super({ key: "OpenSettings" });
+    this.musicVolume = 0.5; // Default volume
+    this.volumeSlider = null;
+    this.volumeFill = null;
   }
+
   preload() {
-  this.load.image("settingsBackground", "/assets/ui-items/overlayBg.png");
-}
+    this.load.image("settingsBackground", "/assets/ui-items/overlayBg.png");
+  }
 
   create() {
     const { width, height } = this.sys.game.config;
+
+    // Load saved settings
+    const savedSettings = loadFromLocal("gameSettings");
+    if (savedSettings) {
+      this.musicVolume = savedSettings.musicVolume || 0.5;
+    }
 
     // Use settingsBackground image instead of rectangle
     this.add.image(width / 2, height / 2, "settingsBackground")
@@ -22,76 +32,67 @@ class OpenSettings extends Phaser.Scene {
     this.add.text(width / 2, height / 2 - 160, "Settings", {
       fontFamily: "Georgia",
       fontSize: "40px",
-      color: "#fff",
+      color: "#ffe066", // Changed to bright yellow for dark background
       fontStyle: "bold",
-      stroke: "#88ccff",
-      strokeThickness: 3,
-      shadow: { offsetX: 2, offsetY: 2, color: "#fff", blur: 2, fill: true }
+      stroke: "#2c1810", // Dark brown stroke
+      strokeThickness: 2,
+      shadow: { offsetX: 2, offsetY: 2, color: "#000", blur: 2, fill: true }
     }).setOrigin(0.5).setDepth(2);
 
-    // Music Volume
-    this.add.text(width / 2 - 150, height / 2 - 60, "Music Volume", {
+    // Music Volume Label - moved left
+    this.add.text(width / 2 - 200, height / 2 - 60, "Music Volume", {
       fontFamily: "Georgia",
       fontSize: "24px",
-      color: "#111",
+      color: "#fff", // Changed to white for better visibility
       fontStyle: "bold",
-      shadow: { offsetX: 1, offsetY: 1, color: "#fff", blur: 0, fill: true }
+      shadow: { offsetX: 1, offsetY: 1, color: "#000", blur: 1, fill: true }
     }).setOrigin(0, 0.5).setDepth(10);
 
-    this.add.rectangle(width / 2 + 40, height / 2 - 60, 200, 18, 0xcccccc)
+    // Volume bar background - moved left
+    const volumeBarBg = this.add.rectangle(width / 2 - 10, height / 2 - 60, 200, 20, 0x3e2f1c)
       .setOrigin(0, 0.5)
-      .setStrokeStyle(2, 0x567d46)
-      .setDepth(2);
-    this.add.rectangle(width / 2 + 40, height / 2 - 60, 120, 18, 0x88ccff)
-      .setOrigin(0, 0.5)
-      .setDepth(2);
+      .setStrokeStyle(2, 0x8b7355)
+      .setDepth(2)
+      .setInteractive({ useHandCursor: true });
 
-    // Fullscreen toggle
-    this.add.text(width / 2 - 150, height / 2, "Fullscreen", {
-      fontFamily: "Georgia",
-      fontSize: "24px",
-      color: "#111",
-      fontStyle: "bold",
-      shadow: { offsetX: 1, offsetY: 1, color: "#fff", blur: 0, fill: true }
-    }).setOrigin(0, 0.5).setDepth(10);
-
-    const toggleBg = this.add.rectangle(width / 2 + 40, height / 2, 70, 36, 0xcccccc)
+    // Volume bar fill - moved left
+    this.volumeFill = this.add.rectangle(width / 2 - 10, height / 2 - 60, 200 * this.musicVolume, 20, 0x4caf50)
       .setOrigin(0, 0.5)
-      .setStrokeStyle(2, 0x567d46)
-      .setDepth(2);
-    const toggleBtn = this.add.circle(width / 2 + 65, height / 2, 16, 0x88ccff)
-      .setOrigin(0.5)
       .setDepth(3);
 
-    toggleBg.setInteractive({ useHandCursor: true }).on("pointerdown", () => {
-      if (toggleBtn.x === width / 2 + 65) {
-        toggleBtn.x = width / 2 + 100;
-        this.scale.startFullscreen();
-      } else {
-        toggleBtn.x = width / 2 + 65;
-        this.scale.stopFullscreen();
-      }
-    });
+    // Volume slider handle - moved left
+    this.volumeSlider = this.add.circle(
+      width / 2 - 10 + (200 * this.musicVolume), 
+      height / 2 - 60, 
+      12, 
+      0xffe066
+    )
+      .setDepth(4)
+      .setInteractive({ useHandCursor: true });
+
+    // Volume percentage text - moved left
+    this.volumeText = this.add.text(width / 2 + 140, height / 2 - 60, `${Math.round(this.musicVolume * 100)}%`, {
+      fontFamily: "Georgia",
+      fontSize: "20px",
+      color: "#fff",
+      fontStyle: "bold"
+    }).setOrigin(0, 0.5).setDepth(10);
+
+    // Make the volume bar interactive - updated position
+    this.setupVolumeControl(volumeBarBg, width / 2 - 80, height / 2 - 60);
 
     // Helper to show a temporary message
     const showTempMessage = (msg, y) => {
       const textObj = this.add.text(width / 2, y, msg, {
         fontFamily: "Georgia",
         fontSize: "22px",
-        color: "#234",
-        backgroundColor: "#ffe066",
+        color: "#2c1810", // Dark brown text
+        backgroundColor: "#ffe066", // Yellow background
         padding: { left: 18, right: 18, top: 8, bottom: 8 }
       }).setOrigin(0.5).setDepth(20);
       this.time.delayedCall(2000, () => {
         if (textObj && !textObj.destroyed) textObj.destroy();
       });
-    // Clean up on shutdown/destroy
-    this.events.on('shutdown', () => {
-      // Add any additional cleanup if needed
-    });
-    this.events.on('destroy', () => {
-      // Add any additional cleanup if needed
-    });
     };
 
     // Helper to save wiped state to database
@@ -138,8 +139,8 @@ class OpenSettings extends Phaser.Scene {
       }
     };
 
-    // Save button
-    const saveBtn = this.add.text(width / 2 - 100, height / 2 + 140, "Save", {
+    // Save button - moved up
+    const saveBtn = this.add.text(width / 2 - 100, height / 2 + 60, "Save", {
       fontFamily: "Georgia",
       fontSize: "26px",
       color: "#fff",
@@ -157,17 +158,23 @@ class OpenSettings extends Phaser.Scene {
         const inventory = this.registry.get("inventory") || [];
         const isFullscreen = this.scale.isFullscreen;
 
+        // Save game settings including volume
+        saveToLocal("gameSettings", {
+          musicVolume: this.musicVolume,
+          isFullscreen: isFullscreen
+        });
+
         saveToLocal("botanistSave", {
           coins,
           inventory,
           isFullscreen
         });
 
-        showTempMessage("Settings & Game Saved!", height / 2 + 100);
+        showTempMessage("Settings & Game Saved!", height / 2 + 20);
       });
 
-    // Back button
-    const backBtn = this.add.text(width / 2 + 100, height / 2 + 140, "Back", {
+    // Back button - moved up
+    const backBtn = this.add.text(width / 2 + 100, height / 2 + 60, "Back", {
       fontFamily: "Georgia",
       fontSize: "26px",
       color: "#fff",
@@ -185,8 +192,8 @@ class OpenSettings extends Phaser.Scene {
         this.scene.resume("HUDScene");
       });
 
-    // Clear Save button
-    const clearBtn = this.add.text(width / 2, height / 2 + 200, "Clear Save", {
+    // Clear Save button - moved up
+    const clearBtn = this.add.text(width / 2, height / 2 + 120, "Clear Save", {
       fontFamily: "Georgia",
       fontSize: "24px",
       color: "#fff",
@@ -200,17 +207,17 @@ class OpenSettings extends Phaser.Scene {
       .on("pointerover", () => clearBtn.setStyle({ backgroundColor: "#a61b2b" }))
       .on("pointerout", () => clearBtn.setStyle({ backgroundColor: "#d7263d" }))
       .on("pointerdown", () => {
-        // Show confirmation dialog
-        const confirmBg = this.add.rectangle(width / 2, height / 2 + 200, 340, 120, 0xf5f5dc, 0.98)
+        // Show confirmation dialog - moved up
+        const confirmBg = this.add.rectangle(width / 2, height / 2 + 120, 340, 120, 0xf5f5dc, 0.98)
           .setStrokeStyle(4, 0xd7263d)
           .setDepth(30);
-        const confirmText = this.add.text(width / 2, height / 2 + 170, "Are you sure you want \n to clear this save?", {
+        const confirmText = this.add.text(width / 2, height / 2 + 90, "Are you sure you want \n to clear this save?", {
           fontFamily: "Georgia",
           fontSize: "22px",
           color: "#d7263d",
           fontStyle: "bold"
         }).setOrigin(0.5).setDepth(31);
-        const yesBtn = this.add.text(width / 2 - 60, height / 2 + 230, "Yes", {
+        const yesBtn = this.add.text(width / 2 - 60, height / 2 + 150, "Yes", {
           fontFamily: "Georgia",
           fontSize: "22px",
           color: "#fff",
@@ -218,7 +225,7 @@ class OpenSettings extends Phaser.Scene {
           fontStyle: "bold",
           padding: { left: 18, right: 18, top: 8, bottom: 8 }
         }).setOrigin(0.5).setDepth(32).setInteractive({ useHandCursor: true });
-        const noBtn = this.add.text(width / 2 + 60, height / 2 + 230, "No", {
+        const noBtn = this.add.text(width / 2 + 60, height / 2 + 150, "No", {
           fontFamily: "Georgia",
           fontSize: "22px",
           color: "#fff",
@@ -230,28 +237,24 @@ class OpenSettings extends Phaser.Scene {
         yesBtn.on("pointerdown", async () => {
           console.log("🗑️ Clear Save button clicked - starting data wipe...");
           
-          // Get character name before wiping
           const characterName = localStorage.getItem("characterName") || "Unknown";
           console.log(`📝 Character name before wipe: ${characterName}`);
           
-          // Use the comprehensive wipeAllGameData function
           const wipeSuccess = wipeAllGameData(true);
           
           if (wipeSuccess) {
             console.log("✅ All game data successfully wiped!");
             
-            // Save wiped state to database
             const dbSaveSuccess = await saveWipedStateToDB(characterName);
             
             if (dbSaveSuccess) {
               console.log("✅ Wiped state saved to database!");
-              showTempMessage("✅ All save data cleared & saved to DB! Restarting...", height / 2 + 140);
+              showTempMessage("✅ All save data cleared & saved to DB! Restarting...", height / 2 + 60);
             } else {
               console.warn("⚠️ Local data cleared but database save failed");
-              showTempMessage("✅ Local data cleared! (DB save failed)", height / 2 + 140);
+              showTempMessage("✅ Local data cleared! (DB save failed)", height / 2 + 60);
             }
             
-            // Clear in-memory inventory manager
             if (window.inventoryManager) {
               if (window.inventoryManager.clear) {
                 window.inventoryManager.clear();
@@ -263,45 +266,29 @@ class OpenSettings extends Phaser.Scene {
               }
             }
             
-            // Clear Phaser registry data
             this.registry.set("coins", 0);
             this.registry.set("inventory", []);
             this.registry.set("timeOfDay", "morning");
             
           } else {
             console.error("❌ Some data failed to clear!");
-            showTempMessage("⚠️ Some data may not have cleared properly", height / 2 + 140);
+            showTempMessage("⚠️ Some data may not have cleared properly", height / 2 + 60);
           }
 
-          // Clean up confirmation dialog
           confirmBg.destroy();
           confirmText.destroy();
           yesBtn.destroy();
           noBtn.destroy();
           
-          // Restart the game after a delay
           this.time.delayedCall(2000, () => {
             console.log("🔄 Restarting game...");
             
-            // Stop all active scenes
             const sceneManager = this.scene.manager;
             const scenesToStop = [
-              "OpenSettings",
-              "HUDScene", 
-              "PersonalGarden",
-              "MiddleGardenScene", 
-              "WallGardenScene",
-              "ShardGardenScene",
-              "GreenhouseScene",
-              "OpenJournal",
-              "OpenInventory",
-              "MiniGameScene",
-              "XOTutorialScene",
-              "XOGameScene",
-              "FishTutorialScene",
-              "FishGameScene",
-              "FlowerCatchTutorial",
-              "FlowerCatchGame"
+              "OpenSettings", "HUDScene", "PersonalGarden", "MiddleGardenScene", 
+              "WallGardenScene", "ShardGardenScene", "GreenhouseScene", "OpenJournal",
+              "OpenInventory", "MiniGameScene", "XOTutorialScene", "XOGameScene",
+              "FishTutorialScene", "FishGameScene", "FlowerCatchTutorial", "FlowerCatchGame"
             ];
             
             scenesToStop.forEach(sceneKey => {
@@ -311,7 +298,6 @@ class OpenSettings extends Phaser.Scene {
               }
             });
             
-            // Start fresh with the start scene
             this.scene.start("StartScene");
           });
         });
@@ -324,6 +310,71 @@ class OpenSettings extends Phaser.Scene {
           noBtn.destroy();
         });
       });
+
+    // Clean up on shutdown/destroy
+    this.events.on('shutdown', () => {
+      // Add any additional cleanup if needed
+    });
+    this.events.on('destroy', () => {
+      // Add any additional cleanup if needed
+    });
+  }
+
+  setupVolumeControl(volumeBarBg, barX, barY) {
+    let isDragging = false;
+
+    // Click/drag on volume bar
+    volumeBarBg.on('pointerdown', (pointer) => {
+      isDragging = true;
+      this.updateVolume(pointer, barX);
+    });
+
+    // Click/drag on volume slider
+    this.volumeSlider.on('pointerdown', () => {
+      isDragging = true;
+    });
+
+    // Global pointer move
+    this.input.on('pointermove', (pointer) => {
+      if (isDragging) {
+        this.updateVolume(pointer, barX);
+      }
+    });
+
+    // Global pointer up
+    this.input.on('pointerup', () => {
+      isDragging = false;
+    });
+  }
+
+  updateVolume(pointer, barX) {
+    const relativeX = pointer.x - barX;
+    const percentage = Phaser.Math.Clamp(relativeX / 200, 0, 1);
+    
+    this.musicVolume = percentage;
+    
+    // Update visual elements
+    this.volumeFill.setDisplaySize(200 * percentage, 20);
+    this.volumeSlider.setPosition(barX + (200 * percentage), this.volumeSlider.y);
+    this.volumeText.setText(`${Math.round(percentage * 100)}%`);
+    
+    // Apply volume to all music
+    this.updateAllMusicVolume();
+  }
+
+  updateAllMusicVolume() {
+    // Update volume for all currently playing music
+    const musicKeys = ['theme1', 'shopTheme', 'menuTheme'];
+    
+    musicKeys.forEach(key => {
+      const sound = this.sound.get(key);
+      if (sound && sound.isPlaying) {
+        sound.setVolume(this.musicVolume);
+      }
+    });
+
+    // Set global music volume for future sounds
+    this.sound.volume = this.musicVolume;
   }
 }
 

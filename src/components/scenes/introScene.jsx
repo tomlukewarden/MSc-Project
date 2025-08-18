@@ -9,9 +9,9 @@ class IntroScene extends Phaser.Scene {
     this.load.audio('letterOpen', '/assets/sound-effects/sparkle.mp3');
 
     // Preload your images (replace with your actual paths)
-    this.load.image('scene1', '/assets/intro/scene1.png');
-    this.load.image('scene2', '/assets/intro/scene2.png');
-    this.load.image('scene3', '/assets/intro/scene3.png');
+    this.load.image('scene1', '/assets/backgrounds/intro/scene1.png');
+    this.load.image('scene2', '/assets/backgrounds/intro/scene2.png');
+    this.load.image('scene3', '/assets/backgrounds/intro/scene3.png');
   }
 
   create() {
@@ -35,7 +35,7 @@ class IntroScene extends Phaser.Scene {
     let currentSceneIndex = 0;
     let displayText = '';
     let letterText = '';
-    const typeSpeed = 32;
+    const typeSpeed = 60;
 
     // Background image
     const bg = this.add.image(width / 2, height / 2, 'scene1')
@@ -68,9 +68,9 @@ class IntroScene extends Phaser.Scene {
       this.tweens.add({
         targets: bg,
         alpha: 0,
-        duration: 500,
+        duration: 750,
         onComplete: () => {
-          bg.setTexture(targetImage);
+          bg.setTexture(targetImage).setScale(0.225);
           this.tweens.add({ targets: bg, alpha: 1, duration: 500 });
         }
       });
@@ -89,7 +89,7 @@ class IntroScene extends Phaser.Scene {
             currentSceneIndex++;
             if (currentSceneIndex < scenes.length) {
               // Delay then type next part
-              this.time.delayedCall(1000, typeScene);
+              this.time.delayedCall(2000, typeScene);
             } else {
               // Done typing everything
               showPrompt();

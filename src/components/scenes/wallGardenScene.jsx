@@ -60,7 +60,6 @@ class WallGardenScene extends Phaser.Scene {
     this.load.image('autumnShard', '/assets/items/autumn.png');
     this.load.image("baseCream", "/assets/shopItems/cream.png");
     this.load.image("aloePlant", "/assets/plants/aloe.PNG");
-    this.load.image('aloeAfterSunCream', '/assets/crafting/creamRemedy.png');
     this.load.audio("option", "/assets/sound-effects/option.mp3");
        this.load.image('foxglovePlant', '/assets/plants/foxglove.png');
     this.load.image('marigoldPlant', '/assets/plants/marigold.PNG');

@@ -8,6 +8,7 @@ import itemsData from "../../items";
 import SeedPouchLogic from "../seedPouchLogic";
 import plantData from "../../plantData";
 import quests from "../../quests/quests";
+import achievements from "../../quests/achievments";
 import globalInventoryManager from "../inventoryManager";
 
 class PersonalGarden extends Phaser.Scene {
@@ -21,6 +22,11 @@ class PersonalGarden extends Phaser.Scene {
     
     // Use the global inventory manager
     this.inventoryManager = globalInventoryManager;
+    
+    // Track achievement progress
+    this.hasPlantedFirstCrop = false;
+    this.hasHarvestedFirstCrop = false;
+    this.harvestedPlantTypes = new Set();
   }
 
   preload() {
@@ -65,16 +71,15 @@ class PersonalGarden extends Phaser.Scene {
       ["garlicPlant", "/assets/plants/garlic.PNG"],
       ["thymePlant", "/assets/plants/thyme.PNG"],
       ["willowPlant", "/assets/plants/willow.PNG"],
-      ["craftingBench", "/assets/crafting/bench.png"],
+
       ["hedgeArch", "/assets/backgrounds/personal/hedgeArchway.png"],
       ["hedgeArchShadow", "/assets/backgrounds/personal/hedgeArchwayShadow.png"],
-      ["plotEmptyImg", "/assets/farming/empty.png"],
       ["plotPreparedImg", "/assets/farming/prepared.PNG"],
       ["plotPlantedImg", "/assets/farming/planted.png"],
       ["plotWateredImg", "/assets/farming/water2.png"],
-      ["plotHarvestedImg", "/assets/farming/harvested.png"],
       ["plant", "/assets/interact/plant.png"],
       ["harvest", "/assets/interact/harvest.png"],
+    
     ];
     assets.forEach(([key, path]) => this.load.image(key, path));
     this.load.audio("theme1", "/assets/music/main-theme-1.mp3");
@@ -82,10 +87,17 @@ class PersonalGarden extends Phaser.Scene {
     this.load.audio("water", "/assets/sound-effects/water.mp3");
     this.load.audio("harvest", "/assets/sound-effects/harvest.mp3");
     this.load.audio("option", "/assets/sound-effects/option.mp3");
+    this.load.image("springShard", "/assets/items/spring.png");
+    this.load.image("summerShard", "/assets/items/summer.png");
+    this.load.image("autumnShard", "/assets/items/autumn.png");
+    this.load.image("winterShard", "/assets/items/winter.png");
     this.load.tilemapTiledJSON("personalGardenMap", "/assets/maps/personalGarden.json");
   }
 
   create() {
+    // Load achievement progress
+    this.loadAchievementProgress();
+
     globalTimeManager.init(this);
     if (!globalTimeManager.startTimestamp) {
       globalTimeManager.start();
@@ -106,6 +118,31 @@ class PersonalGarden extends Phaser.Scene {
       backgroundColor: '#222',
       padding: { left: 8, right: 8, top: 4, bottom: 4 }
     }).setOrigin(0, 0).setDepth(99999);
+
+    // Add the triangle button for advancing to next day
+    const triangleButton = this.add.triangle(40 + 120, 100 + 15, 0, 20, 15, 0, 30, 20, 0x4caf50)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(99999)
+      .setScale(0.6);
+
+    triangleButton.on('pointerdown', () => {
+      globalTimeManager.advanceDay();
+      this.dayText.setText(`Day: ${globalTimeManager.getDayNumber()}`);
+      
+      // Update all plots for new day
+      this.plots.forEach(({ plot }) => {
+        plot.updateForNewDay(globalTimeManager.getDayNumber());
+      });
+      
+      // Refresh plot displays
+      this.plots.forEach(({ plot, plotText, plotRect }) => {
+        this.updatePlotText(plotText, plot);
+        this.updatePlotColor(plotRect, plot);
+        this.updatePlotStageImage(plot);
+      });
+      
+      console.log(`Advanced to day ${globalTimeManager.getDayNumber()}`);
+    });
 
     const { width, height } = this.sys.game.config;
     const scaleFactor = 0.14;
@@ -316,13 +353,29 @@ class PersonalGarden extends Phaser.Scene {
                   this.updatePlotColor(plotRect, plot);
                   this.updatePlotStageImage(plot);
 
-                  // Mark "Plant your first crop" quest as complete
-                  const cropQuest = quests.find(q => q.title === "Plant your first crop");
-                  if (result.success && cropQuest && cropQuest.active && !cropQuest.completed) {
-                    cropQuest.active = false;
-                    cropQuest.completed = true;
-                    saveToLocal("quests", quests);
-                    console.log("Quest 'Plant your first crop' completed!");
+                  if (result.success) {
+                    // Mark "Plant your first crop" quest as complete
+                    const cropQuest = quests.find(q => q.title === "Plant your first crop");
+                    if (cropQuest && cropQuest.active && !cropQuest.completed) {
+                      cropQuest.active = false;
+                      cropQuest.completed = true;
+                      saveToLocal("quests", quests);
+                      console.log("Quest 'Plant your first crop' completed!");
+                    }
+
+                    // Complete "Green Thumb" achievement on first plant
+                    if (!this.hasPlantedFirstCrop) {
+                      this.hasPlantedFirstCrop = true;
+                      this.saveAchievementProgress();
+                      
+                      const greenThumbAchievement = achievements.find(a => a.title === "Green Thumb");
+                      if (greenThumbAchievement && !greenThumbAchievement.completed) {
+                        greenThumbAchievement.completed = true;
+                        saveToLocal("achievements", achievements);
+                        console.log("Achievement 'Green Thumb' completed!");
+                        this.showAchievementNotification("Green Thumb");
+                      }
+                    }
                   }
                 }
               });
@@ -349,6 +402,13 @@ class PersonalGarden extends Phaser.Scene {
                   const plantItem = itemsData.find(i => i.key === plantKey);
                   if (plantItem) {
                     receivedItem(this, plantItem.key, plantItem.name);
+                    
+                    // Track harvested plant types for Master Gardener achievement
+                    this.harvestedPlantTypes.add(plantKey);
+                    this.saveAchievementProgress();
+                    
+                    // Complete achievements related to harvesting
+                    this.checkHarvestAchievements(plantKey);
                   }
                 }
                 // Reset plot to empty after harvest
@@ -414,21 +474,43 @@ class PersonalGarden extends Phaser.Scene {
     this.add.image(0, 0, "gardenBackground").setOrigin(0).setScale(0.221);
 
     const tentImg = this.add.image(0, 0, "tent").setOrigin(0).setScale(scaleFactor).setDepth(5);
-    // Removed: No collision for tent
+ 
+    const tentTriangleX = tentImg.x + tentImg.displayWidth / 2;
+    const tentTriangleY = tentImg.y + 60;
+    const triangleSize = 32;
+    const triangle = this.add.triangle(
+      tentTriangleX,
+      tentTriangleY,
+      0, triangleSize,
+      triangleSize / 2, 0,
+      triangleSize, triangleSize,
+      0xffe066
+    ).setDepth(10)
+      .setInteractive({ useHandCursor: true });
 
-    // ...rest of your existing code for tent interaction, crafting bench, etc...
+    const nextDayText = this.add.text(tentTriangleX, tentTriangleY - 24, "Next Day", {
+      fontFamily: "Georgia",
+      fontSize: "16px",
+      color: "#fff",
+      backgroundColor: "#222",
+      padding: { left: 8, right: 8, top: 4, bottom: 4 }
+    }).setOrigin(0.5).setDepth(11).setAlpha(0);
 
-    const benchX = 420;
-    const benchY = 180;
-    const craftingBenchImg = this.add.image(benchX, benchY, "craftingBench")
-      .setScale(0.07)
-      .setInteractive({ useHandCursor: true })
-      .setDepth(20);
-    // Removed: No collision for crafting bench - only tilemap collisions
-
-    craftingBenchImg.on("pointerdown", () => {
-      this.scene.launch('CraftUI');
-      this.scene.bringToTop('CraftUI');
+    triangle.on("pointerover", () => nextDayText.setAlpha(1));
+    triangle.on("pointerout", () => nextDayText.setAlpha(0));
+    triangle.on("pointerdown", () => {
+      this.scene.pause();
+      this.scene.launch("DayEndScene", { day: globalTimeManager.getDayNumber() });
+      this.scene.get("DayEndScene").events.once("dayEnded", () => {
+        globalTimeManager.nextDay();
+        this.plots.forEach(({ plot }) => {
+          plot.watered = false;
+        });
+        if (this.dayText) {
+          this.dayText.setText(`Day: ${globalTimeManager.getDayNumber()}`);
+        }
+        this.scene.resume();
+      });
     });
 
     this.scene.launch("HUDScene");
@@ -453,16 +535,12 @@ class PersonalGarden extends Phaser.Scene {
 
     backButton.setDepth(10);
 
-    // Restore other saved state
+    // Load other saved state including achievement progress
     if (loadedState?.currentTool) this.currentTool = loadedState.currentTool;
-    if (loadedState?.timeOfDay) {
-      globalTimeManager.dayCycle.setTimeOfDay(loadedState.timeOfDay);
-    }
-    if (loadedState?.currentDay !== undefined) {
-      globalTimeManager.currentDay = loadedState.currentDay;
-      if (this.dayText) {
-        this.dayText.setText(`Day: ${globalTimeManager.getDayNumber()}`);
-      }
+    if (loadedState?.hasPlantedFirstCrop) this.hasPlantedFirstCrop = loadedState.hasPlantedFirstCrop;
+    if (loadedState?.hasHarvestedFirstCrop) this.hasHarvestedFirstCrop = loadedState.hasHarvestedFirstCrop;
+    if (loadedState?.harvestedPlantTypes) {
+      this.harvestedPlantTypes = new Set(loadedState.harvestedPlantTypes);
     }
 
     // Shop button
@@ -536,6 +614,9 @@ class PersonalGarden extends Phaser.Scene {
       currentTool: this.currentTool,
       timeOfDay: globalTimeManager.getCurrentTimeOfDay(),
       currentDay: globalTimeManager.getDayNumber(),
+      hasPlantedFirstCrop: this.hasPlantedFirstCrop,
+      hasHarvestedFirstCrop: this.hasHarvestedFirstCrop,
+      harvestedPlantTypes: [...this.harvestedPlantTypes]
     };
     saveToLocal('personalGardenSceneState', state);
     console.log('Personal Garden state saved:', state);
@@ -587,7 +668,7 @@ class PersonalGarden extends Phaser.Scene {
         // Show the grown plant image, larger
         let plantKey = plot.seedType;
         const plantEntry = plantData.find(p => p.seedKey === plantKey || p.key === plantKey);
-        overlayKey = plantEntry ? plantEntry.key : "plotHarvestedImg";
+        overlayKey = plantEntry ? plantEntry.key : "";
         overlayScale = 0.06; // Larger for grown
       } else if (plot.state === "planted" && plot.waterCount >= 2) {
         overlayKey = "plotWateredImg";
@@ -599,7 +680,7 @@ class PersonalGarden extends Phaser.Scene {
         overlayKey = "plotWateredImg";
         overlayScale = 0.06; // Larger for watered
       } else if (plot.state === "empty") {
-        overlayKey = "plotEmptyImg";
+        overlayKey = "";
         overlayScale = 0.03;
       }
 
@@ -678,6 +759,89 @@ class PersonalGarden extends Phaser.Scene {
       }
       this.dialogueBox = null;
     }
+  }
+
+  // Check harvest-related achievements
+  checkHarvestAchievements(plantKey) {
+    // Check if this is the first harvest for any achievement that requires first harvest
+    if (!this.hasHarvestedFirstCrop) {
+      this.hasHarvestedFirstCrop = true;
+      this.saveAchievementProgress();
+
+    }
+
+    // Check Master Gardener achievement - if all plant types have been harvested
+    const allPlantKeys = plantData.map(plant => plant.key);
+    const hasHarvestedAllPlants = allPlantKeys.every(key => this.harvestedPlantTypes.has(key));
+    
+    if (hasHarvestedAllPlants) {
+      const masterGardenerAchievement = achievements.find(a => a.title === "Master Gardener");
+      if (masterGardenerAchievement && !masterGardenerAchievement.completed) {
+        masterGardenerAchievement.completed = true;
+        saveToLocal("achievements", achievements);
+        console.log("Achievement 'Master Gardener' completed!");
+        this.showAchievementNotification("Master Gardener");
+      }
+    }
+  }
+
+  // Show achievement completion notification
+  showAchievementNotification(achievementTitle) {
+    const { width, height } = this.sys.game.config;
+    
+    const notification = this.add.text(width / 2, height / 2 - 100, `🏆 Achievement Unlocked!\n${achievementTitle}`, {
+      fontFamily: "Georgia",
+      fontSize: "20px",
+      color: "#fff",
+      backgroundColor: "#d4851f",
+      padding: { left: 16, right: 16, top: 8, bottom: 8 },
+      align: "center"
+    }).setOrigin(0.5).setDepth(9999);
+
+    // Auto-hide notification after 4 seconds
+    this.time.delayedCall(4000, () => {
+      if (notification && !notification.destroyed) {
+        notification.destroy();
+      }
+    });
+
+    // Allow manual dismissal
+    notification.setInteractive().on("pointerdown", () => {
+      notification.destroy();
+    });
+  }
+
+  // Load achievement progress from localStorage
+  loadAchievementProgress() {
+    const savedProgress = localStorage.getItem("personalGardenAchievements");
+    if (savedProgress) {
+      try {
+        const parsed = JSON.parse(savedProgress);
+        this.hasPlantedFirstCrop = parsed.hasPlantedFirstCrop || false;
+        this.hasHarvestedFirstCrop = parsed.hasHarvestedFirstCrop || false;
+        this.harvestedPlantTypes = new Set(parsed.harvestedPlantTypes || []);
+      } catch (error) {
+        console.log("Error loading achievement progress:", error);
+        this.resetAchievementProgress();
+      }
+    }
+  }
+
+  // Save achievement progress to localStorage
+  saveAchievementProgress() {
+    const progress = {
+      hasPlantedFirstCrop: this.hasPlantedFirstCrop,
+      hasHarvestedFirstCrop: this.hasHarvestedFirstCrop,
+      harvestedPlantTypes: [...this.harvestedPlantTypes]
+    };
+    localStorage.setItem("personalGardenAchievements", JSON.stringify(progress));
+  }
+
+  // Reset achievement progress (for debugging or new games)
+  resetAchievementProgress() {
+    this.hasPlantedFirstCrop = false;
+    this.hasHarvestedFirstCrop = false;
+    this.harvestedPlantTypes = new Set();
   }
 }
 

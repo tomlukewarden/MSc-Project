@@ -61,12 +61,12 @@ class MiddleGardenScene extends Phaser.Scene {
     this.load.image('turtle', '/assets/npc/turtle/turtle.png');
     this.load.image('turtleHappy', '/assets/npc/turtle/happy.png');
     this.load.audio("option", "/assets/sound-effects/option.mp3");
-    this.load.image("turtleDialogueHappy", "/assets/npc/dialogue/turtleHappy.png");
-    this.load.image("turtleDialogueSad", "/assets/npc/dialogue/turtleSad.png");
+    this.load.image("turtleDialogueHappy", "/assets/npc/dialogue/turtleHappy.PNG");
+    this.load.image("turtleDialogueSad", "/assets/npc/dialogue/turtleSad.PNG");
     this.load.image("moleDialogueHappy", "/assets/npc/dialogue/moleHappy.png");
     this.load.image("moleDialogueSad", "/assets/npc/dialogue/moleSad.png");
-    this.load.image("wolfDialogueHappy", "/assets/npc/dialogue/wolfHappy.png");
-    this.load.image("wolfDialogueSad", "/assets/npc/dialogue/wolfSad.png");
+    this.load.image("wolfDialogueHappy", "/assets/npc/dialogue/wolfHappy.PNG");
+    this.load.image("wolfDialogueSad", "/assets/npc/dialogue/wolfSad.PNG");
     this.load.tilemapTiledJSON('middleGardenMap', '/assets/maps/middleGarden.json');
   }
 
