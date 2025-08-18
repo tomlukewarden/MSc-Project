@@ -1,11 +1,11 @@
 import Phaser from "phaser";
 import { getCollectedPlants } from "./journalManager";
-import plantData from "../plantData";
-import recipieData from "../recipieData";
-import buddiesData from "../buddies";
-import quests from "../quests/quests"
-import achievements from "../quests/achievments"
-import { saveToLocal, loadFromLocal } from "../utils/localStorage";
+import plantData from "../../../gameData/plantData";
+import recipieData from "../../../gameData/recipieData";
+import buddiesData from "../../../gameData/buddies";
+import quests from "../../../gameData/quests"
+import achievements from "../../../gameData/achievments"
+import { saveToLocal, loadFromLocal } from "../../../utils/localStorage";
 
 class OpenJournal extends Phaser.Scene {
   constructor() {

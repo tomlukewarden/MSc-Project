@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import { loadFromLocal } from "../../utils/localStorage";
+import { loadFromLocal } from "../../../utils/localStorage";
 
 class StartScene extends Phaser.Scene {
     constructor() {

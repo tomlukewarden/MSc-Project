@@ -2,24 +2,24 @@
 import globalInventoryManager from "../inventoryManager";
 
 import Phaser from "phaser";
-import { showDialogue, showOption, destroyDialogueUI } from "../../dialogue/dialogueUIHelpers";
+import { showDialogue, showOption, destroyDialogueUI } from "../../../dialogue/dialogueUIHelpers";
 import {
   createBee,
   beeIntroDialogues,
   beeThanksDialogues
-} from "../../characters/bee";
+} from "../../../characters/bee";
 import {
   createFairy,
   fairyIntroDialogues,
   fairyHelpDialogues,
   fairyGoodbyeDialogues
-} from "../../characters/fairy";
-import { saveToLocal, loadFromLocal } from "../../utils/localStorage";
-import { createMainChar } from "../../characters/mainChar";
-import { receivedItem } from "../../components/recievedItem";
+} from "../../../characters/fairy";
+import { saveToLocal, loadFromLocal } from "../../../utils/localStorage";
+import { createMainChar } from "../../../characters/mainChar";
+import { receivedItem } from "../../recievedItem";
 import {addPlantToJournal} from "../journalManager";
-import quests from "../../quests/quests";
-import achievements from "../../quests/achievments";
+import quests from "../../../quests/quests";
+import achievements from "../../../quests/achievments";
 
 class WeeCairScene extends Phaser.Scene {
   constructor() {

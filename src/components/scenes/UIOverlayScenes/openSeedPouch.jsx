@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import SeedPouchLogic from './seedPouchLogic';
+import SeedPouchLogic from '../../../logicHandlers/seedPouchLogic';
 
 class OpenSeedPouch extends Phaser.Scene {
   constructor() {

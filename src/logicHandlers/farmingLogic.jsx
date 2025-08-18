@@ -1,5 +1,5 @@
-import SeedPouchLogic from './seedPouchLogic';
-import itemsData from '../items';
+import SeedPouchLogic from '../components/seedPouchLogic';
+import itemsData from '../gameData/items';
 import globalTimeManager from '../day/timeManager';
 import { receivedItem } from './recievedItem';
 

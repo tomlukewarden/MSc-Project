@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import { saveToLocal, loadFromLocal, wipeAllGameData } from "../utils/localStorage";
+import { saveToLocal, loadFromLocal, wipeAllGameData } from "../../../utils/localStorage";
 
 class OpenSettings extends Phaser.Scene {
   constructor() {

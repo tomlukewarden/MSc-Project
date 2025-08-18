@@ -1,15 +1,15 @@
-import { createMainChar } from "../../characters/mainChar";
-import plantData from "../../plantData";
+import { createMainChar } from "../../../characters/mainChar";
+import plantData from "../../../gameData/plantData";
 import globalInventoryManager from "../inventoryManager";
 import { addPlantToJournal } from "../journalManager";
-import { receivedItem } from "../recievedItem";
-import { saveToLocal, loadFromLocal } from "../../utils/localStorage";
-import { showDialogue, showOption } from "../../dialogue/dialogueUIHelpers";
-import { createWolf, wolfIntroDialogues, wolfThanksDialogues } from "../../characters/wolf";
-import { createMole, moleIntroDialogues, moleThanksDialogues } from "../../characters/mole";
-import { createTurtle, turtleIntroDialogues, turtleThanksDialogues } from "../../characters/turtle";
+import { receivedItem } from "../../recievedItem";
+import { saveToLocal, loadFromLocal } from "../../../utils/localStorage";
+import { showDialogue, showOption } from "../../../dialogue/dialogueUIHelpers";
+import { createWolf, wolfIntroDialogues, wolfThanksDialogues } from "../../../characters/wolf";
+import { createMole, moleIntroDialogues, moleThanksDialogues } from "../../../characters/mole";
+import { createTurtle, turtleIntroDialogues, turtleThanksDialogues } from "../../../characters/turtle";
 import globalTimeManager from "../../day/timeManager";
-import quests from "../../quests/quests";
+import quests from "../../../gameData/quests";
 
 class MiddleGardenScene extends Phaser.Scene {
   constructor() {

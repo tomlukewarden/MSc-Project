@@ -1,13 +1,13 @@
 import Phaser from "phaser";
-import { createRabbit, rabbitIntroDialogues, rabbitThanksDialogues } from "../../characters/rabbit";
-import { createPig, pigIntroDialogues, pigThanksDialogues } from "../../characters/pig";
-import { showDialogue, showOption, destroyDialogueUI } from "../../dialogue/dialogueUIHelpers";
-import { saveToLocal, loadFromLocal } from "../../utils/localStorage";
-import { createMainChar } from "../../characters/mainChar";
+import { createRabbit, rabbitIntroDialogues, rabbitThanksDialogues } from "../../../characters/rabbit";
+import { createPig, pigIntroDialogues, pigThanksDialogues } from "../../../characters/pig";
+import { showDialogue, showOption, destroyDialogueUI } from "../../../dialogue/dialogueUIHelpers";
+import { saveToLocal, loadFromLocal } from "../../../utils/localStorage";
+import { createMainChar } from "../../../characters/mainChar";
 import globalInventoryManager from "../inventoryManager";
-import { receivedItem } from "../recievedItem";
+import { receivedItem } from "../../recievedItem";
 import globalTimeManager from "../../day/timeManager";
-import quests from "../../quests/quests";
+import quests from "../../../quests/quests";
 
 class GreenhouseScene extends Phaser.Scene {
     constructor() {

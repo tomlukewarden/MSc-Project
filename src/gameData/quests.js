@@ -1,4 +1,4 @@
-import buddiesData from "../buddies";
+import buddiesData from "./buddies";
 
 const quests = [
     {

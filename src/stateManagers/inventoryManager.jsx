@@ -1,5 +1,5 @@
 import { saveToLocal, loadFromLocal } from "../utils/localStorage";
-import plantData from "../plantData";
+import plantData from "../gameData/plantData";
 
 class GlobalInventoryManager {
   constructor() {

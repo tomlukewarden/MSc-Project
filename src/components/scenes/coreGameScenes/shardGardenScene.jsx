@@ -1,15 +1,15 @@
-import { createButterfly, butterflyPillarDialogues, butterflyShardDialogues, butterflyGoodbyeDialogues } from "../../characters/butterfly";
-import { createMainChar } from "../../characters/mainChar";
-import { saveToLocal, loadFromLocal } from "../../utils/localStorage";
-import plantData from "../../plantData";
-import { showDialogue, showOption } from "../../dialogue/dialogueUIHelpers";
-import { shardLogic } from "../shardLogic";
+import { createButterfly, butterflyPillarDialogues, butterflyShardDialogues, butterflyGoodbyeDialogues } from "../../../characters/butterfly";
+import { createMainChar } from "../../../characters/mainChar";
+import { saveToLocal, loadFromLocal } from "../../../utils/localStorage";
+import plantData from "../../../plantData";
+import { showDialogue, showOption } from "../../../dialogue/dialogueUIHelpers";
+import { shardLogic } from "../../shardLogic";
 import globalInventoryManager from "../inventoryManager";
 import { addPlantToJournal } from "../journalManager";
-import { receivedItem } from "../recievedItem";
+import { receivedItem } from "../../recievedItem";
 import globalTimeManager from "../../day/timeManager";
-import quests from "../../quests/quests";
-import achievements from "../../quests/achievments";
+import quests from "../../../quests/quests";
+import achievements from "../../../quests/achievments";
 
 class ShardGardenScene extends Phaser.Scene {
   constructor() {

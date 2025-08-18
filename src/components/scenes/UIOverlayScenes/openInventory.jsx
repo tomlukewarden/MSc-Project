@@ -1,7 +1,7 @@
 import globalInventoryManager from "./inventoryManager";
-import recipieData from "../recipieData";
-import achievements from "../quests/achievments";
-import { saveToLocal } from "../utils/localStorage";
+import recipieData from "../../../gameData/recipieData";
+import achievements from "../../../gameData/achievments";
+import { saveToLocal } from "../../../utils/localStorage";
 
 // Remove the old inventoryManager export and use the global one
 export const inventoryManager = globalInventoryManager;

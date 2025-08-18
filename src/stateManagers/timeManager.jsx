@@ -1,4 +1,4 @@
-import DayCycle from './dayCycle';
+import DayCycle from '../day/dayCycle';
 
 // Singleton GlobalTimeManager
 class GlobalTimeManager {

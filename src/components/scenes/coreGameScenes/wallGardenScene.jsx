@@ -1,15 +1,15 @@
 import Phaser from 'phaser';
-import { createButterfly, butterflyIntroDialogues } from '../../characters/butterfly';
-import { showDialogue, destroyDialogueUI, showOption } from '../../dialogue/dialogueUIHelpers';
-import { createMainChar } from '../../characters/mainChar';
-import { saveToLocal, loadFromLocal } from '../../utils/localStorage';
-import plantData from "../../plantData";
-import quests from "../../quests/quests";
+import { createButterfly, butterflyIntroDialogues } from '../../../characters/butterfly';
+import { showDialogue, destroyDialogueUI, showOption } from '../../../dialogue/dialogueUIHelpers';
+import { createMainChar } from '../../../characters/mainChar';
+import { saveToLocal, loadFromLocal } from '../../../utils/localStorage';
+import plantData from "../../../plantData";
+import quests from "../../../quests/quests";
 import { addPlantToJournal } from "../journalManager";
-import { receivedItem } from "../recievedItem";
-import { createElephant, elephantIntroDialogues, elephantThanksDialogues } from '../../characters/elephant';
-import { createPolarBear, polarBearIntroDialogues, polarBearThanksDialogues } from '../../characters/polar';
-import {createDeer, deerIntroDialogues, deerThanksDialogues} from '../../characters/deer';
+import { receivedItem } from "../../recievedItem";
+import { createElephant, elephantIntroDialogues, elephantThanksDialogues } from '../../../characters/elephant';
+import { createPolarBear, polarBearIntroDialogues, polarBearThanksDialogues } from '../../../characters/polar';
+import {createDeer, deerIntroDialogues, deerThanksDialogues} from '../../../characters/deer';
 import globalTimeManager from "../../day/timeManager";
 
 
