@@ -71,16 +71,15 @@ class PersonalGarden extends Phaser.Scene {
       ["garlicPlant", "/assets/plants/garlic.PNG"],
       ["thymePlant", "/assets/plants/thyme.PNG"],
       ["willowPlant", "/assets/plants/willow.PNG"],
-      ["craftingBench", "/assets/crafting/bench.png"],
+
       ["hedgeArch", "/assets/backgrounds/personal/hedgeArchway.png"],
       ["hedgeArchShadow", "/assets/backgrounds/personal/hedgeArchwayShadow.png"],
-      ["plotEmptyImg", "/assets/farming/empty.png"],
       ["plotPreparedImg", "/assets/farming/prepared.PNG"],
       ["plotPlantedImg", "/assets/farming/planted.png"],
       ["plotWateredImg", "/assets/farming/water2.png"],
-      ["plotHarvestedImg", "/assets/farming/harvested.png"],
       ["plant", "/assets/interact/plant.png"],
       ["harvest", "/assets/interact/harvest.png"],
+    
     ];
     assets.forEach(([key, path]) => this.load.image(key, path));
     this.load.audio("theme1", "/assets/music/main-theme-1.mp3");
@@ -88,6 +87,10 @@ class PersonalGarden extends Phaser.Scene {
     this.load.audio("water", "/assets/sound-effects/water.mp3");
     this.load.audio("harvest", "/assets/sound-effects/harvest.mp3");
     this.load.audio("option", "/assets/sound-effects/option.mp3");
+    this.load.image("springShard", "/assets/items/spring.png");
+    this.load.image("summerShard", "/assets/items/summer.png");
+    this.load.image("autumnShard", "/assets/items/autumn.png");
+    this.load.image("winterShard", "/assets/items/winter.png");
     this.load.tilemapTiledJSON("personalGardenMap", "/assets/maps/personalGarden.json");
   }
 
@@ -471,21 +474,43 @@ class PersonalGarden extends Phaser.Scene {
     this.add.image(0, 0, "gardenBackground").setOrigin(0).setScale(0.221);
 
     const tentImg = this.add.image(0, 0, "tent").setOrigin(0).setScale(scaleFactor).setDepth(5);
-    // Removed: No collision for tent
+ 
+    const tentTriangleX = tentImg.x + tentImg.displayWidth / 2;
+    const tentTriangleY = tentImg.y + 60;
+    const triangleSize = 32;
+    const triangle = this.add.triangle(
+      tentTriangleX,
+      tentTriangleY,
+      0, triangleSize,
+      triangleSize / 2, 0,
+      triangleSize, triangleSize,
+      0xffe066
+    ).setDepth(10)
+      .setInteractive({ useHandCursor: true });
 
-    // ...rest of your existing code for tent interaction, crafting bench, etc...
+    const nextDayText = this.add.text(tentTriangleX, tentTriangleY - 24, "Next Day", {
+      fontFamily: "Georgia",
+      fontSize: "16px",
+      color: "#fff",
+      backgroundColor: "#222",
+      padding: { left: 8, right: 8, top: 4, bottom: 4 }
+    }).setOrigin(0.5).setDepth(11).setAlpha(0);
 
-    const benchX = 420;
-    const benchY = 180;
-    const craftingBenchImg = this.add.image(benchX, benchY, "craftingBench")
-      .setScale(0.07)
-      .setInteractive({ useHandCursor: true })
-      .setDepth(20);
-    // Removed: No collision for crafting bench - only tilemap collisions
-
-    craftingBenchImg.on("pointerdown", () => {
-      this.scene.launch('CraftUI');
-      this.scene.bringToTop('CraftUI');
+    triangle.on("pointerover", () => nextDayText.setAlpha(1));
+    triangle.on("pointerout", () => nextDayText.setAlpha(0));
+    triangle.on("pointerdown", () => {
+      this.scene.pause();
+      this.scene.launch("DayEndScene", { day: globalTimeManager.getDayNumber() });
+      this.scene.get("DayEndScene").events.once("dayEnded", () => {
+        globalTimeManager.nextDay();
+        this.plots.forEach(({ plot }) => {
+          plot.watered = false;
+        });
+        if (this.dayText) {
+          this.dayText.setText(`Day: ${globalTimeManager.getDayNumber()}`);
+        }
+        this.scene.resume();
+      });
     });
 
     this.scene.launch("HUDScene");
@@ -589,7 +614,6 @@ class PersonalGarden extends Phaser.Scene {
       currentTool: this.currentTool,
       timeOfDay: globalTimeManager.getCurrentTimeOfDay(),
       currentDay: globalTimeManager.getDayNumber(),
-      // Save achievement progress in scene state too
       hasPlantedFirstCrop: this.hasPlantedFirstCrop,
       hasHarvestedFirstCrop: this.hasHarvestedFirstCrop,
       harvestedPlantTypes: [...this.harvestedPlantTypes]
@@ -644,7 +668,7 @@ class PersonalGarden extends Phaser.Scene {
         // Show the grown plant image, larger
         let plantKey = plot.seedType;
         const plantEntry = plantData.find(p => p.seedKey === plantKey || p.key === plantKey);
-        overlayKey = plantEntry ? plantEntry.key : "plotHarvestedImg";
+        overlayKey = plantEntry ? plantEntry.key : "";
         overlayScale = 0.06; // Larger for grown
       } else if (plot.state === "planted" && plot.waterCount >= 2) {
         overlayKey = "plotWateredImg";
@@ -656,7 +680,7 @@ class PersonalGarden extends Phaser.Scene {
         overlayKey = "plotWateredImg";
         overlayScale = 0.06; // Larger for watered
       } else if (plot.state === "empty") {
-        overlayKey = "plotEmptyImg";
+        overlayKey = "";
         overlayScale = 0.03;
       }
 
@@ -743,15 +767,7 @@ class PersonalGarden extends Phaser.Scene {
     if (!this.hasHarvestedFirstCrop) {
       this.hasHarvestedFirstCrop = true;
       this.saveAchievementProgress();
-      
-      // You can add a "First Harvest" achievement here if you have one
-      // const firstHarvestAchievement = achievements.find(a => a.title === "First Harvest");
-      // if (firstHarvestAchievement && !firstHarvestAchievement.completed) {
-      //   firstHarvestAchievement.completed = true;
-      //   saveToLocal("achievements", achievements);
-      //   console.log("Achievement 'First Harvest' completed!");
-      //   this.showAchievementNotification("First Harvest");
-      // }
+
     }
 
     // Check Master Gardener achievement - if all plant types have been harvested
