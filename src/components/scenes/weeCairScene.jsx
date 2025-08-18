@@ -2,8 +2,6 @@
 import globalInventoryManager from "../inventoryManager";
 
 import Phaser from "phaser";
-import quests from "../../quests/quests";
-import achievements from "../../quests/achievments";
 import { showDialogue, showOption, destroyDialogueUI } from "../../dialogue/dialogueUIHelpers";
 import {
   createBee,
@@ -20,7 +18,8 @@ import { saveToLocal, loadFromLocal } from "../../utils/localStorage";
 import { createMainChar } from "../../characters/mainChar";
 import { receivedItem } from "../../components/recievedItem";
 import {addPlantToJournal} from "../journalManager";
-
+import quests from "../../quests/quests";
+import achievements from "../../quests/achievments";
 
 class WeeCairScene extends Phaser.Scene {
   constructor() {
@@ -29,8 +28,14 @@ class WeeCairScene extends Phaser.Scene {
       physics: { default: "arcade", arcade: { debug: false } }
     });
     
-    // Use the global inventory manager
+    // Use the global managers
     this.inventoryManager = globalInventoryManager;
+    
+    // Track progress for conditions
+    this.hasInteractedWithFairy = false;
+    this.hasInteractedWithBee = false;
+    this.hasHelpedPaula = false;
+    this.hasReceivedFirstShard = false;
   }
 
   preload() {
@@ -69,6 +74,9 @@ class WeeCairScene extends Phaser.Scene {
   }
 
   create() {
+    // Load progress state
+    this.loadProgressState();
+
     this.scene.launch("ControlScene");
     // --- Launch HUD ---
     this.scene.launch("HUDScene");
@@ -80,16 +88,13 @@ class WeeCairScene extends Phaser.Scene {
     this.add.image(width / 2, height / 2, "weeCairBackground").setScale(scaleFactor);
 
     // --- Create tilemap collision system ---
-    console.log('Creating WeeCair tilemap collision system...');
     const map = this.make.tilemap({ key: "weeCairMap" });
-    console.log('WeeCair tilemap created:', map);
 
     // Create collision group
     const collisionGroup = this.physics.add.staticGroup();
 
     // Handle collision objects from the tilemap
     const collisionObjects = map.getObjectLayer("wee-cair-collisions");
-    console.log('wee-cair-collisions layer found:', collisionObjects);
 
     // Collision scale and offset for positioning
     const collisionScale = 0.175; // Match the background scale
@@ -97,35 +102,19 @@ class WeeCairScene extends Phaser.Scene {
     const tilemapOffsetY = 0;
 
     if (collisionObjects) {
-      console.log(`Found ${collisionObjects.objects.length} collision objects in wee-cair-collisions layer`);
-      
       collisionObjects.objects.forEach((obj, index) => {
-        console.log(`Collision object ${index}:`, {
-          x: obj.x,
-          y: obj.y,
-          width: obj.width,
-          height: obj.height,
-          properties: obj.properties
-        });
-        
         // Check for collision property
         const hasCollision = obj.properties && obj.properties.find(prop => 
           (prop.name === 'collision' && prop.value === true) ||
           (prop.name === 'collisions' && prop.value === true)
         );
         
-        console.log(`Collision object ${index} has collision:`, !!hasCollision);
-        
         if (hasCollision) {
-          console.log(`Creating collision rectangle for object ${index}`);
-          
           // Calculate position and size with scale factor and offset
           const rectX = (obj.x * collisionScale) + (obj.width * collisionScale) / 2 + tilemapOffsetX;
           const rectY = (obj.y * collisionScale) + (obj.height * collisionScale) / 2 + tilemapOffsetY;
           const rectWidth = obj.width * collisionScale;
           const rectHeight = obj.height * collisionScale;
-          
-          console.log(`Collision rect ${index} - Position: (${rectX}, ${rectY}), Size: ${rectWidth}x${rectHeight}`);
           
           // Create invisible collision rectangle
           const collisionRect = this.add.rectangle(
@@ -140,19 +129,8 @@ class WeeCairScene extends Phaser.Scene {
           // Enable physics on the collision rectangle
           this.physics.add.existing(collisionRect, true);
           collisionGroup.add(collisionRect);
-          
-          console.log(`Successfully created invisible collision rectangle ${index}`);
         }
       });
-    } else {
-      console.log('No wee-cair-collisions layer found. Available object layers:');
-      if (map.objects) {
-        map.objects.forEach((layer, index) => {
-          console.log(`Object layer ${index}:`, layer.name || 'unnamed');
-        });
-      } else {
-        console.log('No object layers found in tilemap');
-      }
     }
 
     // Pass collisionGroup to createMainChar
@@ -193,10 +171,6 @@ class WeeCairScene extends Phaser.Scene {
     // Enable collision between character and collision group
     this.physics.add.collider(char, collisionGroup);
 
-    // Enable Phaser's physics debug rendering (optional)
-    this.physics.world.createDebugGraphic();
-    this.physics.world.debugGraphic.setDepth(9999);
-
     // --- Dialogue sequence with proper bee images ---
     this.dialogueSequence = [
       { lines: fairyIntroDialogues, imageKey: "fairySad" },
@@ -226,8 +200,11 @@ class WeeCairScene extends Phaser.Scene {
       });
     };
 
-    // --- Fairy click handler ---
+    // --- Enhanced Fairy click handler ---
     fairy.on("pointerdown", () => {
+      // Mark interaction
+      this.hasInteractedWithFairy = true;
+      
       const currentImage = this.dialogueSequence[this.currentSet]?.imageKey;
       if (
         !this.dialogueActive &&
@@ -238,8 +215,11 @@ class WeeCairScene extends Phaser.Scene {
       }
     });
 
-    // --- Bee click handler ---
+    // --- Enhanced Bee click handler ---
     bee.on("pointerdown", () => {
+      // Mark interaction
+      this.hasInteractedWithBee = true;
+      
       const currentImage = this.dialogueSequence[this.currentSet]?.imageKey;
 
       // If player has foxglove, offer to give it to Paula (the bee)
@@ -247,7 +227,7 @@ class WeeCairScene extends Phaser.Scene {
         this.dialogueActive = true;
         this.updateHUDState();
         showOption(this, "Give Paula the Foxglove?", {
-          imageKey: "beeDialogueSad", // Use appropriate bee dialogue image
+          imageKey: "beeDialogueSad",
           options: [
             {
               label: "Yes",
@@ -268,7 +248,7 @@ class WeeCairScene extends Phaser.Scene {
                 destroyDialogueUI(this);
                 this.dialogueActive = true;
                 showDialogue(this, "You decide to hold off for now.", {
-                  imageKey: "beeDialogueSad" // Use appropriate bee dialogue image
+                  imageKey: "beeDialogueSad"
                 });
               }
             }
@@ -283,7 +263,7 @@ class WeeCairScene extends Phaser.Scene {
       }
     });
 
-    // --- Pointerdown handler for advancing dialogue ---
+    // --- Enhanced pointerdown handler for advancing dialogue ---
     this.input.on("pointerdown", () => {
       this.sound.play("click", { volume: 0.5 });
       if (!this.dialogueActive || !this.activeDialogue) return;
@@ -296,64 +276,61 @@ class WeeCairScene extends Phaser.Scene {
           imageKey: this.activeImageKey
         });
       } else {
+        // First dialogue set completed - manual quest handling
         if (this.currentSet === 0) { 
-         
-          const welcomeQuest = quests.find(q => q.id === 0);
-          if (welcomeQuest) {
-            welcomeQuest.active = false;
+          // Complete "Welcome to the Gardens" quest manually
+          const welcomeQuest = quests.find(q => q.title === "Welcome to the Gardens");
+          if (welcomeQuest && !welcomeQuest.completed) {
             welcomeQuest.completed = true;
-            saveToLocal("quests", quests); // Optionally persist
-            console.log("Quest 'Welcome to the Gardens' completed!");
-            
-            // Complete "First Steps" achievement
-            const firstStepsAchievement = achievements.find(a => a.title === "First Steps");
-            if (firstStepsAchievement && !firstStepsAchievement.completed) {
-              firstStepsAchievement.completed = true;
-              saveToLocal("achievements", achievements);
-              console.log("Achievement 'First Steps' completed!");
-            }
+            console.log("Completed quest: Welcome to the Gardens");
           }
-
-          // Activate "Help Paula Nator" quest
+          
+          // Activate "Help Paula Nator" quest manually
           const paulaQuest = quests.find(q => q.title === "Help Paula Nator");
-          if (paulaQuest) {
+          if (paulaQuest && !paulaQuest.active) {
             paulaQuest.active = true;
-            saveToLocal("quests", quests);
-            console.log("Quest 'Help Paula Nator' is now active!");
+            console.log("Activated quest: Help Paula Nator");
+          }
+          
+          // Check "First Steps" achievement manually
+          const firstStepsAchievement = achievements.find(a => a.title === "First Steps");
+          if (firstStepsAchievement && !firstStepsAchievement.completed) {
+            firstStepsAchievement.completed = true;
+            console.log("Completed achievement: First Steps");
           }
         }
 
         // --- After beeThanksDialogues, receive spring shard ---
         if (this.activeDialogue === beeThanksDialogues) {
-          // Complete "Help Paula Nator" quest
+          // Complete "Help Paula Nator" quest manually
           const paulaQuest = quests.find(q => q.title === "Help Paula Nator");
-          if (paulaQuest) {
-            paulaQuest.active = false;
+          if (paulaQuest && !paulaQuest.completed) {
             paulaQuest.completed = true;
-            saveToLocal("quests", quests); // Optionally persist
-            console.log("Quest 'Help Paula Nator' completed!");
+            console.log("Completed quest: Help Paula Nator");
+          }
+          
+          // Activate "Return the first Shard" quest manually
+          const shardQuest = quests.find(q => q.title === "Return the first Shard");
+          if (shardQuest && !shardQuest.active) {
+            shardQuest.active = true;
+            console.log("Activated quest: Return the first Shard");
           }
 
-          // Activate "Return the first Shard" quest
-          const shardQuest = quests.find(q => q.title === "Return the first Shard");
-          if (shardQuest && !shardQuest.active && !shardQuest.completed) {
-            shardQuest.active = true;
-            saveToLocal("quests", quests);
-            console.log("Quest 'Return the first Shard' is now active!");
-          }
+          // Mark that Paula has been helped
+          this.hasHelpedPaula = true;
 
           // Existing spring shard logic
           if (!this.springShardReceived) {
             receivedItem(this, "springShard", "Spring Shard");
             addPlantToJournal("springShard");
             this.springShardReceived = true;
+            this.hasReceivedFirstShard = true;
             
-            // Complete "Shard Collector" achievement
+            // Check "Shard Collector" achievement manually
             const shardCollectorAchievement = achievements.find(a => a.title === "Shard Collector");
             if (shardCollectorAchievement && !shardCollectorAchievement.completed) {
               shardCollectorAchievement.completed = true;
-              saveToLocal("achievements", achievements);
-              console.log("Achievement 'Shard Collector' completed!");
+              console.log("Completed achievement: Shard Collector");
             }
 
             this.time.delayedCall(1000, () => {
@@ -374,7 +351,7 @@ class WeeCairScene extends Phaser.Scene {
           this.updateHUDState();
 
           this.showStayOrGoOptions = () => {
-            showOption(this, "What would you like to do?", {
+            showOption(this, "What would you like do?", {
               imageKey: "fairyHappy",
               options: [
                 {
@@ -426,17 +403,18 @@ class WeeCairScene extends Phaser.Scene {
           receivedItem(this, "foxglovePlant", "Foxglove");
           addPlantToJournal("foxglovePlant");
           this.foxglovePlantReceived = true;
+          
+          // Check "Green Thumb" achievement manually when getting first plant
+          const greenThumbAchievement = achievements.find(a => a.title === "Green Thumb");
+          if (greenThumbAchievement && !greenThumbAchievement.completed) {
+            greenThumbAchievement.completed = true;
+            console.log("Completed achievement: Green Thumb");
+          }
         }
       }
     });
 
-    // --- Responsive: Listen for resize events
-    this.scale.on('resize', (gameSize) => {
-      const char = createMainChar(this, width, height, collisionObjects, scaleFactor);      
-      this.handleResize(gameSize);
-    });
-
-    // --- Updated foxglove handover event ---
+    // --- Enhanced foxglove handover event ---
     this.events.on("foxgloveGiven", () => {
       this.awaitingFoxgloveGive = false;
       this.hasMadeFoxgloveChoice = true;
@@ -452,7 +430,7 @@ class WeeCairScene extends Phaser.Scene {
             (set) => set.lines === beeThanksDialogues
           );
           this.activeDialogue = beeThanksDialogues;
-          this.activeImageKey = "beeDialogueHappy"; // Use proper bee dialogue image
+          this.activeImageKey = "beeDialogueHappy";
           this.currentDialogueIndex = 0;
           this.dialogueActive = true;
           this.updateHUDState();
@@ -479,6 +457,92 @@ class WeeCairScene extends Phaser.Scene {
       this.scene.launch('CraftUI');
       this.scene.bringToTop('CraftUI');
     });
+
+    // Check for "Community Builder" achievement at the end - manually
+    this.time.delayedCall(1000, () => {
+      if (this.hasInteractedWithFairy && this.hasInteractedWithBee) {
+        const communityBuilderAchievement = achievements.find(a => a.title === "Community Builder");
+        if (communityBuilderAchievement && !communityBuilderAchievement.completed) {
+          communityBuilderAchievement.completed = true;
+          console.log("Completed achievement: Community Builder");
+        }
+      }
+    });
+
+    // Save quests and achievements periodically
+    setInterval(() => {
+      saveToLocal('quests', quests);
+      saveToLocal('achievements', achievements);
+    }, 5000);
+  }
+
+  // Enhanced saveSceneState to include progress tracking
+  saveSceneState() {
+    const state = {
+      inventory: this.inventoryManager.getItems ? this.inventoryManager.getItems() : [],
+      currentSet: this.currentSet,
+      currentDialogueIndex: this.currentDialogueIndex,
+      dialogueActive: !!this.dialogueActive,
+      foxglovePlantReceived: !!this.foxglovePlantReceived,
+      springShardReceived: !!this.springShardReceived,
+      hasMadeFoxgloveChoice: !!this.hasMadeFoxgloveChoice,
+      // Save interaction progress
+      hasInteractedWithFairy: this.hasInteractedWithFairy,
+      hasInteractedWithBee: this.hasInteractedWithBee,
+      hasHelpedPaula: this.hasHelpedPaula,
+      hasReceivedFirstShard: this.hasReceivedFirstShard
+    };
+    saveToLocal('weeCairSceneState', state);
+    
+    // Also save quests and achievements
+    saveToLocal('quests', quests);
+    saveToLocal('achievements', achievements);
+  }
+
+  // Load progress state from saved data
+  loadProgressState() {
+    const sceneState = loadFromLocal('weeCairSceneState') || {};
+    
+    // Restore interaction states
+    this.hasInteractedWithFairy = sceneState.hasInteractedWithFairy || false;
+    this.hasInteractedWithBee = sceneState.hasInteractedWithBee || false;
+    this.hasHelpedPaula = sceneState.hasHelpedPaula || false;
+    this.hasReceivedFirstShard = sceneState.hasReceivedFirstShard || false;
+    
+    // Restore dialogue state
+    this.currentSet = sceneState.currentSet || 0;
+    this.currentDialogueIndex = sceneState.currentDialogueIndex || 0;
+    this.foxglovePlantReceived = sceneState.foxglovePlantReceived || false;
+    this.springShardReceived = sceneState.springShardReceived || false;
+    this.hasMadeFoxgloveChoice = sceneState.hasMadeFoxgloveChoice || false;
+    
+    // Restore inventory
+    if (sceneState.inventory && Array.isArray(sceneState.inventory)) {
+      this.inventoryManager.clear();
+      sceneState.inventory.forEach(item => this.inventoryManager.addItem(item));
+    }
+    
+    // Load quests and achievements
+    const savedQuests = loadFromLocal('quests');
+    const savedAchievements = loadFromLocal('achievements');
+    
+    if (savedQuests && Array.isArray(savedQuests)) {
+      // Update quest states
+      savedQuests.forEach((savedQuest, index) => {
+        if (quests[index]) {
+          quests[index] = { ...quests[index], ...savedQuest };
+        }
+      });
+    }
+    
+    if (savedAchievements && Array.isArray(savedAchievements)) {
+      // Update achievement states
+      savedAchievements.forEach((savedAchievement, index) => {
+        if (achievements[index]) {
+          achievements[index] = { ...achievements[index], ...savedAchievement };
+        }
+      });
+    }
   }
 
   updateHUDState() {

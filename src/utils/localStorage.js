@@ -84,12 +84,19 @@ export function wipeAllGameData(confirmWipe = false) {
     'wallGardenSceneState',
     'shardGardenSceneState',
     'greenhouseSceneState',
+    'weeCairSceneState', // Added missing scene
     'timeOfDay',
     'journalState',
     'settings',
     'HUDState',
     'quests',
-    'characterName'
+    'achievements', // Added achievements
+    'characterName',
+    'collectedPlants', // Added plants storage
+    'craftedRecipes', // Added crafted recipes
+    'globalInventory', // Added global inventory
+    'questProgress', // Added quest progress
+    'achievementProgress' // Added achievement progress
   ];
 
   let successCount = 0;
@@ -112,7 +119,15 @@ export function wipeAllGameData(confirmWipe = false) {
   const additionalKeys = [];
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i);
-    if (key && (key.includes('Scene') || key.includes('minigame') || key.includes('bush'))) {
+    if (key && (
+      key.includes('Scene') || 
+      key.includes('minigame') || 
+      key.includes('bush') ||
+      key.includes('Plant') ||
+      key.includes('Shard') ||
+      key.includes('Recipe') ||
+      key.includes('Buddy')
+    )) {
       additionalKeys.push(key);
     }
   }
