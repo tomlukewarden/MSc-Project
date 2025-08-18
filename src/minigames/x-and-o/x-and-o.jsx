@@ -110,15 +110,13 @@ class XOGameScene extends Phaser.Scene {
 
       const cell = this.add.image(x, y, null)
         .setDisplaySize(this.cellSize * 0.6, this.cellSize * 0.6)
-        .setDepth(-1) // Set depth to -1 to make them behind everything
-        .setAlpha(0) // Make them completely transparent
         .setInteractive({ useHandCursor: true })
         .on("pointerdown", () => this.handleMove(i, cell));
 
       this.cells.push(cell);
     }
     
-    console.log("[XOGameScene] Created fresh interactive board with transparent cells");
+    console.log("[XOGameScene] Created fresh interactive board");
   }
 
   handleMove(index, cell) {
@@ -128,9 +126,7 @@ class XOGameScene extends Phaser.Scene {
     this.board[index] = this.currentPlayer;
     const iconKey = this.currentPlayer === "X" ? "xIcon" : "oIcon";
     cell.setTexture(iconKey);
-    cell.setDisplaySize(this.cellSize * 0.6, this.cellSize * 0.6);
-    cell.setAlpha(1); // Make visible when placing X or O
-    cell.setDepth(10); // Bring to front when placing icons
+    cell.setDisplaySize(this.cellSize * 0.6, this.cellSize * 0.6); 
 
     if (this.checkWinner()) {
       this.statusText.setText(`Player ${this.currentPlayer} wins!`);
@@ -265,7 +261,7 @@ class XOGameScene extends Phaser.Scene {
     // Reset status text
     this.statusText.setText("Player X's turn");
     
-    console.log("[XOGameScene] Board reset complete - all tiles cleared and re-enabled with transparent cells");
+    console.log("[XOGameScene] Board reset complete - all tiles cleared and re-enabled");
   }
 
   checkWinner() {
