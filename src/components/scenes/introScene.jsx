@@ -70,7 +70,7 @@ class IntroScene extends Phaser.Scene {
         alpha: 0,
         duration: 750,
         onComplete: () => {
-          bg.setTexture(targetImage);
+          bg.setTexture(targetImage).setScale(0.225);
           this.tweens.add({ targets: bg, alpha: 1, duration: 500 });
         }
       });
