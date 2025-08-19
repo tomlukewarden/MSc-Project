@@ -10,7 +10,7 @@ class MiniGameScene extends Phaser.Scene {
     this.cameras.main.setBackgroundColor("#b3e6ff");
 
 
-    const minigames = [ "XOTutorialScene", "FishTutorialScene", "FlowerCatchTutorial"]; 
+    const minigames = [ "XOTutorialScene","FishTutorialScene", "FlowerCatchTutorial"]; 
     // Pick a random minigame
     const chosenMinigame = minigames[Math.floor(Math.random() * minigames.length)];
 
