@@ -89,7 +89,7 @@ Plants are hidden throughout the garden in interactive bushes. When you find one
 - **WASD**: Move your character around the garden
 - **Mouse**: Interact with NPCs, bushes, shop items, and UI elements
 - **Click**: Advance dialogue, select options, and play minigames
-- **ESC**: Access pause menu (if implemented)
+- **ESC**: Access pause menu
 
 ## Save System
 
@@ -113,7 +113,7 @@ The game automatically saves your progress including:
 
 ### Adding New Plants
 
-1. Add plant data to `src/data/plantData.jsx`
+1. Add plant data to `src/data/plantData.js`
 2. Place plant artwork in `public/assets/plants/`
 3. Configure bush locations in scene files
 4. Test minigame integration
