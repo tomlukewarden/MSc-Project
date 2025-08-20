@@ -47,6 +47,7 @@ class GreenhouseScene extends Phaser.Scene {
         this.load.image('lavenderOil', '/assets/crafting/lavenderOil.png');
         this.load.image('aloeAfterSunCream', '/assets/crafting/creamRemedy.png');
         this.load.tilemapTiledJSON("greenhouseMap", "/assets/maps/greenhouseMap.json");
+        this.load.image("exit", "/assets/signs/wallGardenSign.png");
     }
 
     create() {
@@ -82,8 +83,12 @@ class GreenhouseScene extends Phaser.Scene {
         const { width, height } = this.sys.game.config;
         const scaleFactor = 0.175;
 
-        this.add.image(width / 2, height / 2, "greenhouseBackground").setScale(scaleFactor);
 
+        this.add.image(width / 2, height / 2, "greenhouseBackground").setScale(scaleFactor);
+this.add.image(width - 100, height - 100, "exit")
+            .setScale(0.15)
+            .setOrigin(0.5)
+            
         // --- Create tilemap collision system ---
         console.log('Creating Greenhouse tilemap collision system...');
         const map = this.make.tilemap({ key: "greenhouseMap" });

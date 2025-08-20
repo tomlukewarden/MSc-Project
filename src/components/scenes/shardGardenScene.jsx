@@ -85,6 +85,7 @@ class ShardGardenScene extends Phaser.Scene {
     this.load.image('thymePlant', '/assets/plants/thyme.PNG');
     this.load.image('willowPlant', '/assets/plants/willow.PNG');
     this.load.tilemapTiledJSON("shardGardenMap", "/assets/maps/shardGarden.json");
+    this.load.image("middleGardenSign", "/assets/signs/middleGardenL.PNG");
   }
 
   create() {
@@ -305,6 +306,40 @@ class ShardGardenScene extends Phaser.Scene {
 
     // --- Butterfly interaction ---
     this.setupButterflyInteraction(butterfly, talkIcon);
+
+    // --- Middle Garden Sign (Left side) ---
+    const middleGardenSignX = 120;
+    const middleGardenSignY = height / 2 +  100;
+    const middleGardenSign = this.textures.exists('middleGardenSign')
+      ? this.add.image(middleGardenSignX, middleGardenSignY, 'middleGardenSign')
+        .setScale(0.15)
+        .setDepth(50)
+        .setInteractive({ useHandCursor: true })
+      : this.add.text(middleGardenSignX, middleGardenSignY, 'Missing: middleGardenSign', { 
+          fontSize: '16px', 
+          color: '#f00', 
+          backgroundColor: '#fff' 
+        }).setOrigin(0.5).setDepth(999);
+
+    if (this.textures.exists('middleGardenSign')) {
+      middleGardenSign.on('pointerover', () => {
+        middleGardenSign.setTint(0xcccccc);
+      });
+      
+      middleGardenSign.on('pointerout', () => {
+        middleGardenSign.clearTint();
+      });
+      
+      middleGardenSign.on('pointerdown', () => {
+        if (!this.transitioning) {
+          this.transitioning = true;
+          this.scene.start("LoaderScene", {
+            nextSceneKey: "MiddleGardenScene",
+            nextSceneData: {}
+          });
+        }
+      });
+    }
 
     // --- Setup bushes ---
     this.setupBushes(width, height);

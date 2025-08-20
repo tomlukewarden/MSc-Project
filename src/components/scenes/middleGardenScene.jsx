@@ -68,6 +68,8 @@ class MiddleGardenScene extends Phaser.Scene {
     this.load.image("wolfDialogueHappy", "/assets/npc/dialogue/wolfHappy.PNG");
     this.load.image("wolfDialogueSad", "/assets/npc/dialogue/wolfSad.PNG");
     this.load.tilemapTiledJSON('middleGardenMap', '/assets/maps/middleGarden.json');
+    this.load.image("wallGardenSign", "/assets/signs/wallGardenL.PNG");
+    this.load.image("mainGardenSign", "/assets/signs/mainGardenR.png");
   }
 
   create() {
@@ -106,6 +108,51 @@ class MiddleGardenScene extends Phaser.Scene {
     if (sceneState.timeOfDay) {
       globalTimeManager.dayCycle.setTimeOfDay(sceneState.timeOfDay);
     }
+
+
+        // --- Wall Garden Sign (Left side) ---
+        const wallGardenSign = this.add.image(100, 600, "wallGardenSign").setScale(0.15).setOrigin(0.5).setDepth(100);
+        wallGardenSign.setInteractive({ useHandCursor: true });
+
+        wallGardenSign.on('pointerover', () => {
+          wallGardenSign.setTint(0xcccccc);
+        });
+
+        wallGardenSign.on('pointerout', () => {
+          wallGardenSign.clearTint();
+        });
+
+        wallGardenSign.on('pointerdown', () => {
+          if (!this.transitioning) {
+            this.transitioning = true;
+            this.scene.start("LoaderScene", {
+              nextSceneKey: "WallGardenScene", // Fixed: removed extra space
+              nextSceneData: {}
+            });
+          }
+        });
+
+        // --- Main Garden Sign (Right side) - Goes to Shard Garden ---
+        const mainGardenSign = this.add.image(1000, 600, "mainGardenSign").setScale(0.15).setOrigin(0.5).setDepth(100);
+        mainGardenSign.setInteractive({ useHandCursor: true });
+
+        mainGardenSign.on('pointerover', () => {
+          mainGardenSign.setTint(0xcccccc);
+        });
+
+        mainGardenSign.on('pointerout', () => {
+          mainGardenSign.clearTint();
+        });
+
+        mainGardenSign.on('pointerdown', () => {
+          if (!this.transitioning) {
+            this.transitioning = true;
+            this.scene.start("LoaderScene", {
+              nextSceneKey: "ShardGardenScene",
+              nextSceneData: {}
+            });
+          }
+        });
 
     // Asset existence check helper
     const safeAddImage = (scene, x, y, key, ...args) => {
