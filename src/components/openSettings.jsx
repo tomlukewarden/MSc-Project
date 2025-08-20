@@ -60,16 +60,6 @@ class OpenSettings extends Phaser.Scene {
       .setOrigin(0, 0.5)
       .setDepth(3);
 
-    // Volume slider handle - moved left
-    this.volumeSlider = this.add.circle(
-      width / 2 - 10 + (200 * this.musicVolume), 
-      height / 2 - 60, 
-      12, 
-      0xffe066
-    )
-      .setDepth(4)
-      .setInteractive({ useHandCursor: true });
-
     // Volume percentage text - moved left
     this.volumeText = this.add.text(width / 2 + 140, height / 2 - 60, `${Math.round(this.musicVolume * 100)}%`, {
       fontFamily: "Georgia",

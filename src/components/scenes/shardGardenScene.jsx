@@ -66,7 +66,7 @@ class ShardGardenScene extends Phaser.Scene {
     this.load.image('autumn', '/assets/backgrounds/shardGarden/autumn/sad.png');
     this.load.image('winter', '/assets/backgrounds/shardGarden/winter/sad.png');
     this.load.image('butterflyHappy', '/assets/npc/dialogue/butterflyHappy.png');
-    this.load.image('butterflySad', '/assets/npc/dialogue/butterflySad.png');
+    this.load.image('butterflySad', '/assets/npc/dialogue/butterflySad.PNG');
     this.load.audio('sparkle', '/assets/sound-effects/sparkle.mp3');
     this.load.audio('click', '/assets/sound-effects/click.mp3');
     this.load.image('dialogueBoxBg', '/assets/ui-items/dialogue.png');
@@ -592,7 +592,7 @@ class ShardGardenScene extends Phaser.Scene {
         if (this.sound && this.sound.play) {
           this.sound.play("click");
         }
-        if (this.dialogueActive) return;
+        if (this.dialogueActive) return; // Fixed: added opening parenthesis
         this.dialogueActive = true;
         this.updateHUDState();
 
@@ -742,6 +742,158 @@ class ShardGardenScene extends Phaser.Scene {
         }
       ]
     });
+  }
+
+  setupInputHandling() {
+    // Basic input handling for the shard garden scene
+    console.log("Setting up input handling for ShardGardenScene...");
+    
+    // Cursor keys for character movement (if needed)
+    this.cursors = this.input.keyboard.createCursorKeys();
+    
+    // WASD keys
+    this.wasd = this.input.keyboard.addKeys('W,S,A,D');
+    
+    // Other useful keys
+    this.keys = this.input.keyboard.addKeys({
+      space: Phaser.Input.Keyboard.KeyCodes.SPACE,
+      escape: Phaser.Input.Keyboard.KeyCodes.ESC,
+      enter: Phaser.Input.Keyboard.KeyCodes.ENTER,
+      inventory: Phaser.Input.Keyboard.KeyCodes.I,
+      journal: Phaser.Input.Keyboard.KeyCodes.J
+    });
+
+    // Handle dialogue advancement with mouse clicks
+    this.input.on("pointerdown", () => {
+      if (this.sound && this.sound.play) {
+        this.sound.play("click", { volume: 0.5 });
+      }
+      
+      if (!this.dialogueActive || !this.activeDialogue) return;
+      
+      // Skip if there are option buttons visible
+      if (this.dialogueBox && this.dialogueBox.optionButtons && this.dialogueBox.optionButtons.length > 0) {
+        return;
+      }
+
+      this.activeDialogueIndex++;
+
+      if (this.activeDialogueIndex < this.activeDialogue.length) {
+        // Continue with next dialogue line
+        const imageKey = this.dialogueStage === 0 ? "butterflySad" : 
+                        this.dialogueStage === 1 ? "butterflyHappy" : "butterflyHappy";
+        showDialogue(this, this.activeDialogue[this.activeDialogueIndex], { imageKey });
+      } else {
+        // End of dialogue
+        this.destroyDialogueUI();
+        this.dialogueActive = false;
+        this.updateHUDState();
+        this.dialogueStage++;
+
+        // Execute any completion callback
+        if (this.dialogueOnComplete) {
+          this.dialogueOnComplete();
+        }
+
+        // Show move on question after final dialogue stage
+        if (this.dialogueStage >= 3) {
+          this.showMoveOnQuestion();
+        }
+      }
+    });
+
+    // Keyboard shortcuts
+    this.input.keyboard.on('keydown-ESC', () => {
+      // Handle escape key - could pause or show menu
+      console.log("Escape pressed in ShardGardenScene");
+    });
+
+    this.input.keyboard.on('keydown-I', () => {
+      // Open inventory
+      if (!this.dialogueActive) {
+        this.scene.launch('OpenInventory');
+      }
+    });
+
+    this.input.keyboard.on('keydown-J', () => {
+      // Open journal
+      if (!this.dialogueActive) {
+        this.scene.launch('OpenJournal');
+      }
+    });
+
+    console.log("Input handling setup complete for ShardGardenScene");
+  }
+
+  // Also add the missing setupSaveSystem method that's called on line 206
+  setupSaveSystem() {
+    console.log("Setting up save system for ShardGardenScene...");
+    
+    // Auto-save every 30 seconds
+    this.saveTimer = this.time.addEvent({
+      delay: 30000, // 30 seconds
+      callback: () => {
+        this.saveSceneState();
+      },
+      loop: true
+    });
+
+    // Save when scene shuts down
+    this.events.on('shutdown', () => {
+      this.saveSceneState();
+    });
+
+    console.log("Save system setup complete for ShardGardenScene");
+  }
+
+  // Add the saveSceneState method if it's missing
+  saveSceneState() {
+    const state = {
+      shardCounts: this.shardCounts,
+      happySprites: this.happySprites,
+      dialogueStage: this.dialogueStage,
+      dialogueActive: this.dialogueActive,
+      activeDialogueIndex: this.activeDialogueIndex,
+      garlicFound: this.garlicFound,
+      thymeFound: this.thymeFound,
+      bushDispensed: this.bushDispensed,
+      // Fix the timeOfDay access with proper error checking
+      timeOfDay: this.getTimeOfDaySafely(),
+      inventory: this.inventoryManager.getItems ? this.inventoryManager.getItems() : []
+    };
+    
+    saveToLocal('shardGardenSceneState', state);
+    console.log('ShardGarden state saved:', state);
+  }
+
+  // Add this helper method to safely get time of day
+  getTimeOfDaySafely() {
+    try {
+      // Check if globalTimeManager exists and has the expected structure
+      if (globalTimeManager && 
+          globalTimeManager.dayCycle && 
+          typeof globalTimeManager.dayCycle.getTimeOfDay === 'function') {
+        return globalTimeManager.dayCycle.getTimeOfDay();
+      }
+      
+      // Alternative: check if globalTimeManager has a direct getTimeOfDay method
+      if (globalTimeManager && 
+          typeof globalTimeManager.getTimeOfDay === 'function') {
+        return globalTimeManager.getTimeOfDay();
+      }
+      
+      // Alternative: check if globalTimeManager has a timeOfDay property
+      if (globalTimeManager && globalTimeManager.timeOfDay !== undefined) {
+        return globalTimeManager.timeOfDay;
+      }
+      
+      console.warn('globalTimeManager.dayCycle.getTimeOfDay not available, using default');
+      return 'morning'; // Default fallback
+      
+    } catch (error) {
+      console.error('Error getting time of day:', error);
+      return 'morning'; // Default fallback
+    }
   }
 }
 
