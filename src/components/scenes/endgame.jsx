@@ -10,9 +10,9 @@ class EndGameScene extends Phaser.Scene {
     this.load.audio('theme1', '/assets/music/main-theme-1.mp3');
 
     // Load your end scene images
-    this.load.image('ending1', '/assets/end/ending1.png');
-    this.load.image('ending2', '/assets/end/ending2.png');
-    this.load.image('ending3', '/assets/end/ending3.png');
+    this.load.image('ending1', '/assets/backgrounds/end/ending1.png');
+    this.load.image('ending2', '/assets/backgrounds/end/ending2.png');
+    this.load.image('ending3', '/assets/backgrounds/end/ending3.png');
   }
 
   create() {
@@ -46,7 +46,7 @@ class EndGameScene extends Phaser.Scene {
 
     const bg = this.add.image(width / 2, height / 2, 'ending1')
       .setAlpha(0)
-      .setScale(0.8)
+      .setScale(0.225)
       .setDepth(0);
 
     this.tweens.add({ targets: bg, alpha: 1, duration: 1000 });

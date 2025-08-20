@@ -91,7 +91,7 @@ const recipieData = [
         { key: 'oilBase', amount: 1 },
         ],
         order: ['thymePlant', 'oilBase', 'thymePlant'],
-        description: 'An infused oil made from thyme, known for its culinary and medicinal properties.',
+        description: 'An infused oil made from thyme, known for its culinary and medicinal properties. It hasben proven to be effective in treating coughs and colds.',
         result: { key: 'thymeInfusedOil', name: 'Thyme Infused Oil', imageKey: 'thymeInfusedOil', amount: 1 },
         imageKey: 'thymeInfusedOil',
     },
@@ -103,7 +103,7 @@ const recipieData = [
         { key: 'teaBag', amount: 1 },
         ],
         order: ['willowPlant', 'teaBag', 'willowPlant'],
-    description: 'A herbal tea made from willow bark, known for its pain-relieving properties.',
+    description: 'A herbal tea made from willow bark, known for its pain-relieving properties. It has been used for centuries to treat fevers and other pains.',
         result: { key: 'willowBarkTea', name: 'Willow Bark Tea', imageKey: 'willowBarkTea', amount: 1 },
         imageKey: 'willowBarkTea',
     }
