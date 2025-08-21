@@ -244,13 +244,6 @@ class OpenInventory extends Phaser.Scene {
             this.scene.stop();
             return;
           }
-          if (middleGardenScene.awaitingMarigoldSalveGive && item.key === "marigoldSalve") {
-            globalInventoryManager.removeItemByKey("marigoldSalve");
-            middleGardenScene.events.emit("marigoldSalveGiven");
-            middleGardenScene.awaitingMarigoldSalveGive = false;
-            this.scene.stop();
-            return;
-          }
           if (middleGardenScene.awaitingGarlicPasteGive && item.key === "garlicPaste") {
             globalInventoryManager.removeItemByKey("garlicPaste");
             middleGardenScene.events.emit("garlicPasteGiven");
@@ -267,7 +260,7 @@ class OpenInventory extends Phaser.Scene {
           }
         }
 
-        // WallGardenScene
+        // WallGardenScene - ADD THE MISSING HANDLERS
         const wallGardenScene = this.scene.get('WallGardenScene');
         if (wallGardenScene) {
           if (wallGardenScene.awaitingJasmineTeaGive && item.key === "jasmineTea") {
@@ -284,9 +277,37 @@ class OpenInventory extends Phaser.Scene {
             this.scene.stop();
             return;
           }
+          // ADD THE MISSING MARIGOLD SALVE HANDLER:
+          if (wallGardenScene.awaitingMarigoldSalveGive && item.key === "marigoldSalve") {
+            globalInventoryManager.removeItemByKey("marigoldSalve");
+            wallGardenScene.events.emit("marigoldSalveGiven");
+            wallGardenScene.awaitingMarigoldSalveGive = false;
+            this.scene.stop();
+            return;
+          }
         }
 
-        // Add more scenes/NPCs and items as needed, following the same pattern
+        // Add debug logging to see what's happening when you click
+        console.log('Clicked item:', item);
+        console.log('Available scenes and their awaiting flags:');
+        
+        if (weeCairScene) {
+          console.log('WeeCairScene - awaitingFoxgloveGive:', weeCairScene.awaitingFoxgloveGive);
+        }
+        if (greenhouseScene) {
+          console.log('GreenhouseScene - awaitingAloeAfterSunCreamGive:', greenhouseScene.awaitingAloeAfterSunCreamGive);
+          console.log('GreenhouseScene - awaitingLavenderOilGive:', greenhouseScene.awaitingLavenderOilGive);
+        }
+        if (middleGardenScene) {
+          console.log('MiddleGardenScene - awaitingPeriwinkleExtractGive:', middleGardenScene.awaitingPeriwinkleExtractGive);
+          console.log('MiddleGardenScene - awaitingGarlicPasteGive:', middleGardenScene.awaitingGarlicPasteGive);
+          console.log('MiddleGardenScene - awaitingThymeInfusedOilGive:', middleGardenScene.awaitingThymeInfusedOilGive);
+        }
+        if (wallGardenScene) {
+          console.log('WallGardenScene - awaitingJasmineTeaGive:', wallGardenScene.awaitingJasmineTeaGive);
+          console.log('WallGardenScene - awaitingWillowBarkTeaGive:', wallGardenScene.awaitingWillowBarkTeaGive);
+          console.log('WallGardenScene - awaitingMarigoldSalveGive:', wallGardenScene.awaitingMarigoldSalveGive);
+        }
       });
     });
   }
@@ -341,34 +362,111 @@ class OpenInventory extends Phaser.Scene {
 
       // Craft functionality on background click
       bg.on("pointerdown", () => {
+        alert(`🔨 Starting craft process for: ${recipe.result.name}`);
+        
+        // Debug recipe structure
+        alert(`📋 Recipe Debug:
+ID: ${recipe.id}
+Result Key: ${recipe.result.key}
+Result Name: ${recipe.result.name}
+Result ImageKey: ${recipe.result.imageKey}`);
+
         // Check inventory for required items
         const items = globalInventoryManager.getItems();
+        alert(`📦 Current inventory has ${items.length} items:
+${items.map(item => `- ${item.key} (${item.count})`).join('\n')}`);
+
         const missing = recipe.ingredients.filter(ingredient => {
           const invItem = items.find(i => i.key === ingredient.key);
-          return !invItem || typeof invItem.count !== "number" || invItem.count < ingredient.amount;
+          const hasEnough = invItem && typeof invItem.count === "number" && invItem.count >= ingredient.amount;
+          
+          alert(`🔍 Checking ingredient: ${ingredient.key}
+Needed: ${ingredient.amount}
+Found in inventory: ${invItem ? invItem.count : 0}
+Has enough: ${hasEnough}`);
+          
+          return !hasEnough;
         });
         
         if (missing.length > 0) {
-          // Show missing items message
+          alert(`❌ Missing ingredients:
+${missing.map(i => `${i.amount}x ${i.key}`).join(', ')}`);
+          
           const msg = "Not enough items to craft!\nMissing: " + missing.map(i => `${i.amount}x ${i.key}`).join(", ");
           this.showCraftingMessage(msg, "#a33");
           return;
         }
 
+        alert(`✅ All ingredients available! Starting crafting process...`);
+
         // Remove ingredients from inventory
         recipe.ingredients.forEach(ingredient => {
-          globalInventoryManager.removeItemByKey &&
+          alert(`🗑️ Removing ${ingredient.amount}x ${ingredient.key} from inventory`);
+          
+          if (globalInventoryManager.removeItemByKey) {
             globalInventoryManager.removeItemByKey(ingredient.key, ingredient.amount);
+            alert(`✅ Successfully removed ${ingredient.key}`);
+          } else {
+            alert(`❌ ERROR: removeItemByKey function not found!`);
+          }
         });
         
+        // Debug what we're about to add
+        const keyToAdd = recipe.result.key;
+        const nameToAdd = recipe.result.name;
+        
+        alert(`📝 About to add item:
+Key: "${keyToAdd}"
+Name: "${nameToAdd}"
+Count: 1`);
+
         // Add crafted item to inventory
-        globalInventoryManager.addItem({ key: recipe.result.key, name: recipe.result.name });
+        const itemToAdd = { 
+          key: keyToAdd, 
+          name: nameToAdd, 
+          count: 1 
+        };
+        
+        alert(`🎯 Calling globalInventoryManager.addItem with:
+${JSON.stringify(itemToAdd, null, 2)}`);
+
+        if (globalInventoryManager.addItem) {
+          globalInventoryManager.addItem(itemToAdd);
+          alert(`✅ addItem function called`);
+        } else {
+          alert(`❌ ERROR: addItem function not found!`);
+        }
+
+        // Check what was actually added
+        const itemsAfterCrafting = globalInventoryManager.getItems();
+        alert(`📋 Inventory after crafting (${itemsAfterCrafting.length} items):
+${itemsAfterCrafting.map(item => `- ${item.key} (${item.count})`).join('\n')}`);
+
+        // Look for the specific item we just added
+        const addedItem = itemsAfterCrafting.find(item => 
+          item.key === keyToAdd || 
+          item.key.includes(keyToAdd) || 
+          item.name === nameToAdd
+        );
+        
+        if (addedItem) {
+          alert(`🎉 Found added item:
+Key: "${addedItem.key}"
+Name: "${addedItem.name}"
+Count: ${addedItem.count}`);
+        } else {
+          alert(`❌ ERROR: Could not find the added item in inventory!
+Looking for key: "${keyToAdd}"
+Looking for name: "${nameToAdd}"`);
+        }
 
         // Track this recipe as crafted
         this.craftedRecipes.add(recipe.id);
+        alert(`📊 Added recipe ${recipe.id} to crafted recipes set`);
 
         // Save crafted recipes
         this.saveCraftedRecipes();
+        alert(`💾 Saved crafted recipes to localStorage`);
 
         // Check and complete achievements
         this.checkCraftingAchievements();
@@ -376,8 +474,11 @@ class OpenInventory extends Phaser.Scene {
         // Show crafted message
         const craftedMsg = `Crafted: ${recipe.result.name}`;
         this.showCraftingMessage(craftedMsg, "#567d46");
+        alert(`🎊 Showing success message: ${craftedMsg}`);
 
+        alert(`🔄 About to refresh UI...`);
         this.refreshUI();
+        alert(`✅ UI refreshed! Crafting process complete.`);
       });
 
       const objectsToAdd = [bg, nameText, ingredientsText];

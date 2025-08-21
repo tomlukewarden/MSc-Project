@@ -12,6 +12,7 @@ import { createPolarBear, polarBearIntroDialogues, polarBearThanksDialogues } fr
 import {createDeer, deerIntroDialogues, deerThanksDialogues} from '../../characters/deer';
 import globalTimeManager from "../../day/timeManager";
 import { addCompanionToScene } from '../../characters/companion';
+import globalInventoryManager from '../inventoryManager';
 
 
 class WallGardenScene extends Phaser.Scene {
@@ -23,6 +24,7 @@ class WallGardenScene extends Phaser.Scene {
     this.dialogueOnComplete = null;
     this.mainChar = null;
     this.transitioning = false;
+    this.butterflyIntroComplete = false; // Add this property
   }
 
   preload() {
@@ -182,31 +184,28 @@ class WallGardenScene extends Phaser.Scene {
     globalTimeManager.start();
   }
   
-    if (typeof window !== "undefined") {
-      window.inventoryManager = inventoryManager;
-    }
     this.scene.launch('HUDScene');
     const { width, height } = this.sys.game.config;
     const scaleFactor = 0.175;
 
     // --- LOAD STATE FROM LOCAL STORAGE ---
     const sceneState = loadFromLocal('wallGardenSceneState') || {};
-    // Restore inventory if present (assumes inventoryManager is imported)
-    if (sceneState.inventory && Array.isArray(sceneState.inventory)) {
-      inventoryManager.clear();
-      sceneState.inventory.forEach(item => inventoryManager.addItem(item));
-    }
-    // Restore periwinkleFound (for bush logic)
-    let periwinkleFound = !!sceneState.periwinkleFound;
-    // Restore butterfly dialogue state
+    
+   console.log('Current inventory items:', globalInventoryManager.getItems());
+    
+    // Restore other scene-specific state
     this.butterflyDialogueIndex = sceneState.butterflyDialogueIndex || 0;
     this.butterflyDialogueActive = !!sceneState.butterflyDialogueActive;
     this.dialogueActive = !!sceneState.dialogueActive;
+    this.butterflyIntroComplete = !!sceneState.butterflyIntroComplete;
+    
     // Restore time of day
     if (sceneState.timeOfDay) {
       globalTimeManager.dayCycle.setTimeOfDay(sceneState.timeOfDay);
     }
 
+    // Restore butterfly intro completion status
+    this.butterflyIntroComplete = !!sceneState.butterflyIntroComplete;
     // --- Restore dialogue UI if needed ---
     // Only restore if dialogue was active when leaving
     if (this.butterflyDialogueActive) {
@@ -279,20 +278,20 @@ class WallGardenScene extends Phaser.Scene {
     this.elephantDialogueActive = false;
     this.elephantDialogueIndex = 0;
     // Change required item to Jasmine Tea
-    this.hasJasmineTea = () => inventoryManager.hasItemByKey && inventoryManager.hasItemByKey("jasmineTea");
+    this.hasJasmineTea = () => globalInventoryManager.hasItemByKey && globalInventoryManager.hasItemByKey("jasmineTea");
 
     // Listen for jasmineTea handover event from inventory
     this.events.on("jasmineTeaGiven", () => {
       this.awaitingJasmineTeaGive = false;
       // Remove ALL jasmineTea items from inventory as a failsafe
-      if (typeof inventoryManager.getItems === "function" && typeof inventoryManager.removeItemByKey === "function") {
-        let items = inventoryManager.getItems();
+      if (typeof globalInventoryManager.getItems === "function" && typeof globalInventoryManager.removeItemByKey === "function") {
+        let items = globalInventoryManager.getItems();
         let teaCount = items.filter(item => item.key === "jasmineTea").length;
         for (let i = 0; i < teaCount; i++) {
-          inventoryManager.removeItemByKey("jasmineTea");
+          globalInventoryManager.removeItemByKey("jasmineTea");
         }
       }
-      const items = typeof inventoryManager.getItems === "function" ? inventoryManager.getItems() : [];
+      const items = typeof globalInventoryManager.getItems === "function" ? globalInventoryManager.getItems() : [];
       const hasJasmineTea = items.some(item => item.key === "jasmineTea");
       if (!hasJasmineTea) {
         showDialogue(this, "You hand the elephant the Jasmine Tea...", { imageKey: "elephantDialogueHappy" });
@@ -312,6 +311,7 @@ class WallGardenScene extends Phaser.Scene {
 
     // Elephant click handler
     this.elephant.on("pointerdown", () => {
+      // Check if player is close enough
       if (!this.elephantIntroDone && !this.elephantDialogueActive) {
         this.elephantDialogueActive = true;
         this.elephantDialogueIndex = 0;
@@ -393,7 +393,7 @@ class WallGardenScene extends Phaser.Scene {
               console.log("Quest 'Help Tia' completed!");
             }
             receivedItem(this, "autumnShard", "Autumn Shard");
-            inventoryManager.removeItemByKey && inventoryManager.removeItemByKey("jasmineTea");
+            globalInventoryManager.removeItemByKey && globalInventoryManager.removeItemByKey("jasmineTea");
           }
           this.elephantDialogueActive = false;
           this.updateHUDState && this.updateHUDState();
@@ -434,7 +434,7 @@ class WallGardenScene extends Phaser.Scene {
               console.log("Quest 'Help Snowbert' completed!");
             }
             receivedItem(this, "winterShard", "Winter Shard");
-            inventoryManager.removeItemByKey && inventoryManager.removeItemByKey("willowBarkTea");
+            globalInventoryManager.removeItemByKey && globalInventoryManager.removeItemByKey("willowBarkTea");
           }
           this.polarBearDialogueActive = false;
           this.updateHUDState && this.updateHUDState();
@@ -468,7 +468,7 @@ class WallGardenScene extends Phaser.Scene {
               console.log("Quest 'Help Elkton John' completed!");
             }
             receivedItem(this, "springShard", "Spring Shard");
-            inventoryManager.removeItemByKey && inventoryManager.removeItemByKey("marigoldSalve");
+            globalInventoryManager.removeItemByKey && globalInventoryManager.removeItemByKey("marigoldSalve");
           }
           this.deerDialogueActive = false;
           this.updateHUDState && this.updateHUDState();
@@ -506,20 +506,20 @@ class WallGardenScene extends Phaser.Scene {
     this.polarBearDialogueActive = false;
     this.polarBearDialogueIndex = 0;
     // Change required item to Willow Bark Tea
-    this.hasWillowBarkTea = () => inventoryManager.hasItemByKey && inventoryManager.hasItemByKey("willowBarkTea");
+    this.hasWillowBarkTea = () => globalInventoryManager.hasItemByKey && globalInventoryManager.hasItemByKey("willowBarkTea");
 
     // Listen for willowBarkTea handover event from inventory
     this.events.on("willowBarkTeaGiven", () => {
       this.awaitingWillowBarkTeaGive = false;
       // Remove ALL willowBarkTea items from inventory as a failsafe
-      if (typeof inventoryManager.getItems === "function" && typeof inventoryManager.removeItemByKey === "function") {
-        let items = inventoryManager.getItems();
+      if (typeof globalInventoryManager.getItems === "function" && typeof globalInventoryManager.removeItemByKey === "function") {
+        let items = globalInventoryManager.getItems();
         let teaCount = items.filter(item => item.key === "willowBarkTea").length;
         for (let i = 0; i < teaCount; i++) {
-          inventoryManager.removeItemByKey("willowBarkTea");
+          globalInventoryManager.removeItemByKey("willowBarkTea");
         }
       }
-      const items = typeof inventoryManager.getItems === "function" ? inventoryManager.getItems() : [];
+      const items = typeof globalInventoryManager.getItems === "function" ? globalInventoryManager.getItems() : [];
       const hasWillowBarkTea = items.some(item => item.key === "willowBarkTea");
       if (!hasWillowBarkTea) {
         showDialogue(this, "You hand the polar bear the Willow Bark Tea...", { imageKey: "polarDialogueHappy" });
@@ -539,6 +539,7 @@ class WallGardenScene extends Phaser.Scene {
 
     // Polar Bear click handler
     this.polarBear.on("pointerdown", () => {
+      // Check if player is close enough
       if (!this.polarBearIntroDone && !this.polarBearDialogueActive) {
         this.polarBearDialogueActive = true;
         this.polarBearDialogueIndex = 0;
@@ -591,7 +592,7 @@ class WallGardenScene extends Phaser.Scene {
       .setInteractive({ useHandCursor: true })
       .setDepth(30)
       .setScale(0.13)
-      .setOrigin(4, 0.3);
+      .setOrigin(4, -1.8);
 
     // Deer talk icon events
     this.deer.on("pointerover", (pointer) => {
@@ -608,20 +609,20 @@ class WallGardenScene extends Phaser.Scene {
     // --- Deer dialogue and gifting logic ---
     this.deerDialogueActive = false;
     this.deerDialogueIndex = 0;
-    this.hasMarigoldSalve = () => inventoryManager.hasItemByKey && inventoryManager.hasItemByKey("marigoldSalve");
+    this.hasMarigoldSalve = () => globalInventoryManager.hasItemByKey && globalInventoryManager.hasItemByKey("marigoldSalve");
 
     // Listen for marigoldSalve handover event from inventory
     this.events.on("marigoldSalveGiven", () => {
       this.awaitingMarigoldSalveGive = false;
       // Remove ALL marigoldSalve items from inventory as a failsafe
-      if (typeof inventoryManager.getItems === "function" && typeof inventoryManager.removeItemByKey === "function") {
-        let items = inventoryManager.getItems();
+      if (typeof globalInventoryManager.getItems === "function" && typeof globalInventoryManager.removeItemByKey === "function") {
+        let items = globalInventoryManager.getItems();
         let salveCount = items.filter(item => item.key === "marigoldSalve").length;
         for (let i = 0; i < salveCount; i++) {
-          inventoryManager.removeItemByKey("marigoldSalve");
+          globalInventoryManager.removeItemByKey("marigoldSalve");
         }
       }
-      const items = typeof inventoryManager.getItems === "function" ? inventoryManager.getItems() : [];
+      const items = typeof globalInventoryManager.getItems === "function" ? globalInventoryManager.getItems() : [];
       const hasMarigoldSalve = items.some(item => item.key === "marigoldSalve");
       if (!hasMarigoldSalve) {
         showDialogue(this, "You hand the deer the Marigold Salve...", { imageKey: "deerDialogueHappy" });
@@ -641,6 +642,7 @@ class WallGardenScene extends Phaser.Scene {
 
     // Deer click handler
     this.deer.on("pointerdown", () => {
+      // Check if player is close enough
       if (!this.deerIntroDone && !this.deerDialogueActive) {
         this.deerDialogueActive = true;
         this.deerDialogueIndex = 0;
@@ -700,7 +702,7 @@ class WallGardenScene extends Phaser.Scene {
       if (this.deerDialogueActive) {
         this.deerDialogueIndex++;
         if (this.activeDeerDialogues && this.deerDialogueIndex < this.activeDeerDialogues.length) {
-          showDialogue(this, this.activeDeerDialogues[this.deerDialogueIndex], { imageKey: "deer" });
+          showDialogue(this, this.activeDeerDialogues[this.deerDialogueIndex], { imageKey: "deerDialogueSad" });
         } else {
           this.destroyDialogueUI();
           this.dialogueActive = false;
@@ -720,7 +722,7 @@ class WallGardenScene extends Phaser.Scene {
               console.log("Quest 'Help Elkton John' completed!");
             }
             receivedItem(this, "springShard", "Spring Shard");
-            inventoryManager.removeItemByKey && inventoryManager.removeItemByKey("marigoldSalve");
+            globalInventoryManager.removeItemByKey && globalInventoryManager.removeItemByKey("marigoldSalve");
           }
           this.deerDialogueActive = false;
           this.updateHUDState && this.updateHUDState();
@@ -857,104 +859,60 @@ class WallGardenScene extends Phaser.Scene {
 
     // --- Butterfly NPC ---
     this.butterfly = createButterfly(this, width / 2 + 100, height / 2 - 50);
-    this.butterfly.setDepth(20).setScale(0.09).setInteractive();
+    this.butterfly.setDepth(20).setScale(0.09);
 
-    // --- Talk icon hover logic ---
-    this.butterfly.on("pointerover", (pointer) => {
-      talkIcon.setVisible(true);
-      talkIcon.setPosition(pointer.worldX + 32, pointer.worldY);
-    });
-    this.butterfly.on("pointermove", (pointer) => {
-      talkIcon.setPosition(pointer.worldX + 32, pointer.worldY);
-    });
-    this.butterfly.on("pointerout", () => {
-      talkIcon.setVisible(false);
-    });
+    // Only make butterfly interactive if intro is not complete
+    if (!this.butterflyIntroComplete) {
+        this.butterfly.setInteractive();
+        
+        // --- Talk icon hover logic ---
+        this.butterfly.on("pointerover", (pointer) => {
+          talkIcon.setVisible(true);
+          talkIcon.setPosition(pointer.worldX + 32, pointer.worldY);
+        });
+        this.butterfly.on("pointermove", (pointer) => {
+          talkIcon.setPosition(pointer.worldX + 32, pointer.worldY);
+        });
+        this.butterfly.on("pointerout", () => {
+          talkIcon.setVisible(false);
+        });
 
-    this.butterflyDialogueIndex = 0;
-    this.butterflyDialogueActive = false;
-
-    this.butterfly.on("pointerdown", () => {
-      if (this.butterflyDialogueActive) return;
-      this.butterflyDialogueActive = true;
-      // Do not reset index if restoring
-      if (!this.dialogueBox) this.butterflyDialogueIndex = 0;
-      showDialogue(this, butterflyIntroDialogues[this.butterflyDialogueIndex], { imageKey: "butterflyHappy" });
-      this.dialogueOnComplete = () => {
-        this.butterflyDialogueIndex++;
-        if (this.butterflyDialogueIndex < butterflyIntroDialogues.length) {
+        this.butterfly.on("pointerdown", () => {
+          if (this.butterflyDialogueActive) return;
+          this.butterflyDialogueActive = true;
+          // Do not reset index if restoring
+          if (!this.dialogueBox) this.butterflyDialogueIndex = 0;
           showDialogue(this, butterflyIntroDialogues[this.butterflyDialogueIndex], { imageKey: "butterflyHappy" });
-        } else {
-          showOption(this, "Would you like to move on?", {
-            imageKey: "butterflyHappy",
-            options: [
-              {
-                text: "Yes",
-                callback: () => {
-                  this.destroyDialogueUI();
-                  this.butterflyDialogueActive = false;
-                  this.scene.start("LoaderScene", {
-                    nextSceneKey: "ShardGardenScene",
-                    nextSceneData: {}
-                  });
-                }
-              },
-              {
-                text: "No",
-                callback: () => {
-                  showDialogue(this, "Take your time and explore! Talk to me again when you're ready to move on.", { imageKey: "butterflyHappy" });
-                  this.dialogueOnComplete = () => {
-                    this.destroyDialogueUI();
-                    this.butterflyDialogueActive = false;
-                    this.dialogueActive = false;
-                    this.updateHUDState();
-                    this.dialogueOnComplete = null;
-                  };
-                }
-              }
-            ]
-          });
-        }
-      };
-    });
+          this.dialogueOnComplete = () => {
+            this.butterflyDialogueIndex++;
+            if (this.butterflyDialogueIndex < butterflyIntroDialogues.length) {
+              showDialogue(this, butterflyIntroDialogues[this.butterflyDialogueIndex], { imageKey: "butterflyHappy" });
+            }
+          };
+        });
+    } else {
+        // Butterfly intro is complete, make it non-interactive
+        console.log('Butterfly intro already complete - butterfly is non-interactive');
+    }
+}
 
-    // --- Placeholder bushes: random rectangles ---
-    this.setupBushes(width, height, periwinkleFound);
+// Add method to remove butterfly interactivity
+makeButtonflyNonInteractive() {
+    if (this.butterfly) {
+        this.butterfly.disableInteractive();
+        this.butterfly.removeAllListeners();
+        console.log('Butterfly made non-interactive');
+    }
+}
 
-    this.input.on("pointerdown", () => {
-      this.sound.play("click");
-      // Only advance/close if a dialogue is active and a completion callback is set
-      if (this.dialogueActive && typeof this.dialogueOnComplete === "function") {
-        this.dialogueOnComplete();
-      }
-    });
-
-    // --- PERIODIC SAVE TO LOCAL STORAGE ---
-    this._saveInterval = setInterval(() => {
-      this.saveSceneState(periwinkleFound);
-    }, 8000);
-
-    // Save on shutdown/stop
-    this.events.on('shutdown', () => {
-      this.saveSceneState(periwinkleFound);
-      clearInterval(this._saveInterval);
-      this.transitioning = false;
-    });
-    this.events.on('destroy', () => {
-      this.saveSceneState(periwinkleFound);
-      clearInterval(this._saveInterval);
-      this.transitioning = false;
-    });
-  }
-
-  // Save relevant state to localStorage
-  saveSceneState(periwinkleFound) {
+  // Add a property to track if intro dialogues are complete
+  saveSceneState() {
     const state = {
-      inventory: inventoryManager.getItems ? inventoryManager.getItems() : [],
-      periwinkleFound: !!periwinkleFound,
+      // Remove inventory from here - globalInventoryManager handles it
       butterflyDialogueIndex: this.butterflyDialogueIndex,
       butterflyDialogueActive: !!this.butterflyDialogueActive,
       dialogueActive: !!this.dialogueActive,
+      butterflyIntroComplete: !!this.butterflyIntroComplete,
       timeOfDay: globalTimeManager.getCurrentTimeOfDay(),
       bushDispensed: this.bushDispensed || [false, false, false, false],
       garlicFound: !!this.garlicFound,
@@ -1144,7 +1102,7 @@ class WallGardenScene extends Phaser.Scene {
                     console.log(`Won minigame for ${plant.name}`);
                     this.scene.resume();
 
-                    const alreadyHas = inventoryManager.hasItemByKey && inventoryManager.hasItemByKey(plant.key);
+                    const alreadyHas = globalInventoryManager.hasItemByKey && globalInventoryManager.hasItemByKey(plant.key);
                     if (!alreadyHas) {
                       addPlantToJournal(plant.key);
                       receivedItem(this, plant.key, plant.name);
@@ -1263,6 +1221,5 @@ class WallGardenScene extends Phaser.Scene {
       this.dialogueBox = null;
     }
   }
-
 }
 export default WallGardenScene;

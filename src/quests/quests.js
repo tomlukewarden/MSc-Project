@@ -39,7 +39,7 @@ const quests = [
         description: "Return all Shards to the Season Pillars.",
         active: false,
         completed: false,
-        imageKey: "butterflySad" // Will show butterflyBuddy when completed
+        imageKey: "butterflySad" 
     }
 ];
 

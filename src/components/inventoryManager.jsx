@@ -50,9 +50,24 @@ class GlobalInventoryManager {
   // Normalize plant keys
   _normalizePlantKey(item) {
     const name = item?.name?.toLowerCase();
-    if (!name) return;
+    const key = item?.key?.toLowerCase();
+    
+    if (!name && !key) return;
+    const isActualPlant = (key && key.includes('plant')) || 
+                         (name && (name.includes('plant') || name.endsWith('plant')));
 
-    if ([...this.plantNames].some(p => name.includes(p))) {
+    // Don't normalize crafted items that just happen to contain plant names
+    const isCraftedItem = name && (
+      name.includes('tea') || 
+      name.includes('salve') || 
+      name.includes('oil') || 
+      name.includes('cream') || 
+      name.includes('extract') || 
+      name.includes('paste') ||
+      name.includes('infused')
+    );
+
+    if (isActualPlant && !isCraftedItem && [...this.plantNames].some(p => name.includes(p))) {
       const baseName = item.name.replace(/\s+/g, '').replace(/[^a-zA-Z]/g, '');
       item.key = baseName.charAt(0).toLowerCase() + baseName.slice(1) + 'Plant';
     }

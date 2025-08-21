@@ -28,10 +28,9 @@ export const butterflyShardDialogues = [
 
 export const butterflyGoodbyeDialogues = [
   "Ah yes, one last thing...",
-  "Head to your garden workspace, \n here you can access the shop and do some farming!",
+  "Head to your personal garden, \n here you can access the shop and \n do some farming!",
   "Good luck, and remember,\n the seasons are counting on you.",
 ];
-
 
 export function createButterfly(scene, x, y) {
   const butterfly = scene.add.sprite(x, y, "butterfly")
