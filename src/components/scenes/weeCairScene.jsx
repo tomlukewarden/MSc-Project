@@ -202,19 +202,6 @@ class WeeCairScene extends Phaser.Scene {
 
     // --- Enhanced Fairy click handler with distance check ---
     fairy.on("pointerdown", () => {
-      // Check if player is close enough
-      if (!this.isPlayerNearNPC(fairy, 120)) {
-        this.dialogueActive = true;
-        this.updateHUDState();
-        showDialogue(this, "You need to get closer to talk to Flora.", {imageKey: "fairySad"});
-        this.time.delayedCall(1500, () => {
-          destroyDialogueUI(this);
-          this.dialogueActive = false;
-          this.updateHUDState();
-        });
-        return;
-      }
-
       // Mark interaction
       this.hasInteractedWithFairy = true;
       
@@ -230,19 +217,6 @@ class WeeCairScene extends Phaser.Scene {
 
     // --- Enhanced Bee click handler with distance check ---
     bee.on("pointerdown", () => {
-      // Check if player is close enough
-      if (!this.isPlayerNearNPC(bee, 120)) {
-        this.dialogueActive = true;
-        this.updateHUDState();
-        showDialogue(this, "You need to get closer to talk to Paula.", {imageKey: "beeDialogueSad"});
-        this.time.delayedCall(1500, () => {
-          destroyDialogueUI(this);
-          this.dialogueActive = false;
-          this.updateHUDState();
-        });
-        return;
-      }
-
       // Mark interaction
       this.hasInteractedWithBee = true;
       
@@ -500,18 +474,6 @@ class WeeCairScene extends Phaser.Scene {
       saveToLocal('quests', quests);
       saveToLocal('achievements', achievements);
     }, 5000);
-  }
-
-  // Add this helper method to check distance
-  isPlayerNearNPC(npc, range = 300) {
-    if (!this.mainChar || !npc) return false;
-    
-    const distance = Phaser.Math.Distance.Between(
-      this.mainChar.x, this.mainChar.y,
-      npc.x, npc.y
-    );
-    
-    return distance <= range;
   }
 
   // Enhanced saveSceneState to include progress tracking

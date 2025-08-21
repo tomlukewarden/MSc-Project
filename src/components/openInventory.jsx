@@ -362,63 +362,41 @@ class OpenInventory extends Phaser.Scene {
 
       // Craft functionality on background click
       bg.on("pointerdown", () => {
-        alert(`🔨 Starting craft process for: ${recipe.result.name}`);
+       
         
-        // Debug recipe structure
-        alert(`📋 Recipe Debug:
-ID: ${recipe.id}
-Result Key: ${recipe.result.key}
-Result Name: ${recipe.result.name}
-Result ImageKey: ${recipe.result.imageKey}`);
 
         // Check inventory for required items
         const items = globalInventoryManager.getItems();
-        alert(`📦 Current inventory has ${items.length} items:
-${items.map(item => `- ${item.key} (${item.count})`).join('\n')}`);
 
         const missing = recipe.ingredients.filter(ingredient => {
           const invItem = items.find(i => i.key === ingredient.key);
           const hasEnough = invItem && typeof invItem.count === "number" && invItem.count >= ingredient.amount;
-          
-          alert(`🔍 Checking ingredient: ${ingredient.key}
-Needed: ${ingredient.amount}
-Found in inventory: ${invItem ? invItem.count : 0}
-Has enough: ${hasEnough}`);
+
           
           return !hasEnough;
         });
         
         if (missing.length > 0) {
-          alert(`❌ Missing ingredients:
-${missing.map(i => `${i.amount}x ${i.key}`).join(', ')}`);
+        
           
           const msg = "Not enough items to craft!\nMissing: " + missing.map(i => `${i.amount}x ${i.key}`).join(", ");
           this.showCraftingMessage(msg, "#a33");
           return;
         }
 
-        alert(`✅ All ingredients available! Starting crafting process...`);
 
         // Remove ingredients from inventory
         recipe.ingredients.forEach(ingredient => {
-          alert(`🗑️ Removing ${ingredient.amount}x ${ingredient.key} from inventory`);
           
           if (globalInventoryManager.removeItemByKey) {
             globalInventoryManager.removeItemByKey(ingredient.key, ingredient.amount);
-            alert(`✅ Successfully removed ${ingredient.key}`);
-          } else {
-            alert(`❌ ERROR: removeItemByKey function not found!`);
-          }
+
+          } 
         });
         
         // Debug what we're about to add
         const keyToAdd = recipe.result.key;
         const nameToAdd = recipe.result.name;
-        
-        alert(`📝 About to add item:
-Key: "${keyToAdd}"
-Name: "${nameToAdd}"
-Count: 1`);
 
         // Add crafted item to inventory
         const itemToAdd = { 
@@ -427,20 +405,12 @@ Count: 1`);
           count: 1 
         };
         
-        alert(`🎯 Calling globalInventoryManager.addItem with:
-${JSON.stringify(itemToAdd, null, 2)}`);
-
+    
         if (globalInventoryManager.addItem) {
           globalInventoryManager.addItem(itemToAdd);
-          alert(`✅ addItem function called`);
-        } else {
-          alert(`❌ ERROR: addItem function not found!`);
-        }
-
+        } 
         // Check what was actually added
         const itemsAfterCrafting = globalInventoryManager.getItems();
-        alert(`📋 Inventory after crafting (${itemsAfterCrafting.length} items):
-${itemsAfterCrafting.map(item => `- ${item.key} (${item.count})`).join('\n')}`);
 
         // Look for the specific item we just added
         const addedItem = itemsAfterCrafting.find(item => 
@@ -448,25 +418,14 @@ ${itemsAfterCrafting.map(item => `- ${item.key} (${item.count})`).join('\n')}`);
           item.key.includes(keyToAdd) || 
           item.name === nameToAdd
         );
-        
-        if (addedItem) {
-          alert(`🎉 Found added item:
-Key: "${addedItem.key}"
-Name: "${addedItem.name}"
-Count: ${addedItem.count}`);
-        } else {
-          alert(`❌ ERROR: Could not find the added item in inventory!
-Looking for key: "${keyToAdd}"
-Looking for name: "${nameToAdd}"`);
-        }
-
+  
         // Track this recipe as crafted
         this.craftedRecipes.add(recipe.id);
-        alert(`📊 Added recipe ${recipe.id} to crafted recipes set`);
+
 
         // Save crafted recipes
         this.saveCraftedRecipes();
-        alert(`💾 Saved crafted recipes to localStorage`);
+   
 
         // Check and complete achievements
         this.checkCraftingAchievements();
@@ -474,11 +433,11 @@ Looking for name: "${nameToAdd}"`);
         // Show crafted message
         const craftedMsg = `Crafted: ${recipe.result.name}`;
         this.showCraftingMessage(craftedMsg, "#567d46");
-        alert(`🎊 Showing success message: ${craftedMsg}`);
+  
 
-        alert(`🔄 About to refresh UI...`);
+
         this.refreshUI();
-        alert(`✅ UI refreshed! Crafting process complete.`);
+    
       });
 
       const objectsToAdd = [bg, nameText, ingredientsText];

@@ -281,19 +281,6 @@ this.add.image(width - 100, height - 100, "exit")
 
         // Rabbit click handler
         this.rabbit.on("pointerdown", () => {
-          // Check if player is close enough
-          if (!this.isPlayerNearNPC(this.rabbit, 120)) {
-            this.dialogueActive = true;
-            this.updateHUDState && this.updateHUDState();
-            showDialogue(this, "You need to get closer to talk to Carrie Cake.", { imageKey: "rabbitDialogueSad" });
-            this.time.delayedCall(1500, () => {
-              this.destroyDialogueUI();
-              this.dialogueActive = false;
-              this.updateHUDState && this.updateHUDState();
-            });
-            return;
-          }
-
           if (!this.rabbitIntroDone && !this.rabbitDialogueActive) {
             this.rabbitDialogueActive = true;
             this.rabbitDialogueIndex = 0;
@@ -375,19 +362,6 @@ this.add.image(width - 100, height - 100, "exit")
 
         // Pig click handler
         this.pig.on("pointerdown", () => {
-          // Check if player is close enough
-          if (!this.isPlayerNearNPC(this.pig, 120)) {
-            this.dialogueActive = true;
-            this.updateHUDState && this.updateHUDState();
-            showDialogue(this, "You need to get closer to talk to Chris P. Bacon.", { imageKey: "pigDialogueSad" });
-            this.time.delayedCall(1500, () => {
-              this.destroyDialogueUI();
-              this.dialogueActive = false;
-              this.updateHUDState && this.updateHUDState();
-            });
-            return;
-          }
-
           if (!this.pigIntroDone && !this.pigDialogueActive) {
             this.pigDialogueActive = true;
             this.pigDialogueIndex = 0;
@@ -577,18 +551,6 @@ this.add.image(width - 100, height - 100, "exit")
             }
             this.dialogueBox = null;
         }
-    }
-
-    // Add this helper method to check distance
-    isPlayerNearNPC(npc, range = 100) {
-      if (!this.mainChar || !npc) return false;
-      
-      const distance = Phaser.Math.Distance.Between(
-        this.mainChar.x, this.mainChar.y,
-        npc.x, npc.y
-      );
-      
-      return distance <= range;
     }
 }
 

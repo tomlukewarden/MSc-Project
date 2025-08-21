@@ -1,5 +1,4 @@
 import Phaser from 'phaser';
-import { createButterfly, butterflyIntroDialogues } from '../../characters/butterfly';
 import { showDialogue, destroyDialogueUI, showOption } from '../../dialogue/dialogueUIHelpers';
 import { createMainChar } from '../../characters/mainChar';
 import { saveToLocal, loadFromLocal } from '../../utils/localStorage';
@@ -18,13 +17,10 @@ import globalInventoryManager from '../inventoryManager';
 class WallGardenScene extends Phaser.Scene {
   constructor() {
     super({ key: 'WallGardenScene', physics: { default: 'arcade', arcade: { debug: false } } });
-    this.butterflyDialogueIndex = 0;
-    this.butterflyDialogueActive = false;
     this.dialogueActive = false;
     this.dialogueOnComplete = null;
     this.mainChar = null;
     this.transitioning = false;
-    this.butterflyIntroComplete = false; // Add this property
   }
 
   preload() {
@@ -33,7 +29,6 @@ class WallGardenScene extends Phaser.Scene {
     this.load.image('wall2', '/assets/backgrounds/wallGarden/wall2.png');
     this.load.image('trees', '/assets/backgrounds/wallGarden/trees.png');
     this.load.image('wallGardenBackground', '/assets/backgrounds/wallGarden/wallGarden.png');
-    this.load.image('butterfly', '/assets/npc/butterfly/front-butterfly.png');
     this.load.image("defaultFront", "/assets/char/default/front-default.png");
         this.load.image("defaultBack", "/assets/char/default/back-default.png");
         this.load.image("defaultLeft", "/assets/char/default/left-default.png");
@@ -52,7 +47,7 @@ class WallGardenScene extends Phaser.Scene {
     this.load.image('talk', '/assets/interact/talk.png');
     this.load.image("springShard", "/assets/items/spring.png");
     this.load.audio("sparkle", "/assets/sound-effects/sparkle.mp3");
-    this.load.image('butterflyHappy', '/assets/npc/dialogue/butterflyHappy.png');
+ 
     this.load.audio('click', '/assets/sound-effects/click.mp3');
     this.load.image('dialogueBoxBg', '/assets/ui-items/dialogue.png');
     this.load.image('bush', '/assets/misc/bush.png');
@@ -94,9 +89,9 @@ class WallGardenScene extends Phaser.Scene {
     const debugY = 30;
     const loadedKeys = this.textures.getTextureKeys();
     const expectedKeys = [
-      'wallGardenBackground', 'wall1', 'wall2', 'trees', 'butterfly', 'defaultFront', 'defaultBack', 'defaultLeft', 'defaultRight',
+      'wallGardenBackground', 'wall1', 'wall2', 'trees', 'defaultFront', 'defaultBack', 'defaultLeft', 'defaultRight',
       'defaultFrontWalk1', 'defaultFrontWalk2', 'defaultBackWalk1', 'defaultBackWalk2', 'defaultLeftWalk1', 'defaultLeftWalk2',
-      'defaultRightWalk1', 'defaultRightWalk2', 'talk', 'foxglovePlant', 'springShard', 'butterflyHappy',
+      'defaultRightWalk1', 'defaultRightWalk2', 'talk', 'foxglovePlant', 'springShard',
       'periwinklePlant', 'dialogueBoxBg', 'bush', 'elephant', 'elephantHappy', 'jasminePlant', 'autumnShard'
     ];
     let missingKeys = expectedKeys.filter(k => !loadedKeys.includes(k));
@@ -201,56 +196,13 @@ class WallGardenScene extends Phaser.Scene {
     this.deerIntroDone = !!sceneState.deerIntroDone;
     this.deerThanksDone = !!sceneState.deerThanksDone;
     
-    // Restore other states
-    this.butterflyDialogueIndex = sceneState.butterflyDialogueIndex || 0;
-    this.butterflyDialogueActive = !!sceneState.butterflyDialogueActive;
-    this.dialogueActive = !!sceneState.dialogueActive;
-    this.butterflyIntroComplete = !!sceneState.butterflyIntroComplete;
     
     // Restore time of day
     if (sceneState.timeOfDay) {
       globalTimeManager.dayCycle.setTimeOfDay(sceneState.timeOfDay);
     }
 
-    // Restore butterfly intro completion status
-    this.butterflyIntroComplete = !!sceneState.butterflyIntroComplete;
-    // --- Restore dialogue UI if needed ---
-    // Only restore if dialogue was active when leaving
-    if (this.butterflyDialogueActive) {
-      showDialogue(this, butterflyIntroDialogues[this.butterflyDialogueIndex], { imageKey: "butterflyHappy" });
-      this.dialogueOnComplete = () => {
-        this.butterflyDialogueIndex++;
-        if (this.butterflyDialogueIndex < butterflyIntroDialogues.length) {
-          showDialogue(this, butterflyIntroDialogues[this.butterflyDialogueIndex], { imageKey: "butterflyHappy" });
-        } else {
-          showOption(this, "Would you like to move on?", {
-            imageKey: "butterflyHappy",
-            options: [
-              {
-                text: "Yes",
-                callback: () => {
-                  this.destroyDialogueUI();
-                  this.butterflyDialogueActive = false;
-                  this.saveSceneState(periwinkleFound);
-                  this.scene.start("ShardGardenScene");
-                }
-              },
-              {
-                text: "No",
-                callback: () => {
-                  showDialogue(this, "Take your time and explore! Talk to me again when you're ready to move on.", { imageKey: "butterflyHappy" });
-                  this.dialogueOnComplete = () => {
-                    this.destroyDialogueUI();
-                    this.butterflyDialogueActive = false;
-                    this.saveSceneState(periwinkleFound);
-                  };
-                }
-              }
-            ]
-          });
-        }
-      };
-    }
+    
 
     // --- Talk icon ---
     const talkIcon = this.add
@@ -865,54 +817,45 @@ class WallGardenScene extends Phaser.Scene {
     this.companion.setDepth(11); 
     this.physics.add.collider(this.mainChar, collisionGroup);
 
-    // --- Butterfly NPC ---
-    this.butterfly = createButterfly(this, width / 2 + 100, height / 2 - 50);
-    this.butterfly.setDepth(20).setScale(0.09);
-
-    // Only make butterfly interactive if intro is not complete
-    if (!this.butterflyIntroComplete) {
-        this.butterfly.setInteractive();
-        
-        // --- Talk icon hover logic ---
-        this.butterfly.on("pointerover", (pointer) => {
-          talkIcon.setVisible(true);
-          talkIcon.setPosition(pointer.worldX + 32, pointer.worldY);
-        });
-        this.butterfly.on("pointermove", (pointer) => {
-          talkIcon.setPosition(pointer.worldX + 32, pointer.worldY);
-        });
-        this.butterfly.on("pointerout", () => {
-          talkIcon.setVisible(false);
-        });
-
-        this.butterfly.on("pointerdown", () => {
-          if (this.butterflyDialogueActive) return;
-          this.butterflyDialogueActive = true;
-          // Do not reset index if restoring
-          if (!this.dialogueBox) this.butterflyDialogueIndex = 0;
-          showDialogue(this, butterflyIntroDialogues[this.butterflyDialogueIndex], { imageKey: "butterflyHappy" });
-          this.dialogueOnComplete = () => {
-            this.butterflyDialogueIndex++;
-            if (this.butterflyDialogueIndex < butterflyIntroDialogues.length) {
-              showDialogue(this, butterflyIntroDialogues[this.butterflyDialogueIndex], { imageKey: "butterflyHappy" });
-            }
-          };
-        });
-    } else {
-        // Butterfly intro is complete, make it non-interactive
-        console.log('Butterfly intro already complete - butterfly is non-interactive');
+    // Update the elephant texture if thanks are done
+    if (this.elephantThanksDone && this.textures.exists('elephantHappy')) {
+        this.elephant.setTexture('elephantHappy');
+        console.log('Restored elephant happy texture');
     }
-}
-
-// Add method to remove butterfly interactivity
-makeButtonflyNonInteractive() {
-    if (this.butterfly) {
-        this.butterfly.disableInteractive();
-        this.butterfly.removeAllListeners();
-        console.log('Butterfly made non-interactive');
+    
+    // Update the polar bear texture if thanks are done
+    if (this.polarBearThanksDone && this.textures.exists('polarBearHappy')) {
+        this.polarBear.setTexture('polarBearHappy');
+        console.log('Restored polar bear happy texture');
     }
-}
+    
+    // Update the deer texture if thanks are done
+    if (this.deerThanksDone && this.textures.exists('deerHappy')) {
+        this.deer.setTexture('deerHappy');
+        console.log('Restored deer happy texture');
+    }
+    
+    // Call setupBushes after everything else
+    this.setupBushes(width, height);
+    
+    // --- PERIODIC SAVE TO LOCAL STORAGE ---
+    this._saveInterval = setInterval(() => {
+        this.saveSceneState();
+    }, 8000);
 
+    // Save on shutdown/stop
+    this.events.on('shutdown', () => {
+        this.saveSceneState();
+        clearInterval(this._saveInterval);
+        this.transitioning = false;
+    });
+    this.events.on('destroy', () => {
+        this.saveSceneState();
+        clearInterval(this._saveInterval);
+        this.transitioning = false;
+    });
+  }
+   
   // Add a property to track if intro dialogues are complete
   saveSceneState() {
     const state = {
@@ -923,11 +866,7 @@ makeButtonflyNonInteractive() {
         polarBearThanksDone: !!this.polarBearThanksDone,
         deerIntroDone: !!this.deerIntroDone,
         deerThanksDone: !!this.deerThanksDone,  
-        
-        // Butterfly progress
-        butterflyDialogueIndex: this.butterflyDialogueIndex,
-        butterflyDialogueActive: !!this.butterflyDialogueActive,
-        butterflyIntroComplete: !!this.butterflyIntroComplete,
+      
         
         // Plant collection states
         bushDispensed: this.bushDispensed || [false, false, false, false],
