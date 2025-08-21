@@ -472,6 +472,33 @@ class ShardGardenScene extends Phaser.Scene {
     this.setActiveDialogue();
 
     butterfly.on("pointerdown", () => {
+      // Check if player is close enough
+      if (!this.isPlayerNearNPC(butterfly, 120)) {
+        this.dialogueActive = true;
+        this.updateHUDState();
+        showDialogue(this, "You need to get closer to talk to Mona.", {imageKey: "butterflySad"});
+        this.time.delayedCall(1500, () => {
+          this.destroyDialogueUI();
+          this.dialogueActive = false;
+          this.updateHUDState();
+        });
+        return;
+      }
+
+      // Check if dialogue has progressed past stage 2 (finished all main dialogue)
+      if (this.dialogueStage >= 3) {
+        console.log('Showing busy message because dialogue stage >= 3');
+        this.dialogueActive = true;
+        this.updateHUDState();
+        
+        // DON'T set activeDialogue - this lets the input handler know it's a simple message
+        this.activeDialogue = null; 
+        this.activeDialogueIndex = 0;
+        
+        showDialogue(this, "Mona is too busy looking at the butterflies.", { imageKey: "butterflyHappy" });
+        return;
+      }
+
       if (this.dialogueActive) return;
       this.dialogueActive = true;
       this.activeDialogueIndex = 0;
@@ -481,8 +508,6 @@ class ShardGardenScene extends Phaser.Scene {
       // Complete "Community Builder" achievement when interacting with butterfly
       const communityBuilderAchievement = achievements.find(a => a.title === "Community Builder");
       if (communityBuilderAchievement && !communityBuilderAchievement.completed) {
-        // Check if player has interacted with all NPCs (this would need to be tracked globally)
-        // For now, we'll trigger it when interacting with the butterfly for the first time
         this.checkCommunityBuilderAchievement();
       }
     });
@@ -780,32 +805,49 @@ class ShardGardenScene extends Phaser.Scene {
         this.sound.play("click", { volume: 0.5 });
       }
       
-      if (!this.dialogueActive || !this.activeDialogue) return;
-      
-      // Skip if there are option buttons visible
-      if (this.dialogueBox && this.dialogueBox.optionButtons && this.dialogueBox.optionButtons.length > 0) {
-        return;
-      }
-
-      this.activeDialogueIndex++;
-
-      if (this.activeDialogueIndex < this.activeDialogue.length) {
-        // Continue with next dialogue line
-        const imageKey = this.dialogueStage === 0 ? "butterflySad" : 
-                        this.dialogueStage === 1 ? "butterflyHappy" : "butterflyHappy";
-        showDialogue(this, this.activeDialogue[this.activeDialogueIndex], { imageKey });
-      } else {
-        // End of dialogue
-        this.destroyDialogueUI();
-        this.dialogueActive = false;
-        this.updateHUDState();
-        this.dialogueStage++;
-
-        // Execute any completion callback
+      // Handle ANY active dialogue - including the stage 3+ message
+      if (this.dialogueActive) {
+        console.log('Dialogue active - checking for destruction');
+        
+        // If there's a completion callback, execute it
         if (this.dialogueOnComplete) {
           this.dialogueOnComplete();
+          return;
+        }
+        
+        // Handle normal dialogue or simple messages
+        if (!this.activeDialogue) {
+          // This handles the stage 3+ message that doesn't have activeDialogue
+          this.destroyDialogueUI();
+          this.dialogueActive = false;
+          this.updateHUDState();
+          return;
+        }
+        
+        // Skip if there are option buttons visible
+        if (this.dialogueBox && this.dialogueBox.optionButtons && this.dialogueBox.optionButtons.length > 0) {
+          return;
         }
 
+        this.activeDialogueIndex++;
+
+        if (this.activeDialogueIndex < this.activeDialogue.length) {
+          // Continue with next dialogue line
+          const imageKey = this.dialogueStage === 0 ? "butterflySad" : 
+                          this.dialogueStage === 1 ? "butterflyHappy" : "butterflyHappy";
+          showDialogue(this, this.activeDialogue[this.activeDialogueIndex], { imageKey });
+        } else {
+          // End of dialogue
+          this.destroyDialogueUI();
+          this.dialogueActive = false;
+          this.updateHUDState();
+          this.dialogueStage++;
+
+          // Execute any completion callback
+          if (this.dialogueOnComplete) {
+            this.dialogueOnComplete();
+          }
+        }
       }
     });
 
@@ -901,6 +943,18 @@ class ShardGardenScene extends Phaser.Scene {
       console.error('Error getting time of day:', error);
       return 'morning'; // Default fallback
     }
+  }
+
+  // Add this helper method to check distance
+  isPlayerNearNPC(npc, range = 100) {
+    if (!this.mainChar || !npc) return false;
+    
+    const distance = Phaser.Math.Distance.Between(
+      this.mainChar.x, this.mainChar.y,
+      npc.x, npc.y
+    );
+    
+    return distance <= range;
   }
 }
 

@@ -42,6 +42,10 @@ class GreenhouseScene extends Phaser.Scene {
         this.load.image('rabbitHappy', '/assets/npc/rabbit/happy.png');
         this.load.image("pig", "/assets/npc/pig/pig.png");
         this.load.image("pigHappy", "/assets/npc/pig/happy.png");
+        this.load.image("pigDialogueSad", "/assets/npc/dialogue/pigSad.PNG");
+        this.load.image("rabbitDialogueSad", "/assets/npc/dialogue/rabbitSad.PNG");
+        this.load.image("pigDialogueHappy", "/assets/npc/dialogue/pigHappy.PNG");
+        this.load.image("rabbitDialogueHappy", "/assets/npc/dialogue/rabbitHappy.PNG");
         this.load.image('talk', '/assets/interact/talk.png');
         this.load.audio("option", "/assets/sound-effects/option.mp3");
         this.load.image('lavenderOil', '/assets/crafting/lavenderOil.png');
@@ -266,28 +270,41 @@ this.add.image(width - 100, height - 100, "exit")
           this.inventoryManager.removeItemByKey("lavenderOil");
           
           if (!this.inventoryManager.hasItemByKey("lavenderOil")) {
-            showDialogue(this, "You hand the rabbit the Lavender Oil...", { imageKey: "rabbit" });
+            showDialogue(this, "You hand the rabbit the Lavender Oil...", { imageKey: "rabbitDialogueHappy" });
             this.rabbit.setTexture && this.rabbit.setTexture("rabbitHappy");
             this.time.delayedCall(800, () => {
               this.rabbitDialogueActive = true;
               this.rabbitDialogueIndex = 0;
               this.activeRabbitDialogues = rabbitThanksDialogues;
-              showDialogue(this, this.activeRabbitDialogues[this.rabbitDialogueIndex], { imageKey: "rabbit" });
+              showDialogue(this, this.activeRabbitDialogues[this.rabbitDialogueIndex], { imageKey: "rabbitDialogueHappy" });
               this.updateHUDState && this.updateHUDState();
             });
             this.rabbitHasLavenderOil = true;
           } else {
-            showDialogue(this, "You still have the Lavender Oil.", { imageKey: "rabbit" });
+            showDialogue(this, "You still have the Lavender Oil.", { imageKey: "rabbitDialogueSad" });
           }
         });
 
         // Rabbit click handler
         this.rabbit.on("pointerdown", () => {
+          // Check if player is close enough
+          if (!this.isPlayerNearNPC(this.rabbit, 120)) {
+            this.dialogueActive = true;
+            this.updateHUDState && this.updateHUDState();
+            showDialogue(this, "You need to get closer to talk to Carrie Cake.", { imageKey: "rabbitDialogueSad" });
+            this.time.delayedCall(1500, () => {
+              this.destroyDialogueUI();
+              this.dialogueActive = false;
+              this.updateHUDState && this.updateHUDState();
+            });
+            return;
+          }
+
           if (!this.rabbitIntroDone && !this.rabbitDialogueActive) {
             this.rabbitDialogueActive = true;
             this.rabbitDialogueIndex = 0;
             this.activeRabbitDialogues = rabbitIntroDialogues;
-            showDialogue(this, this.activeRabbitDialogues[this.rabbitDialogueIndex], { imageKey: "rabbit" });
+            showDialogue(this, this.activeRabbitDialogues[this.rabbitDialogueIndex], { imageKey: "rabbitDialogueSad" });
             this.updateHUDState && this.updateHUDState();
 
             // --- Activate Carrie Cake's quest when first meeting ---
@@ -301,7 +318,7 @@ this.add.image(width - 100, height - 100, "exit")
           }
           if (this.rabbitIntroDone && !this.rabbitThanksDone && this.hasLavenderOil()) {
             showOption(this, "Give the rabbit the Lavender Oil?", {
-              imageKey: "rabbit",
+              imageKey: "rabbitDialogueSad",
               options: [
                 {
                   label: "Yes",
@@ -318,7 +335,7 @@ this.add.image(width - 100, height - 100, "exit")
                   onSelect: () => {
                     this.destroyDialogueUI();
                     this.dialogueActive = true;
-                    showDialogue(this, "You decide to hold off for now.", { imageKey: "rabbit" });
+                    showDialogue(this, "You decide to hold off for now.", { imageKey: "rabbitDialogueSad" });
                   }
                 }
               ]
@@ -326,7 +343,7 @@ this.add.image(width - 100, height - 100, "exit")
             return;
           }
           if (this.rabbitIntroDone && !this.rabbitThanksDone && !this.hasLavenderOil()) {
-            showDialogue(this, "The rabbit looks at you expectantly. Maybe you need to find something for them?", { imageKey: "rabbit" });
+            showDialogue(this, "The rabbit looks at you expectantly. Maybe you need to find something for them?", { imageKey: "rabbitDialogueSad" });
             this.time.delayedCall(1800, () => {
               this.destroyDialogueUI();
               this.dialogueActive = false;
@@ -347,28 +364,41 @@ this.add.image(width - 100, height - 100, "exit")
           this.inventoryManager.removeItemByKey("aloeAfterSunCream");
           
           if (!this.inventoryManager.hasItemByKey("aloeAfterSunCream")) {
-            showDialogue(this, "You hand the pig the Aloe After-Sun Cream...", { imageKey: "pig" });
+            showDialogue(this, "You hand the pig the Aloe After-Sun Cream...", { imageKey: "pigDialogueHappy" });
             this.pig.setTexture && this.pig.setTexture("pigHappy");
             this.time.delayedCall(800, () => {
               this.pigDialogueActive = true;
               this.pigDialogueIndex = 0;
               this.activePigDialogues = pigThanksDialogues;
-              showDialogue(this, this.activePigDialogues[this.pigDialogueIndex], { imageKey: "pigHappy" });
+              showDialogue(this, this.activePigDialogues[this.pigDialogueIndex], { imageKey: "pigDialogueHappy" });
               this.updateHUDState && this.updateHUDState();
             });
             this.pigHasAloeAfterSunCream = true;
           } else {
-            showDialogue(this, "You still have the Aloe After-Sun Cream.", { imageKey: "pig" });
+            showDialogue(this, "You still have the Aloe After-Sun Cream.", { imageKey: "pigDialogueSad" });
           }
         });
 
         // Pig click handler
         this.pig.on("pointerdown", () => {
+          // Check if player is close enough
+          if (!this.isPlayerNearNPC(this.pig, 120)) {
+            this.dialogueActive = true;
+            this.updateHUDState && this.updateHUDState();
+            showDialogue(this, "You need to get closer to talk to Chris P. Bacon.", { imageKey: "pigDialogueSad" });
+            this.time.delayedCall(1500, () => {
+              this.destroyDialogueUI();
+              this.dialogueActive = false;
+              this.updateHUDState && this.updateHUDState();
+            });
+            return;
+          }
+
           if (!this.pigIntroDone && !this.pigDialogueActive) {
             this.pigDialogueActive = true;
             this.pigDialogueIndex = 0;
             this.activePigDialogues = pigIntroDialogues;
-            showDialogue(this, this.activePigDialogues[this.pigDialogueIndex], { imageKey: "pig" });
+            showDialogue(this, this.activePigDialogues[this.pigDialogueIndex], { imageKey: "pigDialogueSad" });
             this.updateHUDState && this.updateHUDState();
 
             // --- Activate Chris P. Bacon's quest when first meeting ---
@@ -382,7 +412,7 @@ this.add.image(width - 100, height - 100, "exit")
           }
           if (this.pigIntroDone && !this.pigThanksDone && this.hasAloeAfterSunCream()) {
             showOption(this, "Give the pig the Aloe After-Sun Cream?", {
-              imageKey: "pig",
+              imageKey: "pigDialogueSad",
               options: [
                 {
                   label: "Yes",
@@ -399,7 +429,7 @@ this.add.image(width - 100, height - 100, "exit")
                   onSelect: () => {
                     this.destroyDialogueUI();
                     this.dialogueActive = true;
-                    showDialogue(this, "You decide to hold off for now.", { imageKey: "pig" });
+                    showDialogue(this, "You decide to hold off for now.", { imageKey: "pigDialogueSad" });
                   }
                 }
               ]
@@ -407,7 +437,7 @@ this.add.image(width - 100, height - 100, "exit")
             return;
           }
           if (this.pigIntroDone && !this.pigThanksDone && !this.hasAloeAfterSunCream()) {
-            showDialogue(this, "The pig looks at you expectantly. Maybe you need to find something for them...", { imageKey: "pig" });
+            showDialogue(this, "The pig looks at you expectantly. Maybe you need to find something for them...", { imageKey: "pigDialogueSad" });
             this.time.delayedCall(1800, () => {
               this.destroyDialogueUI();
               this.dialogueActive = false;
@@ -424,7 +454,7 @@ this.add.image(width - 100, height - 100, "exit")
           if (this.rabbitDialogueActive) {
             this.rabbitDialogueIndex++;
             if (this.activeRabbitDialogues && this.rabbitDialogueIndex < this.activeRabbitDialogues.length) {
-              showDialogue(this, this.activeRabbitDialogues[this.rabbitDialogueIndex], { imageKey: "rabbit" });
+              showDialogue(this, this.activeRabbitDialogues[this.rabbitDialogueIndex], { imageKey: "rabbitDialogueSad" });
             } else {
               this.destroyDialogueUI();
               this.dialogueActive = false;
@@ -455,7 +485,7 @@ this.add.image(width - 100, height - 100, "exit")
           if (this.pigDialogueActive) {
             this.pigDialogueIndex++;
             if (this.activePigDialogues && this.pigDialogueIndex < this.activePigDialogues.length) {
-              showDialogue(this, this.activePigDialogues[this.pigDialogueIndex], { imageKey: "pig" });
+              showDialogue(this, this.activePigDialogues[this.pigDialogueIndex], { imageKey: "pigDialogueSad" });
             } else {
               this.destroyDialogueUI();
               this.dialogueActive = false;
@@ -554,6 +584,18 @@ this.add.image(width - 100, height - 100, "exit")
             }
             this.dialogueBox = null;
         }
+    }
+
+    // Add this helper method to check distance
+    isPlayerNearNPC(npc, range = 100) {
+      if (!this.mainChar || !npc) return false;
+      
+      const distance = Phaser.Math.Distance.Between(
+        this.mainChar.x, this.mainChar.y,
+        npc.x, npc.y
+      );
+      
+      return distance <= range;
     }
 }
 

@@ -366,6 +366,19 @@ class MiddleGardenScene extends Phaser.Scene {
 
     // Mole click handler
     this.mole.on("pointerdown", () => {
+      // Check if player is close enough
+      if (!this.isPlayerNearNPC(this.mole, 120)) {
+        this.dialogueActive = true;
+        this.updateHUDState && this.updateHUDState();
+        showDialogue(this, "You need to get closer to talk to the Digmund.", { imageKey: "moleDialogueSad" });
+        this.time.delayedCall(1500, () => {
+          this.destroyDialogueUI();
+          this.dialogueActive = false;
+          this.updateHUDState && this.updateHUDState();
+        });
+        return;
+      }
+
       if (!this.moleIntroDone && !this.moleDialogueActive) {
         this.moleDialogueActive = true;
         this.moleDialogueIndex = 0;
@@ -447,6 +460,19 @@ class MiddleGardenScene extends Phaser.Scene {
 
     // Turtle click handler
     this.turtle.on("pointerdown", () => {
+      // Check if player is close enough
+      if (!this.isPlayerNearNPC(this.turtle, 120)) {
+        this.dialogueActive = true;
+        this.updateHUDState && this.updateHUDState();
+        showDialogue(this, "You need to get closer to talk to the Murtle.", { imageKey: "turtleDialogueSad" });
+        this.time.delayedCall(1500, () => {
+          this.destroyDialogueUI();
+          this.dialogueActive = false;
+          this.updateHUDState && this.updateHUDState();
+        });
+        return;
+      }
+
       if (!this.turtleIntroDone && !this.turtleDialogueActive) {
         this.turtleDialogueActive = true;
         this.turtleDialogueIndex = 0;
@@ -528,6 +554,19 @@ class MiddleGardenScene extends Phaser.Scene {
 
     // Wolf click handler
     this.wolf.on("pointerdown", () => {
+      // Check if player is close enough
+      if (!this.isPlayerNearNPC(this.wolf, 120)) {
+        this.dialogueActive = true;
+        this.updateHUDState && this.updateHUDState();
+        showDialogue(this, "You need to get closer to talk to Fang.", { imageKey: "wolfDialogueSad" });
+        this.time.delayedCall(1500, () => {
+          this.destroyDialogueUI();
+          this.dialogueActive = false;
+          this.updateHUDState && this.updateHUDState();
+        });
+        return;
+      }
+
       if (!this.wolfIntroDone && !this.wolfDialogueActive) {
         this.wolfDialogueActive = true;
         this.wolfDialogueIndex = 0;
@@ -705,6 +744,18 @@ class MiddleGardenScene extends Phaser.Scene {
       clearInterval(this._saveInterval);
       this.transitioning = false;
     });
+  }
+
+  // Add this helper method to check distance
+  isPlayerNearNPC(npc, range = 100) {
+    if (!this.mainChar || !npc) return false;
+    
+    const distance = Phaser.Math.Distance.Between(
+      this.mainChar.x, this.mainChar.y,
+      npc.x, npc.y
+    );
+    
+    return distance <= range;
   }
 
   setupBushes(width, height) {
