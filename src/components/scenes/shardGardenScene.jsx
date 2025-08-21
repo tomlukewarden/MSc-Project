@@ -414,7 +414,7 @@ class ShardGardenScene extends Phaser.Scene {
           this.sound.play("shardAdd", { volume: 0.7 });
         }
 
-        showDialogue(this, `You returned a ${season} shard! (${this.shardCounts[season]} left)`);
+        showDialogue(this, `You returned a ${season} shard! (${this.shardCounts[season]} left)`, { imageKey: season + "Happy" });
         
         if (typeof shardLogic === 'function') {
           shardLogic(this);

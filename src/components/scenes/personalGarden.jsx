@@ -356,8 +356,23 @@ class PersonalGarden extends Phaser.Scene {
             case 'prepared':
               this.scene.launch('OpenSeedPouch', {
                 onSelect: (seedItem) => {
+                  // ADD THIS: Check how many seeds are available BEFORE planting
+                  const seedsAvailable = SeedPouchLogic.getSeeds().find(s => s.key === seedItem.key);
+                  console.log(`Before planting: ${seedsAvailable ? seedsAvailable.count : 0} ${seedItem.key} seeds available`);
+                  
                   result = plot.plant(seedItem);
                   shouldUpdateImage = result.success;
+                  
+                  // ADD THIS: Only remove 1 seed if planting was successful
+                  if (result.success) {
+                    SeedPouchLogic.removeSeed(seedItem.key, 1); // Remove exactly 1 seed
+                    console.log(`After planting: Removed 1 ${seedItem.key} seed`);
+                    
+                    // Check remaining seeds
+                    const remainingSeeds = SeedPouchLogic.getSeeds().find(s => s.key === seedItem.key);
+                    console.log(`Remaining seeds: ${remainingSeeds ? remainingSeeds.count : 0}`);
+                  }
+                  
                   this.updatePlotText(plotText, plot);
                   this.updatePlotColor(plotRect, plot);
                   this.updatePlotStageImage(plot);

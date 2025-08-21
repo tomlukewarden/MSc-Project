@@ -48,7 +48,7 @@ class ShopScene extends Phaser.Scene {
     if (this.sound.get('theme1')) {
       this.sound.stopByKey('theme1');
     }
-    alert("If you are struggling to collect shards. Just grab them in the extras tab of the shop! :)");
+    alert("You can only grab ONE seed of each type at a time!");
     
     // Play shop theme music
     this.sound.play('shopTheme', { loop: true, volume: 0.2 });

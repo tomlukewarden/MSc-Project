@@ -66,11 +66,17 @@ class OpenSeedPouch extends Phaser.Scene {
       ).setOrigin(0.5).setDepth(108);
 
       rect.on('pointerdown', () => {
-        // Select seed, decrement count, and close pouch
+        // DON'T remove seeds here - just select the seed type
         if (typeof data.onSelect === 'function') {
-          data.onSelect(seed);
+          // Pass just the seed info, not the removal logic
+          data.onSelect({
+            key: seed.key,
+            name: seed.name,
+            // Don't pass the full count - let planting logic decide how many to use
+          });
         }
-        SeedPouchLogic.removeSeed(seed.key, 1);
+        
+        // Close the pouch immediately - let the planting scene handle the removal
         this.scene.stop();
       });
 
