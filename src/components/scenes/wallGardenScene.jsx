@@ -191,9 +191,17 @@ class WallGardenScene extends Phaser.Scene {
     // --- LOAD STATE FROM LOCAL STORAGE ---
     const sceneState = loadFromLocal('wallGardenSceneState') || {};
     
-   console.log('Current inventory items:', globalInventoryManager.getItems());
+    // Restore NPC states - ADD THE MISSING DEER STATES:
+    this.elephantIntroDone = !!sceneState.elephantIntroDone;
+    this.elephantThanksDone = !!sceneState.elephantThanksDone;
+    this.polarBearIntroDone = !!sceneState.polarBearIntroDone;
+    this.polarBearThanksDone = !!sceneState.polarBearThanksDone;
     
-    // Restore other scene-specific state
+    // ADD THESE MISSING DEER STATE LOADS:
+    this.deerIntroDone = !!sceneState.deerIntroDone;
+    this.deerThanksDone = !!sceneState.deerThanksDone;
+    
+    // Restore other states
     this.butterflyDialogueIndex = sceneState.butterflyDialogueIndex || 0;
     this.butterflyDialogueActive = !!sceneState.butterflyDialogueActive;
     this.dialogueActive = !!sceneState.dialogueActive;
@@ -908,19 +916,29 @@ makeButtonflyNonInteractive() {
   // Add a property to track if intro dialogues are complete
   saveSceneState() {
     const state = {
-      // Remove inventory from here - globalInventoryManager handles it
-      butterflyDialogueIndex: this.butterflyDialogueIndex,
-      butterflyDialogueActive: !!this.butterflyDialogueActive,
-      dialogueActive: !!this.dialogueActive,
-      butterflyIntroComplete: !!this.butterflyIntroComplete,
-      timeOfDay: globalTimeManager.getCurrentTimeOfDay(),
-      bushDispensed: this.bushDispensed || [false, false, false, false],
-      garlicFound: !!this.garlicFound,
-      thymeFound: !!this.thymeFound
+        // NPC dialogue progress - ADD THE MISSING DEER STATES:
+        elephantIntroDone: !!this.elephantIntroDone,
+        elephantThanksDone: !!this.elephantThanksDone,
+        polarBearIntroDone: !!this.polarBearIntroDone,
+        polarBearThanksDone: !!this.polarBearThanksDone,
+        deerIntroDone: !!this.deerIntroDone,
+        deerThanksDone: !!this.deerThanksDone,  
+        
+        // Butterfly progress
+        butterflyDialogueIndex: this.butterflyDialogueIndex,
+        butterflyDialogueActive: !!this.butterflyDialogueActive,
+        butterflyIntroComplete: !!this.butterflyIntroComplete,
+        
+        // Plant collection states
+        bushDispensed: this.bushDispensed || [false, false, false, false],
+        garlicFound: !!this.garlicFound,
+        thymeFound: !!this.thymeFound,
+        
+        // Time progression
+        timeOfDay: globalTimeManager.getCurrentTimeOfDay()
     };
     saveToLocal('wallGardenSceneState', state);
-    console.log('Saved state:', state);
-  }
+}
 
   setupBushes(width, height) {
     // Initialize bush dispensed state from saved data or default
