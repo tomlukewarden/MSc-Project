@@ -47,6 +47,7 @@ class Tutorial extends Phaser.Scene {
       padding: { left: 30, right: 30, top: 12, bottom: 12 }
     })
       .setOrigin(0.5)
+      .setDepth(200)
       .setInteractive({ useHandCursor: true })
       .on("pointerover", () => yesBtn.setStyle({ backgroundColor: "#145214" }))
       .on("pointerout", () => yesBtn.setStyle({ backgroundColor: "#228B22" }))
@@ -63,6 +64,7 @@ class Tutorial extends Phaser.Scene {
       padding: { left: 30, right: 30, top: 12, bottom: 12 }
     })
       .setOrigin(0.5)
+      .setDepth(200)
       .setInteractive({ useHandCursor: true })
       .on("pointerover", () => skipBtn.setStyle({ backgroundColor: "#800" }))
       .on("pointerout", () => skipBtn.setStyle({ backgroundColor: "#a33" }))

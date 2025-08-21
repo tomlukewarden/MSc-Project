@@ -754,36 +754,7 @@ class ShardGardenScene extends Phaser.Scene {
     };
   }
 
-  showMoveOnQuestion() {
-    showOption(this, "Would you like to move on?", {
-      imageKey: "butterfly",
-      options: [
-        {
-          text: "Yes",
-          callback: () => {
-            this.destroyDialogueUI();
-            this.transitioning = true;
-            this.scene.start("PersonalGarden");
-          }
-        },
-        {
-          text: "No",
-          callback: () => {
-            this.dialogueOnComplete = () => {
-              this.destroyDialogueUI();
-              this.dialogueActive = false;
-              this.updateHUDState();
-              this.dialogueOnComplete = null;
-            };
-            // Ensure HUD reappears immediately
-            this.dialogueActive = false;
-            this.updateHUDState();
-          }
-        }
-      ]
-    });
-  }
-
+  
   setupInputHandling() {
     // Basic input handling for the shard garden scene
     console.log("Setting up input handling for ShardGardenScene...");
@@ -835,10 +806,6 @@ class ShardGardenScene extends Phaser.Scene {
           this.dialogueOnComplete();
         }
 
-        // Show move on question after final dialogue stage
-        if (this.dialogueStage >= 3) {
-          this.showMoveOnQuestion();
-        }
       }
     });
 

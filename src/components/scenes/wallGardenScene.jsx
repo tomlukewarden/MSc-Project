@@ -23,6 +23,7 @@ class WallGardenScene extends Phaser.Scene {
     this.dialogueOnComplete = null;
     this.mainChar = null;
     this.transitioning = false;
+    this.butterflyIntroComplete = false; // Add this property
   }
 
   preload() {
@@ -207,6 +208,8 @@ class WallGardenScene extends Phaser.Scene {
       globalTimeManager.dayCycle.setTimeOfDay(sceneState.timeOfDay);
     }
 
+    // Restore butterfly intro completion status
+    this.butterflyIntroComplete = !!sceneState.butterflyIntroComplete;
     // --- Restore dialogue UI if needed ---
     // Only restore if dialogue was active when leaving
     if (this.butterflyDialogueActive) {
@@ -857,104 +860,60 @@ class WallGardenScene extends Phaser.Scene {
 
     // --- Butterfly NPC ---
     this.butterfly = createButterfly(this, width / 2 + 100, height / 2 - 50);
-    this.butterfly.setDepth(20).setScale(0.09).setInteractive();
+    this.butterfly.setDepth(20).setScale(0.09);
 
-    // --- Talk icon hover logic ---
-    this.butterfly.on("pointerover", (pointer) => {
-      talkIcon.setVisible(true);
-      talkIcon.setPosition(pointer.worldX + 32, pointer.worldY);
-    });
-    this.butterfly.on("pointermove", (pointer) => {
-      talkIcon.setPosition(pointer.worldX + 32, pointer.worldY);
-    });
-    this.butterfly.on("pointerout", () => {
-      talkIcon.setVisible(false);
-    });
+    // Only make butterfly interactive if intro is not complete
+    if (!this.butterflyIntroComplete) {
+        this.butterfly.setInteractive();
+        
+        // --- Talk icon hover logic ---
+        this.butterfly.on("pointerover", (pointer) => {
+          talkIcon.setVisible(true);
+          talkIcon.setPosition(pointer.worldX + 32, pointer.worldY);
+        });
+        this.butterfly.on("pointermove", (pointer) => {
+          talkIcon.setPosition(pointer.worldX + 32, pointer.worldY);
+        });
+        this.butterfly.on("pointerout", () => {
+          talkIcon.setVisible(false);
+        });
 
-    this.butterflyDialogueIndex = 0;
-    this.butterflyDialogueActive = false;
-
-    this.butterfly.on("pointerdown", () => {
-      if (this.butterflyDialogueActive) return;
-      this.butterflyDialogueActive = true;
-      // Do not reset index if restoring
-      if (!this.dialogueBox) this.butterflyDialogueIndex = 0;
-      showDialogue(this, butterflyIntroDialogues[this.butterflyDialogueIndex], { imageKey: "butterflyHappy" });
-      this.dialogueOnComplete = () => {
-        this.butterflyDialogueIndex++;
-        if (this.butterflyDialogueIndex < butterflyIntroDialogues.length) {
+        this.butterfly.on("pointerdown", () => {
+          if (this.butterflyDialogueActive) return;
+          this.butterflyDialogueActive = true;
+          // Do not reset index if restoring
+          if (!this.dialogueBox) this.butterflyDialogueIndex = 0;
           showDialogue(this, butterflyIntroDialogues[this.butterflyDialogueIndex], { imageKey: "butterflyHappy" });
-        } else {
-          showOption(this, "Would you like to move on?", {
-            imageKey: "butterflyHappy",
-            options: [
-              {
-                text: "Yes",
-                callback: () => {
-                  this.destroyDialogueUI();
-                  this.butterflyDialogueActive = false;
-                  this.scene.start("LoaderScene", {
-                    nextSceneKey: "ShardGardenScene",
-                    nextSceneData: {}
-                  });
-                }
-              },
-              {
-                text: "No",
-                callback: () => {
-                  showDialogue(this, "Take your time and explore! Talk to me again when you're ready to move on.", { imageKey: "butterflyHappy" });
-                  this.dialogueOnComplete = () => {
-                    this.destroyDialogueUI();
-                    this.butterflyDialogueActive = false;
-                    this.dialogueActive = false;
-                    this.updateHUDState();
-                    this.dialogueOnComplete = null;
-                  };
-                }
-              }
-            ]
-          });
-        }
-      };
-    });
+          this.dialogueOnComplete = () => {
+            this.butterflyDialogueIndex++;
+            if (this.butterflyDialogueIndex < butterflyIntroDialogues.length) {
+              showDialogue(this, butterflyIntroDialogues[this.butterflyDialogueIndex], { imageKey: "butterflyHappy" });
+            }
+          };
+        });
+    } else {
+        // Butterfly intro is complete, make it non-interactive
+        console.log('Butterfly intro already complete - butterfly is non-interactive');
+    }
+}
 
-    // --- Placeholder bushes: random rectangles ---
-    this.setupBushes(width, height, periwinkleFound);
+// Add method to remove butterfly interactivity
+makeButtonflyNonInteractive() {
+    if (this.butterfly) {
+        this.butterfly.disableInteractive();
+        this.butterfly.removeAllListeners();
+        console.log('Butterfly made non-interactive');
+    }
+}
 
-    this.input.on("pointerdown", () => {
-      this.sound.play("click");
-      // Only advance/close if a dialogue is active and a completion callback is set
-      if (this.dialogueActive && typeof this.dialogueOnComplete === "function") {
-        this.dialogueOnComplete();
-      }
-    });
-
-    // --- PERIODIC SAVE TO LOCAL STORAGE ---
-    this._saveInterval = setInterval(() => {
-      this.saveSceneState(periwinkleFound);
-    }, 8000);
-
-    // Save on shutdown/stop
-    this.events.on('shutdown', () => {
-      this.saveSceneState(periwinkleFound);
-      clearInterval(this._saveInterval);
-      this.transitioning = false;
-    });
-    this.events.on('destroy', () => {
-      this.saveSceneState(periwinkleFound);
-      clearInterval(this._saveInterval);
-      this.transitioning = false;
-    });
-  }
-
-  // Save relevant state to localStorage
-  saveSceneState(periwinkleFound) {
+  // Add a property to track if intro dialogues are complete
+  saveSceneState() {
     const state = {
       inventory: inventoryManager.getItems ? inventoryManager.getItems() : [],
-      periwinkleFound: !!periwinkleFound,
       butterflyDialogueIndex: this.butterflyDialogueIndex,
       butterflyDialogueActive: !!this.butterflyDialogueActive,
       dialogueActive: !!this.dialogueActive,
+      butterflyIntroComplete: !!this.butterflyIntroComplete, // Add this line
       timeOfDay: globalTimeManager.getCurrentTimeOfDay(),
       bushDispensed: this.bushDispensed || [false, false, false, false],
       garlicFound: !!this.garlicFound,
