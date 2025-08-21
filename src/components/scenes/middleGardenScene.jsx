@@ -11,6 +11,7 @@ import { createTurtle, turtleIntroDialogues, turtleThanksDialogues } from "../..
 import globalTimeManager from "../../day/timeManager";
 import quests from "../../quests/quests";
 
+
 class MiddleGardenScene extends Phaser.Scene {
   constructor() {
     super({ key: 'MiddleGardenScene', physics: { default: 'arcade', arcade: { debug: false } } });
@@ -68,6 +69,8 @@ class MiddleGardenScene extends Phaser.Scene {
     this.load.image("wolfDialogueHappy", "/assets/npc/dialogue/wolfHappy.PNG");
     this.load.image("wolfDialogueSad", "/assets/npc/dialogue/wolfSad.PNG");
     this.load.tilemapTiledJSON('middleGardenMap', '/assets/maps/middleGarden.json');
+    this.load.image("wallGardenSign", "/assets/signs/wallGardenL.PNG");
+    this.load.image("mainGardenSign", "/assets/signs/mainGardenR.png");
   }
 
   create() {
@@ -106,6 +109,51 @@ class MiddleGardenScene extends Phaser.Scene {
     if (sceneState.timeOfDay) {
       globalTimeManager.dayCycle.setTimeOfDay(sceneState.timeOfDay);
     }
+
+
+        // --- Wall Garden Sign (Left side) ---
+        const wallGardenSign = this.add.image(100, 600, "wallGardenSign").setScale(0.15).setOrigin(0.5).setDepth(100);
+        wallGardenSign.setInteractive({ useHandCursor: true });
+
+        wallGardenSign.on('pointerover', () => {
+          wallGardenSign.setTint(0xcccccc);
+        });
+
+        wallGardenSign.on('pointerout', () => {
+          wallGardenSign.clearTint();
+        });
+
+        wallGardenSign.on('pointerdown', () => {
+          if (!this.transitioning) {
+            this.transitioning = true;
+            this.scene.start("LoaderScene", {
+              nextSceneKey: "WallGardenScene", // Fixed: removed extra space
+              nextSceneData: {}
+            });
+          }
+        });
+
+        // --- Main Garden Sign (Right side) - Goes to Shard Garden ---
+        const mainGardenSign = this.add.image(1000, 600, "mainGardenSign").setScale(0.15).setOrigin(0.5).setDepth(100);
+        mainGardenSign.setInteractive({ useHandCursor: true });
+
+        mainGardenSign.on('pointerover', () => {
+          mainGardenSign.setTint(0xcccccc);
+        });
+
+        mainGardenSign.on('pointerout', () => {
+          mainGardenSign.clearTint();
+        });
+
+        mainGardenSign.on('pointerdown', () => {
+          if (!this.transitioning) {
+            this.transitioning = true;
+            this.scene.start("LoaderScene", {
+              nextSceneKey: "ShardGardenScene",
+              nextSceneData: {}
+            });
+          }
+        });
 
     // Asset existence check helper
     const safeAddImage = (scene, x, y, key, ...args) => {
@@ -213,10 +261,11 @@ class MiddleGardenScene extends Phaser.Scene {
     this.physics.add.existing(folliage2Rect, true);
     collisionGroup.add(folliage2Rect);
 
-    // Create main character with collision
-    this.mainChar = createMainChar(this, width / 2, height / 2, scaleFactor, collisionGroup);
+    // Create main character with collision - Updated spawn position
+    this.mainChar = createMainChar(this, 200, 850, scaleFactor, collisionGroup); 
     this.mainChar.setDepth(1).setOrigin(0.5, 0.5);
 
+    
     // Enable collision between character and collision group
     this.physics.add.collider(this.mainChar, collisionGroup);
 
@@ -247,7 +296,7 @@ class MiddleGardenScene extends Phaser.Scene {
     this.turtle
       .setInteractive({ useHandCursor: true })
       .setDepth(1)
-      .setScale(0.12)
+      .setScale(0.1)  
       .setOrigin(-0.2, 1.7);
 
     // Set turtle texture based on saved state
@@ -256,11 +305,11 @@ class MiddleGardenScene extends Phaser.Scene {
     }
 
     // --- Wolf NPC ---
-    this.wolf = createWolf(this, width / 2, height / 2 - 120);
+    this.wolf = createWolf(this, width / 2, height / 2 + 120); 
     this.wolf
       .setInteractive({ useHandCursor: true })
       .setDepth(10)
-      .setScale(0.15)
+      .setScale(0.12) 
       .setOrigin(0.5, 0.9);
 
     // Set wolf texture based on saved state

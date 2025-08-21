@@ -92,6 +92,9 @@ class PersonalGarden extends Phaser.Scene {
     this.load.image("autumnShard", "/assets/items/autumn.png");
     this.load.image("winterShard", "/assets/items/winter.png");
     this.load.tilemapTiledJSON("personalGardenMap", "/assets/maps/personalGarden.json");
+    this.load.image("wallGardenSign", "/assets/signs/wallGardenSign.png");
+    this.load.image("shopSign", "/assets/signs/shop.PNG");
+    
   }
 
   create() {
@@ -516,70 +519,83 @@ class PersonalGarden extends Phaser.Scene {
     this.scene.launch("HUDScene");
     this.scene.bringToTop("HUDScene");
 
-    const backBtnX = width - 40;
-    const backBtnY = height / 2;
-    const backButton = this.add.text(backBtnX, backBtnY, "Back", {
-      fontSize: "24px",
-      color: "#fff",
-      fontFamily: "Georgia",
-      backgroundColor: "#3bb273",
-      padding: { left: 12, right: 12, top: 6, bottom: 6 }
-    })
-      .setOrigin(1, 3.5)
-      .setInteractive({ useHandCursor: true })
-      .on("pointerdown", () => {
+    // --- Wall Garden Sign (Right side) ---
+    const wallGardenSignX = width - 120;
+    const wallGardenSignY = height / 2 - 150;
+    const wallGardenSign = this.textures.exists('wallGardenSign')
+      ? this.add.image(wallGardenSignX, wallGardenSignY, 'wallGardenSign')
+        .setScale(0.15)
+        .setDepth(50)
+        .setInteractive({ useHandCursor: true })
+      : this.add.text(wallGardenSignX, wallGardenSignY, 'Missing: wallGardenSign', { 
+          fontSize: '16px', 
+          color: '#f00', 
+          backgroundColor: '#fff' 
+        }).setOrigin(0.5).setDepth(999);
+
+    if (this.textures.exists('wallGardenSign')) {
+      wallGardenSign.on('pointerover', () => {
+        wallGardenSign.setTint(0xcccccc);
+      });
+      
+      wallGardenSign.on('pointerout', () => {
+        wallGardenSign.clearTint();
+      });
+      
+      wallGardenSign.on('pointerdown', () => {
         this.scene.stop("PersonalGarden");
         this.scene.start("WallGardenScene");
         this.scene.resume("HUDScene");
       });
-
-    backButton.setDepth(10);
-
-    // Load other saved state including achievement progress
-    if (loadedState?.currentTool) this.currentTool = loadedState.currentTool;
-    if (loadedState?.hasPlantedFirstCrop) this.hasPlantedFirstCrop = loadedState.hasPlantedFirstCrop;
-    if (loadedState?.hasHarvestedFirstCrop) this.hasHarvestedFirstCrop = loadedState.hasHarvestedFirstCrop;
-    if (loadedState?.harvestedPlantTypes) {
-      this.harvestedPlantTypes = new Set(loadedState.harvestedPlantTypes);
     }
 
-    // Shop button
-    const shopBtnX = 120;
-    const shopBtnY = height - 80;
-    const shopButtonBg = this.add.rectangle(shopBtnX, shopBtnY, 140, 50, 0x567d46, 0.95)
-      .setStrokeStyle(2, 0x88ccff)
-      .setDepth(20)
-      .setInteractive({ useHandCursor: true });
+    // --- Shop Sign (Left side) ---
+    const shopSignX = 120;
+    const shopSignY = height - 120;
+    const shopSign = this.textures.exists('shopSign')
+      ? this.add.image(shopSignX, shopSignY, 'shopSign')
+        .setScale(0.15)
+        .setDepth(50)
+        .setInteractive({ useHandCursor: true })
+      : this.add.text(shopSignX, shopSignY, 'Missing: shopSign', { 
+          fontSize: '16px', 
+          color: '#f00', 
+          backgroundColor: '#fff' 
+        }).setOrigin(0.5).setDepth(999);
 
-    const shopButtonText = this.add.text(shopBtnX, shopBtnY, "Shop", {
-      fontFamily: "Georgia",
-      fontSize: "24px",
-      color: "#fff"
-    }).setOrigin(0.5).setDepth(21);
-
-    shopButtonBg.on("pointerdown", () => {
-      showOption(this, "Would you like to go to the shop?", {
-        options: [
-          {
-            text: "Yes",
-            callback: () => {
-              if (this.destroyDialogueUI) this.destroyDialogueUI();
-              this.sound.stopByKey && this.sound.stopByKey("theme1");
-              this.scene.start("LoaderScene", {
-                nextSceneKey: "ShopScene",
-                nextSceneData: {}
-              });
-            }
-          },
-          {
-            text: "No",
-            callback: () => {
-              if (this.destroyDialogueUI) this.destroyDialogueUI();
-            }
-          }
-        ]
+    if (this.textures.exists('shopSign')) {
+      shopSign.on('pointerover', () => {
+        shopSign.setTint(0xcccccc);
       });
-    });
+      
+      shopSign.on('pointerout', () => {
+        shopSign.clearTint();
+      });
+      
+      shopSign.on('pointerdown', () => {
+        showOption(this, "Would you like to go to the shop?", {
+          options: [
+            {
+              text: "Yes",
+              callback: () => {
+                if (this.destroyDialogueUI) this.destroyDialogueUI();
+                this.sound.stopByKey && this.sound.stopByKey("theme1");
+                this.scene.start("LoaderScene", {
+                  nextSceneKey: "ShopScene",
+                  nextSceneData: {}
+                });
+              }
+            },
+            {
+              text: "No",
+              callback: () => {
+                if (this.destroyDialogueUI) this.destroyDialogueUI();
+              }
+            }
+          ]
+        });
+      });
+    }
 
     this.createToolButtons();
 

@@ -78,6 +78,9 @@ class WallGardenScene extends Phaser.Scene {
     this.load.image("elephantDialogueSad", "/assets/npc/dialogue/elephantSad.png");
     this.load.image("winterShard", "/assets/items/winter.png");
     this.load.tilemapTiledJSON("wallGardenMap", "/assets/maps/wallGardenMap.json");
+    this.load.image("greenhouseSign", "/assets/signs/glasshouseL.PNG");
+    this.load.image("middleGardenSign", "/assets/signs/middleGardenR.PNG");
+    this.load.image("personalGardenSign", "/assets/signs/personalGardenL.PNG");
   }
 
   create() {
@@ -93,46 +96,78 @@ class WallGardenScene extends Phaser.Scene {
     let debugText = `Loaded textures: ${loadedKeys.join(', ')}\nMissing: ${missingKeys.join(', ')}`;
     this.add.text(20, debugY, debugText, { fontSize: '14px', color: missingKeys.length ? '#f00' : '#080', backgroundColor: '#fff', wordWrap: { width: 800 } }).setDepth(-1);
     this.transitioning = false;
-    // --- Personal Garden Button (above bushes) ---
-    const btnX = 220;
-    const btnY = 300;
-    const btnWidth = 180;
-    const btnHeight = 48;
-    const personalBtnBg = this.add.rectangle(btnX, btnY, btnWidth, btnHeight, 0x3e7d3a, 0.95)
-      .setOrigin(0.5)
-      .setDepth(100)
-      .setInteractive({ useHandCursor: true });
-    const personalBtnText = this.add.text(btnX, btnY, 'Go to Personal Garden', {
-      fontFamily: 'Georgia',
-      fontSize: '22px',
-      color: '#fff',
-      align: 'center',
-      shadow: {
-        offsetX: 0,
-        offsetY: 0,
-        color: '#4caf50',
-        blur: 8,
-        fill: true
-      }
-    }).setOrigin(0.5).setDepth(101);
 
-    personalBtnText.setInteractive({ useHandCursor: true });
-    personalBtnText.on('pointerdown', () => {
-      personalBtnBg.emit('pointerdown');
+    // --- Personal Garden Sign (Above bushes area) ---
+    const personalGardenSignX = 220;
+    const personalGardenSignY = 300;
+    const personalGardenSign = this.textures.exists('personalGardenSign')
+      ? this.add.image(personalGardenSignX, personalGardenSignY, 'personalGardenSign')
+        .setScale(0.15)
+        .setDepth(100)
+        .setInteractive({ useHandCursor: true })
+      : this.add.text(personalGardenSignX, personalGardenSignY, 'Missing: personalGardenSign', { 
+          fontSize: '16px', 
+          color: '#f00', 
+          backgroundColor: '#fff' 
+        }).setOrigin(0.5).setDepth(999);
+
+    if (this.textures.exists('personalGardenSign')) {
+      personalGardenSign.on('pointerover', () => {
+        personalGardenSign.setTint(0xcccccc);
+      });
+      
+      personalGardenSign.on('pointerout', () => {
+        personalGardenSign.clearTint();
+      });
+      
+      personalGardenSign.on('pointerdown', () => {
+        if (!this.transitioning) {
+          this.transitioning = true;
+          this.scene.start("LoaderScene", {
+            nextSceneKey: "PersonalGarden",
+            nextSceneData: {}
+          });
+        }
+      });
+    }
+
+    const greenhouseSign = this.add.image(100, 500, "greenhouseSign").setScale(0.15).setOrigin(0.5).setDepth(100);
+    greenhouseSign.setInteractive({ useHandCursor: true });
+
+    greenhouseSign.on('pointerover', () => {
+      greenhouseSign.setTint(0xcccccc);
     });
-    personalBtnBg.on('pointerover', () => {
-      personalBtnBg.setFillStyle(0x4caf50, 0.98);
-      personalBtnText.setColor('#ffffcc');
+
+    greenhouseSign.on('pointerout', () => {
+      greenhouseSign.clearTint();
     });
-    personalBtnBg.on('pointerout', () => {
-      personalBtnBg.setFillStyle(0x3e7d3a, 0.95);
-      personalBtnText.setColor('#fff');
-    });
-    personalBtnBg.on('pointerdown', () => {
+
+    greenhouseSign.on('pointerdown', () => {
       if (!this.transitioning) {
         this.transitioning = true;
         this.scene.start("LoaderScene", {
-          nextSceneKey: "PersonalGarden",
+          nextSceneKey: "GreenhouseScene",
+          nextSceneData: {}
+        });
+      }
+    });
+
+    const middleGardenSign = this.add.image(1000, 250, "middleGardenSign").setScale(0.15).setOrigin(0.5).setDepth(100);
+    middleGardenSign.setInteractive({ useHandCursor: true });
+
+    middleGardenSign.on('pointerover', () => {
+      middleGardenSign.setTint(0xcccccc);
+    });
+
+    middleGardenSign.on('pointerout', () => {
+      middleGardenSign.clearTint();
+    });
+
+    middleGardenSign.on('pointerdown', () => {
+      if (!this.transitioning) {
+        this.transitioning = true;
+        this.scene.start("LoaderScene", {
+          nextSceneKey: "MiddleGardenScene",
           nextSceneData: {}
         });
       }
