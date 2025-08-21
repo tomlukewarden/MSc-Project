@@ -315,6 +315,17 @@ class WallGardenScene extends Phaser.Scene {
 
     // Elephant click handler
     this.elephant.on("pointerdown", () => {
+      // Check if player is close enough
+      if (!this.isPlayerNearNPC(this.elephant, 120)) {
+        showDialogue(this, "You need to get closer to talk to Tia.", {image: "elephantDialogueSad"});
+        this.time.delayedCall(1500, () => {
+          this.destroyDialogueUI();
+          this.dialogueActive = false;
+          this.updateHUDState && this.updateHUDState();
+        });
+        return;
+      }
+
       if (!this.elephantIntroDone && !this.elephantDialogueActive) {
         this.elephantDialogueActive = true;
         this.elephantDialogueIndex = 0;
@@ -542,6 +553,17 @@ class WallGardenScene extends Phaser.Scene {
 
     // Polar Bear click handler
     this.polarBear.on("pointerdown", () => {
+      // Check if player is close enough
+      if (!this.isPlayerNearNPC(this.polarBear, 120)) {
+        showDialogue(this, "You need to get closer to talk to Snowbert.", { imageKey: "polarDialogueSad" });
+        this.time.delayedCall(1500, () => {
+          this.destroyDialogueUI();
+          this.dialogueActive = false;
+          this.updateHUDState && this.updateHUDState();
+        });
+        return;
+      }
+
       if (!this.polarBearIntroDone && !this.polarBearDialogueActive) {
         this.polarBearDialogueActive = true;
         this.polarBearDialogueIndex = 0;
@@ -594,7 +616,7 @@ class WallGardenScene extends Phaser.Scene {
       .setInteractive({ useHandCursor: true })
       .setDepth(30)
       .setScale(0.13)
-      .setOrigin(4, 0.3);
+      .setOrigin(4, -1.8);
 
     // Deer talk icon events
     this.deer.on("pointerover", (pointer) => {
@@ -644,6 +666,17 @@ class WallGardenScene extends Phaser.Scene {
 
     // Deer click handler
     this.deer.on("pointerdown", () => {
+      // Check if player is close enough
+      if (!this.isPlayerNearNPC(this.deer, 120)) {
+        showDialogue(this, "You need to get closer to talk to Elkton John.", { imageKey: "deerDialogueSad" });
+        this.time.delayedCall(1500, () => {
+          this.destroyDialogueUI();
+          this.dialogueActive = false;
+          this.updateHUDState && this.updateHUDState();
+        });
+        return;
+      }
+
       if (!this.deerIntroDone && !this.deerDialogueActive) {
         this.deerDialogueActive = true;
         this.deerDialogueIndex = 0;
@@ -1222,6 +1255,18 @@ makeButtonflyNonInteractive() {
       this.dialogueBox = null;
     }
   }
+
+  // Add this helper method to check distance
+isPlayerNearNPC(npc, range = 100) {
+  if (!this.mainChar || !npc) return false;
+  
+  const distance = Phaser.Math.Distance.Between(
+    this.mainChar.x, this.mainChar.y,
+    npc.x, npc.y
+  );
+  
+  return distance <= range;
+}
 
 }
 export default WallGardenScene;
