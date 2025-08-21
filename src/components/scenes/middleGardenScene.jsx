@@ -10,6 +10,7 @@ import { createMole, moleIntroDialogues, moleThanksDialogues } from "../../chara
 import { createTurtle, turtleIntroDialogues, turtleThanksDialogues } from "../../characters/turtle";
 import globalTimeManager from "../../day/timeManager";
 import quests from "../../quests/quests";
+import { addCompanionToScene } from "../../characters/companion";
 
 
 class MiddleGardenScene extends Phaser.Scene {
@@ -71,6 +72,11 @@ class MiddleGardenScene extends Phaser.Scene {
     this.load.tilemapTiledJSON('middleGardenMap', '/assets/maps/middleGarden.json');
     this.load.image("wallGardenSign", "/assets/signs/wallGardenL.PNG");
     this.load.image("mainGardenSign", "/assets/signs/mainGardenR.png");
+    this.load.image("sit", "/assets/npc/pet/dog_3_sit.png");
+    this.load.image("walk1", "/assets/npc/pet/dog_3_walk_sheet1.png");
+    this.load.image("walk2", "/assets/npc/pet/dog_3_walk_sheet2.png");
+    this.load.audio("dogBark", "/assets/sound-effects/dogbark.mp3");
+    
   }
 
   create() {
@@ -265,6 +271,7 @@ class MiddleGardenScene extends Phaser.Scene {
     this.mainChar = createMainChar(this, 200, 850, scaleFactor, collisionGroup); 
     this.mainChar.setDepth(1).setOrigin(0.5, 0.5);
 
+    this.companion = addCompanionToScene(this, this.mainChar);
     
     // Enable collision between character and collision group
     this.physics.add.collider(this.mainChar, collisionGroup);

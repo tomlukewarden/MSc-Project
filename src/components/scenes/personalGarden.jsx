@@ -10,6 +10,7 @@ import plantData from "../../plantData";
 import quests from "../../quests/quests";
 import achievements from "../../quests/achievments";
 import globalInventoryManager from "../inventoryManager";
+import { addCompanionToScene } from "../../characters/companion";
 
 class PersonalGarden extends Phaser.Scene {
   constructor() {
@@ -95,6 +96,11 @@ class PersonalGarden extends Phaser.Scene {
     this.load.image("wallGardenSign", "/assets/signs/wallGardenSign.png");
     this.load.image("shopSign", "/assets/signs/shop.PNG");
     
+    // Add companion assets
+    this.load.image("sit", "/assets/npc/pet/dog_3_sit.png");
+    this.load.image("walk1", "/assets/npc/pet/dog_3_walk_sheet1.png");
+    this.load.image("walk2", "/assets/npc/pet/dog_3_walk_sheet2.png");
+    this.load.audio("dogBark", "/assets/sound-effects/dogbark.mp3");
   }
 
   create() {
@@ -467,7 +473,7 @@ class PersonalGarden extends Phaser.Scene {
 
     this.mainChar = createMainChar(this, charStartX, charStartY, scaleFactor, this.obstacleGroup);
     this.mainChar.setDepth(101).setOrigin(0.5, 0.5);
-
+    this.companion = addCompanionToScene(this, this.mainChar);
     // Only collide with tilemap collision objects
     this.physics.add.collider(this.mainChar, this.obstacleGroup);
 
