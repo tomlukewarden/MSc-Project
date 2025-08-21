@@ -20,7 +20,7 @@ class FarmingTutorial extends Phaser.Scene {
     this.load.image('hoe', '/assets/tools/hoe.png');
     this.load.image('marigoldPlant', '/assets/plants/marigold.PNG');
     this.load.image('arrow', '/assets/ui-items/arrow.png');
-    this.load.image("butterflyHappy", "/assets/npc/butterfly/happy-butterfly-dio.png");
+  this.load.image("butterflyHappy", "/assets/npc/dialogue/butterflySad.PNG");
     this.load.image('dialogueBoxBg', '/assets/ui-items/dialogue.png');
   }
 
@@ -165,15 +165,15 @@ class FarmingTutorial extends Phaser.Scene {
       }
     });
 
-    // Next button (separate, always visible at bottom)
-    const nextBtn = this.add.text(width / 2, height - 60, "Crafting Tutorial", {
+    // Next button - moved to top right
+    const nextBtn = this.add.text(width - 20, 20, "Crafting Tutorial", {
       fontFamily: "Georgia",
       fontSize: "22px",
       color: "#fff",
       backgroundColor: "#228B22",
       padding: { left: 18, right: 18, top: 8, bottom: 8 }
     })
-      .setOrigin(0.5)
+      .setOrigin(1, 0) // Set origin to top-right corner
       .setDepth(5)
       .setInteractive({ useHandCursor: true })
       .on("pointerover", () => nextBtn.setStyle({ backgroundColor: "#145214" }))

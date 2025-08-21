@@ -81,10 +81,9 @@ class OpenJournal extends Phaser.Scene {
 
     // Quest-specific images
     this.load.image("hoeIcon","/assets/tools/hoe.png" )
-    this.load.image("questGeneral", "/assets/misc/questGeneral.png"); // Generic quest icon
 
 
-    this.load.image("star", "public/assets/misc/Star.png"); 
+    this.load.image("star", "/assets/misc/Star.png"); 
 
     // Optionally, load all plant images here if not already loaded elsewhere
     plantData.forEach(plant => {
@@ -337,10 +336,6 @@ class OpenJournal extends Phaser.Scene {
     if (this.questStatus && !this.questStatus.destroyed) this.questStatus.destroy();
     if (this.completedTitle && !this.completedTitle.destroyed) this.completedTitle.destroy();
     if (this.completedList && !this.completedList.destroyed) this.completedList.destroy();
-    if (this.shardImages && Array.isArray(this.shardImages)) {
-      this.shardImages.forEach(img => { if (img && !img.destroyed) img.destroy(); });
-      this.shardImages = [];
-    }
 
     // Achievements tab content
     if (this.achievementImage && !this.achievementImage.destroyed) this.achievementImage.destroy();
@@ -360,7 +355,7 @@ class OpenJournal extends Phaser.Scene {
     }
   }
 
-  // --- Updated Quest Page Renderer with proper cleanup ---
+  // --- Updated Quest Page Renderer (No Images, Better Spacing) ---
   renderQuestPage() {
     const { width, height } = this.sys.game.config;
 
@@ -379,12 +374,12 @@ class OpenJournal extends Phaser.Scene {
       });
 
       const checklistText = completedQuests.map(q => `✓ ${q.title}`).join('\n');
-      this.completedList = this.add.text(width / 2 - 220, 230, checklistText, {
+      this.completedList = this.add.text(width / 2 - 220, 235, checklistText, {
         fontFamily: "Georgia",
         fontSize: "14px",
         color: "#567d46",
         wordWrap: { width: 240 },
-        lineSpacing: 5
+        lineSpacing: 10 // Increased spacing
       });
     } else {
       this.completedTitle = this.add.text(width / 2 - 220, 250, "No completed quests yet.", {
@@ -395,7 +390,7 @@ class OpenJournal extends Phaser.Scene {
       });
     }
 
-    // --- RIGHT SIDE: Current Quest Display ---
+    // --- RIGHT SIDE: Current Quest Display (No Image) ---
     const quest = allQuests[this.currentPage];
     
     if (!quest) {
@@ -407,44 +402,29 @@ class OpenJournal extends Phaser.Scene {
       return;
     }
 
-    // Determine quest image based on quest type and status
-    let questImageKey = this.getQuestImageKey(quest);
-
-    // Quest image
-    const imageX = width / 2 + 100;
-    const imageY = height / 2 - 20;
-    
-    if (questImageKey && this.textures.exists(questImageKey)) {
-      this.questImage = this.add.image(imageX, imageY, questImageKey)
-        .setDisplaySize(160, 160)
-        .setDepth(2);
-    } else {
-      if (this.textures.exists("questGeneral")) {
-        this.questImage = this.add.image(imageX, imageY, "questGeneral")
-          .setDisplaySize(160, 160)
-          .setDepth(2);
-      }
-    }
+    // Quest content positioning (centered since no image)
+    const textX = width / 2 + 50;
+    const textY = height / 2 - 80; // Moved up more
 
     // Quest title
-    this.questTitle = this.add.text(imageX + 110, imageY - 80, quest.title, {
+    this.questTitle = this.add.text(textX, textY, quest.title, {
       fontFamily: "Georgia",
-      fontSize: "22px",
+      fontSize: "26px", // Increased font size
       color: quest.completed ? "#567d46" : (quest.active ? "#2d4739" : "#888"),
       fontStyle: "bold",
-      wordWrap: { width: 180 }
+      wordWrap: { width: 300 } // Increased width
     });
 
-    // Quest description
-    this.questDesc = this.add.text(imageX + 110, imageY - 40, quest.description, {
+    // Quest description - more spacing from title
+    this.questDesc = this.add.text(textX, textY + 70, quest.description, {
       fontFamily: "Georgia",
-      fontSize: "15px",
+      fontSize: "18px", // Increased font size
       color: "#444",
-      wordWrap: { width: 180 },
-      lineSpacing: 3
+      wordWrap: { width: 300 }, // Increased width
+      lineSpacing: 8 // Increased line spacing
     });
 
-    // Quest status
+    // Quest status - more spacing from description
     let statusText = "";
     let statusColor = "#444";
     if (quest.completed) {
@@ -458,42 +438,14 @@ class OpenJournal extends Phaser.Scene {
       statusColor = "#888";
     }
 
-    this.questStatus = this.add.text(imageX + 110, imageY + 40, statusText, {
+    this.questStatus = this.add.text(textX, textY + 150, statusText, {
       fontFamily: "Georgia",
-      fontSize: "13px",
+      fontSize: "16px", // Increased font size
       color: statusColor,
       fontStyle: "bold",
       backgroundColor: statusColor === "#567d46" ? "#e8f5e8" : (statusColor === "#d4851f" ? "#fff3e0" : "#f5f5f5"),
-      padding: { left: 8, right: 8, top: 4, bottom: 4 }
+      padding: { left: 15, right: 15, top: 10, bottom: 10 } // Increased padding
     });
-
-    // Special handling for shard quests
-    if (quest.title.toLowerCase().includes("shard")) {
-      this.shardImages = [];
-      const shardKeys = ["springShard", "summerShard", "autumnShard", "winterShard"];
-      const shardStartX = imageX - 60;
-      const shardStartY = imageY + 100;
-      
-      this.add.text(shardStartX, shardStartY - 20, "Seasonal Shards:", {
-        fontFamily: "Georgia",
-        fontSize: "12px",
-        color: "#567d46",
-        fontStyle: "italic"
-      });
-      
-      shardKeys.forEach((shardKey, index) => {
-        if (this.textures.exists(shardKey)) {
-          const shardImage = this.add.image(
-            shardStartX + (index * 40), 
-            shardStartY, 
-            shardKey
-          )
-          .setDisplaySize(30, 30)
-          .setDepth(3);
-          this.shardImages.push(shardImage);
-        }
-      });
-    }
 
     // Page number
     this.pageNumText = this.add.text(width / 2, 580, `Quest ${this.currentPage + 1} of ${allQuests.length}`, {
@@ -514,7 +466,7 @@ class OpenJournal extends Phaser.Scene {
     }
   }
 
-  // --- Updated Achievements Page Renderer with proper cleanup ---
+  // --- Updated Achievements Page Renderer (No Images, Better Spacing) ---
   renderAchievementsPage() {
     const { width, height } = this.sys.game.config;
 
@@ -533,12 +485,12 @@ class OpenJournal extends Phaser.Scene {
       });
 
       const checklistText = completedAchievements.map(a => `🏆 ${a.title}`).join('\n');
-      this.completedAchievementsList = this.add.text(width / 2 - 220, 230, checklistText, {
+      this.completedAchievementsList = this.add.text(width / 2 - 220, 235, checklistText, {
         fontFamily: "Georgia",
         fontSize: "14px",
         color: "#d4851f",
         wordWrap: { width: 240 },
-        lineSpacing: 5
+        lineSpacing: 10 // Increased spacing
       });
     } else {
       this.completedAchievementsTitle = this.add.text(width / 2 - 220, 250, "No achievements earned yet.", {
@@ -549,7 +501,7 @@ class OpenJournal extends Phaser.Scene {
       });
     }
 
-    // --- RIGHT SIDE: Current Achievement Display ---
+    // --- RIGHT SIDE: Current Achievement Display (No Image) ---
     const achievement = allAchievements[this.currentPage];
     
     if (!achievement) {
@@ -561,51 +513,29 @@ class OpenJournal extends Phaser.Scene {
       return;
     }
 
-    // Determine achievement image
-    let achievementImageKey = this.getAchievementImageKey(achievement);
-
-    // Achievement image
-    const imageX = width / 2 + 100;
-    const imageY = height / 2 - 20;
-    
-    if (achievementImageKey && this.textures.exists(achievementImageKey)) {
-      this.achievementImage = this.add.image(imageX, imageY, achievementImageKey)
-        .setDisplaySize(160, 160)
-        .setDepth(2);
-      
-      if (achievement.completed) {
-        this.achievementImage.setTint(0xffd700); // Golden tint for completed
-      } else {
-        this.achievementImage.setTint(0x888888); // Gray tint for incomplete
-      }
-    } else {
-      if (this.textures.exists("questGeneral")) {
-        this.achievementImage = this.add.image(imageX, imageY, "questGeneral")
-          .setDisplaySize(160, 160)
-          .setDepth(2)
-          .setTint(achievement.completed ? 0xffd700 : 0x888888);
-      }
-    }
+    // Achievement content positioning (centered since no image)
+    const textX = width / 2 + 50;
+    const textY = height / 2 - 80; // Moved up more
 
     // Achievement title
-    this.achievementTitle = this.add.text(imageX + 80, imageY - 80, achievement.title, {
+    this.achievementTitle = this.add.text(textX, textY, achievement.title, {
       fontFamily: "Georgia",
-      fontSize: "22px",
+      fontSize: "26px", // Increased font size
       color: achievement.completed ? "#d4851f" : "#888",
       fontStyle: "bold",
-      wordWrap: { width: 180 }
+      wordWrap: { width: 300 } // Increased width
     });
 
-    // Achievement description
-    this.achievementDesc = this.add.text(imageX + 80, imageY - 20, achievement.description, {
+    // Achievement description - more spacing from title
+    this.achievementDesc = this.add.text(textX, textY + 70, achievement.description, {
       fontFamily: "Georgia",
-      fontSize: "15px",
+      fontSize: "18px", // Increased font size
       color: "#444",
-      wordWrap: { width: 180 },
-      lineSpacing: 3
+      wordWrap: { width: 300 }, // Increased width
+      lineSpacing: 8 // Increased line spacing
     });
 
-    // Achievement status
+    // Achievement status - more spacing from description
     let statusText = "";
     let statusColor = "#444";
     if (achievement.completed) {
@@ -616,13 +546,13 @@ class OpenJournal extends Phaser.Scene {
       statusColor = "#888";
     }
 
-    this.achievementStatus = this.add.text(imageX + 80, imageY + 60, statusText, {
+    this.achievementStatus = this.add.text(textX, textY + 150, statusText, {
       fontFamily: "Georgia",
-      fontSize: "13px",
+      fontSize: "16px", // Increased font size
       color: statusColor,
       fontStyle: "bold",
       backgroundColor: statusColor === "#d4851f" ? "#fff8e1" : "#f5f5f5",
-      padding: { left: 8, right: 8, top: 4, bottom: 4 }
+      padding: { left: 15, right: 15, top: 10, bottom: 10 } // Increased padding
     });
 
     // Page number

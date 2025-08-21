@@ -29,7 +29,7 @@ class MovementTutorial extends Phaser.Scene {
     this.load.image("defaultLeftWalk2", "/assets/char/default/left-step-2.PNG");
     this.load.image("defaultRightWalk1", "/assets/char/default/right-step-1.PNG");
     this.load.image("defaultRightWalk2", "/assets/char/default/right-step-2.PNG");
-    this.load.image("butterflyHappy", "/assets/npc/butterfly/happy-butterfly-dio.png");
+    this.load.image("butterflyHappy", "/assets/npc/dialogue/butterflySad.PNG");
     this.load.image("dialogueBoxBg", "/assets/ui-items/dialogue.png");
   }
 
@@ -80,18 +80,18 @@ class MovementTutorial extends Phaser.Scene {
       }
     });
 
-    // Next button
-    const nextBtn = this.add.text(width / 2, height - 60, "Foraging Tutorial", {
+    // Next button - moved to top right
+    const nextBtn = this.add.text(width - 20, 20, "Foraging Tutorial", {
       fontFamily: "Georgia",
       fontSize: "22px",
       color: "#fff",
       backgroundColor: "#228B22",
       padding: { left: 18, right: 18, top: 8, bottom: 8 }
     })
-      .setOrigin(0.5)
+      .setOrigin(1, 0) // Set origin to top-right corner
       .setInteractive({ useHandCursor: true })
-      .on("pointerover", () => backBtn.setStyle({ backgroundColor: "#145214" }))
-      .on("pointerout", () => backBtn.setStyle({ backgroundColor: "#228B22" }))
+      .on("pointerover", () => nextBtn.setStyle({ backgroundColor: "#145214" })) // Fixed variable name
+      .on("pointerout", () => nextBtn.setStyle({ backgroundColor: "#228B22" }))
       .on("pointerdown", () => {
         this.scene.start("ForagingTutorial", this.scene.settings.data?.nextData || {});
       });
