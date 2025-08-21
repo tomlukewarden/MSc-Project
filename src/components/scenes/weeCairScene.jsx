@@ -503,7 +503,7 @@ class WeeCairScene extends Phaser.Scene {
   }
 
   // Add this helper method to check distance
-  isPlayerNearNPC(npc, range = 100) {
+  isPlayerNearNPC(npc, range = 300) {
     if (!this.mainChar || !npc) return false;
     
     const distance = Phaser.Math.Distance.Between(

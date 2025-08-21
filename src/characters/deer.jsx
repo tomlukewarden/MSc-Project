@@ -6,7 +6,6 @@ export const deerIntroDialogues = [
 ];
 
 export const deerThanksDialogues = [
-    "",
     "Ohhh yeah… that’s the good stuff. \n The itching’s already easing up.",
     "I feel like I can finally stop \n scratching and just *exist* again.",
     "Thanks, friend. \n You’re a lifesaver. Here—take this. I owe you one."
