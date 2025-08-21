@@ -10,6 +10,7 @@ import { receivedItem } from "../recievedItem";
 import globalTimeManager from "../../day/timeManager";
 import quests from "../../quests/quests";
 import achievements from "../../quests/achievments";
+import { addCompanionToScene } from "../../characters/companion";
 
 class ShardGardenScene extends Phaser.Scene {
   constructor() {
@@ -86,6 +87,10 @@ class ShardGardenScene extends Phaser.Scene {
     this.load.image('willowPlant', '/assets/plants/willow.PNG');
     this.load.tilemapTiledJSON("shardGardenMap", "/assets/maps/shardGarden.json");
     this.load.image("middleGardenSign", "/assets/signs/middleGardenL.PNG");
+     this.load.image("sit", "/assets/npc/pet/dog_3_sit.png");
+    this.load.image("walk1", "/assets/npc/pet/dog_3_walk_sheet1.png");
+    this.load.image("walk2", "/assets/npc/pet/dog_3_walk_sheet2.png");
+    this.load.audio("dogBark", "/assets/sound-effects/dogbark.mp3");
   }
 
   create() {
@@ -289,7 +294,7 @@ class ShardGardenScene extends Phaser.Scene {
     // --- Create main character ---
     this.mainChar = createMainChar(this, width / 2, height / 2, scaleFactor, collisionGroup);
     this.mainChar.setDepth(10).setOrigin(0.5, 0.5);
-
+ this.companion = addCompanionToScene(this, this.mainChar);
     // Enable collision between character and collision group
     this.physics.add.collider(this.mainChar, collisionGroup);
 

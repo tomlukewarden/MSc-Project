@@ -201,10 +201,10 @@ this.add.image(width - 100, height - 100, "exit")
             .setOrigin(0.5);
 
         // Spawn player at center to avoid immediate edge transitions
-        this.mainChar = createMainChar(this, width / 2, height / 2, scaleFactor, collisionGroup);
-
-        // Enable collision between character and collision group
-        this.physics.add.collider(this.mainChar, collisionGroup);
+        this.mainChar = createMainChar(this, width * 0.7, height * 0.8, scaleFactor, collisionGroup);
+    
+    // Enable collision between character and collision group
+    this.physics.add.collider(this.mainChar, collisionGroup);
 
         // --- Rabbit NPC ---
         this.rabbit = createRabbit(this, width / 2 + 200, height / 2 + 100);

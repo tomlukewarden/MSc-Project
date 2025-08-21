@@ -11,6 +11,7 @@ import { createElephant, elephantIntroDialogues, elephantThanksDialogues } from 
 import { createPolarBear, polarBearIntroDialogues, polarBearThanksDialogues } from '../../characters/polar';
 import {createDeer, deerIntroDialogues, deerThanksDialogues} from '../../characters/deer';
 import globalTimeManager from "../../day/timeManager";
+import { addCompanionToScene } from '../../characters/companion';
 
 
 class WallGardenScene extends Phaser.Scene {
@@ -81,6 +82,10 @@ class WallGardenScene extends Phaser.Scene {
     this.load.image("greenhouseSign", "/assets/signs/glasshouseL.PNG");
     this.load.image("middleGardenSign", "/assets/signs/middleGardenR.PNG");
     this.load.image("personalGardenSign", "/assets/signs/personalGardenL.PNG");
+     this.load.image("sit", "/assets/npc/pet/dog_3_sit.png");
+    this.load.image("walk1", "/assets/npc/pet/dog_3_walk_sheet1.png");
+    this.load.image("walk2", "/assets/npc/pet/dog_3_walk_sheet2.png");
+    this.load.audio("dogBark", "/assets/sound-effects/dogbark.mp3");
   }
 
   create() {
@@ -843,15 +848,12 @@ class WallGardenScene extends Phaser.Scene {
     }
 
     // --- Main Character with collision ---
-    this.mainChar = createMainChar(this, width / 2, height / 2, scaleFactor, collisionGroup);
-    this.mainChar.setDepth(10).setOrigin(1, -5);
+    this.mainChar = createMainChar(this, width / 2, height * 0.8, scaleFactor, collisionGroup);
+    this.mainChar.setDepth(10).setOrigin(0.5, 0.5);
 
-    // Enable collision between character and collision group
+  this.companion = addCompanionToScene(this, this.mainChar);
+    this.companion.setDepth(11); 
     this.physics.add.collider(this.mainChar, collisionGroup);
-
-    // Enable Phaser's physics debug rendering (optional - uncomment to see physics bodies)
-    // this.physics.world.createDebugGraphic();
-    // this.physics.world.debugGraphic.setDepth(9999);
 
     // --- Butterfly NPC ---
     this.butterfly = createButterfly(this, width / 2 + 100, height / 2 - 50);
