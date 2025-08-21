@@ -14,9 +14,6 @@ class GreenhouseScene extends Phaser.Scene {
         super({ key: "GreenhouseScene", physics: { default: "arcade", arcade: { debug: false } } });
         this.dialogueActive = false;
         this.dialogueBox = null;
-        
-        // Use the global inventory manager
-        this.inventoryManager = globalInventoryManager;
     }
 
     preload() {
@@ -63,16 +60,13 @@ class GreenhouseScene extends Phaser.Scene {
 
         // --- LOAD STATE FROM LOCAL STORAGE ---
         const sceneState = loadFromLocal('greenhouseSceneState') || {};
-        // Restore inventory if present
-        if (sceneState.inventory && Array.isArray(sceneState.inventory)) {
-            this.inventoryManager.clear();
-            sceneState.inventory.forEach(item => this.inventoryManager.addItem(item));
-        }
+        
         // Restore NPC states
         this.rabbitIntroDone = !!sceneState.rabbitIntroDone;
         this.rabbitThanksDone = !!sceneState.rabbitThanksDone;
         this.pigIntroDone = !!sceneState.pigIntroDone;
         this.pigThanksDone = !!sceneState.pigThanksDone;
+        
         // Restore time of day
         if (sceneState.timeOfDay) {
             globalTimeManager.dayCycle.setTimeOfDay(sceneState.timeOfDay);
@@ -262,14 +256,14 @@ this.add.image(width - 100, height - 100, "exit")
         // --- Rabbit dialogue and gifting logic ---
         this.rabbitDialogueActive = false;
         this.rabbitDialogueIndex = 0;
-        this.hasLavenderOil = () => this.inventoryManager.hasItemByKey("lavenderOil");
+        this.hasLavenderOil = () => globalInventoryManager.hasItemByKey("lavenderOil");
 
         // Listen for lavenderOil handover event from inventory
         this.events.on("lavenderOilGiven", () => {
           this.awaitingLavenderOilGive = false;
-          this.inventoryManager.removeItemByKey("lavenderOil");
+          globalInventoryManager.removeItemByKey("lavenderOil");
           
-          if (!this.inventoryManager.hasItemByKey("lavenderOil")) {
+          if (!globalInventoryManager.hasItemByKey("lavenderOil")) {
             showDialogue(this, "You hand the rabbit the Lavender Oil...", { imageKey: "rabbitDialogueHappy" });
             this.rabbit.setTexture && this.rabbit.setTexture("rabbitHappy");
             this.time.delayedCall(800, () => {
@@ -356,14 +350,14 @@ this.add.image(width - 100, height - 100, "exit")
         // --- Pig dialogue and gifting logic ---
         this.pigDialogueActive = false;
         this.pigDialogueIndex = 0;
-        this.hasAloeAfterSunCream = () => this.inventoryManager.hasItemByKey("aloeAfterSunCream");
+        this.hasAloeAfterSunCream = () => globalInventoryManager.hasItemByKey("aloeAfterSunCream");
 
         // Listen for aloeAfterSunCream handover event from inventory
         this.events.on("aloeAfterSunCreamGiven", () => {
           this.awaitingAloeAfterSunCreamGive = false;
-          this.inventoryManager.removeItemByKey("aloeAfterSunCream");
+          globalInventoryManager.removeItemByKey("aloeAfterSunCream");
           
-          if (!this.inventoryManager.hasItemByKey("aloeAfterSunCream")) {
+          if (!globalInventoryManager.hasItemByKey("aloeAfterSunCream")) {
             showDialogue(this, "You hand the pig the Aloe After-Sun Cream...", { imageKey: "pigDialogueHappy" });
             this.pig.setTexture && this.pig.setTexture("pigHappy");
             this.time.delayedCall(800, () => {
@@ -540,7 +534,6 @@ this.add.image(width - 100, height - 100, "exit")
     // Save relevant state to localStorage
     saveSceneState() {
         const state = {
-            inventory: this.inventoryManager.getItems(),
             rabbitIntroDone: !!this.rabbitIntroDone,
             rabbitThanksDone: !!this.rabbitThanksDone,
             pigIntroDone: !!this.pigIntroDone,

@@ -21,9 +21,6 @@ class MiddleGardenScene extends Phaser.Scene {
     this.dialogueActive = false;
     this.dialogueOnComplete = null;
     this.transitioning = false;
-    
-    // Use the global inventory manager
-    this.inventoryManager = globalInventoryManager;
   }
 
   preload() {
@@ -93,17 +90,21 @@ class MiddleGardenScene extends Phaser.Scene {
 
     // --- LOAD STATE FROM LOCAL STORAGE ---
     const sceneState = loadFromLocal('middleGardenSceneState') || {};
-    // Restore inventory if present
-    if (sceneState.inventory && Array.isArray(sceneState.inventory)) {
-      this.inventoryManager.clear();
-      sceneState.inventory.forEach(item => this.inventoryManager.addItem(item));
-    }
+    
+    // DON'T restore inventory from local storage - globalInventoryManager handles this
+    // Remove these lines:
+    // if (sceneState.inventory && Array.isArray(sceneState.inventory)) {
+    //     this.inventoryManager.clear();
+    //     sceneState.inventory.forEach(item => this.inventoryManager.addItem(item));
+    // }
+    
     // Restore found flags
     this.garlicFound = !!sceneState.garlicFound;
     this.thymeFound = !!sceneState.thymeFound;
     this.marigoldFound = !!sceneState.marigoldFound;
     this.jasmineFound = !!sceneState.jasmineFound;
     this.periwinkleFound = !!sceneState.periwinkleFound;
+    
     // Restore NPC states
     this.wolfIntroDone = !!sceneState.wolfIntroDone;
     this.wolfThanksDone = !!sceneState.wolfThanksDone;
@@ -111,9 +112,10 @@ class MiddleGardenScene extends Phaser.Scene {
     this.moleThanksDone = !!sceneState.moleThanksDone;
     this.turtleIntroDone = !!sceneState.turtleIntroDone;
     this.turtleThanksDone = !!sceneState.turtleThanksDone;
+    
     // Restore time of day
     if (sceneState.timeOfDay) {
-      globalTimeManager.dayCycle.setTimeOfDay(sceneState.timeOfDay);
+        globalTimeManager.dayCycle.setTimeOfDay(sceneState.timeOfDay);
     }
 
 
@@ -341,14 +343,14 @@ class MiddleGardenScene extends Phaser.Scene {
     // --- Mole dialogue and gifting logic ---
     this.moleDialogueActive = false;
     this.moleDialogueIndex = 0;
-    this.hasGarlicPaste = () => this.inventoryManager.hasItemByKey("garlicPaste");
+    this.hasGarlicPaste = () => globalInventoryManager.hasItemByKey("garlicPaste");
 
     // Listen for garlicPaste handover event from inventory
     this.events.on("garlicPasteGiven", () => {
       this.awaitingGarlicPasteGive = false;
-      this.inventoryManager.removeItemByKey("garlicPaste");
+      globalInventoryManager.removeItemByKey("garlicPaste");
       
-      if (!this.inventoryManager.hasItemByKey("garlicPaste")) {
+      if (!globalInventoryManager.hasItemByKey("garlicPaste")) {
         showDialogue(this, "You hand the mole the Garlic Paste...", { imageKey: "moleDialogueHappy" });
         this.mole.setTexture && this.mole.setTexture("moleHappy");
         this.time.delayedCall(800, () => {
@@ -366,19 +368,6 @@ class MiddleGardenScene extends Phaser.Scene {
 
     // Mole click handler
     this.mole.on("pointerdown", () => {
-      // Check if player is close enough
-      if (!this.isPlayerNearNPC(this.mole, 120)) {
-        this.dialogueActive = true;
-        this.updateHUDState && this.updateHUDState();
-        showDialogue(this, "You need to get closer to talk to the Digmund.", { imageKey: "moleDialogueSad" });
-        this.time.delayedCall(1500, () => {
-          this.destroyDialogueUI();
-          this.dialogueActive = false;
-          this.updateHUDState && this.updateHUDState();
-        });
-        return;
-      }
-
       if (!this.moleIntroDone && !this.moleDialogueActive) {
         this.moleDialogueActive = true;
         this.moleDialogueIndex = 0;
@@ -435,14 +424,14 @@ class MiddleGardenScene extends Phaser.Scene {
     // --- Turtle dialogue and gifting logic ---
     this.turtleDialogueActive = false;
     this.turtleDialogueIndex = 0;
-    this.hasThymeInfusedOil = () => this.inventoryManager.hasItemByKey("thymeInfusedOil");
+    this.hasThymeInfusedOil = () => globalInventoryManager.hasItemByKey("thymeInfusedOil");
 
     // Listen for thymeInfusedOil handover event from inventory
     this.events.on("thymeInfusedOilGiven", () => {
       this.awaitingThymeInfusedOilGive = false;
-      this.inventoryManager.removeItemByKey("thymeInfusedOil");
+      globalInventoryManager.removeItemByKey("thymeInfusedOil");
       
-      if (!this.inventoryManager.hasItemByKey("thymeInfusedOil")) {
+      if (!globalInventoryManager.hasItemByKey("thymeInfusedOil")) {
         showDialogue(this, "You hand the turtle the Thyme Infused Oil...", { imageKey: "turtleDialogueHappy" });
         this.turtle.setTexture && this.turtle.setTexture("turtleHappy");
         this.time.delayedCall(800, () => {
@@ -460,19 +449,6 @@ class MiddleGardenScene extends Phaser.Scene {
 
     // Turtle click handler
     this.turtle.on("pointerdown", () => {
-      // Check if player is close enough
-      if (!this.isPlayerNearNPC(this.turtle, 120)) {
-        this.dialogueActive = true;
-        this.updateHUDState && this.updateHUDState();
-        showDialogue(this, "You need to get closer to talk to the Murtle.", { imageKey: "turtleDialogueSad" });
-        this.time.delayedCall(1500, () => {
-          this.destroyDialogueUI();
-          this.dialogueActive = false;
-          this.updateHUDState && this.updateHUDState();
-        });
-        return;
-      }
-
       if (!this.turtleIntroDone && !this.turtleDialogueActive) {
         this.turtleDialogueActive = true;
         this.turtleDialogueIndex = 0;
@@ -529,14 +505,14 @@ class MiddleGardenScene extends Phaser.Scene {
     // --- Wolf dialogue and gifting logic ---
     this.wolfDialogueActive = false;
     this.wolfDialogueIndex = 0;
-    this.hasPeriwinkleExtract = () => this.inventoryManager.hasItemByKey("periwinkleExtract");
+    this.hasPeriwinkleExtract = () => globalInventoryManager.hasItemByKey("periwinkleExtract");
 
     // Listen for periwinkleExtract handover event from inventory
     this.events.on("periwinkleExtractGiven", () => {
       this.awaitingPeriwinkleExtractGive = false;
-      this.inventoryManager.removeItemByKey("periwinkleExtract");
+      globalInventoryManager.removeItemByKey("periwinkleExtract");
       
-      if (!this.inventoryManager.hasItemByKey("periwinkleExtract")) {
+      if (!globalInventoryManager.hasItemByKey("periwinkleExtract")) {
         showDialogue(this, "You hand the wolf the Periwinkle Extract...", { imageKey: "wolfDialogueHappy" });
         this.wolf.setTexture && this.wolf.setTexture("wolfHappy");
         this.time.delayedCall(800, () => {
@@ -554,19 +530,6 @@ class MiddleGardenScene extends Phaser.Scene {
 
     // Wolf click handler
     this.wolf.on("pointerdown", () => {
-      // Check if player is close enough
-      if (!this.isPlayerNearNPC(this.wolf, 120)) {
-        this.dialogueActive = true;
-        this.updateHUDState && this.updateHUDState();
-        showDialogue(this, "You need to get closer to talk to Fang.", { imageKey: "wolfDialogueSad" });
-        this.time.delayedCall(1500, () => {
-          this.destroyDialogueUI();
-          this.dialogueActive = false;
-          this.updateHUDState && this.updateHUDState();
-        });
-        return;
-      }
-
       if (!this.wolfIntroDone && !this.wolfDialogueActive) {
         this.wolfDialogueActive = true;
         this.wolfDialogueIndex = 0;
@@ -747,17 +710,6 @@ class MiddleGardenScene extends Phaser.Scene {
   }
 
   // Add this helper method to check distance
-  isPlayerNearNPC(npc, range = 100) {
-    if (!this.mainChar || !npc) return false;
-    
-    const distance = Phaser.Math.Distance.Between(
-      this.mainChar.x, this.mainChar.y,
-      npc.x, npc.y
-    );
-    
-    return distance <= range;
-  }
-
   setupBushes(width, height) {
     const bushPositions = [
       { x: 100, y: 300 }, // Jasmine
@@ -861,7 +813,7 @@ class MiddleGardenScene extends Phaser.Scene {
                   this.scene.stop("MiniGameScene");
                   this.scene.resume();
 
-                  const alreadyHas = this.inventoryManager.hasItemByKey(plant.key);
+                  const alreadyHas = globalInventoryManager.hasItemByKey(plant.key);
                   if (!alreadyHas) {
                     addPlantToJournal(plant.key);
                     receivedItem(this, plant.key, plant.name);
@@ -951,7 +903,8 @@ class MiddleGardenScene extends Phaser.Scene {
 
   saveSceneState() {
     const state = {
-      inventory: this.inventoryManager.getItems(),
+      // Remove inventory from local state saving - globalInventoryManager handles it
+      // inventory: this.inventoryManager.getItems(),
       garlicFound: !!this.garlicFound,
       thymeFound: !!this.thymeFound,
       marigoldFound: !!this.marigoldFound,
