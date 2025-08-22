@@ -34,6 +34,7 @@ import Tutorial from "../tutorials/tutorial";
 import CreditsScene from "./scenes/credits";
 import FlowerCatchTutorial from "../minigames/flower-catch/flowerCatchTutorial";
 import FlowerCatchGame from "../minigames/flower-catch/flowerCatchGame";
+import ColorBlindOverlay from "./colourBlindOverlay";
 
 function GameCanvas() {
     const canvasRef = useRef(null);
@@ -99,7 +100,8 @@ function GameCanvas() {
     Tutorial,
     CreditsScene,
     FlowerCatchTutorial,
-    FlowerCatchGame
+    FlowerCatchGame,
+    ColorBlindOverlay
   ]
 };
 
